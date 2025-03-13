@@ -1,8 +1,15 @@
-import { registerRootComponent } from 'expo';
+import { Redirect } from "expo-router";
 
-import Home from './(tabs)/Home';
 
-// registerRootComponent calls AppRegistry.registerComponent('main', () => App);
-// It also ensures that whether you load the app in Expo Go or in a native build,
-// the environment is set up appropriately
-registerRootComponent(Home);
+export default function Index() {
+  const onboardingComplete = true;
+
+  return onboardingComplete ? (
+    <Redirect href="/(tabs)/" />
+  ) : (
+    <Redirect href="/(auth)/" />
+  );
+
+};
+
+
