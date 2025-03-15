@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { View, Text, TextInput, TouchableOpacity, Image } from "react-native";
 import { styles } from "./styles";
+import { router } from "expo-router";
 
 const Login = () => {
   const [phone, setPhone] = useState("");
@@ -29,7 +30,8 @@ const Login = () => {
       <View style={styles.row}>
         <Text style={styles.footerText}>
           Don’t have an account? </Text>
-        <TouchableOpacity><Text style={styles.createAccount}>Create Account</Text>
+        <TouchableOpacity onPress={()=>router.push('/(auth)/Signup')}>
+          <Text style={styles.createAccount}>Create Account</Text>
         </TouchableOpacity>
       </View>
     </View>
