@@ -1,15 +1,11 @@
 import { Redirect } from "expo-router";
 
-
 export default function Index() {
-  const onboardingComplete = true;
+  const onboardingComplete = false; // Change this dynamically based on AsyncStorage or state
 
-  return onboardingComplete ? (
-    <Redirect href="/(tabs)/" />
-  ) : (
-    <Redirect href="/(auth)/" />
-  );
-
-};
-
-
+  if (onboardingComplete) {
+    return <Redirect href="/(tabs)/" />;
+  } else {
+    return <Redirect href="/(auth)/" />;
+  }
+}

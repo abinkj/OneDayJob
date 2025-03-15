@@ -1,7 +1,7 @@
 {
   "name": "one-day",
   "version": "1.0.0",
-  "main": "app/index.tsx",
+  "main": "expo-router/entry",
   "scripts": {
     "start": "expo start",
     "android": "expo run:android",
