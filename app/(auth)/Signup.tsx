@@ -35,7 +35,7 @@ const SignUp = () => {
         />
       </View>
      
-      <TouchableOpacity style={styles.buttonSign}>
+      <TouchableOpacity style={styles.buttonSign} onPress={()=>router.push('/(auth)/Otp')}>
         <Text style={styles.buttonText}>Get OTP</Text>
       </TouchableOpacity>
       <View style={styles.row}>

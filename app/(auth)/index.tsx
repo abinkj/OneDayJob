@@ -24,7 +24,7 @@ const Login = () => {
           onChangeText={setPhone}
         />
       </View>
-      <TouchableOpacity style={styles.button}>
+      <TouchableOpacity style={styles.button} onPress={()=>router.push('/(auth)/Otp')}>
         <Text style={styles.buttonText}>Get OTP</Text>
       </TouchableOpacity>
       <View style={styles.row}>

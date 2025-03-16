@@ -1,4 +1,4 @@
-import { StyleSheet } from "react-native";
+import { Dimensions, StyleSheet } from "react-native";
 import DeviceDimensions from "../../constants/DeviceDimenions";
 import { Colors } from "../../constants/Colors";
 
@@ -28,6 +28,16 @@ export  const styles = StyleSheet.create({
       fontFamily: 'regular',
       color: Colors.grey,
       marginTop: 34,
+      paddingHorizontal:16
+    },
+    subtitleOtp: {
+      fontSize: 18,
+      lineHeight: 22,
+      textAlign: "center",
+      fontFamily: 'regular',
+      color: Colors.grey,
+      marginTop: 55*DeviceDimensions.heightRatio,
+      paddingHorizontal:16
     },
     inputContainer: {
       flexDirection: "row",
@@ -90,6 +100,15 @@ export  const styles = StyleSheet.create({
         justifyContent: 'center',
         marginTop: 106* DeviceDimensions.heightRatio,
       },
+      buttonOtp: {
+        backgroundColor: Colors.black,
+        width: 361 * DeviceDimensions.widthRatio,
+        height: 42,
+        borderRadius: 10,
+        alignItems: "center",
+        justifyContent: 'center',
+        marginTop: 373* DeviceDimensions.heightRatio,
+      },
     buttonText: {
         color: Colors.white,
         fontSize: 16,
@@ -111,4 +130,38 @@ export  const styles = StyleSheet.create({
       flexDirection: 'row',
       marginTop: 32
     },
+    containerOtp: {
+      flexDirection: "row",
+      justifyContent: "center",
+      marginTop: 32,
+    },
+    pinCodeContainer: {
+      width: 48,
+      height: 50,
+      borderWidth: 1,
+      borderColor: Colors.black,
+      borderRadius: 8,
+      justifyContent: "center",
+      alignItems: "center",
+      marginHorizontal: 6,
+      backgroundColor: Colors.white,
+    },
+    pinCodeText: {
+      fontSize: 20,
+      color: Colors.black,
+      textAlign: "center",
+    },
+    resendText: {
+      marginTop: 12,
+      fontSize: 14,
+      color: Colors.grey,
+      textAlign: "center",
+    },
+    resendButton: {
+      color: Colors.black,
+      fontWeight: "bold",
+    },
+    activePinCodeContainer:{
+      backgroundColor:"#DDDDDD"
+    }
   });
