@@ -163,5 +163,22 @@ export  const styles = StyleSheet.create({
     },
     activePinCodeContainer:{
       backgroundColor:"#DDDDDD"
-    }
+    },
+    containerCenter:{
+      flex:1,
+      justifyContent:'center',
+      alignItems:'center'
+    },
+    tick:{
+height:130* DeviceDimensions.heightRatio,
+width:130* DeviceDimensions.widthRatio,
+marginHorizontal:'auto'
+    },
+    verified:{
+      marginTop:38,
+      fontSize:24,
+      fontFamily:'medium',
+      textAlign:'center',
+      color:Colors.grey
+    },
   });

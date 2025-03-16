@@ -50,7 +50,7 @@ const Otp = () => {
         </Text>
       </Text>
 
-      <TouchableOpacity style={styles.buttonOtp} >
+      <TouchableOpacity style={styles.buttonOtp}onPress={()=>{router.push('/(auth)/Congo')}} >
         <Text style={styles.buttonText}>Verify</Text>
       </TouchableOpacity>
     </View>

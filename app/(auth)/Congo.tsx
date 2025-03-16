@@ -1,10 +1,20 @@
-import { View, Text } from 'react-native'
+import { View, Text, Image } from 'react-native'
 import React from 'react'
+import { styles } from './styles'
 
 const Congo = () => {
   return (
-    <View>
-      <Text>Congo</Text>
+    <View style={styles.containerCenter}>
+<View>
+  <Image source={require('../../assets/images/tick.png')}
+  style={styles.tick}/>
+  <Text style={styles.verified}>
+  Verified {'\n'} Successfully
+  </Text>
+</View>
+
+
+      
     </View>
   )
 }
