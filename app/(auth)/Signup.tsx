@@ -70,9 +70,9 @@ const SignUp = () => {
       </View>
 
       <TouchableOpacity 
-        style={[styles.buttonSign, isLoading && styles.disabledButton]} 
+        style={[styles.buttonSign, isLoading && styles.disabledButtonSign]} 
         onPress={handleGetOtp} 
-        disabled={isLoading} // Disable button when loading
+        disabled={isLoading} 
       >
         <Text style={styles.buttonText}>
           {isLoading ? "Sending OTP..." : "Get OTP"}

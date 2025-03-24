@@ -1,30 +1,39 @@
 import React, { useState } from "react";
 import { View, Text, TouchableOpacity, Alert } from "react-native";
 import { styles } from "./styles";
-import { router } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import { OtpInput } from "react-native-otp-entry";
 import { Colors } from "../../constants/Colors";
-import { verifyOtp, requestOtp } from "../../services/api"; // Import the API services
+import { verifyOtp, requestOtp } from "../../services/api";
 
 const Otp = () => {
   const [otp, setOtp] = useState("");
-  const [isLoading, setIsLoading] = useState(false); // Add loading state
-  const { phoneNumber } = router.params;
-  
+  const [isLoading, setIsLoading] = useState(false);
+  const { phoneNumber } = useLocalSearchParams();
+
   const handleVerifyOtp = async () => {
-    if (!otp || otp.length !== 4) {
-      Alert.alert("Error", "Please enter a valid 4-digit OTP.");
+    if (!otp || otp.length !== 6) {
+      Alert.alert("Error", "Please enter a valid 6-digit OTP.");
       return;
     }
-  
+
     setIsLoading(true);
-  
+
     try {
-      // Send `phoneNumber` and `otpCode` instead of `phone` and `otp`
+      console.log("phoneNumber:", phoneNumber);
+      console.log("otp:", otp);
       const response = await verifyOtp({ phoneNumber, otpCode: otp });
-      console.log("OTP verification successful:", response.data);
-  
-      router.replace("/(auth)/Congo");
+      console.log("OTP verification successful:", response.data.data);
+
+      if (response.data.data.valid) {
+        try {
+          router.push("/(auth)/Congo");
+        } catch (navigationError) {
+          console.error("Navigation error:", navigationError);
+        }
+      } else {
+        Alert.alert("Error", response.data.message || "Invalid OTP. Please try again.");
+      }
     } catch (error) {
       console.error("OTP verification failed:", error.response?.data || error.message);
       Alert.alert("Error", "Invalid OTP. Please try again.");
@@ -35,10 +44,10 @@ const Otp = () => {
 
   const handleResendOtp = async () => {
     try {
-      // Call the requestOtp API to resend OTP
-      const response = await requestOtp({ phone });
+      const response = await requestOtp({ phoneNumber });
       console.log("OTP resent successfully:", response.data);
       Alert.alert("Success", "OTP has been resent.");
+      setOtp(""); // Reset the OTP field
     } catch (error) {
       console.error("Failed to resend OTP:", error.response?.data || error.message);
       Alert.alert("Error", "Failed to resend OTP. Please try again.");
@@ -53,18 +62,18 @@ const Otp = () => {
       </Text>
 
       <OtpInput
-        numberOfDigits={4}
+        numberOfDigits={6}
         focusColor={Colors.black}
         autoFocus={false}
         hideStick={true}
-        placeholder="----"
+        placeholder="------"
         blurOnFilled={true}
         disabled={false}
         type="numeric"
         secureTextEntry={false}
         focusStickBlinkingDuration={500}
-        onTextChange={(text) => setOtp(text)} // Update OTP state
-        onFilled={(text) => setOtp(text)} // Update OTP state when filled
+        onTextChange={(text) => setOtp(text)}
+        onFilled={(text) => setOtp(text)}
         textInputProps={{
           accessibilityLabel: "One-Time Password",
         }}
@@ -84,9 +93,9 @@ const Otp = () => {
       </Text>
 
       <TouchableOpacity
-        style={[styles.buttonOtp, isLoading && styles.disabledButton]} // Disable button when loading
+        style={[styles.buttonOtp, isLoading && styles.disabledButton]}
         onPress={handleVerifyOtp}
-        disabled={isLoading} // Disable button when loading
+        disabled={isLoading}
       >
         <Text style={styles.buttonText}>
           {isLoading ? "Verifying..." : "Verify"}

@@ -98,6 +98,24 @@ export  const styles = StyleSheet.create({
       borderRadius: 10,
       alignItems: "center",
       justifyContent: 'center',
+      marginTop: 373 * DeviceDimensions.heightRatio,
+    },
+    disabledButtonSign: {
+      backgroundColor: 'grey',
+      width: 361 * DeviceDimensions.widthRatio,
+      height: 42,
+      borderRadius: 10,
+      alignItems: "center",
+      justifyContent: 'center',
+      marginTop: 106 * DeviceDimensions.heightRatio,
+    },
+    disabledButtonOtp: {
+      backgroundColor: 'grey',
+      width: 361 * DeviceDimensions.widthRatio,
+      height: 42,
+      borderRadius: 10,
+      alignItems: "center",
+      justifyContent: 'center',
       marginTop: 162 * DeviceDimensions.heightRatio,
     },
     buttonSign: {
@@ -137,8 +155,8 @@ export  const styles = StyleSheet.create({
     },
     row: {
       flexDirection: 'row',
-      marginTop: 32
-    },
+      marginTop: 10
+       },
     containerOtp: {
       flexDirection: "row",
       justifyContent: "center",
@@ -191,3 +209,4 @@ marginHorizontal:'auto'
       color:Colors.grey
     },
   });
+

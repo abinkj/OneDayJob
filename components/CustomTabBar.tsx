@@ -125,6 +125,11 @@ const styles = StyleSheet.create({
         width: DeviceDimensions.screenWidth,
         backgroundColor: 'transparent',
         alignItems: 'center',
+        shadowColor: '#000', 
+        shadowOffset: { width: 0, height: -2 },
+        shadowOpacity: 0.8,
+        shadowRadius: 3.84,
+        elevation: 5, 
     },
     tabBar: {
         flexDirection: 'row',

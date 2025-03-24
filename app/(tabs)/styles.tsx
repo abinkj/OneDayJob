@@ -1,0 +1,245 @@
+import { StyleSheet } from "react-native";
+import DeviceDimensions from "../../constants/DeviceDimenions";
+import { Colors } from "../../constants/Colors";
+
+export const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: Colors.background,
+    padding: 16
+  },
+  header: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  locationHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  locationSelector: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  locationTitle: {
+    fontSize: 16,
+    fontFamily: "bold",
+    color: Colors.black,
+    marginRight: 4 * DeviceDimensions.widthRatio,
+  },
+  locationSubtitle: {
+    fontSize: 12,
+    fontFamily: "regular",
+    color: Colors.grey,
+  },
+  searchContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#E8E8E8",
+    borderRadius: 12,
+    width:361* DeviceDimensions.widthRatio,
+    height: 50 * DeviceDimensions.heightRatio,
+    marginTop: 16 * DeviceDimensions.heightRatio,
+    paddingHorizontal:12,
+  },
+  searchIcon: {
+    marginRight: 8 * DeviceDimensions.widthRatio,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 14,
+    fontFamily: "regular",
+    color: Colors.black,
+  },
+  bannerContainer: {
+    borderRadius: 16,
+    marginTop:8,
+    marginBottom: 16 * DeviceDimensions.heightRatio,
+    flexDirection: "row",
+    height: 140.21 * DeviceDimensions.heightRatio,
+    width:'100%'
+    
+  },
+  banner:{
+   width:'100%',
+   height:'100%'
+  },
+  bannerTextContainer: {
+    flex: 3,
+    justifyContent: "center",
+    paddingHorizontal:12,
+    paddingVertical:16,
+  },
+  bannerTitle: {
+    fontSize: 18,
+    fontFamily: "bold",
+    color: Colors.white,
+  },
+  bannerSubtitle: {
+    fontSize: 14,
+    fontFamily: "regular",
+    color: Colors.white,
+    marginTop: 4 * DeviceDimensions.heightRatio,
+  },
+  postNowButton: {
+    backgroundColor: Colors.white,
+  justifyContent:'center',
+  alignItems:'center',
+    borderRadius: 8,
+    alignSelf: "flex-start",
+    marginTop: 16 * DeviceDimensions.heightRatio,
+    height:28* DeviceDimensions.heightRatio,
+    width:71* DeviceDimensions.widthRatio,
+  },
+  postNowText: {
+    color: Colors.blue,
+    fontSize: 11,
+    fontFamily: "medium",
+  },
+  bannerImage: {
+    flex: 2,
+    height: "100%",
+  },
+  filtersScrollContainer: {
+    marginBottom: 16 * DeviceDimensions.heightRatio,
+  },
+  filtersContainer: {
+   flex:1
+  },
+  filterButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent:'center',
+    backgroundColor: Colors.white,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: Colors.black,
+    paddingHorizontal: 12 * DeviceDimensions.widthRatio,
+    paddingVertical: 12 * DeviceDimensions.heightRatio,
+    marginRight: 12 * DeviceDimensions.widthRatio,
+  },
+  filterText: {
+    fontSize: 14,
+    fontFamily: "regular",
+    color: Colors.black,
+    marginRight: 4 * DeviceDimensions.widthRatio,
+  },
+  jobCard: {
+    backgroundColor: Colors.white,
+    borderRadius: 12,
+    padding: 16 * DeviceDimensions.widthRatio,
+    marginBottom: 16 * DeviceDimensions.heightRatio,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+    width:361 * DeviceDimensions.widthRatio,
+  },
+  jobCardHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 12 * DeviceDimensions.heightRatio,
+  },
+  categoryContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  avatarContainer: {
+    width: 24 * DeviceDimensions.widthRatio,
+    height: 24 * DeviceDimensions.widthRatio,
+    borderRadius: 1234,
+     justifyContent: "center",
+    alignItems: "center",
+    marginRight: 8 * DeviceDimensions.widthRatio,
+  },
+  avatarText: {
+    color: Colors.white,
+    fontSize: 14,
+    fontFamily: "bold",
+  },
+  categoryText: {
+    fontSize: 12,
+    fontFamily: "regular",
+    color: Colors.grey,
+  },
+  priceText: {
+    fontSize: 16,
+    fontFamily: "bold",
+    color: Colors.black,
+  },
+  jobTitle: {
+    fontSize: 16,
+    fontFamily: "medium",
+    color: Colors.black,
+    marginBottom: 12 * DeviceDimensions.heightRatio,
+    width:268* DeviceDimensions.widthRatio,
+  },
+  jobDetailsContainer: {
+    flexDirection: "row",
+    marginBottom: 16 * DeviceDimensions.heightRatio,
+  },
+  titleContainer: {
+    flexDirection: "row",
+    justifyContent:'space-between',
+    marginBottom: 12 * DeviceDimensions.heightRatio,
+    width:'100%',
+  },
+  locationContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginRight: 16 * DeviceDimensions.widthRatio,
+  },
+  locationText: {
+    fontSize: 14,
+    fontFamily: "regular",
+    color: Colors.grey,
+    marginLeft: 4 * DeviceDimensions.widthRatio,
+  },
+  dateContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  dateText: {
+    fontSize: 14,
+    fontFamily: "regular",
+    color: Colors.grey,
+    marginLeft: 4 * DeviceDimensions.widthRatio,
+  },
+  jobFooter: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  vacanciesContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  vacanciesText: {
+    fontSize: 12,
+    fontFamily: "regular",
+    color: Colors.grey,
+  },
+  timeAgoText: {
+    fontSize: 12,
+    fontFamily: "regular",
+    color: Colors.grey,
+  },
+  statusContainer: {
+    backgroundColor: Colors.tabGrey,
+    paddingHorizontal: 12 * DeviceDimensions.widthRatio,
+height:22,
+    borderRadius: 20,
+    justifyContent:'center',
+    alignItems:'center'
+  },
+  statusText: {
+    fontSize: 12,
+    fontFamily: "medium",
+    color: Colors.black,
+  }
+});

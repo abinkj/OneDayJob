@@ -4,6 +4,8 @@ export const Colors={
     grey:'#555555',
     blue:"#613EEA",
     tabBlue:'#386BF6',
-    tabGrey:'#9DB2CE'
+    tabGrey:'#9DB2CE',
+    background:'#F9F5FF',
+    
 
 };

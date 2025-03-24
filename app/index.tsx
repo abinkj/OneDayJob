@@ -11,7 +11,7 @@ export default function Index() {
     "bold": require("../assets/fonts/Roboto-Bold.ttf"),
   });
 
-  const onboardingComplete = true; 
+  const onboardingComplete = true
 
   const onLayoutRootView = useCallback(async () => {
     if (fontsLoaded) {

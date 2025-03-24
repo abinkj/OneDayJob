@@ -3,6 +3,7 @@ import { View, Text, TextInput, TouchableOpacity, Image, Alert } from "react-nat
 import { styles } from "./styles";
 import { router } from "expo-router";
 import { requestOtp } from "../../services/api"; // Import the API service
+import { SafeAreaView } from "react-native-safe-area-context";
 
 const Login = () => {
   const [phone, setPhone] = useState("");
@@ -36,7 +37,7 @@ const Login = () => {
   
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <Text style={styles.title}>Log In</Text>
       <Image source={require("../../assets/placeholder-image.png")} style={styles.image} />
       <Text style={styles.subtitle}>
@@ -69,7 +70,7 @@ const Login = () => {
           <Text style={styles.createAccount}>Create Account</Text>
         </TouchableOpacity>
       </View>
-    </View>
+    </SafeAreaView>
   );
 };
 
