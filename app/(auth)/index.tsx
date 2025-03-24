@@ -1,10 +1,39 @@
 import React, { useState } from "react";
-import { View, Text, TextInput, TouchableOpacity, Image } from "react-native";
+import { View, Text, TextInput, TouchableOpacity, Image, Alert } from "react-native";
 import { styles } from "./styles";
 import { router } from "expo-router";
+import { requestOtp } from "../../services/api"; // Import the API service
 
 const Login = () => {
   const [phone, setPhone] = useState("");
+  const [isLoading, setIsLoading] = useState(false); // Add loading state
+
+  const handleGetOtp = async () => {
+    if (!phone || phone.length !== 10) {
+      Alert.alert("Error", "Please enter a valid 10-digit mobile number.");
+      return;
+    }
+  
+    setIsLoading(true);
+  
+    try {
+      // Send `phoneNumber` instead of `phone`
+      const response = await requestOtp({ phoneNumber: `+91${phone}` });
+      console.log("OTP request successful:", response.data);
+  
+      // Navigate to OTP screen with `phoneNumber`
+      router.push({
+        pathname: "/(auth)/Otp",
+        params: { phoneNumber: `+91${phone}` },
+      });
+    } catch (error) {
+      console.error("OTP request failed:", error.response?.data || error.message);
+      Alert.alert("Error", "Failed to send OTP. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
 
   return (
     <View style={styles.container}>
@@ -24,19 +53,24 @@ const Login = () => {
           onChangeText={setPhone}
         />
       </View>
-      <TouchableOpacity style={styles.button} onPress={()=>router.push('/(auth)/Otp')}>
-        <Text style={styles.buttonText}>Get OTP</Text>
+      <TouchableOpacity
+        style={[styles.button, isLoading && styles.button]} 
+        onPress={handleGetOtp}
+        disabled={isLoading} // Disable button when loading
+      >
+        <Text style={styles.buttonText}>
+          {isLoading ? "Sending OTP..." : "Get OTP"}
+        </Text>
       </TouchableOpacity>
       <View style={styles.row}>
         <Text style={styles.footerText}>
           Don’t have an account? </Text>
-        <TouchableOpacity onPress={()=>router.push('/(auth)/Signup')}>
+        <TouchableOpacity onPress={() => router.push('/(auth)/Signup')}>
           <Text style={styles.createAccount}>Create Account</Text>
         </TouchableOpacity>
       </View>
     </View>
   );
 };
-
 
 export default Login;

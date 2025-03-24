@@ -1,6 +1,7 @@
 import { Redirect, SplashScreen } from "expo-router";
 import { useFonts } from "expo-font";
 import { useCallback } from "react";
+import  TabLayout from '(tabs)/_layout'
 
 
 export default function Index() {
@@ -10,7 +11,7 @@ export default function Index() {
     "bold": require("../assets/fonts/Roboto-Bold.ttf"),
   });
 
-  const onboardingComplete = false; 
+  const onboardingComplete = true; 
 
   const onLayoutRootView = useCallback(async () => {
     if (fontsLoaded) {
@@ -24,7 +25,7 @@ export default function Index() {
 
 
   if (onboardingComplete) {
-    return <Redirect href="/(tabs)/" />;
+    return <Redirect href="/(tabs)/" /> 
   } else {
     return <Redirect href="/(auth)/" />;
   }

@@ -91,6 +91,15 @@ export  const styles = StyleSheet.create({
       justifyContent: 'center',
       marginTop: 162 * DeviceDimensions.heightRatio,
     },
+    disabledButton: {
+      backgroundColor: 'grey',
+      width: 361 * DeviceDimensions.widthRatio,
+      height: 42,
+      borderRadius: 10,
+      alignItems: "center",
+      justifyContent: 'center',
+      marginTop: 162 * DeviceDimensions.heightRatio,
+    },
     buttonSign: {
         backgroundColor: Colors.black,
         width: 361 * DeviceDimensions.widthRatio,

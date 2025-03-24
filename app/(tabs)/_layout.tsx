@@ -1,13 +1,35 @@
-import { Tabs } from "expo-router";
+import React from "react";
+import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
+
+// Import your screens
+import HomeScreen from "../(tabs)/index";
+import StatusScreen from "../(tabs)/Status";
+import PostJobScreen from "../(tabs)/PostJob";
+import ChatScreen from "../(tabs)/Chat";
+import ProfileScreen from "../(tabs)/Profile";
+
+// Import the custom tab bar
+import CustomTabBar from "../../components/CustomTabBar";
+
+const Tab = createBottomTabNavigator();
 
 export default function TabLayout() {
   return (
-    <Tabs screenOptions={{ headerShown: false }}>
-      <Tabs.Screen name="index" options={{ title: "Home" }} />
-      <Tabs.Screen name="Status" options={{ title: "Status" }} />
-      <Tabs.Screen name="PostJob" options={{ title: "Post Job" }} />
-      <Tabs.Screen name="Chat" options={{ title: "Chat" }} />
-      <Tabs.Screen name="Profile" options={{ title: "Profile" }} />
-    </Tabs>
+    <Tab.Navigator
+      tabBar={(props) => <CustomTabBar {...props} />}
+      screenOptions={{
+        headerShown: false,
+      }}
+    >
+      <Tab.Screen name="Home" component={HomeScreen} />
+      <Tab.Screen name="Status" component={StatusScreen} />
+      <Tab.Screen
+        name="PostJob"
+        component={PostJobScreen}
+        options={{ tabBarStyle: { display: "none" } }}
+      />
+      <Tab.Screen name="Chat" component={ChatScreen} />
+      <Tab.Screen name="Profile" component={ProfileScreen} />
+    </Tab.Navigator>
   );
 }

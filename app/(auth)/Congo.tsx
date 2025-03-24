@@ -5,16 +5,16 @@ import { styles } from './styles'
 const Congo = () => {
   return (
     <View style={styles.containerCenter}>
-<View>
-  <Image source={require('../../assets/images/tick.png')}
-  style={styles.tick}/>
-  <Text style={styles.verified}>
-  Verified {'\n'} Successfully
-  </Text>
-</View>
+      <View>
+        <Image source={require('../../assets/images/tick.png')}
+          style={styles.tick} />
+        <Text style={styles.verified}>
+          Verified {'\n'} Successfully
+        </Text>
+      </View>
 
 
-      
+
     </View>
   )
 }
