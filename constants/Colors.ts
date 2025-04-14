@@ -6,6 +6,11 @@ export const Colors={
     tabBlue:'#386BF6',
     tabGrey:'#9DB2CE',
     background:'#F9F5FF',
+    primary:'black',
+    categoryBox:'#E0E8FD',
+    selected:'#A6BEFF',
+    subGrey:'#4A4A4A'
+
     
 
 };
