@@ -7,7 +7,7 @@ import DeviceDimensions from "../../constants/DeviceDimenions";
       backgroundColor: Colors.white,
       borderRadius: 8,
       borderWidth: 1,
-      borderColor: '#E0E0E0',
+      borderColor: Colors.border,
       marginBottom: 16 * DeviceDimensions.heightRatio,
       overflow: 'hidden'
     },

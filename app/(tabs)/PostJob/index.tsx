@@ -62,20 +62,20 @@ const PostJobScreen = ({ navigation }) => {
   const [time, setTime] = useState(new Date());
 
 
-const incrementHour = () => setHour(prev => (prev % 12) + 1);
-const decrementHour = () => setHour(prev => (prev - 1 < 1 ? 12 : prev - 1));
+  const incrementHour = () => setHour(prev => (prev % 12) + 1);
+  const decrementHour = () => setHour(prev => (prev - 1 < 1 ? 12 : prev - 1));
 
-const incrementMinute = () => setMinute(prev => (prev + 5) % 60);
-const decrementMinute = () => setMinute(prev => (prev - 5 < 0 ? 55 : prev - 5));
+  const incrementMinute = () => setMinute(prev => (prev + 5) % 60);
+  const decrementMinute = () => setMinute(prev => (prev - 5 < 0 ? 55 : prev - 5));
 
-const getSelectedTime = () => {
-  const date = new Date();
-  let h = amPm === 'PM' && hour !== 12 ? hour + 12 : hour;
-  if (amPm === 'AM' && hour === 12) h = 0;
-  date.setHours(h);
-  date.setMinutes(minute);
-  return date;
-};
+  const getSelectedTime = () => {
+    const date = new Date();
+    let h = amPm === 'PM' && hour !== 12 ? hour + 12 : hour;
+    if (amPm === 'AM' && hour === 12) h = 0;
+    date.setHours(h);
+    date.setMinutes(minute);
+    return date;
+  };
 
 
 
@@ -223,7 +223,7 @@ const getSelectedTime = () => {
           selectedValue={selectedValue}
           onValueChange={(itemValue) => setSelectedValue(itemValue)}
           style={styles.picker}
-          dropdownIconColor={Colors.grey}
+          dropdownIconColor={Colors.border}
           mode="dropdown"
         >
           {jobCategories.map((option) => (
@@ -250,24 +250,24 @@ const getSelectedTime = () => {
           placeholderTextColor={Colors.subGrey}
         />
       </View>
-            <View style={styles.row}>
-              <Text style={styles.sectionTitle}>Describe Your Job</Text>
-              <Text style={styles.inputHelper}>Minimum 25 Characters</Text>
-            </View>
+      <View style={styles.row}>
+        <Text style={styles.sectionTitle}>Describe Your Job</Text>
+        <Text style={styles.inputHelper}>Minimum 25 Characters</Text>
+      </View>
 
-               {/* Unified Job Description Section */}
-               <JobDescriptionSection
-            jobDescription={jobDescription}
-            setJobDescription={setJobDescription}
-            requirements={requirements}
-            photos={photos}
-            toggleRequirementsList={toggleRequirementsList}
-            showRequirementsList={showRequirementsList}
-            openEditRequirements={openEditRequirements}
-            togglePhotosList={togglePhotosList}
-            showPhotosList={showPhotosList}
-            handlePickImage={handlePickImage}
-          />
+      {/* Unified Job Description Section */}
+      <JobDescriptionSection
+        jobDescription={jobDescription}
+        setJobDescription={setJobDescription}
+        requirements={requirements}
+        photos={photos}
+        toggleRequirementsList={toggleRequirementsList}
+        showRequirementsList={showRequirementsList}
+        openEditRequirements={openEditRequirements}
+        togglePhotosList={togglePhotosList}
+        showPhotosList={showPhotosList}
+        handlePickImage={handlePickImage}
+      />
 
       <View style={styles.switchContainer}>
         <Text style={styles.switchLabel}>Is this a multiple vacancy job?</Text>
@@ -279,15 +279,31 @@ const getSelectedTime = () => {
 
       {isMultipleVacancy && (
         <View style={styles.vacancyContainer}>
-          <Text style={styles.sectionTitle}>Number of Vacancies</Text>
+          <Text style={styles.vaccancyTitle}>Number of Vacancies</Text>
           <View style={styles.counterContainer}>
+
+            <View style={styles.counterValueContainer}>
+              <Ionicons name="person-outline" size={24} color={Colors.grey} />
+              <TextInput
+                style={styles.counterValue}
+                value={String(vacancyCount)}
+                onChangeText={(text) => {
+                  const numericValue = parseInt(text, 10);
+                  if (!isNaN(numericValue)) {
+                    setVacancyCount(numericValue);
+                  } else if (text === "") {
+                    setVacancyCount(0); 
+                  }
+                }}
+                keyboardType="number-pad"
+                maxLength={3}
+                placeholder="0"
+              />
+            </View>
             <TouchableOpacity style={styles.counterButton} onPress={decreaseVacancy}>
               <Text style={styles.counterButtonText}>−</Text>
             </TouchableOpacity>
-            <View style={styles.counterValueContainer}>
-              <Ionicons name="person" size={16} color={Colors.grey} />
-              <Text style={styles.counterValue}>{vacancyCount}</Text>
-            </View>
+            <Text style={styles.counterButtonText}>|</Text>
             <TouchableOpacity style={styles.counterButton} onPress={increaseVacancy}>
               <Text style={styles.counterButtonText}>+</Text>
             </TouchableOpacity>
@@ -304,20 +320,23 @@ const getSelectedTime = () => {
       </View>
       {!canBeDoneRemotely && (
         <View>
-          <Text style={styles.sectionTitle}>Add Task Address</Text>
+          <Text style={styles.sectionTitle2}>Add Task Address</Text>
           <View style={styles.addressContainer}>
             <Ionicons name="location-outline" size={20} color={Colors.grey} />
             <TextInput
               style={styles.addressInput}
               value={taskAddress}
               onChangeText={setTaskAddress}
-              placeholder="Mail/Exp"
+              placeholder="Address"
               placeholderTextColor={Colors.grey}
             />
           </View>
+          <View style={styles.address2}>
           <Text style={styles.addressHelperText}>
             Exact task address is not shown publicly until a task is assigned
           </Text>
+          </View>
+         
         </View>
 
       )}
@@ -401,45 +420,45 @@ const getSelectedTime = () => {
       </View>
 
       {isExactTime && (
-  <View style={styles.timePickerContainer}>
-    <View style={styles.timePickerColumn}>
-      <TouchableOpacity onPress={incrementHour} style={styles.timePickerArrow}>
-        <Ionicons name="chevron-up" size={24} color={Colors.grey} />
-      </TouchableOpacity>
-      <Text style={styles.timePickerValue}>{String(hour).padStart(2, '0')}</Text>
-      <TouchableOpacity onPress={decrementHour} style={styles.timePickerArrow}>
-        <Ionicons name="chevron-down" size={24} color={Colors.grey} />
-      </TouchableOpacity>
-    </View>
+        <View style={styles.timePickerContainer}>
+          <View style={styles.timePickerColumn}>
+            <TouchableOpacity onPress={incrementHour} style={styles.timePickerArrow}>
+              <Ionicons name="chevron-up" size={24} color={Colors.grey} />
+            </TouchableOpacity>
+            <Text style={styles.timePickerValue}>{String(hour).padStart(2, '0')}</Text>
+            <TouchableOpacity onPress={decrementHour} style={styles.timePickerArrow}>
+              <Ionicons name="chevron-down" size={24} color={Colors.grey} />
+            </TouchableOpacity>
+          </View>
 
-    <Text style={styles.timePickerSeparator}>:</Text>
+          <Text style={styles.timePickerSeparator}>:</Text>
 
-    <View style={styles.timePickerColumn}>
-      <TouchableOpacity onPress={incrementMinute} style={styles.timePickerArrow}>
-        <Ionicons name="chevron-up" size={24} color={Colors.grey} />
-      </TouchableOpacity>
-      <Text style={styles.timePickerValue}>{String(minute).padStart(2, '0')}</Text>
-      <TouchableOpacity onPress={decrementMinute} style={styles.timePickerArrow}>
-        <Ionicons name="chevron-down" size={24} color={Colors.grey} />
-      </TouchableOpacity>
-    </View>
+          <View style={styles.timePickerColumn}>
+            <TouchableOpacity onPress={incrementMinute} style={styles.timePickerArrow}>
+              <Ionicons name="chevron-up" size={24} color={Colors.grey} />
+            </TouchableOpacity>
+            <Text style={styles.timePickerValue}>{String(minute).padStart(2, '0')}</Text>
+            <TouchableOpacity onPress={decrementMinute} style={styles.timePickerArrow}>
+              <Ionicons name="chevron-down" size={24} color={Colors.grey} />
+            </TouchableOpacity>
+          </View>
 
-    <View style={styles.amPmContainer}>
-      <TouchableOpacity
-        style={[styles.amPmButton, amPm === 'AM' && styles.selectedAmPm]}
-        onPress={() => setAmPm('AM')}
-      >
-        <Text style={styles.amPmText}>AM</Text>
-      </TouchableOpacity>
-      <TouchableOpacity
-        style={[styles.amPmButton, amPm === 'PM' && styles.selectedAmPm]}
-        onPress={() => setAmPm('PM')}
-      >
-        <Text style={styles.amPmText}>PM</Text>
-      </TouchableOpacity>
-    </View>
-  </View>
-)}
+          <View style={styles.amPmContainer}>
+            <TouchableOpacity
+              style={[styles.amPmButton, amPm === 'AM' && styles.selectedAmPm]}
+              onPress={() => setAmPm('AM')}
+            >
+              <Text style={styles.amPmText}>AM</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.amPmButton, amPm === 'PM' && styles.selectedAmPm]}
+              onPress={() => setAmPm('PM')}
+            >
+              <Text style={styles.amPmText}>PM</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      )}
 
       <CustomButton text={'Next'} color={Colors.grey} onPress={handleNext} />
 
