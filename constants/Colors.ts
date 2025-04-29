@@ -9,7 +9,10 @@ export const Colors={
     primary:'black',
     categoryBox:'#E0E8FD',
     selected:'#A6BEFF',
-    subGrey:'#4A4A4A'
+    subGrey:'#4A4A4A',
+    switchBlue:'#65558F',
+    switchGrey:'#E6E0E9',
+    switchBorder:'#79747E',
 
     
 

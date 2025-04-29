@@ -125,11 +125,11 @@ const styles = StyleSheet.create({
         width: DeviceDimensions.screenWidth,
         backgroundColor: 'transparent',
         alignItems: 'center',
-        shadowColor: '#000', 
+        shadowColor: '#000',
         shadowOffset: { width: 0, height: -2 },
         shadowOpacity: 0.8,
         shadowRadius: 3.84,
-        elevation: 5, 
+        elevation: 5,
     },
     tabBar: {
         flexDirection: 'row',
@@ -138,7 +138,7 @@ const styles = StyleSheet.create({
         width: DeviceDimensions.screenWidth,
         alignItems: 'center',
         justifyContent: 'space-around',
-    
+
     },
     tabItem: {
         alignItems: 'center',
@@ -175,10 +175,10 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
         width: 55 * DeviceDimensions.widthRatio,
-        height: 55 * DeviceDimensions.heightRatio,
-        borderRadius: 1234, 
+        height: 55 * DeviceDimensions.widthRatio,
+        borderRadius: 27.5 * DeviceDimensions.widthRatio,
         backgroundColor: Colors.blue,
-        borderWidth:5, // Adjust border width
+        borderWidth: 5, // Adjust border width
         borderColor: Colors.white,
     },
     centerButtonOutline: {

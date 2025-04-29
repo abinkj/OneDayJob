@@ -3,9 +3,9 @@ import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 
 // Import your screens
 import HomeScreen from "../(tabs)/index";
-import StatusScreen from "../(tabs)/Status";
-import PostJobScreen from "../(tabs)/PostJob";
-import ChatScreen from "../(tabs)/Chat";
+import StatusScreen from "./Status";
+import PostJobScreen from "../(tabs)/PostJob/index";
+import ChatScreen from "./Chat";
 import ProfileScreen from "../(tabs)/Profile";
 
 // Import the custom tab bar
