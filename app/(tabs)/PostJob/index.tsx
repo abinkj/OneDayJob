@@ -495,13 +495,13 @@ const PostJobScreen = ({ navigation }) => {
               style={[styles.amPmButton, amPm === 'AM' && styles.selectedAmPm]}
               onPress={() => setAmPm('AM')}
             >
-              <Text style={styles.amPmText}>AM</Text>
+              <Text style={amPm ==='AM' ?styles.amPmText2:styles.amPmText}>AM</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.amPmButton, amPm === 'PM' && styles.selectedAmPm]}
               onPress={() => setAmPm('PM')}
             >
-              <Text style={styles.amPmText}>PM</Text>
+              <Text style={amPm ==='PM' ?styles.amPmText2:styles.amPmText}>PM</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -518,54 +518,11 @@ const PostJobScreen = ({ navigation }) => {
       <Text style={styles.sectionTitle}>Enter Your Budget</Text>
 
       <View style={styles.budgetContainer}>
+        <Text></Text>
         <TextInput style={styles.currencySymbol}
           placeholder='$200'
           keyboardType='number-pad'></TextInput>
       </View>
-      {/* 
-      <View style={styles.numpadContainer}>
-        <View style={styles.numpadRow}>
-          <TouchableOpacity style={styles.numpadButton} onPress={() => setBudget(budget + '1')}>
-            <Text style={styles.numpadButtonText}>1</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.numpadButton} onPress={() => setBudget(budget + '2')}>
-            <Text style={styles.numpadButtonText}>2</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.numpadButton} onPress={() => setBudget(budget + '3')}>
-            <Text style={styles.numpadButtonText}>3</Text>
-          </TouchableOpacity>
-        </View>
-        <View style={styles.numpadRow}>
-          <TouchableOpacity style={styles.numpadButton} onPress={() => setBudget(budget + '4')}>
-            <Text style={styles.numpadButtonText}>4</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.numpadButton} onPress={() => setBudget(budget + '5')}>
-            <Text style={styles.numpadButtonText}>5</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.numpadButton} onPress={() => setBudget(budget + '6')}>
-            <Text style={styles.numpadButtonText}>6</Text>
-          </TouchableOpacity>
-        </View>
-        <View style={styles.numpadRow}>
-          <TouchableOpacity style={styles.numpadButton} onPress={() => setBudget(budget + '7')}>
-            <Text style={styles.numpadButtonText}>7</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.numpadButton} onPress={() => setBudget(budget + '8')}>
-            <Text style={styles.numpadButtonText}>8</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.numpadButton} onPress={() => setBudget(budget + '9')}>
-            <Text style={styles.numpadButtonText}>9</Text>
-          </TouchableOpacity>
-        </View>
-        <View style={styles.numpadRow}>
-          <TouchableOpacity style={styles.numpadButton} onPress={() => setBudget(budget + '0')}>
-            <Text style={styles.numpadButtonText}>0</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.numpadButton} onPress={() => setBudget(budget.slice(0, -1))}>
-            <Ionicons name="backspace-outline" size={24} color={Colors.black} />
-          </TouchableOpacity>
-        </View>
-      </View> */}
       <CustomButton text={'Next'} color={Colors.grey} onPress={handleNext} />
 
     </View>

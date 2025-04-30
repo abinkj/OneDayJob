@@ -315,7 +315,15 @@ export const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 16 * DeviceDimensions.heightRatio,
+    borderRadius:12,
+    backgroundColor:Colors.white,
+    shadowColor: '#000',
+    shadowOffset: { width: 2, height: 2 },
+    shadowOpacity: 0.12,
+    shadowRadius: 12,
+    // Shadow for Android
+    elevation: 4,
+    marginBottom:40* DeviceDimensions.heightRatio,
   },
   timePickerColumn: {
     alignItems: 'center',
@@ -337,11 +345,13 @@ export const styles = StyleSheet.create({
   },
   amPmContainer: {
     marginLeft: 24 * DeviceDimensions.widthRatio,
+    flexDirection:'row'
   },
   amPmButton: {
     padding: 8 * DeviceDimensions.widthRatio,
     borderRadius: 4,
     marginBottom: 8 * DeviceDimensions.heightRatio,
+    marginLeft:30 * DeviceDimensions.widthRatio,
   },
   selectedAmPm: {
     backgroundColor: Colors.primary,
@@ -351,9 +361,15 @@ export const styles = StyleSheet.create({
     fontFamily: 'medium',
     color: Colors.black,
   },
+  amPmText2: {
+    fontSize: 16,
+    fontFamily: 'medium',
+    color: Colors.white,
+  },
   budgetContainer: {
     alignItems: 'center',
     marginVertical: 24 * DeviceDimensions.heightRatio,
+    flexDirection:'row',
   },
   currencySymbol: {
     fontSize: 36,
