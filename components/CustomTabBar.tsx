@@ -2,13 +2,28 @@ import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native';
 import DeviceDimensions from '../constants/DeviceDimenions';
 import { Colors } from '../constants/Colors';
+import { getFocusedRouteNameFromRoute } from '@react-navigation/native';
+
 
 const CustomTabBar = ({ state, descriptors, navigation }) => {
     const focusedOptions = descriptors[state.routes[state.index].key].options;
+    const currentRoute = state.routes[state.index];
+    const routeName =
+        getFocusedRouteNameFromRoute(currentRoute) || currentRoute.name;
+
+    // List of screens where tab bar should be hidden
+    const hiddenTabBarScreens = ['PostJob']; // Add others as needed
+
+    if (hiddenTabBarScreens.includes(routeName)) {
+        return null; // Don't render the tab bar
+    }
 
     if (focusedOptions.tabBarVisible === false) {
         return null;
-    }
+    };
+    if (['PostJob'].includes(routeName)) {
+        return null;
+    };
 
     return (
         <View style={styles.container}>

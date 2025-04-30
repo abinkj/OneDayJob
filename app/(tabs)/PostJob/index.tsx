@@ -208,7 +208,7 @@ const PostJobScreen = ({ navigation }) => {
                 setSelectedCategory(category.id);
               }}
             >
-              <Image source={category.icon} style={styles.categoryIcon} />
+              <Image source={category.icon} style={styles.categoryIcon} resizeMode='contain' />
             </TouchableOpacity>
             <Text style={styles.categoryName}>{category.name}</Text>
           </View>
@@ -518,14 +518,19 @@ const PostJobScreen = ({ navigation }) => {
       <Text style={styles.sectionTitle}>Enter Your Budget</Text>
 
       <View style={styles.budgetContainer}>
-        <Text></Text>
+        <Text style={styles.currencyText}>$</Text>
         <TextInput style={styles.currencySymbol}
-          placeholder='$200'
+          placeholder='200'
           keyboardType='number-pad'></TextInput>
       </View>
+
+      <View style={{ position:'absolute',bottom:30}}>
       <CustomButton text={'Next'} color={Colors.grey} onPress={handleNext} />
+      </View>
+     
 
     </View>
+    
   );
 
   // Render progress steps at the top
@@ -564,10 +569,10 @@ const PostJobScreen = ({ navigation }) => {
         {currentStep === 3 && renderStep3()}
         {currentStep === 4 && renderStep4()}
       </ScrollView>
-
       <TouchableOpacity style={styles.nextButton} onPress={handleNext}>
         <Text style={styles.nextButtonText}>Next</Text>
       </TouchableOpacity>
+
       <Modal
         animationType="slide"
         transparent={true}

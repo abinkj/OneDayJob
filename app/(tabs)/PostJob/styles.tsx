@@ -368,16 +368,22 @@ export const styles = StyleSheet.create({
   },
   budgetContainer: {
     alignItems: 'center',
+    justifyContent:'center',
     marginVertical: 24 * DeviceDimensions.heightRatio,
     flexDirection:'row',
+    backgroundColor:Colors.switchGrey,
+    padding:20,
+    borderRadius:12,
   },
   currencySymbol: {
     fontSize: 36,
     fontFamily: 'bold',
     color: Colors.black,
-    width: '100%',
-    height: 100,
-    textAlign: 'center'
+  },
+  currencyText:{
+    fontSize: 36,
+    fontFamily: 'bold',
+    color: Colors.black,
   },
   numpadContainer: {
     marginTop: 16 * DeviceDimensions.heightRatio,
