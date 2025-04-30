@@ -7,7 +7,7 @@ import { Colors } from '../../../constants/Colors';
 import CustomButton from '../../../components/CustomButton';
 import { Picker } from '@react-native-picker/picker';
 import * as ImagePicker from 'expo-image-picker';
-import RNDateTimePicker from '@react-native-community/datetimepicker';
+import { Calendar } from 'react-native-calendars';
 import { styles } from './styles';
 import CustomSwitch from '../../../components/CustomSwich';
 import JobDescriptionSection from '../../../components/JobDescription';
@@ -28,10 +28,10 @@ const jobCategories = [
 
 // Time Slot Data
 const timeSlots = [
-  { id: 'morning', name: 'Morning', icon: 'sunny-outline', time: 'Before 10AM' },
-  { id: 'midday', name: 'Midday', icon: 'sunny', time: '10AM - 2PM' },
-  { id: 'afternoon', name: 'Afternoon', icon: 'partly-sunny-outline', time: '2PM - 6PM' },
-  { id: 'evening', name: 'Evening', icon: 'moon-outline', time: 'After 6PM' },
+  { id: 'morning', name: 'Morning', time: 'Before 10AM', true: require('../../../assets/images/morning.png'), false: require('../../../assets/images/morningU.png') },
+  { id: 'midday', name: 'Midday', time: '10AM - 2PM', true: require('../../../assets/images/midday.png'), false: require('../../../assets/images/middayU.png') },
+  { id: 'afternoon', name: 'Afternoon', time: '2PM - 6PM', true: require('../../../assets/images/afternoon.png'), false: require('../../../assets/images/afternoonU.png') },
+  { id: 'evening', name: 'Evening', time: 'After 6PM', true: require('../../../assets/images/evening.png'), false: require('../../../assets/images/eveningU.png') },
 ];
 
 const PostJobScreen = ({ navigation }) => {
@@ -47,7 +47,7 @@ const PostJobScreen = ({ navigation }) => {
   const [selectedTimePreference, setSelectedTimePreference] = useState(null);
   const [isExactTime, setIsExactTime] = useState(false);
   const [budget, setBudget] = useState('200');
-  const [timeMode, setTimeMode] = useState('On Date');
+  const [timeMode, setTimeMode] = useState('I am Flexible');
   const [hour, setHour] = useState('10');
   const [minute, setMinute] = useState('30');
   const [amPm, setAmPm] = useState('AM');
@@ -60,6 +60,10 @@ const PostJobScreen = ({ navigation }) => {
   const [showPhotosList, setShowPhotosList] = useState(false);
   const [editingRequirements, setEditingRequirements] = useState(false);
   const [time, setTime] = useState(new Date());
+  const [selectedDate, setSelectedDate] = useState(null);
+  const [isCalendarVisible, setCalendarVisible] = useState(false);
+
+
 
 
   const incrementHour = () => setHour(prev => (prev % 12) + 1);
@@ -292,7 +296,7 @@ const PostJobScreen = ({ navigation }) => {
                   if (!isNaN(numericValue)) {
                     setVacancyCount(numericValue);
                   } else if (text === "") {
-                    setVacancyCount(0); 
+                    setVacancyCount(0);
                   }
                 }}
                 keyboardType="number-pad"
@@ -332,11 +336,11 @@ const PostJobScreen = ({ navigation }) => {
             />
           </View>
           <View style={styles.address2}>
-          <Text style={styles.addressHelperText}>
-            Exact task address is not shown publicly until a task is assigned
-          </Text>
+            <Text style={styles.addressHelperText}>
+              Exact task address is not shown publicly until a task is assigned
+            </Text>
           </View>
-         
+
         </View>
 
       )}
@@ -355,15 +359,24 @@ const PostJobScreen = ({ navigation }) => {
       <View style={styles.timeOptionContainer}>
         <TouchableOpacity
           style={[styles.timeOption, timeMode === 'On Date' && styles.selectedTimeOption]}
-          onPress={() => setTimeMode('On Date')}
+          onPress={() => {
+            setTimeMode('On Date');
+            setCalendarVisible(true);
+          }}
         >
           <Text style={styles.timeOptionText}>On Date</Text>
+          <Ionicons name="chevron-down" size={16} color={Colors.black} />
         </TouchableOpacity>
+
         <TouchableOpacity
           style={[styles.timeOption, timeMode === 'Before date' && styles.selectedTimeOption]}
-          onPress={() => setTimeMode('Before date')}
+          onPress={() => {
+            setTimeMode('Before date');
+            setCalendarVisible(true);
+          }}
         >
           <Text style={styles.timeOptionText}>Before date</Text>
+          <Ionicons name="chevron-down" size={16} color={Colors.black} />
         </TouchableOpacity>
         <TouchableOpacity
           style={[styles.timeOption, timeMode === 'I am Flexible' && styles.selectedTimeOption]}
@@ -372,6 +385,42 @@ const PostJobScreen = ({ navigation }) => {
           <Text style={styles.timeOptionText}>I am Flexible</Text>
         </TouchableOpacity>
       </View>
+      <Modal
+        visible={isCalendarVisible}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setCalendarVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.calendarModal}>
+            <Calendar
+              onDayPress={(day) => {
+                setSelectedDate(day.dateString);
+                setCalendarVisible(false);
+              }}
+              markedDates={{
+                [selectedDate]: {
+                  selected: true,
+                  selectedColor: 'blue',
+                },
+              }}
+            />
+            <View style={styles.row}>
+              <TouchableOpacity onPress={() => setCalendarVisible(false)}>
+                <Text style={{ textAlign: 'center', marginTop: 10, color: 'blue' }}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={() => setCalendarVisible(false)}>
+                <Text style={{ textAlign: 'center', marginTop: 10, color: 'blue' }}>Save</Text>
+              </TouchableOpacity>
+            </View>
+
+          </View>
+        </View>
+      </Modal>
+      {timeMode !== 'I am Flexible' && (
+        <Text style={styles.dateText}>{timeMode}: {selectedDate}</Text>
+      )}
+
 
       <Text style={styles.sectionTitle}>Mention your time preference</Text>
 
@@ -385,9 +434,9 @@ const PostJobScreen = ({ navigation }) => {
             ]}
             onPress={() => setSelectedTimePreference(slot.id)}
           >
-            <Ionicons name={slot.icon} size={24} color={Colors.grey} style={styles.timeSlotIcon} />
-            <Text style={styles.timeSlotName}>{slot.name}</Text>
-            <Text style={styles.timeSlotTime}>{slot.time}</Text>
+             <Image source={selectedTimePreference === slot.id? slot.false:slot.true} style={styles.timeSlotIcon}  resizeMode='contain'/>
+            <Text style={[ styles.timeSlotName,selectedTimePreference === slot.id?{color:Colors.white}:{color:Colors.black}]}>{slot.name}</Text>
+            <Text style={[ styles.timeSlotTime,selectedTimePreference === slot.id?{color:Colors.white}:{color:Colors.grey}]}>{slot.time}</Text>
           </TouchableOpacity>
         ))}
       </View>
@@ -402,20 +451,18 @@ const PostJobScreen = ({ navigation }) => {
             ]}
             onPress={() => setSelectedTimePreference(slot.id)}
           >
-            <Ionicons name={slot.icon} size={24} color={Colors.grey} style={styles.timeSlotIcon} />
-            <Text style={styles.timeSlotName}>{slot.name}</Text>
-            <Text style={styles.timeSlotTime}>{slot.time}</Text>
+            <Image source={selectedTimePreference === slot.id? slot.false:slot.true} style={styles.timeSlotIcon}  resizeMode='contain'/>
+            <Text style={[ styles.timeSlotName,selectedTimePreference === slot.id?{color:Colors.white}:{color:Colors.black}]}>{slot.name}</Text>
+            <Text style={[ styles.timeSlotTime,selectedTimePreference === slot.id?{color:Colors.white}:{color:Colors.grey}]}>{slot.time}</Text>
           </TouchableOpacity>
         ))}
       </View>
 
       <View style={styles.switchContainer}>
         <Text style={styles.switchLabel}>Set exact time</Text>
-        <Switch
+        <CustomSwitch
           value={isExactTime}
           onValueChange={setIsExactTime}
-          trackColor={{ false: Colors.grey, true: Colors.primary }}
-          thumbColor={Colors.white}
         />
       </View>
 

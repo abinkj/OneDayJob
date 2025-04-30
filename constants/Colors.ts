@@ -16,6 +16,7 @@ export const Colors={
     border:'#B0B0B0',
     addressGrey:'#E6E6E6',
     address2:'#F0F0F0',
+    timeSelected:'#B8B8B8',
 
     
 

@@ -239,6 +239,12 @@ export const styles = StyleSheet.create({
     fontFamily: 'regular',
     color: Colors.grey,
   },
+  dateText: {
+    fontSize: 12,
+    fontFamily: 'regular',
+    color: Colors.grey,
+    marginBottom:8,
+  },
   timeOptionContainer: {
     flexDirection: 'row',
     marginBottom: 24 * DeviceDimensions.heightRatio,
@@ -252,6 +258,7 @@ export const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 8 * DeviceDimensions.widthRatio,
+    flexDirection:'row',
   },
   selectedTimeOption: {
     borderColor: Colors.primary,
@@ -261,6 +268,7 @@ export const styles = StyleSheet.create({
     fontSize: 14,
     fontFamily: 'regular',
     color: Colors.black,
+
   },
   timeSlotGrid: {
     flexDirection: 'row',
@@ -270,31 +278,38 @@ export const styles = StyleSheet.create({
   timeSlot: {
     width: 168 * DeviceDimensions.widthRatio,
     height: 119 * DeviceDimensions.heightRatio,
-    backgroundColor: Colors.white,
     borderRadius: 8,
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#E0E0E0',
     padding: 16 * DeviceDimensions.widthRatio,
+    backgroundColor:Colors.white,
+  
+    // Shadow for iOS
+    shadowColor: '#000',
+    shadowOffset: { width: 2, height: 2 },
+    shadowOpacity: 0.12,
+    shadowRadius: 12,
+  
+    // Shadow for Android
+    elevation: 4,
   },
+  
   selectedTimeSlot: {
-    borderColor: Colors.primary,
-    borderWidth: 2,
+    backgroundColor: Colors.timeSelected,
   },
   timeSlotIcon: {
-    marginBottom: 8 * DeviceDimensions.heightRatio,
+    width: 50 * DeviceDimensions.widthRatio,
+    height: 50 * DeviceDimensions.heightRatio,
+
   },
   timeSlotName: {
     fontSize: 16,
     fontFamily: 'medium',
-    color: Colors.black,
     marginBottom: 4 * DeviceDimensions.heightRatio,
   },
   timeSlotTime: {
-    fontSize: 12,
+    fontSize: 14,
     fontFamily: 'regular',
-    color: Colors.grey,
   },
   timePickerContainer: {
     flexDirection: 'row',
@@ -517,5 +532,19 @@ export const styles = StyleSheet.create({
     padding: 10,
     marginBottom: 30 * DeviceDimensions.heightRatio,
   },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  calendarModal: {
+    backgroundColor: 'white',
+    borderRadius: 10,
+    padding: 20,
+    width: '90%',
+    elevation: 5,
+  },
+  
 
 }); 
