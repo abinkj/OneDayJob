@@ -214,7 +214,7 @@ const PostJobScreen = ({ navigation }) => {
           </View>
         ))}
       </View>
-      <CustomButton text={'Next'} color={Colors.grey} onPress={handleNext} />
+      {/* <CustomButton text={'Next'} color={Colors.grey} onPress={handleNext} /> */}
     </View>
   );
 
@@ -346,7 +346,7 @@ const PostJobScreen = ({ navigation }) => {
       )}
 
 
-      <CustomButton text={'Next'} color={Colors.grey} onPress={handleNext} />
+      {/* <CustomButton text={'Next'} color={Colors.grey} onPress={handleNext} /> */}
     </View>
 
   );
@@ -434,9 +434,9 @@ const PostJobScreen = ({ navigation }) => {
             ]}
             onPress={() => setSelectedTimePreference(slot.id)}
           >
-             <Image source={selectedTimePreference === slot.id? slot.false:slot.true} style={styles.timeSlotIcon}  resizeMode='contain'/>
-            <Text style={[ styles.timeSlotName,selectedTimePreference === slot.id?{color:Colors.white}:{color:Colors.black}]}>{slot.name}</Text>
-            <Text style={[ styles.timeSlotTime,selectedTimePreference === slot.id?{color:Colors.white}:{color:Colors.grey}]}>{slot.time}</Text>
+            <Image source={selectedTimePreference === slot.id ? slot.false : slot.true} style={styles.timeSlotIcon} resizeMode='contain' />
+            <Text style={[styles.timeSlotName, selectedTimePreference === slot.id ? { color: Colors.white } : { color: Colors.black }]}>{slot.name}</Text>
+            <Text style={[styles.timeSlotTime, selectedTimePreference === slot.id ? { color: Colors.white } : { color: Colors.grey }]}>{slot.time}</Text>
           </TouchableOpacity>
         ))}
       </View>
@@ -451,9 +451,9 @@ const PostJobScreen = ({ navigation }) => {
             ]}
             onPress={() => setSelectedTimePreference(slot.id)}
           >
-            <Image source={selectedTimePreference === slot.id? slot.false:slot.true} style={styles.timeSlotIcon}  resizeMode='contain'/>
-            <Text style={[ styles.timeSlotName,selectedTimePreference === slot.id?{color:Colors.white}:{color:Colors.black}]}>{slot.name}</Text>
-            <Text style={[ styles.timeSlotTime,selectedTimePreference === slot.id?{color:Colors.white}:{color:Colors.grey}]}>{slot.time}</Text>
+            <Image source={selectedTimePreference === slot.id ? slot.false : slot.true} style={styles.timeSlotIcon} resizeMode='contain' />
+            <Text style={[styles.timeSlotName, selectedTimePreference === slot.id ? { color: Colors.white } : { color: Colors.black }]}>{slot.name}</Text>
+            <Text style={[styles.timeSlotTime, selectedTimePreference === slot.id ? { color: Colors.white } : { color: Colors.grey }]}>{slot.time}</Text>
           </TouchableOpacity>
         ))}
       </View>
@@ -495,19 +495,19 @@ const PostJobScreen = ({ navigation }) => {
               style={[styles.amPmButton, amPm === 'AM' && styles.selectedAmPm]}
               onPress={() => setAmPm('AM')}
             >
-              <Text style={amPm ==='AM' ?styles.amPmText2:styles.amPmText}>AM</Text>
+              <Text style={amPm === 'AM' ? styles.amPmText2 : styles.amPmText}>AM</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.amPmButton, amPm === 'PM' && styles.selectedAmPm]}
               onPress={() => setAmPm('PM')}
             >
-              <Text style={amPm ==='PM' ?styles.amPmText2:styles.amPmText}>PM</Text>
+              <Text style={amPm === 'PM' ? styles.amPmText2 : styles.amPmText}>PM</Text>
             </TouchableOpacity>
           </View>
         </View>
       )}
 
-      <CustomButton text={'Next'} color={Colors.grey} onPress={handleNext} />
+      {/* <CustomButton text={'Next'} color={Colors.grey} onPress={handleNext} /> */}
 
     </View>
   );
@@ -517,20 +517,284 @@ const PostJobScreen = ({ navigation }) => {
     <View style={styles.stepContainer}>
       <Text style={styles.sectionTitle}>Enter Your Budget</Text>
 
-      <View style={styles.budgetContainer}>
-        <Text style={styles.currencyText}>$</Text>
+      <View style={styles.budgetCon```jsx
+// Render Step 1: Select Category
+const renderStep1 = () => (
+  <View style={{ paddingBottom: 20 }}>
+    <Text style={styles.categoryText}>Select Category</Text>
+    <View style={styles.categoryContainer}>
+      {jobCategories.map(category => (
+        <TouchableOpacity
+          key={category.id}
+          style={[
+            styles.categoryItem,
+            selectedCategory === category.id && styles.selectedCategory
+          ]}
+          onPress={() => setSelectedCategory(category.id)}
+        >
+          <Image source={category.icon} style={styles.categoryIcon} resizeMode='contain' />
+          <Text style={styles.categoryName}>{category.name}</Text>
+        </TouchableOpacity>
+      ))}
+    </View>
+    <CustomButton text={'Next'} color={Colors.grey} onPress={handleNext} />
+  </View>
+);
+
+// Render Step 2: Job Details
+const renderStep2 = () => (
+  <View style={styles.stepContainer}>
+    <Text style={styles.sectionTitle}>Category</Text>
+    <View style={styles.dropContainer}>
+      <Picker
+        selectedValue={selectedValue}
+        onValueChange={(itemValue) => setSelectedValue(itemValue)}
+        style={styles.picker}
+        dropdownIconColor={Colors.border}
+        mode="dropdown"
+      >
+        {jobCategories.map((option) => (
+          <Picker.Item
+            key={option.id}
+            label={option.name}
+            value={option.name}
+          />
+        ))}
+      </Picker>
+    </View>
+
+    <View style={styles.row}>
+      <Text style={styles.sectionTitle}>Job Name</Text>
+      <Text style={styles.inputHelper}>Minimum 10 Characters</Text>
+    </View>
+
+    <View style={styles.inputContainer}>
+      <TextInput
+        style={styles.input}
+        value={jobName}
+        onChangeText={setJobName}
+        placeholder="Name"
+        placeholderTextColor={Colors.subGrey}
+      />
+    </View>
+    <View style={styles.row}>
+      <Text style={styles.sectionTitle}>Describe Your Job</Text>
+      <Text style={styles.inputHelper}>Minimum 25 Characters</Text>
+    </View>
+
+    {/* Unified Job Description Section */}
+    <JobDescriptionSection
+      jobDescription={jobDescription}
+      setJobDescription={setJobDescription}
+      requirements={requirements}
+      photos={photos}
+      toggleRequirementsList={toggleRequirementsList}
+      showRequirementsList={showRequirementsList}
+      openEditRequirements={openEditRequirements}
+      togglePhotosList={togglePhotosList}
+      showPhotosList={showPhotosList}
+      handlePickImage={handlePickImage}
+    />
+
+    <View style={styles.switchContainer}>
+      <Text style={styles.switchLabel}>Is this a multiple vacancy job?</Text>
+      <CustomSwitch
+        value={isMultipleVacancy}
+        onValueChange={setIsMultipleVacancy}
+      />
+    </View>
+
+    {isMultipleVacancy && (
+      <View style={styles.vacancyContainer}>
+        <Text style={styles.vaccancyTitle}>Number of Vacancies</Text>
+        <View style={styles.counterContainer}>
+
+          <View style={styles.counterValueContainer}>
+            <Ionicons name="person-outline" size={24} color={Colors.grey} />
+            <TextInput
+              style={styles.counterValue}
+              value={String(vacancyCount)}
+              onChangeText={(text) => {
+                const numericValue = parseInt(text, 10);
+                if (!isNaN(numericValue)) {
+                  setVacancyCount(numericValue);
+                } else if (text === "") {
+                  setVacancyCount(0);
+                }
+              }}
+              keyboardType="number-pad"
+              maxLength={3}
+              placeholder="0"
+            />
+          </View>
+          <TouchableOpacity style={styles.counterButton} onPress={decreaseVacancy}>
+            <Text style={styles.counterButtonText}>−</Text>
+          </TouchableOpacity>
+          <Text style={styles.counterButtonText}>|</Text>
+          <TouchableOpacity style={styles.counterButton} onPress={increaseVacancy}>
+            <Text style={styles.counterButtonText}>+</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    )}
+
+    <View style={styles.switchContainer}>
+      <Text style={styles.switchLabel}>Can this job be done remotely?</Text>
+      <CustomSwitch
+        value={canBeDoneRemotely}
+        onValueChange={setCanBeDoneRemotely}
+      />
+    </View>
+    {!canBeDoneRemotely && (
+      <View>
+        <Text style={styles.sectionTitle2}>Add Task Address</Text>
+        <View style={styles.addressContainer}>
+          <Ionicons name="location-outline" size={20} color={Colors.grey} />
+          <TextInput
+            style={styles.addressInput}
+            value={taskAddress}
+            onChangeText={setTaskAddress}
+            placeholder="Address"
+            placeholderTextColor={Colors.grey}
+          />
+        </View>
+        <View style={styles.address2}>
+          <Text style={styles.addressHelperText}>
+            Exact task address is not shown publicly until a task is assigned
+          </Text>
+        </View>
+
+      </View>
+    )}
+    <CustomButton text={'Next'} color={Colors.grey} onPress={handleNext} />
+  </View>
+);
+
+// Render Step 3: Time Preference
+const renderStep3 = () => (
+  <View style={styles.stepContainer}>
+    <Text style={styles.sectionTitle}>When the job need to be done?</Text>
+
+    <View style={styles.timeOptionContainer}>
+      <TouchableOpacity
+        style={[styles.timeOption, timeMode === 'On Date' && styles.selectedTimeOption]}
+        onPress={() => {
+          setTimeMode('On Date');
+          setCalendarVisible(true);
+        }}
+      >
+        <Text style={styles.timeOptionText}>On Date</Text>
+        <Ionicons name="chevron-down" size={16} color={Colors.black} />
+      </TouchableOpacity>
+
+      <TouchableOpacity
+        style={[styles.timeOption, timeMode === 'Before date' && styles.selectedTimeOption]}
+        onPress={() => {
+          setTimeMode('Before date');
+          setCalendarVisible(true);
+        }}
+      >
+        <Text style={styles.timeOptionText}>Before date</Text>
+        <Ionicons name="chevron-down" size={16} color={Colors.black} />
+      </TouchableOpacity>
+      <TouchableOpacity
+        style={[styles.timeOption, timeMode === 'I am Flexible' && styles.selectedTimeOption]}
+        onPress={() => setTimeMode('I am Flexible')}
+      >
+        <Text style={styles.timeOptionText}>I am Flexible</Text>
+      </TouchableOpacity>
+    </View>
+    <Modal
+      visible={isCalendarVisible}
+      transparent={true}
+      animationType="slide"
+      onRequestClose={() => setCalendarVisible(false)}
+    >
+      <View style={styles.modalOverlay}>
+        <View style={styles.calendarModal}>
+          <Calendar
+            onDayPress={(day) => {
+              setSelectedDate(day.dateString);
+              setCalendarVisible(false);
+            }}
+            markedDates={{
+              [selectedDate]: {
+                selected: true,
+                selectedColor: 'blue',
+              },
+            }}
+          />
+          <View style={styles.row}>
+            <TouchableOpacity onPress={() => setCalendarVisible(false)}>
+              <Text style={{ textAlign: 'center', marginTop: 10, color: 'blue' }}>Cancel</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => setCalendarVisible(false)}>
+              <Text style={{ textAlign: 'center', marginTop: 10, color: 'blue' }}>Save</Text>
+            </TouchableOpacity>
+          </View>
+
+        </View>
+      </View>
+    </Modal>
+    {timeMode !== 'I am Flexible' && (
+      <Text style={styles.dateText}>{timeMode}: {selectedDate}</Text>
+    )}
+
+
+    <Text style={styles.sectionTitle}>Mention your time preference</Text>
+
+    <View style={styles.timeSlotGrid}>
+      {timeSlots.slice(0, 2).map(slot => (
+        <TouchableOpacity
+          key={slot.id}
+          style={[
+            styles.timeSlot,
+            selectedTimePreference === slot.id && styles.selectedTimeSlot
+          ]}
+          onPress={() => setSelectedTimePreference(slot.id)}
+        >
+          <Image source={selectedTimePreference === slot.id ? slot.false : slot.true} style={styles.timeSlotIcon} resizeMode='contain' />
+          <Text style={[styles.timeSlotName, selectedTimePreference === slot.id ? { color: Colors.white } : { color: Colors.black }]}>{slot.name}</Text>
+          <Text style={[styles.timeSlotTime, selectedTimePreference === slot.id ? { color: Colors.white } : { color: Colors.grey }]}>{slot.time}</Text>
+        </TouchableOpacity>
+      ))}
+    </View>
+
+    <View style={styles.timeSlotGrid}>
+      {timeSlots.slice(2).map(slot => (
+        <TouchableOpacity
+          key={slot.id}
+          style={[
+            styles.timeSlot,
+            selectedTimePreference === slot.id && styles.selectedTimeSlot
+          ]}
+          onPress={() => setSelectedTimePreference(slot.id)}
+        >
+          <Image source={selectedTimePreference === slot.id ? slot.false : slot.true} style={styles.timeSlotIcon} resizeMode='contain' />
+          <Text style={[styles.timeSlotName, selectedTimePreference === slot.id ? { color: Colors.white } : { color: Colors.black }]}>{slot.name}</Text>
+          <Text style={[styles.timeSlotTime, selectedTimePreference === slot.id ? { color: Colors.white } : { color: Colors.grey }]}>{slot.time}</Text>
+        </TouchableOpacity>
+      ))}
+    </View>
+
+    <View style={styles.switchContainer}>
+      <Text style={styles.switchLabel}>Set exact time</Text>
+      <CustomSwitch
+        value={isExactTime}
+        onValueChange={setIstainer}>
+        <Text style={styles.currencyText}>₹</Text>
         <TextInput style={styles.currencySymbol}
           placeholder='200'
           keyboardType='number-pad'></TextInput>
       </View>
-
+      {/* 
       <View style={{ position:'absolute',bottom:30}}>
       <CustomButton text={'Next'} color={Colors.grey} onPress={handleNext} />
-      </View>
-     
+      </View> */}
+
 
     </View>
-    
+
   );
 
   // Render progress steps at the top
@@ -569,9 +833,11 @@ const PostJobScreen = ({ navigation }) => {
         {currentStep === 3 && renderStep3()}
         {currentStep === 4 && renderStep4()}
       </ScrollView>
-      <TouchableOpacity style={styles.nextButton} onPress={handleNext}>
+      {/* <TouchableOpacity style={styles.nextButton} onPress={handleNext}>
         <Text style={styles.nextButtonText}>Next</Text>
-      </TouchableOpacity>
+      </TouchableOpacity> */}
+      <CustomButton text={'Next'} color={Colors.grey} onPress={handleNext} />
+
 
       <Modal
         animationType="slide"
