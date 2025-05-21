@@ -6,7 +6,7 @@ import HomeScreen from "../(tabs)/index";
 import StatusScreen from "./Status";
 import PostJobScreen from "../(tabs)/PostJob/index";
 import ChatScreen from "./Chat";
-import ProfileScreen from "../(tabs)/Profile";
+import ProfileScreen from "../(tabs)/Profile/index";
 
 // Import the custom tab bar
 import CustomTabBar from "../../components/CustomTabBar";
