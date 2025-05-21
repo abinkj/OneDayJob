@@ -20,7 +20,7 @@ export default function Index() {
   }, [fontsLoaded]);
 
   if (!fontsLoaded) {
-    return null; // Don't render UI until fonts are loaded
+    return null; 
   }
 
 

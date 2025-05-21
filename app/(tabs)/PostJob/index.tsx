@@ -62,6 +62,8 @@ const PostJobScreen = ({ navigation }) => {
   const [time, setTime] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState(null);
   const [isCalendarVisible, setCalendarVisible] = useState(false);
+    const [showMenu, setShowMenu] = useState(false);
+
 
 
 
@@ -533,6 +535,234 @@ const PostJobScreen = ({ navigation }) => {
    
   );
 
+  const renderStep5 = () => {
+  
+  // Get category name from selected category ID
+  const getCategoryName = () => {
+    const category = jobCategories.find(cat => cat.id === selectedCategory);
+    return category ? category.name : selectedValue;
+  };
+
+  // Get time preference name
+  const getTimePreferenceName = () => {
+    const timeSlot = timeSlots.find(slot => slot.id === selectedTimePreference);
+    return timeSlot ? timeSlot.name : 'Flexible';
+  };
+
+  // Format the selected date and time
+  const getFormattedDateTime = () => {
+    if (!selectedDate) return 'Flexible';
+    
+    let result = selectedDate;
+    if (isExactTime) {
+      result += ` ${hour}:${String(minute).padStart(2, '0')} ${amPm}`;
+    } else if (selectedTimePreference) {
+      const timeSlot = timeSlots.find(slot => slot.id === selectedTimePreference);
+      if (timeSlot) {
+        result += ` (${timeSlot.time})`;
+      }
+    }
+    return result;
+  };
+
+  const toggleMenu = () => {
+    setShowMenu(!showMenu);
+  };
+
+  // Handle actions
+  const handleShare = () => {
+    // Implement share functionality
+    setShowMenu(false);
+  };
+
+  const handleEdit = () => {
+    // Go back to step 2 to edit job details
+    setCurrentStep(2);
+    setShowMenu(false);
+  };
+
+  const handlePostSimilar = () => {
+    // Reset certain fields but keep others
+    setJobName('');
+    setJobDescription('');
+    setSelectedDate(null);
+    setCurrentStep(2);
+    setShowMenu(false);
+  };
+
+  const handleRemoveJob = () => {
+    // Implement job removal logic
+    // For now, just go back to step 1
+    setCurrentStep(1);
+    setSelectedCategory(null);
+    setJobName('');
+    setJobDescription('');
+    setRequirements([]);
+    setPhotos([]);
+    setTaskAddress('');
+    setSelectedTimePreference(null);
+    setSelectedDate(null);
+    setBudget('200');
+    setShowMenu(false);
+    setIsMultipleVacancy(false);
+    setCanBeDoneRemotely(false);
+     
+  };
+
+  return (
+    <View style={styles.previewContainer}>
+      {/* Header with back button and title */}
+      <View style={styles.previewHeader}>
+        <Text style={styles.previewTitle}>Job Details</Text>
+        <View style={styles.previewActions}>
+          <View style={styles.statusBadge}>
+            <Text style={styles.statusText}>Open</Text>
+            <Ionicons name="chevron-down" size={16} color={Colors.primary} />
+          </View>
+          <TouchableOpacity onPress={toggleMenu}>
+            <Ionicons name="ellipsis-vertical" size={20} color={Colors.black} />
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      {/* Action Menu Dropdown */}
+      {showMenu && (
+        <View style={styles.menuContainer}>
+          <TouchableOpacity style={styles.menuItem} onPress={handleShare}>
+            <Ionicons name="share-social-outline" size={20} color={Colors.black} />
+            <Text style={styles.menuText}>Share</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.menuItem} onPress={handleEdit}>
+            <Ionicons name="create-outline" size={20} color={Colors.black} />
+            <Text style={styles.menuText}>Edit</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.menuItem} onPress={handlePostSimilar}>
+            <Ionicons name="copy-outline" size={20} color={Colors.black} />
+            <Text style={styles.menuText}>Post Similar Job</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.menuItem} onPress={handleRemoveJob}>
+            <Ionicons name="trash-outline" size={20} color="red" />
+            <Text style={[styles.menuText, { color: 'red' }]}>Remove Job</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
+      {/* User Profile */}
+      <View style={styles.profileSection}>
+        <View style={styles.avatarContainer}>
+          <Text style={styles.avatarText}>JD</Text>
+        </View>
+        <Text style={styles.userName}>John Doe</Text>
+      </View>
+
+      {/* Job Title */}
+      <Text style={styles.jobTitlePreview}>{jobName || 'Furniture Lifting Help Needed'}</Text>
+
+      {/* Category */}
+      <View style={styles.categoryBadge}>
+        <Ionicons name="briefcase-outline" size={16} color={Colors.primary} />
+        <Text style={styles.categoryBadgeText}>{getCategoryName()}</Text>
+      </View>
+
+      {/* Horizontal Line Separator */}
+      <View style={styles.separator} />
+
+      {/* Job Details */}
+      <View style={styles.detailsSection}>
+        <View style={styles.detailRow}>
+          <Text style={styles.detailLabel}>BUDGET</Text>
+          <Text style={styles.detailValue}>₹{budget || '500'}/hr</Text>
+        </View>
+
+        <View style={styles.detailRow}>
+          <Text style={styles.detailLabel}>DATE</Text>
+          <Text style={styles.detailValue}>{getFormattedDateTime() || 'Mar 31, 2025\n2:00 pm'}</Text>
+        </View>
+
+        <View style={styles.detailRow}>
+          <Text style={styles.detailLabel}>WORK TYPE</Text>
+          <Text style={styles.detailValue}>{canBeDoneRemotely ? 'Remote' : 'Onsite'}</Text>
+        </View>
+
+        <View style={styles.detailRow}>
+          <Text style={styles.detailLabel}>NO. OF TASKERS REQUIRED</Text>
+          <Text style={styles.detailValue}>{isMultipleVacancy ? vacancyCount : '02'}</Text>
+        </View>
+
+        <View style={styles.detailRow}>
+          <Text style={styles.detailLabel}>LOCATION</Text>
+          <Text style={styles.detailValue}>{taskAddress || 'Downtown, New York'}</Text>
+        </View>
+
+        <View style={styles.detailRow}>
+          <Text style={styles.detailLabel}>DESCRIPTION</Text>
+          <Text style={styles.descriptionValue}>
+            {jobDescription || 'I need two people to help move furniture from my second-floor apartment to a moving truck. It includes a sofa, bed, and a few boxes. The task should take around an hour.'}
+          </Text>
+        </View>
+
+        {/* Photos Section */}
+        {(photos.length > 0 || true) && (
+          <>
+            <View style={styles.detailRow}>
+              <Text style={styles.detailLabel}>PHOTOS</Text>
+            </View>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.photosScrollView}>
+              {photos.length > 0 ? 
+                photos.map((photo, index) => (
+                  <Image key={index} source={{ uri: photo }} style={styles.previewPhoto} />
+                )) : 
+                <View style={styles.placeholderPhoto}>
+                  <Ionicons name="image-outline" size={40} color={Colors.grey} />
+                </View>
+              }
+              <View style={styles.placeholderPhoto}>
+                <Ionicons name="image-outline" size={40} color={Colors.grey} />
+              </View>
+            </ScrollView>
+          </>
+        )}
+
+        {/* Requirements Section */}
+        {(requirements.length > 0 || true) && (
+          <>
+            <View style={styles.detailRow}>
+              <Text style={styles.detailLabel}>REQUIREMENTS</Text>
+            </View>
+            <View style={styles.requirementsContainer}>
+              {requirements.length > 0 ? 
+                requirements.map((req, index) => (
+                  <View key={index} style={styles.requirementItemPreview}>
+                    <Ionicons name="checkmark" size={16} color={Colors.primary} />
+                    <Text style={styles.requirementTextPreview}>{req}</Text>
+                  </View>
+                )) :
+                <View style={styles.requirementItemPreview}>
+                  <Ionicons name="checkmark" size={16} color={Colors.primary} />
+                  <Text style={styles.requirementTextPreview}>Pick up van</Text>
+                </View>
+              }
+            </View>
+          </>
+        )}
+      </View>
+
+      {/* Edit and Remove buttons at bottom */}
+      <View style={styles.bottomActions}>
+        <TouchableOpacity style={styles.editButton123} onPress={handleEdit}>
+          <Ionicons name="create-outline" size={20} color={Colors.grey} />
+          <Text style={styles.editButtonText}>Edit</Text>
+        </TouchableOpacity>
+        
+        <TouchableOpacity style={styles.removeButton} onPress={handleRemoveJob}>
+          <Ionicons name="trash-outline" size={20} color="red" />
+          <Text style={styles.removeButtonText}>Remove Job</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+};
+
   // Render progress steps at the top
   const renderProgressSteps = () => {
     const totalSteps = 5;
@@ -568,6 +798,7 @@ const PostJobScreen = ({ navigation }) => {
         {currentStep === 2 && renderStep2()}
         {currentStep === 3 && renderStep3()}
         {currentStep === 4 && renderStep4()}
+        {currentStep === 5 && renderStep5()}
       </ScrollView>
       {/* <TouchableOpacity style={styles.nextButton} onPress={handleNext}>
         <Text style={styles.nextButtonText}>Next</Text>
