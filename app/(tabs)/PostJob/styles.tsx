@@ -243,7 +243,7 @@ export const styles = StyleSheet.create({
     fontSize: 12,
     fontFamily: 'regular',
     color: Colors.grey,
-    marginBottom:8,
+    marginBottom: 8,
   },
   timeOptionContainer: {
     flexDirection: 'row',
@@ -258,7 +258,7 @@ export const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 8 * DeviceDimensions.widthRatio,
-    flexDirection:'row',
+    flexDirection: 'row',
   },
   selectedTimeOption: {
     borderColor: Colors.primary,
@@ -282,18 +282,18 @@ export const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: 16 * DeviceDimensions.widthRatio,
-    backgroundColor:Colors.white,
-  
+    backgroundColor: Colors.white,
+
     // Shadow for iOS
     shadowColor: '#000',
     shadowOffset: { width: 2, height: 2 },
     shadowOpacity: 0.12,
     shadowRadius: 12,
-  
+
     // Shadow for Android
     elevation: 4,
   },
-  
+
   selectedTimeSlot: {
     backgroundColor: Colors.timeSelected,
   },
@@ -315,15 +315,15 @@ export const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius:12,
-    backgroundColor:Colors.white,
+    borderRadius: 12,
+    backgroundColor: Colors.white,
     shadowColor: '#000',
     shadowOffset: { width: 2, height: 2 },
     shadowOpacity: 0.12,
     shadowRadius: 12,
     // Shadow for Android
     elevation: 4,
-    marginBottom:40* DeviceDimensions.heightRatio,
+    marginBottom: 40 * DeviceDimensions.heightRatio,
   },
   timePickerColumn: {
     alignItems: 'center',
@@ -345,13 +345,13 @@ export const styles = StyleSheet.create({
   },
   amPmContainer: {
     marginLeft: 24 * DeviceDimensions.widthRatio,
-    flexDirection:'row'
+    flexDirection: 'row'
   },
   amPmButton: {
     padding: 8 * DeviceDimensions.widthRatio,
     borderRadius: 4,
     marginBottom: 8 * DeviceDimensions.heightRatio,
-    marginLeft:30 * DeviceDimensions.widthRatio,
+    marginLeft: 30 * DeviceDimensions.widthRatio,
   },
   selectedAmPm: {
     backgroundColor: Colors.primary,
@@ -368,19 +368,19 @@ export const styles = StyleSheet.create({
   },
   budgetContainer: {
     alignItems: 'center',
-    justifyContent:'center',
+    justifyContent: 'center',
     marginVertical: 24 * DeviceDimensions.heightRatio,
-    flexDirection:'row',
-    backgroundColor:Colors.switchGrey,
-    padding:20,
-    borderRadius:12,
+    flexDirection: 'row',
+    backgroundColor: Colors.switchGrey,
+    padding: 20,
+    borderRadius: 12,
   },
   currencySymbol: {
     fontSize: 36,
     fontFamily: 'bold',
     color: Colors.black,
   },
-  currencyText:{
+  currencyText: {
     fontSize: 36,
     fontFamily: 'bold',
     color: Colors.black,
@@ -567,14 +567,13 @@ export const styles = StyleSheet.create({
     width: '90%',
     elevation: 5,
   },
-    previewContainer: {
+  previewContainer: {
     flex: 1,
-    backgroundColor: Colors.white,
     paddingBottom: 20,
   },
   previewHeader: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'flex-end',
     alignItems: 'center',
     marginBottom: 15,
   },
@@ -590,14 +589,14 @@ export const styles = StyleSheet.create({
   statusBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'green',
+    backgroundColor: Colors.green,
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 16,
     marginRight: 10,
   },
   statusText: {
-    color: Colors.primary,
+    color: Colors.darkGreen,
     fontSize: 14,
     fontWeight: '500',
     marginRight: 4,
@@ -633,13 +632,14 @@ export const styles = StyleSheet.create({
     marginBottom: 15,
   },
   avatarContainer: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: Colors.primary,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 8,
+    resizeMode: 'contain',
+    backgroundColor: Colors.categoryBox
   },
   avatarText: {
     color: Colors.white,
@@ -652,52 +652,61 @@ export const styles = StyleSheet.create({
     fontWeight: '500',
   },
   jobTitlePreview: {
-    fontSize: 24,
+    fontSize: 32,
     fontWeight: 'bold',
-    color: Colors.black,
-    marginBottom: 10,
+    color: Colors.grey,
+    marginTop: 20 * DeviceDimensions.heightRatio,
   },
   categoryBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.blue,
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 16,
     alignSelf: 'flex-start',
-    marginBottom: 15,
+    marginTop: 10 * DeviceDimensions.heightRatio
   },
+
   categoryBadgeText: {
     color: Colors.primary,
     marginLeft: 4,
     fontSize: 14,
+    fontFamily: 'medium'
   },
   separator: {
     height: 1,
     backgroundColor: Colors.grey,
-    marginVertical: 15,
+    justifyContent: 'flex-end'
+
+
   },
   detailsSection: {
-    marginBottom: 20,
+    marginTop: 20 * DeviceDimensions.heightRatio,
   },
   detailRow: {
-    marginBottom: 15,
+    marginTop: 20 * DeviceDimensions.heightRatio,
   },
   detailLabel: {
-    fontSize: 12,
+    fontSize: 14,
     color: Colors.grey,
-    fontWeight: '500',
+    fontWeight: 'medium',
     marginBottom: 4,
   },
   detailValue: {
-    fontSize: 16,
+    fontSize: 18,
     color: Colors.black,
-    fontWeight: '500',
+    fontWeight: 'bold'
+  },
+  budget: {
+    fontSize: 24,
+    color: Colors.black,
+    fontWeight: 'bold'
   },
   descriptionValue: {
     fontSize: 16,
     color: Colors.black,
-    lineHeight: 22,
+    fontWeight: 'bold',
+    marginBottom:20 * DeviceDimensions.heightRatio
   },
   photosScrollView: {
     marginBottom: 15,
@@ -735,6 +744,7 @@ export const styles = StyleSheet.create({
     justifyContent: 'space-between',
     marginTop: 20,
     paddingHorizontal: 20,
+    marginBottom:30 * DeviceDimensions.heightRatio,
   },
   editButton123: {
     flexDirection: 'row',
@@ -755,6 +765,30 @@ export const styles = StyleSheet.create({
     fontSize: 16,
     color: 'red',
     fontWeight: '500',
+  },
+  nameContainer: {
+    flexDirection: 'row',
+    height: 245 * DeviceDimensions.heightRatio,
+  },
+  userImage: {
+    width: 141 * DeviceDimensions.widthRatio,
+    height: 193 * DeviceDimensions.heightRatio,
+    resizeMode: 'stretch',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 20,
+  },
+  nameContainer2: {
+    flex: 1,
+    backgroundColor: Colors.subGrey,
+    borderTopLeftRadius: 20,
+    borderBottomLeftRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center'
+  },
+  nameContainer1: {
+    flex: 1,
+    justifyContent: 'space-between'
   },
 
 }); 
