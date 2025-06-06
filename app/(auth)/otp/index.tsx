@@ -3,8 +3,8 @@ import { View, Text, TouchableOpacity, Alert } from "react-native";
 import { styles } from "./styles";
 import { router, useLocalSearchParams } from "expo-router";
 import { OtpInput } from "react-native-otp-entry";
-import { Colors } from "../../constants/Colors";
-import { verifyOtp, requestOtp } from "../../services/api";
+import { Colors } from "../../../constants/Colors";
+import { verifyOtp, requestOtp } from "../../../services/api";
 
 const Otp = () => {
   const [otp, setOtp] = useState("");

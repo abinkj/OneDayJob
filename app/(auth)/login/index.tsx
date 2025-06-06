@@ -1,8 +1,15 @@
 import React, { useState } from "react";
-import { View, Text, TextInput, TouchableOpacity, Image, Alert } from "react-native";
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  Image,
+  Alert,
+} from "react-native";
 import { styles } from "./styles";
 import { router } from "expo-router";
-import { requestOtp } from "../../services/api"; // Import the API service
+import { requestOtp } from "../../../services/api"; // Import the API service
 import { SafeAreaView } from "react-native-safe-area-context";
 
 const Login = () => {
@@ -14,32 +21,37 @@ const Login = () => {
       Alert.alert("Error", "Please enter a valid 10-digit mobile number.");
       return;
     }
-  
+
     setIsLoading(true);
-  
+
     try {
       // Send `phoneNumber` instead of `phone`
       const response = await requestOtp({ phoneNumber: `+91${phone}` });
       console.log("OTP request successful:", response.data);
-  
+
       // Navigate to OTP screen with `phoneNumber`
       router.push({
         pathname: "/(auth)/Otp",
         params: { phoneNumber: `+91${phone}` },
       });
     } catch (error) {
-      console.error("OTP request failed:", error.response?.data || error.message);
+      console.error(
+        "OTP request failed:",
+        error.response?.data || error.message
+      );
       Alert.alert("Error", "Failed to send OTP. Please try again.");
     } finally {
       setIsLoading(false);
     }
   };
-  
 
   return (
     <SafeAreaView style={styles.container}>
       <Text style={styles.title}>Log In</Text>
-      <Image source={require("../../assets/placeholder-image.png")} style={styles.image} />
+      <Image
+        source={require("../../../assets/placeholder-image.png")}
+        style={styles.image}
+      />
       <Text style={styles.subtitle}>
         Enter your registered mobile number to receive an OTP and get started
       </Text>
@@ -55,7 +67,7 @@ const Login = () => {
         />
       </View>
       <TouchableOpacity
-        style={[styles.button, isLoading && styles.button]} 
+        style={[styles.button, isLoading && styles.button]}
         onPress={handleGetOtp}
         disabled={isLoading} // Disable button when loading
       >
@@ -64,9 +76,8 @@ const Login = () => {
         </Text>
       </TouchableOpacity>
       <View style={styles.row}>
-        <Text style={styles.footerText}>
-          Don’t have an account? </Text>
-        <TouchableOpacity onPress={() => router.push('/(auth)/Signup')}>
+        <Text style={styles.footerText}>Don’t have an account? </Text>
+        <TouchableOpacity onPress={() => router.push("../signUp")}>
           <Text style={styles.createAccount}>Create Account</Text>
         </TouchableOpacity>
       </View>
