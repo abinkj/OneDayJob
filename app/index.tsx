@@ -1,11 +1,9 @@
-import { Redirect, SplashScreen } from "expo-router";
+import { SplashScreen } from "expo-router";
 import { useFonts } from "expo-font";
 import { useCallback } from "react";
 import { Provider } from "react-redux";
 
-import TabLayout from "(tabs)/_layout";
 import RootStackLayout from "./navigation";
-import React from "react";
 import { store } from "./redux/store";
 
 export default function Index() {
@@ -15,7 +13,7 @@ export default function Index() {
     bold: require("../assets/fonts/Roboto-Bold.ttf"),
   });
 
-  const onboardingComplete = false;
+  //const onboardingComplete = false;
 
   const onLayoutRootView = useCallback(async () => {
     if (fontsLoaded) {

@@ -1,8 +1,10 @@
 import React from "react";
-import { View, FlatList, StyleSheet } from "react-native";
+import { View, FlatList } from "react-native";
 import ChatItem from "../../../components/chatItem";
 import { Header } from "../../../components/header";
 import { styles } from "./styles";
+import { router } from "expo-router";
+import { useNavigation } from "@react-navigation/native";
 
 const chats = [
   { id: "1", name: "Darrell Steward", message: "HEY", avatar: "", unread: 0 },
@@ -27,8 +29,9 @@ const chats = [
   { id: "7", name: "Kristin Watson", message: "HEY", avatar: "", unread: 0 },
   { id: "8", name: "Ralph Edwards", message: "HEY", avatar: "", unread: 0 },
 ];
+export default function Chat() {
+  const navigation = useNavigation(); 
 
-export default function Chat({ navigation }) {
   return (
     <View style={styles.container}>
       <Header title="Chats" />
@@ -39,11 +42,13 @@ export default function Chat({ navigation }) {
         renderItem={({ item }) => (
           <ChatItem
             item={item}
-            onPress={() => navigation.navigate("Chat", { user: item })}
+            onPress={() => {
+              console.log("Navigating to chat screen...");
+              navigation.navigate("ChatScreen"); 
+            }}
           />
         )}
       />
     </View>
   );
 }
-

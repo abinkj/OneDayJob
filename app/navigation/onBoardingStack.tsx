@@ -10,11 +10,19 @@ const OnBoardingStack = () => {
       screenOptions={{
         headerShown: false,
         animation: "slide_from_right",
-        gestureDirection: "horizontal",
+        gestureEnabled: true,
       }}
     >
-      <Stack.Screen name="Login" component={Login} />
-      <Stack.Screen name="Signup" component={SignUp} />
+      <Stack.Screen
+        name="Login"
+        component={Login}
+        options={{ animation: "slide_from_right" }}
+      />
+      <Stack.Screen
+        name="Signup"
+        component={SignUp}
+        options={{ animation: "slide_from_right" }}
+      />
     </Stack.Navigator>
   );
 };

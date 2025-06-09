@@ -10,27 +10,16 @@ const RootStackLayout = () => {
 
   return (
     <RootStack.Navigator
+      id={undefined}
       screenOptions={{
         headerShown: false,
         animation: "slide_from_right",
-        gestureEnabled: true,
-        gestureDirection: "horizontal",
-        contentStyle: { backgroundColor: "transparent" },
-        presentation: "modal",
       }}
     >
       {!isLoggedIn ? (
-        <RootStack.Screen
-          name="MainStack"
-          component={MainStack}
-          options={{ animation: "slide_from_right" }}
-        />
+        <RootStack.Screen name="MainStack" component={MainStack} />
       ) : (
-        <RootStack.Screen
-          name="OnboardingStack"
-          component={OnBoardingStack}
-          options={{ animation: "slide_from_right" }}
-        />
+        <RootStack.Screen name="OnboardingStack" component={OnBoardingStack} />
       )}
     </RootStack.Navigator>
   );
