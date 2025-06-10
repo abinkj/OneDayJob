@@ -97,7 +97,7 @@ export default function ChatScreen() {
       behavior={Platform.OS === "ios" ? "padding" : undefined}
       keyboardVerticalOffset={90}
     >
-      <Header title={chatData?.name} />
+      <Header title={chatData?.name} showBackButton/>
       <Text style={styles.dateLabel}>8 August 2025</Text>
 
       <FlatList

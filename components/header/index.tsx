@@ -5,9 +5,10 @@ import { useRouter } from "expo-router";
 
 interface HeaderProps {
   title: string;
+  showBackButton?: boolean;
 }
 
-export const Header: React.FC<HeaderProps> = ({ title }) => {
+export const Header: React.FC<HeaderProps> = ({ title, showBackButton }) => {
   const router = useRouter();
 
   const handlePress = () => {
@@ -16,9 +17,11 @@ export const Header: React.FC<HeaderProps> = ({ title }) => {
 
   return (
     <View style={styles.container}>
-      <TouchableOpacity style={styles.backIcon} onPress={handlePress}>
-        <Ionicons name="chevron-back" size={24} color="black" />
-      </TouchableOpacity>
+      {showBackButton && (
+        <TouchableOpacity style={styles.backIcon} onPress={handlePress}>
+          <Ionicons name="chevron-back" size={24} color="black" />
+        </TouchableOpacity>
+      )}
       <Text style={styles.title}>{title}</Text>
     </View>
   );
