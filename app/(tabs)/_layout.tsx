@@ -2,7 +2,7 @@ import React from "react";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 
 // Import your screens
-import HomeScreen from "../(tabs)/index";
+import HomeScreen from "./Home/index";
 import StatusScreen from "./Status";
 import PostJobScreen from "../(tabs)/PostJob/index";
 import ChatScreen from "./Chat";

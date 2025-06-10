@@ -10,11 +10,13 @@ import {
 import { styles } from "./styles"; // Import styles
 import { router } from "expo-router";
 import { requestOtp } from "../../../services/api"; // Import API function
+import { useNavigation } from "@react-navigation/native";
 
 const SignUp = () => {
   const [phone, setPhone] = useState("");
   const [name, setName] = useState("");
   const [isLoading, setIsLoading] = useState(false); // Add loading state
+  const navigation = useNavigation();
 
   const handleGetOtp = async () => {
     if (!name.trim()) {
@@ -94,7 +96,7 @@ const SignUp = () => {
 
       <View style={styles.row}>
         <Text style={styles.footerText}>Already have an account? </Text>
-        <TouchableOpacity onPress={() => router.push("../login")}>
+        <TouchableOpacity onPress={() => navigation.navigate("Login")}>
           <Text style={styles.createAccount}>Login</Text>
         </TouchableOpacity>
       </View>

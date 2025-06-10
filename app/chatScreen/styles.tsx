@@ -33,7 +33,7 @@ export const styles = StyleSheet.create({
   },
   messageText: {
     color: "#fff",
-    fontWeight:'400',
+    fontWeight: "400",
     fontSize: 16,
   },
   messageTime: {

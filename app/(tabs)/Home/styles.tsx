@@ -1,12 +1,12 @@
 import { StyleSheet } from "react-native";
-import DeviceDimensions from "../../constants/DeviceDimenions";
-import { Colors } from "../../constants/Colors";
+import DeviceDimensions from "../../../constants/DeviceDimenions";
+import { Colors } from "../../../constants/Colors";
 
 export const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Colors.background,
-    padding: 16
+    padding: 16,
   },
   header: {
     flexDirection: "row",
@@ -37,10 +37,10 @@ export const styles = StyleSheet.create({
     alignItems: "center",
     backgroundColor: "#E8E8E8",
     borderRadius: 12,
-    width:361* DeviceDimensions.widthRatio,
+    width: 361 * DeviceDimensions.widthRatio,
     height: 50 * DeviceDimensions.heightRatio,
     marginTop: 16 * DeviceDimensions.heightRatio,
-    paddingHorizontal:12,
+    paddingHorizontal: 12,
   },
   searchIcon: {
     marginRight: 8 * DeviceDimensions.widthRatio,
@@ -53,22 +53,21 @@ export const styles = StyleSheet.create({
   },
   bannerContainer: {
     borderRadius: 16,
-    marginTop:8,
+    marginTop: 8,
     marginBottom: 16 * DeviceDimensions.heightRatio,
     flexDirection: "row",
     height: 140.21 * DeviceDimensions.heightRatio,
-    width:'100%'
-    
+    width: "100%",
   },
-  banner:{
-   width:'100%',
-   height:'100%'
+  banner: {
+    width: "100%",
+    height: "100%",
   },
   bannerTextContainer: {
     flex: 3,
     justifyContent: "center",
-    paddingHorizontal:12,
-    paddingVertical:16,
+    paddingHorizontal: 12,
+    paddingVertical: 16,
   },
   bannerTitle: {
     fontSize: 18,
@@ -83,13 +82,13 @@ export const styles = StyleSheet.create({
   },
   postNowButton: {
     backgroundColor: Colors.white,
-  justifyContent:'center',
-  alignItems:'center',
+    justifyContent: "center",
+    alignItems: "center",
     borderRadius: 8,
     alignSelf: "flex-start",
     marginTop: 16 * DeviceDimensions.heightRatio,
-    height:28* DeviceDimensions.heightRatio,
-    width:71* DeviceDimensions.widthRatio,
+    height: 28 * DeviceDimensions.heightRatio,
+    width: 71 * DeviceDimensions.widthRatio,
   },
   postNowText: {
     color: Colors.blue,
@@ -104,12 +103,12 @@ export const styles = StyleSheet.create({
     marginBottom: 16 * DeviceDimensions.heightRatio,
   },
   filtersContainer: {
-   flex:1
+    flex: 1,
   },
   filterButton: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent:'center',
+    justifyContent: "center",
     backgroundColor: Colors.white,
     borderRadius: 16,
     borderWidth: 1,
@@ -137,7 +136,7 @@ export const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 2,
-    width:361 * DeviceDimensions.widthRatio,
+    width: 361 * DeviceDimensions.widthRatio,
   },
   jobCardHeader: {
     flexDirection: "row",
@@ -153,7 +152,7 @@ export const styles = StyleSheet.create({
     width: 24 * DeviceDimensions.widthRatio,
     height: 24 * DeviceDimensions.widthRatio,
     borderRadius: 1234,
-     justifyContent: "center",
+    justifyContent: "center",
     alignItems: "center",
     marginRight: 8 * DeviceDimensions.widthRatio,
   },
@@ -177,7 +176,7 @@ export const styles = StyleSheet.create({
     fontFamily: "medium",
     color: Colors.black,
     marginBottom: 12 * DeviceDimensions.heightRatio,
-    width:268* DeviceDimensions.widthRatio,
+    width: 268 * DeviceDimensions.widthRatio,
   },
   jobDetailsContainer: {
     flexDirection: "row",
@@ -185,9 +184,9 @@ export const styles = StyleSheet.create({
   },
   titleContainer: {
     flexDirection: "row",
-    justifyContent:'space-between',
+    justifyContent: "space-between",
     marginBottom: 12 * DeviceDimensions.heightRatio,
-    width:'100%',
+    width: "100%",
   },
   locationContainer: {
     flexDirection: "row",
@@ -232,14 +231,14 @@ export const styles = StyleSheet.create({
   statusContainer: {
     backgroundColor: Colors.tabGrey,
     paddingHorizontal: 12 * DeviceDimensions.widthRatio,
-height:22,
+    height: 22,
     borderRadius: 20,
-    justifyContent:'center',
-    alignItems:'center'
+    justifyContent: "center",
+    alignItems: "center",
   },
   statusText: {
     fontSize: 12,
     fontFamily: "medium",
     color: Colors.black,
-  }
+  },
 });

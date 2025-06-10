@@ -14,9 +14,9 @@ const MainStack = () => {
         animation: "slide_from_right",
       }}
     >
-      {/* <Stack.Screen name="MainHome" component={TabLayout} /> */}
+      <Stack.Screen name="MainHome" component={TabLayout} />
       <Stack.Screen name="ChatScreen" component={ChatScreen} />
-      {/* <Stack.Screen name="RequestDetails" component={RequestDetails} /> */}
+      <Stack.Screen name="RequestDetails" component={RequestDetails} />
     </Stack.Navigator>
   );
 };

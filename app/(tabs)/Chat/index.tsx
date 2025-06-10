@@ -30,7 +30,7 @@ const chats = [
   { id: "8", name: "Ralph Edwards", message: "HEY", avatar: "", unread: 0 },
 ];
 export default function Chat() {
-  const navigation = useNavigation(); 
+  const navigation = useNavigation();
 
   return (
     <View style={styles.container}>
@@ -43,8 +43,7 @@ export default function Chat() {
           <ChatItem
             item={item}
             onPress={() => {
-              console.log("Navigating to chat screen...");
-              navigation.navigate("ChatScreen"); 
+              navigation.navigate("ChatScreen");
             }}
           />
         )}

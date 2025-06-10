@@ -11,10 +11,12 @@ import { styles } from "./styles";
 import { router } from "expo-router";
 import { requestOtp } from "../../../services/api"; // Import the API service
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useNavigation } from "@react-navigation/native";
 
 const Login = () => {
   const [phone, setPhone] = useState("");
   const [isLoading, setIsLoading] = useState(false); // Add loading state
+  const navigation = useNavigation();
 
   const handleGetOtp = async () => {
     if (!phone || phone.length !== 10) {
@@ -77,7 +79,7 @@ const Login = () => {
       </TouchableOpacity>
       <View style={styles.row}>
         <Text style={styles.footerText}>Don’t have an account? </Text>
-        <TouchableOpacity onPress={() => router.push("../signUp")}>
+        <TouchableOpacity onPress={() => navigation.navigate("Signup")}>
           <Text style={styles.createAccount}>Create Account</Text>
         </TouchableOpacity>
       </View>

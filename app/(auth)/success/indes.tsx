@@ -2,7 +2,7 @@ import { View, Text, Image } from "react-native";
 import React from "react";
 import { styles } from "./styles";
 
-const Congo = () => {
+const Success = () => {
   return (
     <View style={styles.containerCenter}>
       <View>
@@ -16,4 +16,4 @@ const Congo = () => {
   );
 };
 
-export default Congo;
+export default Success;

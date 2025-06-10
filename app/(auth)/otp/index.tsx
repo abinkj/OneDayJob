@@ -1,15 +1,17 @@
 import React, { useState } from "react";
 import { View, Text, TouchableOpacity, Alert } from "react-native";
 import { styles } from "./styles";
-import { router, useLocalSearchParams } from "expo-router";
+import { useLocalSearchParams } from "expo-router";
 import { OtpInput } from "react-native-otp-entry";
 import { Colors } from "../../../constants/Colors";
 import { verifyOtp, requestOtp } from "../../../services/api";
+import { useNavigation } from "@react-navigation/native";
 
 const Otp = () => {
   const [otp, setOtp] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const { phoneNumber } = useLocalSearchParams();
+  const navigation = useNavigation();
 
   const handleVerifyOtp = async () => {
     if (!otp || otp.length !== 6) {
@@ -27,15 +29,21 @@ const Otp = () => {
 
       if (response.data.data.valid) {
         try {
-          router.push("/(auth)/Congo");
+          navigation.navigate("Success");
         } catch (navigationError) {
           console.error("Navigation error:", navigationError);
         }
       } else {
-        Alert.alert("Error", response.data.message || "Invalid OTP. Please try again.");
+        Alert.alert(
+          "Error",
+          response.data.message || "Invalid OTP. Please try again."
+        );
       }
     } catch (error) {
-      console.error("OTP verification failed:", error.response?.data || error.message);
+      console.error(
+        "OTP verification failed:",
+        error.response?.data || error.message
+      );
       Alert.alert("Error", "Invalid OTP. Please try again.");
     } finally {
       setIsLoading(false);
@@ -49,7 +57,10 @@ const Otp = () => {
       Alert.alert("Success", "OTP has been resent.");
       setOtp(""); // Reset the OTP field
     } catch (error) {
-      console.error("Failed to resend OTP:", error.response?.data || error.message);
+      console.error(
+        "Failed to resend OTP:",
+        error.response?.data || error.message
+      );
       Alert.alert("Error", "Failed to resend OTP. Please try again.");
     }
   };

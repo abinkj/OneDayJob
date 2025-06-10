@@ -1,6 +1,7 @@
 import Login from "@/(auth)/login";
 import SignUp from "@/(auth)/signUp";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
+import Success from "@/(auth)/success/indes";
 
 const Stack = createNativeStackNavigator();
 
@@ -12,17 +13,11 @@ const OnBoardingStack = () => {
         animation: "slide_from_right",
         gestureEnabled: true,
       }}
+      initialRouteName="Login"
     >
-      <Stack.Screen
-        name="Login"
-        component={Login}
-        options={{ animation: "slide_from_right" }}
-      />
-      <Stack.Screen
-        name="Signup"
-        component={SignUp}
-        options={{ animation: "slide_from_right" }}
-      />
+      <Stack.Screen name="Login" component={Login} />
+      <Stack.Screen name="Signup" component={SignUp} />
+      <Stack.Screen name="Success" component={Success} />
     </Stack.Navigator>
   );
 };
