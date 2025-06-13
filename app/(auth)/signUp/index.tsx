@@ -1,13 +1,22 @@
 import React, { useState } from "react";
-import { View, Text, TextInput, TouchableOpacity, Image, Alert } from "react-native";
-import { styles } from "./styles";
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  Image,
+  Alert,
+} from "react-native";
+import { styles } from "./styles"; // Import styles
 import { router } from "expo-router";
-import { requestOtp } from "../../services/api"; // Import API function
+import { requestOtp } from "../../../services/api"; // Import API function
+import { useNavigation } from "@react-navigation/native";
 
 const SignUp = () => {
   const [phone, setPhone] = useState("");
   const [name, setName] = useState("");
   const [isLoading, setIsLoading] = useState(false); // Add loading state
+  const navigation = useNavigation();
 
   const handleGetOtp = async () => {
     if (!name.trim()) {
@@ -33,7 +42,10 @@ const SignUp = () => {
         params: { phoneNumber: `+91${phone}` },
       });
     } catch (error) {
-      console.error("OTP request failed:", error.response?.data || error.message);
+      console.error(
+        "OTP request failed:",
+        error.response?.data || error.message
+      );
       Alert.alert("Error", "Failed to send OTP. Please try again.");
     } finally {
       setIsLoading(false); // Stop loading
@@ -43,11 +55,14 @@ const SignUp = () => {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Create Account</Text>
-      <Image source={require("../../assets/placeholder-image.png")} style={styles.image} />
+      <Image
+        source={require("../../../assets/placeholder-image.png")}
+        style={styles.image}
+      />
       <Text style={styles.subtitle}>
         Enter your mobile number to get started
       </Text>
-      
+
       <View style={styles.inputContainerSignUp}>
         <TextInput
           style={styles.input}
@@ -56,7 +71,7 @@ const SignUp = () => {
           onChangeText={setName}
         />
       </View>
-      
+
       <View style={styles.phoneContainer}>
         <Text style={styles.countryCode}>+91</Text>
         <TextInput
@@ -69,10 +84,10 @@ const SignUp = () => {
         />
       </View>
 
-      <TouchableOpacity 
-        style={[styles.buttonSign, isLoading && styles.disabledButtonSign]} 
-        onPress={handleGetOtp} 
-        disabled={isLoading} 
+      <TouchableOpacity
+        style={[styles.buttonSign, isLoading && styles.disabledButtonSign]}
+        onPress={handleGetOtp}
+        disabled={isLoading}
       >
         <Text style={styles.buttonText}>
           {isLoading ? "Sending OTP..." : "Get OTP"}
@@ -81,7 +96,7 @@ const SignUp = () => {
 
       <View style={styles.row}>
         <Text style={styles.footerText}>Already have an account? </Text>
-        <TouchableOpacity onPress={() => router.push('/(auth)')}>
+        <TouchableOpacity onPress={() => navigation.navigate("Login")}>
           <Text style={styles.createAccount}>Login</Text>
         </TouchableOpacity>
       </View>

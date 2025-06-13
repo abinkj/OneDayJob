@@ -18,8 +18,8 @@ import DeviceDimensions from "../../../constants/DeviceDimenions";
 import CustomButton from "../../../components/CustomButton";
 import { Colors } from "../../../constants/Colors";
 import JobApplicationStatus from "../../../components/jobApplicationStatus";
-import { useRouter } from "expo-router";
 import ratingStars from "../../../components/ratingStars";
+import { useNavigation } from "@react-navigation/native";
 
 if (
   Platform.OS === "android" &&
@@ -38,7 +38,7 @@ interface Review {
 }
 
 const Profile: React.FC = () => {
-  const router = useRouter();
+  const navigation = useNavigation();
   const review: Review = {
     id: "1",
     reviewerName: "Jane Cooper",
@@ -55,10 +55,11 @@ const Profile: React.FC = () => {
   const experiencedHeight = 206 * DeviceDimensions.heightRatio;
 
   const handleNext = () => {
-    router.push({
-      pathname: "../publicProfile/requestDetails",
-      params: { review: JSON.stringify(review) },
-    });
+    // router.push({
+    //   pathname: "../../publicProfile/requestDetails",
+    //   params: { review: JSON.stringify(review) },
+    // });
+    navigation.navigate("RequestDetails");
   };
 
   const toggleDropdown = () => {

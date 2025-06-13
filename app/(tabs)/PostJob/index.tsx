@@ -110,25 +110,32 @@ const PostJobScreen = ({ navigation }) => {
 
     fetchUser();
   }, []);
-  console.log(user, "this is user")
+ 
 
-  // Load categories from API
+// Fixed loadCategories function
 const loadCategories = async () => {
   try {
     const response = await getCategories();
-    if (response.data && response.data.length > 0) {
+    console.log('Raw API response:', response);
+    
+if (response.data && Array.isArray(response.data.data) && response.data.data.length > 0){
       // Create mapping from frontend IDs to database IDs
       const mapping = {};
       
       // Map API categories to match your existing structure
-      const apiCategories = response.data.map(category => {
+      const apiCategories = response.data.data.map(category => {
+        console.log('Processing API category:', category);
+        
         // Find matching default category by name (case insensitive)
         const matchingDefault = defaultJobCategories.find(
           def => def.name.toLowerCase() === category.name.toLowerCase()
         );
         
         if (matchingDefault) {
+          // Store the mapping: frontend ID -> backend ID
           mapping[matchingDefault.id] = category._id;
+          console.log(`Mapped ${matchingDefault.id} -> ${category._id}`);
+          
           // Use the frontend ID but store backend ID in mapping
           return {
             id: matchingDefault.id, // Keep frontend ID for UI consistency
@@ -138,6 +145,8 @@ const loadCategories = async () => {
           };
         } else {
           // Handle categories that don't exist in defaults
+          console.log(`No matching default found for: ${category.name}`);
+          mapping[category._id] = category._id;
           return {
             id: category._id,
             backendId: category._id,
@@ -147,11 +156,13 @@ const loadCategories = async () => {
         }
       }).filter(Boolean); // Remove any null entries
 
+      console.log('Final category mapping:', mapping);
+      console.log('Final API categories:', apiCategories);
+      
       setCategoryMapping(mapping);
       setJobCategories(apiCategories);
-      console.log('Category mapping created:', mapping);
-      console.log('API categories loaded:', apiCategories);
     } else {
+      console.log('No API categories found, using defaults');
       // If no API categories, use defaults but create identity mapping
       const identityMapping = {};
       defaultJobCategories.forEach(cat => {
@@ -284,107 +295,120 @@ const loadCategories = async () => {
   const currentDate = new Date();
 
 
-  // Format job data for API submission
-  const formatJobData = (photoUrls = []) => {
-    if (!user || !user.id) {
-      throw new Error('User data is not available');
-    }
+// Fixed formatJobData function
+const formatJobData = (photoUrls = []) => {
+  if (!user || !user.id) {
+    throw new Error('User data is not available');
+  }
 
-const selectedCategoryData = jobCategories.find(cat => cat.id === selectedCategory);
-const categoryId = selectedCategoryData?.backendId || selectedCategory;
+  // Get the backend category ID from the mapping
+  const backendCategoryId = categoryMapping[selectedCategory];
+  
+  if (!backendCategoryId) {
+    console.error('Category mapping not found for:', selectedCategory);
+    console.error('Available mappings:', categoryMapping);
+    throw new Error('Invalid category selection');
+  }
 
   console.log("Selected category:", selectedCategory);
-  console.log("Selected category data:", selectedCategoryData);
-  console.log("Using backend category ID:", categoryId);
+  console.log("Backend category ID from mapping:", backendCategoryId);
 
-    const jobData = {
-      userId: user.id,
-      category: categoryId,
-      name: jobName,
-      description: jobDescription,
-      isMultiVacancy: isMultipleVacancy,
-      participantsNumber: isMultipleVacancy ? vacancyCount : 1,
-      isRemote: canBeDoneRemotely,
-      address: canBeDoneRemotely ? '' : taskAddress,
-      requirements: requirements,
-      photos: photoUrls,
-      timePreference: selectedTimePreferences, // Send as array
-      budget: parseFloat(budget),
-      isOpen: true,
-      createdAt: currentDate,
-      updatedAt: currentDate
-    };
-
-    // Handle date/time based on mode
-    if (dateMode === 'onDate' && onDate) {
-      jobData.onDate = new Date(onDate);
-      jobData.isFlexible = false;
-    } else if (dateMode === 'beforeDate' && beforeDate) {
-      jobData.beforeDate = new Date(beforeDate);
-      jobData.isFlexible = false;
-    } else {
-      jobData.isFlexible = true;
-    }
-
-    if (isExactTime) {
-      jobData.fromTime = get24HourTime(hour, minute, amPm);
-      // If you need toTime, calculate it (e.g., +1 hour)
-      jobData.toTime = get24HourTime(hour, minute, amPm);
-    }
-    return jobData;
+  const jobData = {
+    userId: user.id,
+    category: backendCategoryId, // Use the mapped backend ID
+    name: jobName,
+    description: jobDescription,
+    isMultiVacancy: isMultipleVacancy,
+    participantsNumber: isMultipleVacancy ? vacancyCount : 1,
+    isRemote: canBeDoneRemotely,
+    address: canBeDoneRemotely ? '' : taskAddress,
+    requirements: requirements,
+    photos: photoUrls,
+    timePreference: selectedTimePreferences, // Send as array
+    budget: parseFloat(budget),
+    isOpen: true,
+    createdAt: currentDate,
+    updatedAt: currentDate
   };
+
+  // Handle date/time based on mode
+  if (dateMode === 'onDate' && onDate) {
+    jobData.onDate = new Date(onDate);
+    jobData.isFlexible = false;
+  } else if (dateMode === 'beforeDate' && beforeDate) {
+    jobData.beforeDate = new Date(beforeDate);
+    jobData.isFlexible = false;
+  } else {
+    jobData.isFlexible = true;
+  }
+
+  if (isExactTime) {
+    jobData.fromTime = get24HourTime(hour, minute, amPm);
+    // If you need toTime, calculate it (e.g., +1 hour)
+    jobData.toTime = get24HourTime(hour, minute, amPm);
+  }
+  
+  return jobData;
+};
 
   // Handle job posting
-  const handlePost = async () => {
-    if (!validateJobData()) {
-      return;
-    }
-    const isAuth = await checkAuthStatus();
-    if (!isAuth) {
-      return;
-    }
+// Debug handlePost function
+const handlePost = async () => {
+  if (!validateJobData()) {
+    return;
+  }
+  
+  const isAuth = await checkAuthStatus();
+  if (!isAuth) {
+    return;
+  }
 
+  console.log('Selected category before posting:', selectedCategory);
+  console.log('Category mapping:', categoryMapping);
+  console.log('Backend category ID:', categoryMapping[selectedCategory]);
 
-    setIsLoading(true);
+  setIsLoading(true);
 
-    try {
-      // Create job posting
-      const jobData = formatJobData();
-      console.log('Posting job:', jobData);
-      const response = await createJobPosting(jobData);
+  try {
+    // Create job posting
+    const jobData = formatJobData();
+    console.log('Final job data being sent:', jobData);
+    
+    const response = await createJobPosting(jobData);
 
-      if (response.data) {
-        Alert.alert(
-          'Success!',
-          'Your job has been posted successfully!',
-          [
-            {
-              text: 'OK',
-              onPress: () => {
-                // Navigate back or to job list
-                navigation.goBack();
-              }
+    if (response.data) {
+      Alert.alert(
+        'Success!',
+        'Your job has been posted successfully!',
+        [
+          {
+            text: 'OK',
+            onPress: () => {
+              // Navigate back or to job list
+              navigation.goBack();
             }
-          ]
-        );
-      }
-    } catch (error) {
-      console.error('Error posting job:', error);
-
-      let errorMessage = 'Failed to post job. Please try again.';
-
-      if (error.response?.data?.message) {
-        errorMessage = error.response.data.message;
-      } else if (error.response?.data?.errors) {
-        const errors = Object.values(error.response.data.errors).flat();
-        errorMessage = errors.join('\n');
-      }
-
-      Alert.alert('Error', errorMessage);
-    } finally {
-      setIsLoading(false);
+          }
+        ]
+      );
     }
-  };
+  } catch (error) {
+    console.error('Error posting job:', error);
+    console.error('Error response data:', error.response?.data);
+
+    let errorMessage = 'Failed to post job. Please try again.';
+
+    if (error.response?.data?.message) {
+      errorMessage = error.response.data.message;
+    } else if (error.response?.data?.errors) {
+      const errors = Object.values(error.response.data.errors).flat();
+      errorMessage = errors.join('\n');
+    }
+
+    Alert.alert('Error', errorMessage);
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   // Handle date mode selection
   const handleDateModeChange = (mode) => {

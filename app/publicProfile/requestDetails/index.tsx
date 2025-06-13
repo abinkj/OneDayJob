@@ -16,7 +16,7 @@ import { Colors } from "../../../constants/Colors";
 const RequestDetails = () => {
   return (
     <View style={styles.container}>
-      <Header title="Request" />
+      <Header title="Request" showBackButton />
       <ScrollView contentContainerStyle={styles.scrollContainer}>
         {/* Main Content */}
         <Text style={styles.readyText}>Darell is ready to work for you</Text>

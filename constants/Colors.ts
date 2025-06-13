@@ -18,7 +18,10 @@ export const Colors={
     address2:'#F0F0F0',
     timeSelected:'#B8B8B8',
     green:'#EEFBEC',
-    darkGreen:'#359928'
+    darkGreen:'#359928',
+    borderGrey:'#767676',
+    messagageBubble:'#CCCCCC',
+    
 
     
 
