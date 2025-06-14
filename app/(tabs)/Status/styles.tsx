@@ -7,7 +7,7 @@ export const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: 16,
     paddingTop: 14,
-    backgroundColor: Colors.white,
+    backgroundColor: Colors.background,
     marginBottom: 75 * DeviceDimensions.heightRatio, // Adjusted for device height ratio
   },
   tabbar: {

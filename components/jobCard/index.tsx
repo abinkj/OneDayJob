@@ -26,7 +26,7 @@ const JobCard = ({ data }: { data: any }) => {
         <Ionicons
           name="person"
           size={14}
-          color="#1E1E1E"
+          color="#386BF6"
           style={{ marginLeft: 8 }}
         />
       </View>
