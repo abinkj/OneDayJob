@@ -33,7 +33,7 @@ const Login = () => {
 
       // Navigate to OTP screen with `phoneNumber`
       router.push({
-        pathname: "/(auth)/Otp",
+        pathname: "/(auth)/otp",
         params: { phoneNumber: `+91${phone}` },
       });
     } catch (error) {

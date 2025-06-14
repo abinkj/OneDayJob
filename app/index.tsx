@@ -2,7 +2,6 @@ import { SplashScreen } from "expo-router";
 import { useFonts } from "expo-font";
 import { useCallback } from "react";
 import { Provider } from "react-redux";
-
 import RootStackLayout from "./navigation";
 import { store } from "../redux/store";
 
