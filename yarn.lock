@@ -2983,6 +2983,11 @@ expo-linking@~7.0.5:
     expo-constants "~17.0.5"
     invariant "^2.2.4"
 
+expo-location@~18.0.10:
+  version "18.0.10"
+  resolved "https://registry.yarnpkg.com/expo-location/-/expo-location-18.0.10.tgz#330f35f5dba2d575bd0ffd3c65d5df9299a0bf47"
+  integrity sha512-R0Iioz0UZ9Ts8TACPngh8uDFbajJhVa5/igLqWB8Pq/gp8UHuwj7PC8XbZV7avsFoShYjaxrOhf4U7IONeKLgg==
+
 expo-modules-autolinking@2.0.8:
   version "2.0.8"
   resolved "https://registry.npmjs.org/expo-modules-autolinking/-/expo-modules-autolinking-2.0.8.tgz"
@@ -5056,12 +5061,12 @@ react-native-otp-entry@^1.8.3:
   resolved "https://registry.npmjs.org/react-native-otp-entry/-/react-native-otp-entry-1.8.3.tgz"
   integrity sha512-cpEXmbaBkMEeQNGeGL54T9RAtHWVggddNgpg9hLr9/5bCL2S/voO3J+60TPfsHk3cmI9+rMxTNH3jbNnhpmZZA==
 
-react-native-pager-view@^6.8.1, "react-native-pager-view@>= 6.0.0":
+react-native-pager-view@^6.8.1:
   version "6.8.1"
   resolved "https://registry.npmjs.org/react-native-pager-view/-/react-native-pager-view-6.8.1.tgz"
   integrity sha512-XIyVEMhwq7sZqM7GobOJZXxFCfdFgVNq/CFB2rZIRNRSVPJqE1k1fsc8xfQKfdzsp6Rpt6I7VOIvhmP7/YHdVg==
 
-react-native-reanimated@*, react-native-reanimated@~3.16.1:
+react-native-reanimated@~3.16.1:
   version "3.16.7"
   resolved "https://registry.npmjs.org/react-native-reanimated/-/react-native-reanimated-3.16.7.tgz"
   integrity sha512-qoUUQOwE1pHlmQ9cXTJ2MX9FQ9eHllopCLiWOkDkp6CER95ZWeXhJCP4cSm6AD4jigL5jHcZf/SkWrg8ttZUsw==

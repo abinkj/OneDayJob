@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -12,9 +12,19 @@ import { Ionicons } from "@expo/vector-icons";
 import { Colors } from "../../../constants/Colors";
 import { styles } from "./styles";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { getCurrentLocation } from "../../../services/currentLocation";
 
 const HomeScreen = () => {
   const [searchQuery, setSearchQuery] = useState("");
+  const [location, setLocation] = useState(null);
+
+  useEffect(() => {
+    (async () => {
+      const loc = await getCurrentLocation();
+      setLocation(loc);
+      console.log("Current Location:", loc);
+    })();
+  }, []);
 
   const jobListings = [
     {

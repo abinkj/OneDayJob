@@ -75,7 +75,7 @@ const RootStackLayout = () => {
         animation: "slide_from_right",
       }}
     >
-      {isLoggedIn ? (
+      {!isLoggedIn ? (
         <RootStack.Screen name="MainStack" component={MainStack} />
       ) : (
         <RootStack.Screen name="OnboardingStack" component={OnBoardingStack} />
