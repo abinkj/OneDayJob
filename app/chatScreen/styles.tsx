@@ -19,17 +19,22 @@ export const styles = StyleSheet.create({
   messageBubble: {
     height: "auto",
     padding: 10,
-    borderRadius: 12,
     marginVertical: 6,
     maxWidth: "80%",
   },
   myMessage: {
     backgroundColor: Colors.subGrey,
     alignSelf: "flex-end",
+    borderBottomStartRadius: 21,
+    borderBottomEndRadius: 21,
+    borderTopStartRadius: 21,
   },
   otherMessage: {
     backgroundColor: Colors.messagageBubble,
     alignSelf: "flex-start",
+    borderBottomStartRadius: 21,
+    borderBottomEndRadius: 21,
+    borderTopEndRadius: 21,
   },
   messageText: {
     color: "#fff",
@@ -39,8 +44,17 @@ export const styles = StyleSheet.create({
   messageTime: {
     fontSize: 10,
     color: "#ccc",
-    marginTop: 4,
     alignSelf: "flex-end",
+  },
+  timeContainer: {
+    flexDirection: "row",
+    position: "absolute",
+    right: 8,
+    bottom: 6,
+    alignItems: "center",
+  },
+  tickIcon: {
+    marginLeft: 1,
   },
   inputContainer: {
     flexDirection: "row",

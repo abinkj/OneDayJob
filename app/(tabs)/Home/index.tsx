@@ -115,7 +115,9 @@ const HomeScreen = () => {
               <Text style={styles.locationTitle}>XYZ Junction</Text>
               <Ionicons name="chevron-down" size={16} color={Colors.black} />
             </TouchableOpacity>
-            <Text style={styles.locationSubtitle}>MG Road, Kochi</Text>
+            <Text style={styles.locationSubtitle}>
+              MG Road, Kochi {location?.latitude}, {location?.longitude}
+            </Text>
           </View>
         </View>
         <TouchableOpacity>

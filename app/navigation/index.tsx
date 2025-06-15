@@ -27,7 +27,6 @@
 
 // export default RootStackLayout;
 
-
 import React, { useEffect, useState } from "react";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { useDispatch, useSelector } from "react-redux";
@@ -52,7 +51,7 @@ const RootStackLayout = () => {
 
         if (storedUser && storedToken) {
           const userData = JSON.parse(storedUser);
-          dispatch(login(userData));  // dispatch the login action
+          dispatch(login(userData)); // dispatch the login action
         }
       } catch (e) {
         console.error("Error loading auth state:", e);
@@ -65,7 +64,7 @@ const RootStackLayout = () => {
   }, [dispatch]);
 
   if (isLoading) {
-    return null;  // or a loading spinner
+    return null; // or a loading spinner
   }
 
   return (
