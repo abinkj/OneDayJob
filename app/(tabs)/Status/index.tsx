@@ -15,6 +15,7 @@ import {
 } from "react-native-tab-view";
 import JobCard from "../../../components/jobCard";
 import { styles } from "./styles";
+import { useNavigation } from "@react-navigation/native";
 
 type Route = {
   key: string;
@@ -24,6 +25,11 @@ type Route = {
 type State = NavigationState<Route>;
 
 const MyPostTab = () => {
+  const navigation = useNavigation();
+  const handleNext = () => {
+    console.log("Next button pressed");
+    navigation.navigate("RequestDetails");
+  };
   const posts = [
     {
       id: "1",
@@ -62,7 +68,7 @@ const MyPostTab = () => {
       requests: 10,
     },
     {
-      id: "4",
+      id: "5",
       title: "My house needs to be painted",
       rate: "₹500/hr",
       applicants: "0/1",
@@ -78,13 +84,18 @@ const MyPostTab = () => {
       showsVerticalScrollIndicator={false}
     >
       {posts.map((post) => (
-        <JobCard key={post.id} data={post} />
+        <JobCard key={post.id} data={post} onPress={handleNext} />
       ))}
     </ScrollView>
   );
 };
 
 const AppliedTab = () => {
+  const navigation = useNavigation();
+  const handleNext = () => {
+    console.log("Next button pressed");
+    navigation.navigate("RequestDetails");
+  };
   const posts = [
     {
       id: "2",
@@ -105,7 +116,7 @@ const AppliedTab = () => {
       bounces={false} // iOS only
     >
       {posts.map((post) => (
-        <JobCard key={post.id} data={post} />
+        <JobCard key={post.id} data={post} onPress={handleNext} />
       ))}
     </ScrollView>
   );

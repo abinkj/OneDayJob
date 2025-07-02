@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, Image, TouchableOpacity } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { Colors } from "../../constants/Colors";
 
-const JobCard = ({ data }: { data: any }) => {
+const JobCard = ({ data, onPress }: { data: any; onPress: Function }) => {
   return (
     <View style={styles.card}>
       <View style={styles.headerRow}>
@@ -59,7 +59,7 @@ const JobCard = ({ data }: { data: any }) => {
           />
           <Text style={styles.requestText}>10+ Requests</Text>
         </View>
-        <TouchableOpacity style={styles.button}>
+        <TouchableOpacity style={styles.button} onPress={onPress}>
           <Text style={styles.buttonText}>View Requests</Text>
         </TouchableOpacity>
       </View>
