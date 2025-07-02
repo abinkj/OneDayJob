@@ -19,7 +19,6 @@ const OnBoardingStack = () => {
       <Stack.Screen name="Login" component={Login} />
       <Stack.Screen name="Signup" component={SignUp} />
       <Stack.Screen name="Otp" component={Otp} />
-      <Stack.Screen name="Success" component={Success} />
     </Stack.Navigator>
   );
 };
