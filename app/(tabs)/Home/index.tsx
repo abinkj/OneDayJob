@@ -13,6 +13,10 @@ import { Colors } from "../../../constants/Colors";
 import { styles } from "./styles";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { getCurrentLocation } from "../../../services/currentLocation";
+import CustomButton from "../../../components/CustomButton";
+import { useDispatch } from "react-redux";
+import { logout } from "../../../redux/reducers/authReducers";
+import { logoutUser } from "../../../utilities/authentication";
 
 const HomeScreen = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -62,6 +66,8 @@ const HomeScreen = () => {
     },
     // You can add more job listings here
   ];
+
+  const dispatch = useDispatch();
 
   const renderJobCard = ({ item }) => (
     <TouchableOpacity style={styles.jobCard}>
@@ -164,6 +170,15 @@ const HomeScreen = () => {
       </View>
 
       <View style={styles.filtersScrollContainer}>
+        <CustomButton
+          color={"red"}
+          text={"logout"}
+          onPress={() => {
+            console.log("Logout button pressed");
+            dispatch(logoutUser());
+          }}
+        />
+
         <FlatList
           horizontal
           showsHorizontalScrollIndicator={false}

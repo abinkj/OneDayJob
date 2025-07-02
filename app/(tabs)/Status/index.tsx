@@ -102,6 +102,7 @@ const AppliedTab = () => {
       style={styles.scrollContainer}
       scrollEnabled={true}
       showsVerticalScrollIndicator={false}
+      bounces={false} // iOS only
     >
       {posts.map((post) => (
         <JobCard key={post.id} data={post} />

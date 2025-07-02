@@ -1,21 +1,20 @@
 import React, { useState } from "react";
 import { View, Text, TouchableOpacity, Alert } from "react-native";
 import { styles } from "./styles";
-import { useLocalSearchParams } from "expo-router";
 import { OtpInput } from "react-native-otp-entry";
 import { Colors } from "../../../constants/Colors";
 import { verifyOtp, requestOtp } from "../../../services/api";
-import { useNavigation } from "@react-navigation/native";
+import {  useRoute } from "@react-navigation/native";
 import { useDispatch } from "react-redux";
-import { login } from "../../../redux/reducers/authReducers";
-import AsyncStorage from '@react-native-async-storage/async-storage';
+
+import { loginUser } from "../../../utilities/authentication";
 
 const Otp = () => {
   const [otp, setOtp] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isResending, setIsResending] = useState(false);
-  const { phoneNumber } = useLocalSearchParams();
-  const navigation = useNavigation();
+  const route = useRoute();
+  const { phoneNumber } = route.params;
   const dispatch = useDispatch();
 
   const handleVerifyOtp = async () => {
@@ -32,21 +31,29 @@ const Otp = () => {
 
       const response = await verifyOtp({ phoneNumber, otpCode: otp });
       console.log("OTP verification response:", response.data);
-      console.log(response.data.success, "this should be true");
+      console.log(response.data.success, "response ");
 
       if (response.data.success) {
-        // Store the access token in AsyncStorage for persistence
+
         const accessToken = response.data.data.tokens.accessToken;
-        await AsyncStorage.setItem('token', accessToken);
-
-        // Get user data
+        console.log("Access Token:", accessToken);
+        const refreshToken = response.data.data.tokens.refreshToken;
+        console.log("Refresh Token:", refreshToken);
         const userData = response.data.data.user;
-        
-        // Store user data in AsyncStorage for persistence
-        await AsyncStorage.setItem('user', JSON.stringify(userData));
+        // Store the access token in AsyncStorage for persistence
+        // await AsyncStorage.setItem("token", accessToken);
 
-        // Dispatch login action to Redux store
-        dispatch(login(userData));
+        // // Get user data
+        // const userData = response.data.data.user;
+
+        // // Store user data in AsyncStorage for persistence
+        // await AsyncStorage.setItem("user", JSON.stringify(userData));
+
+        // // Dispatch login action to Redux store
+        // dispatch(login(userData));
+        dispatch(loginUser(userData, accessToken, refreshToken));
+
+        //dispatch(login(response.data.data.user));
 
         console.log("Token stored successfully and user logged in");
 
@@ -56,10 +63,11 @@ const Otp = () => {
         //   index: 0,
         //   routes: [{ name: 'MainStack' }],
         // });
-
-
       } else {
-        Alert.alert("Error", response.data.message || "OTP verification failed");
+        Alert.alert(
+          "Error",
+          response.data.message || "OTP verification failed"
+        );
       }
     } catch (error) {
       console.error("OTP verification failed:", error);
@@ -144,10 +152,7 @@ const Otp = () => {
       <Text style={styles.resendText}>
         Didn't receive an OTP?{" "}
         <Text
-          style={[
-            styles.resendButton,
-            isResending && { opacity: 0.5 }
-          ]}
+          style={[styles.resendButton, isResending && { opacity: 0.5 }]}
           onPress={handleResendOtp}
         >
           {isResending ? "Sending..." : "Resend"}
@@ -155,7 +160,10 @@ const Otp = () => {
       </Text>
 
       <TouchableOpacity
-        style={[styles.buttonOtp, (isLoading || otp.length !== 6) && styles.disabledButton]}
+        style={[
+          styles.buttonOtp,
+          (isLoading || otp.length !== 6) && styles.disabledButton,
+        ]}
         onPress={handleVerifyOtp}
         disabled={isLoading || otp.length !== 6}
       >

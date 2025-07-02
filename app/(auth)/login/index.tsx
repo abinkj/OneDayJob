@@ -8,7 +8,6 @@ import {
   Alert,
 } from "react-native";
 import { styles } from "./styles";
-import { router } from "expo-router";
 import { requestOtp } from "../../../services/api"; // Import the API service
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
@@ -16,7 +15,7 @@ import { useNavigation } from "@react-navigation/native";
 const Login = () => {
   const [phone, setPhone] = useState("");
   const [isLoading, setIsLoading] = useState(false); // Add loading state
-  const navigation = useNavigation();
+  const navigation = useNavigation<any>();
 
   const handleGetOtp = async () => {
     if (!phone || phone.length !== 10) {
@@ -32,10 +31,12 @@ const Login = () => {
       console.log("OTP request successful:", response.data);
 
       // Navigate to OTP screen with `phoneNumber`
-      router.push({
-        pathname: "/(auth)/otp",
-        params: { phoneNumber: `+91${phone}` },
-      });
+      navigation.navigate("Otp", {
+        phoneNumber: `+91${phone}`,});
+      // router.push({
+      //   pathname: "/(auth)/otp",
+      //   params: { phoneNumber: `+91${phone}` },
+      // });
     } catch (error) {
       console.error(
         "OTP request failed:",
