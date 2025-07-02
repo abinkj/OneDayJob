@@ -1,18 +1,24 @@
 import React, { useState } from "react";
-import { View, Text, TouchableOpacity, Alert } from "react-native";
-import { styles } from "./styles";
+import { View, Text, TouchableOpacity, Alert, StyleSheet } from "react-native";
 import { OtpInput } from "react-native-otp-entry";
 import { Colors } from "../../../constants/Colors";
 import { verifyOtp, requestOtp } from "../../../services/api";
-import {  useRoute } from "@react-navigation/native";
+import LottieView from "lottie-react-native";
+import { useRoute } from "@react-navigation/native";
 import { useDispatch } from "react-redux";
-
 import { loginUser } from "../../../utilities/authentication";
+import { styles } from "./styles"; // your original styles file
+
+interface OtpProps {
+  phoneNumber?: Number;
+}
 
 const Otp = () => {
   const [otp, setOtp] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isResending, setIsResending] = useState(false);
+  const [isOtpSuccess, setIsOtpSuccess] = useState(false);
+
   const route = useRoute();
   const { phoneNumber } = route.params;
   const dispatch = useDispatch();
@@ -31,38 +37,18 @@ const Otp = () => {
 
       const response = await verifyOtp({ phoneNumber, otpCode: otp });
       console.log("OTP verification response:", response.data);
-      console.log(response.data.success, "response ");
 
       if (response.data.success) {
-
         const accessToken = response.data.data.tokens.accessToken;
-        console.log("Access Token:", accessToken);
         const refreshToken = response.data.data.tokens.refreshToken;
-        console.log("Refresh Token:", refreshToken);
         const userData = response.data.data.user;
-        // Store the access token in AsyncStorage for persistence
-        // await AsyncStorage.setItem("token", accessToken);
 
-        // // Get user data
-        // const userData = response.data.data.user;
+        // ✅ Show success image first
+        setIsOtpSuccess(true);
 
-        // // Store user data in AsyncStorage for persistence
-        // await AsyncStorage.setItem("user", JSON.stringify(userData));
-
-        // // Dispatch login action to Redux store
-        // dispatch(login(userData));
-        dispatch(loginUser(userData, accessToken, refreshToken));
-
-        //dispatch(login(response.data.data.user));
-
-        console.log("Token stored successfully and user logged in");
-
-        // Navigate to MainStack (which contains the main app with tabs)
-        // Since Redux state will change, RootStackLayout will automatically show MainStack
-        // navigation.reset({
-        //   index: 0,
-        //   routes: [{ name: 'MainStack' }],
-        // });
+        setTimeout(() => {
+          dispatch(loginUser(userData, accessToken, refreshToken));
+        }, 2000);
       } else {
         Alert.alert(
           "Error",
@@ -72,7 +58,6 @@ const Otp = () => {
     } catch (error) {
       console.error("OTP verification failed:", error);
 
-      // Handle different error types
       let errorMessage = "Invalid OTP. Please try again.";
 
       if (error.response?.data?.message) {
@@ -90,7 +75,7 @@ const Otp = () => {
   };
 
   const handleResendOtp = async () => {
-    if (isResending) return; // Prevent multiple rapid requests
+    if (isResending) return;
 
     setIsResending(true);
 
@@ -99,7 +84,7 @@ const Otp = () => {
       console.log("OTP resent successfully:", response.data);
 
       Alert.alert("Success", "OTP has been resent to your mobile number.");
-      setOtp(""); // Reset the OTP field
+      setOtp("");
     } catch (error) {
       console.error("Failed to resend OTP:", error);
 
@@ -113,6 +98,25 @@ const Otp = () => {
       setIsResending(false);
     }
   };
+
+  // ✅ Show success view if OTP verified
+  if (isOtpSuccess) {
+    return (
+      <View style={[styles.container, styles.center]}>
+        <LottieView
+          source={require("../../../assets/animations/success.json")}
+          autoPlay
+          loop={false}
+          style={styles.animationContainer}
+          speed={0.6}
+          resizeMode="contain"
+          accessibilityLabel="OTP Verification Success Animation"
+          testID="otp-success-animation"
+        />
+        <Text style={styles.text}>Verified Successfully</Text>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -133,11 +137,7 @@ const Otp = () => {
         secureTextEntry={false}
         focusStickBlinkingDuration={500}
         onTextChange={(text) => setOtp(text)}
-        onFilled={(text) => {
-          setOtp(text);
-          // Optionally auto-verify when OTP is filled
-          // handleVerifyOtp();
-        }}
+        onFilled={(text) => setOtp(text)}
         textInputProps={{
           accessibilityLabel: "One-Time Password",
         }}
