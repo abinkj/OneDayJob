@@ -38,7 +38,7 @@ const SignUp = () => {
 
       // Navigate to OTP screen and pass phone number
       router.push({
-        pathname: "/(auth)/Otp",
+        pathname: "/(auth)/otp",
         params: { phoneNumber: `+91${phone}` },
       });
     } catch (error) {

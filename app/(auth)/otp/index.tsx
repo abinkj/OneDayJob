@@ -39,6 +39,9 @@ const Otp = () => {
         const accessToken = response.data.data.tokens.accessToken;
         await AsyncStorage.setItem('token', accessToken);
 
+        const refreshToken = response.data.data.tokens.refreshToken;
+        await AsyncStorage.setItem('refreshToken', refreshToken);
+
         // Get user data
         const userData = response.data.data.user;
         
@@ -49,6 +52,8 @@ const Otp = () => {
         dispatch(login(userData));
 
         console.log("Token stored successfully and user logged in");
+        console.log('accessToken:',accessToken);
+        console.log('refreshToken:',refreshToken);
 
         // Navigate to MainStack (which contains the main app with tabs)
         // Since Redux state will change, RootStackLayout will automatically show MainStack
