@@ -21,6 +21,8 @@ export const Colors={
     darkGreen:'#359928',
     borderGrey:'#767676',
     messagageBubble:'#CCCCCC',
+    whiteBack:'#D9D9D9',
+    iconBlack:'#1C274C',
     
 
     

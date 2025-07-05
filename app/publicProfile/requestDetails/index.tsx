@@ -12,8 +12,11 @@ import Images from "../../../utilities/images";
 import ratingStars from "../../../components/ratingStars";
 import DeviceDimensions from "../../../constants/DeviceDimenions";
 import { Colors } from "../../../constants/Colors";
+import { useRoute } from "@react-navigation/native";
 
 const RequestDetails = () => {
+  // const route = useRoute();
+  // const { job } = route.params; 
   return (
     <View style={styles.container}>
       <Header title="Request" showBackButton />

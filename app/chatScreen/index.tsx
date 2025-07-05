@@ -15,6 +15,7 @@ import { styles } from "./styles";
 import { Header } from "../../components/header";
 import { Colors } from "../../constants/Colors";
 import { useLocalSearchParams } from "expo-router";
+import MessageBubble from "../../components/messageBubble";
 
 export default function ChatScreen() {
   const { chat } = useLocalSearchParams();
@@ -80,15 +81,35 @@ export default function ChatScreen() {
   };
 
   const renderItem = ({ item }) => (
-    <View
-      style={[
-        styles.messageBubble,
-        item.type === "me" ? styles.myMessage : styles.otherMessage,
-      ]}
-    >
-      <Text style={styles.messageText}>{item.text}</Text>
-      <Text style={styles.messageTime}>{item.time}</Text>
-    </View>
+    // <View
+    //   style={[
+    //     styles.messageBubble,
+    //     item.type === "me" ? styles.myMessage : styles.otherMessage,
+    //   ]}
+    // >
+    //   <Text style={styles.messageText}>{item.text}</Text>
+
+    //   <View style={styles.timeContainer}>
+    //     <Text style={styles.messageTime}>{item.time}</Text>
+    //     {item.type === "me" && (
+    //       <>
+    //         <AntDesign
+    //           name="check"
+    //           size={12}
+    //           color="#ccc"
+    //           style={styles.tickIcon}
+    //         />
+    //         <AntDesign
+    //           name="check"
+    //           size={12}
+    //           color="#ccc"
+    //           style={styles.tickIcon}
+    //         />
+    //       </>
+    //     )}
+    //   </View>
+    // </View>
+    <MessageBubble text={item.text} time={item.time} type={item.type} />
   );
 
   return (
@@ -97,7 +118,7 @@ export default function ChatScreen() {
       behavior={Platform.OS === "ios" ? "padding" : undefined}
       keyboardVerticalOffset={90}
     >
-      <Header title={chatData?.name} showBackButton/>
+      <Header title={chatData?.name} showBackButton />
       <Text style={styles.dateLabel}>8 August 2025</Text>
 
       <FlatList

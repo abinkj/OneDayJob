@@ -1,41 +1,11 @@
-// import { createNativeStackNavigator } from "@react-navigation/native-stack";
-// import { useSelector } from "react-redux";
-// import MainStack from "./mainStack";
-// import OnBoardingStack from "./onBoardingStack";
-
-// const RootStack = createNativeStackNavigator();
-
-// const RootStackLayout = () => {
-//   const isLoggedIn = useSelector((state) => state.authentication.isLoggedIn);
-
-//   return (
-//     <RootStack.Navigator
-//       id={undefined}
-//       screenOptions={{
-//         headerShown: false,
-//         animation: "slide_from_right",
-//       }}
-//     >
-//       {isLoggedIn ? (
-//         <RootStack.Screen name="MainStack" component={MainStack} />
-//       ) : (
-//         <RootStack.Screen name="OnboardingStack" component={OnBoardingStack} />
-//       )}
-//     </RootStack.Navigator>
-//   );
-// };
-
-// export default RootStackLayout;
-
-
 import React, { useEffect, useState } from "react";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { useDispatch, useSelector } from "react-redux";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import { ActivityIndicator } from "react-native";
 
 import MainStack from "./mainStack";
 import OnBoardingStack from "./onBoardingStack";
-import { login } from "../../redux/reducers/authReducers";
+import { restoreSession } from "../../utilities/authentication";
 
 const RootStack = createNativeStackNavigator();
 
@@ -45,27 +15,20 @@ const RootStackLayout = () => {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const bootstrapAsync = async () => {
+    const checkLogin = async () => {
       try {
-        const storedUser = await AsyncStorage.getItem("user");
-        const storedToken = await AsyncStorage.getItem("token");
-
-        if (storedUser && storedToken) {
-          const userData = JSON.parse(storedUser);
-          dispatch(login(userData));  // dispatch the login action
-        }
-      } catch (e) {
-        console.error("Error loading auth state:", e);
+        await dispatch(restoreSession()); // This should set isLoggedIn in Redux
+      } catch (error) {
+        console.error("Error restoring session:", error);
       } finally {
         setIsLoading(false);
       }
     };
-
-    bootstrapAsync();
+    checkLogin();
   }, [dispatch]);
 
   if (isLoading) {
-    return null;  // or a loading spinner
+    return <ActivityIndicator size="large" style={{ flex: 1 }} />;
   }
 
   return (

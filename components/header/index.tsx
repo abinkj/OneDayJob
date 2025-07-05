@@ -4,7 +4,7 @@ import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { useRouter } from "expo-router";
 
 interface HeaderProps {
-  title: string;
+  title?: string;
   showBackButton?: boolean;
 }
 

@@ -194,7 +194,7 @@ const Profile: React.FC = () => {
           </View>
         )}
       </ScrollView>
-      {!isReadyToWork && (
+      {isReadyToWork && (
         <View style={styles.fixedBottomContainer}>
           <JobApplicationStatus
             name="Darell"

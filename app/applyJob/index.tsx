@@ -1,0 +1,176 @@
+import React from "react";
+import { View, Text, StyleSheet, Image, FlatList } from "react-native";
+import { Header } from "../../components/header";
+
+const task = {
+  title: "Furniture Lifting Help Needed",
+  status: "Open",
+  budget: "₹500",
+  postedBy: {
+    name: "Darell Steward",
+    timeAgo: "2 days ago",
+    avatar: "https://i.pravatar.cc/150?img=3",
+  },
+  date: "Friday, Mar. 28",
+  time: "Midday or Afternoon",
+  location: "Kochi, KL",
+  description:
+    "I need two people to help move furniture from my second-floor apartment to a moving truck. It includes a sofa, bed, and a few boxes. The task should take around an hour.",
+  photos: [
+    "https://picsum.photos/200/300?1",
+    "https://picsum.photos/200/300?2",
+    "https://picsum.photos/200/300?3",
+    "https://picsum.photos/200/300?4",
+    "https://picsum.photos/200/300?5",
+  ],
+  requirements: ["Pick up van"],
+};
+
+const Status = () => {
+  return (
+    <View style={styles.container}>
+      <Header title="Status" />
+      
+      <Text style={styles.title}>{task.title}</Text>
+
+      <View style={styles.row}>
+        <Text style={styles.status}>{task.status}</Text>
+      </View>
+
+      <View style={styles.section}>
+        <Text style={styles.label}>POSTED BY</Text>
+        <View style={styles.userRow}>
+          <Image source={{ uri: task.postedBy.avatar }} style={styles.avatar} />
+          <View>
+            <Text style={styles.name}>{task.postedBy.name}</Text>
+            <Text style={styles.timeAgo}>{task.postedBy.timeAgo}</Text>
+          </View>
+        </View>
+      </View>
+
+      <View style={styles.detailsRow}>
+        <View style={styles.section}>
+          <Text style={styles.label}>DATE</Text>
+          <Text style={styles.value}>{task.date}</Text>
+          <Text style={styles.subValue}>{task.time}</Text>
+        </View>
+        <View style={styles.section}>
+          <Text style={styles.label}>LOCATION</Text>
+          <Text style={styles.value}>{task.location}</Text>
+          <Text style={[styles.subValue, { color: "#0066CC" }]}>View</Text>
+        </View>
+      </View>
+
+      <Text style={styles.label}>DESCRIPTION</Text>
+      <Text style={styles.description}>{task.description}</Text>
+
+      <Text style={styles.label}>PHOTOS</Text>
+      <FlatList
+        data={task.photos}
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        keyExtractor={(item, index) => index.toString()}
+        renderItem={({ item }) => (
+          <Image source={{ uri: item }} style={styles.photo} />
+        )}
+        style={styles.photos}
+      />
+
+      <Text style={styles.label}>REQUIREMENTS</Text>
+      <View style={styles.requirement}>
+        <Text style={styles.check}>✓</Text>
+        <Text style={styles.requirementText}>{task.requirements[0]}</Text>
+      </View>
+    </View>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    backgroundColor: "#fff",
+    flex: 1,
+  },
+  title: {
+    fontSize: 20,
+    fontWeight: "600",
+    marginBottom: 10,
+  },
+  status: {
+    backgroundColor: "#eee",
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+    alignSelf: "flex-start",
+    fontSize: 12,
+    marginBottom: 20,
+  },
+  section: {
+    marginBottom: 20,
+  },
+  label: {
+    fontSize: 12,
+    color: "#888",
+    marginBottom: 5,
+    textTransform: "uppercase",
+  },
+  userRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+  avatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    marginRight: 10,
+  },
+  name: {
+    fontSize: 14,
+    fontWeight: "600",
+  },
+  timeAgo: {
+    fontSize: 12,
+    color: "#888",
+  },
+  detailsRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+  },
+  value: {
+    fontSize: 14,
+    fontWeight: "500",
+  },
+  subValue: {
+    fontSize: 13,
+    color: "#666",
+  },
+  description: {
+    fontSize: 14,
+    color: "#444",
+    marginBottom: 20,
+  },
+  photos: {
+    marginBottom: 20,
+  },
+  photo: {
+    width: 100,
+    height: 70,
+    marginRight: 10,
+    borderRadius: 8,
+  },
+  requirement: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 10,
+  },
+  check: {
+    fontSize: 16,
+    color: "#4CAF50",
+    marginRight: 8,
+  },
+  requirementText: {
+    fontSize: 14,
+  },
+});
+
+export default Status;

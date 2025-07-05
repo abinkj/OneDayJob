@@ -2,6 +2,7 @@ import Login from "@/(auth)/login";
 import SignUp from "@/(auth)/signUp";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import Success from "@/(auth)/success/indes";
+import Otp from "@/(auth)/otp";
 
 const Stack = createNativeStackNavigator();
 
@@ -17,7 +18,7 @@ const OnBoardingStack = () => {
     >
       <Stack.Screen name="Login" component={Login} />
       <Stack.Screen name="Signup" component={SignUp} />
-      <Stack.Screen name="Success" component={Success} />
+      <Stack.Screen name="Otp" component={Otp} />
     </Stack.Navigator>
   );
 };
