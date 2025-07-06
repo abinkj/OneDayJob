@@ -9,6 +9,7 @@ import {
   Image,
   TextInput,
   Keyboard,
+  ScrollView,
 } from "react-native";
 import {
   TabView,
@@ -29,9 +30,15 @@ type Route = {
 
 type State = NavigationState<Route>;
 
-const RequestCard = ({ data}) => {
+const RequestCard = ({ data, isSelected, onSelect }) => {
   return (
-    <TouchableOpacity style={styles.requestCard}>
+    <TouchableOpacity 
+      style={[
+        styles.requestCard,
+        isSelected && styles.selectedCard
+      ]}
+      onPress={() => onSelect(data.id)}
+    >
       <View style={styles.requestHeader}>
         <View style={styles.profileSection}>
           <Image
@@ -59,12 +66,23 @@ const RequestCard = ({ data}) => {
         <Text style={styles.detailValue}>{data.availability}</Text>
       </View>
       
+      {/* Selection Checkbox */}
+      {isSelected && (
+        <View style={styles.checkboxContainer}>
+          <View style={styles.checkbox}>
+            <Text style={styles.checkboxText}>✓</Text>
+          </View>
+        </View>
+      )}
     </TouchableOpacity>
   );
 };
 
 const RequestsTab = () => {
   const navigation = useNavigation();
+  const [selectedFilter, setSelectedFilter] = useState('All');
+  const [selectedRequests, setSelectedRequests] = useState([]);
+  const [showMenu, setShowMenu] = useState(false);
   
   const [requests, setRequests] = useState([
     {
@@ -76,6 +94,7 @@ const RequestsTab = () => {
       description: "I have experience moving heavy furniture and can help with your moving needs.",
       availability: "Mar 31, 2025 2:00 pm",
       avatar: null,
+      category: "Highly rated"
     },
     {
       id: "2",
@@ -86,6 +105,7 @@ const RequestsTab = () => {
       description: "Applicant: We 15 2025 3:00 PM I have experience moving heavy furniture and can help with your moving needs.",
       availability: "Mar 31, 2025 2:00 pm",
       avatar: null,
+      category: "Budget Friendly"
     },
     {
       id: "3",
@@ -96,6 +116,7 @@ const RequestsTab = () => {
       description: "Applicant: We 15 2025 3:00 PM I have experience moving heavy furniture and can help with your moving needs.",
       availability: "Mar 31, 2025 2:00 pm",
       avatar: null,
+      category: "Highly rated"
     },
     {
       id: "4",
@@ -106,6 +127,7 @@ const RequestsTab = () => {
       description: "Applicant: We 15 2025 3:00 PM I have experience moving heavy furniture and can help with your moving needs.",
       availability: "Mar 31, 2025 2:00 pm",
       avatar: null,
+      category: "Budget Friendly"
     },
     {
       id: "5",
@@ -116,24 +138,154 @@ const RequestsTab = () => {
       description: "Applicant: We 15 2025 3:00 PM I have experience moving heavy furniture and can help with your moving needs.",
       availability: "Mar 31, 2025 2:00 pm",
       avatar: null,
+      category: "Highly rated"
     },
   ]);
+
+  const filters = ['All', 'Highly rated', 'Budget Friendly'];
+
+  const getFilteredRequests = () => {
+    if (selectedFilter === 'All') {
+      return requests;
+    }
+    return requests.filter(request => request.category === selectedFilter);
+  };
+
+  const handleSelectRequest = (requestId) => {
+    setSelectedRequests(prev => {
+      if (prev.includes(requestId)) {
+        return prev.filter(id => id !== requestId);
+      } else {
+        return [...prev, requestId];
+      }
+    });
+  };
+
+  const handleSelectAll = () => {
+    const filteredRequests = getFilteredRequests();
+    setSelectedRequests(filteredRequests.map(req => req.id));
+    setShowMenu(false);
+  };
+
+  const handleSelectFirst10 = () => {
+    const filteredRequests = getFilteredRequests();
+    const first10 = filteredRequests.slice(0, 10).map(req => req.id);
+    setSelectedRequests(first10);
+    setShowMenu(false);
+  };
+
+  const handleDeselectAll = () => {
+    setSelectedRequests([]);
+    setShowMenu(false);
+  };
+
+  const handleAcceptSelected = () => {
+    console.log('Accept selected:', selectedRequests);
+    // Handle accept logic here
+    setSelectedRequests([]);
+  };
+
+  const handleRejectSelected = () => {
+    console.log('Reject selected:', selectedRequests);
+    // Handle reject logic here
+    setSelectedRequests([]);
+  };
 
   const renderRequest = ({ item }) => (
     <RequestCard
       data={item}
+      isSelected={selectedRequests.includes(item.id)}
+      onSelect={handleSelectRequest}
     />
   );
 
+  const filteredRequests = getFilteredRequests();
+
   return (
-    <View style={styles.tabContainer}>      
+    <View style={styles.tabContainer}>
+            {/* Selection Count */}
+      {selectedRequests.length > 0 && (
+      <View style={styles.headerInfo}>
+        <View style={styles.headerTitle}>
+        <Text style={styles.requestCount}>
+            {selectedRequests.length}/{filteredRequests.length} selected
+          </Text>
+        </View>
+        </View>
+      )}
+      {/* Filter Section */}
+      <View style={styles.filterSection}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+          {filters.map((filter) => (
+            <TouchableOpacity
+              key={filter}
+              style={[
+                styles.filterButton,
+                selectedFilter === filter && styles.activeFilterButton
+              ]}
+              onPress={() => setSelectedFilter(filter)}
+            >
+              <Text style={[
+                styles.filterButtonText,
+                selectedFilter === filter && styles.activeFilterButtonText
+              ]}>
+                {filter}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+        
+        {/* Menu Button */}
+        <TouchableOpacity 
+          style={styles.menuButton}
+          onPress={() => setShowMenu(!showMenu)}
+        >
+          <Text style={styles.menuButtonText}>⋮</Text>
+        </TouchableOpacity>
+      </View>
+
+
+
+      {/* Menu Options */}
+      {showMenu && (
+        <View style={styles.menuOptions}>
+          <TouchableOpacity style={styles.menuOption} onPress={handleSelectAll}>
+            <Text style={styles.menuOptionText}>Select All</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.menuOption} onPress={handleSelectFirst10}>
+            <Text style={styles.menuOptionText}>Select First 10</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.menuOption} onPress={handleDeselectAll}>
+            <Text style={styles.menuOptionText}>Deselect All</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+      
       <FlatList
-        data={requests}
+        data={filteredRequests}
         renderItem={renderRequest}
         keyExtractor={(item) => item.id}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.listContainer}
       />
+
+      {/* Bottom Action Buttons */}
+      {selectedRequests.length > 0 && (
+        <View style={styles.bottomActions}>
+          <TouchableOpacity 
+            style={styles.rejectButton}
+            onPress={handleRejectSelected}
+          >
+            <Text style={styles.rejectButtonText}>Reject Selected</Text>
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={styles.acceptButton}
+            onPress={handleAcceptSelected}
+          >
+            <Text style={styles.acceptButtonText}>Accept Selected</Text>
+          </TouchableOpacity>
+        </View>
+      )}
     </View>
   );
 };
