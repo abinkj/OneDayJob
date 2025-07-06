@@ -17,16 +17,23 @@ import DeviceDimensions from "../../constants/DeviceDimenions";
   },
   headerInfo: {
     flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    backgroundColor: Colors.white,
+    justifyContent: "flex-end",
+    alignItems:'center'
+   
+  },
+  headerTitle: {
+     alignItems: "center",
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    backgroundColor: Colors.addressGrey,
     borderBottomWidth: 1,
     borderBottomColor: "#E5E5E5",
+    borderRadius:20,
+    marginTop:3
+
   },
   requestCount: {
-    fontSize: 16,
+    fontSize: 12,
     fontWeight: "600",
     color: "#000",
   },
@@ -168,8 +175,8 @@ import DeviceDimensions from "../../constants/DeviceDimenions";
     elevation: 3,
   },
   verifiedCard: {
-    backgroundColor: "#F0F8FF",
-    borderWidth: 2,
+    //backgroundColor: Colors.addressGrey,
+    borderWidth: 1,
     borderColor: "#4CAF50",
     opacity: 0.8,
   },
@@ -222,16 +229,17 @@ import DeviceDimensions from "../../constants/DeviceDimenions";
   // Verification Code Section
   verificationCodeSection: {
     backgroundColor: Colors.white,
-    padding: 16,
-    marginTop: 20,
+    paddingHorizontal: 16,
+    paddingVertical:8,
+   
     marginHorizontal: 16,
     borderRadius: 12,
-    shadowColor: "#000",
+    shadowColor: Colors.black,
     shadowOffset: {
       width: 0,
-      height: 2,
+      height: -15,
     },
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.8,
     shadowRadius: 4,
     elevation: 3,
   },
@@ -252,7 +260,7 @@ import DeviceDimensions from "../../constants/DeviceDimenions";
     marginBottom: 16,
   },
   verifyButton: {
-    backgroundColor: "#000",
+    backgroundColor:Colors.grey,
     borderRadius: 8,
     paddingVertical: 14,
     alignItems: "center",

@@ -8,6 +8,7 @@ import {
   FlatList,
   Image,
   TextInput,
+  Keyboard,
 } from "react-native";
 import {
   TabView,
@@ -19,7 +20,7 @@ import { useNavigation } from "@react-navigation/native";
 import styles from "./styles";
 import { Header } from "../../components/header";
 import ratingStars from "../../components/ratingStars";
-
+import Toast from "../../components/toast";
 
 type Route = {
   key: string;
@@ -118,7 +119,6 @@ const RequestsTab = () => {
     },
   ]);
 
-
   const renderRequest = ({ item }) => (
     <RequestCard
       data={item}
@@ -138,8 +138,7 @@ const RequestsTab = () => {
   );
 };
 
-
-const RequestsVerifyTab = () => {
+const RequestsVerifyTab = ({ onShowToast }) => {
   const navigation = useNavigation();
   
   const [verificationData, setVerificationData] = useState([
@@ -155,28 +154,28 @@ const RequestsVerifyTab = () => {
       name: "James podaki",
       phone: "6275856300",
       status: "pending",
-      code: "5678",
+      code: "1234",
     },
     {
       id: "3",
       name: "john Johnson",
       phone: "6275856300",
       status: "pending",
-      code: "9012",
+      code: "1234",
     },
     {
       id: "4",
       name: "Jinson",
       phone: "6275856300",
       status: "pending",
-      code: "3456",
+      code: "1234",
     },
     {
       id: "5",
       name: "Michael Smith",
       phone: "6275856300",
       status: "pending",
-      code: "7890",
+      code: "1234",
     },
   ]);
 
@@ -193,7 +192,7 @@ const RequestsVerifyTab = () => {
   };
 
   const handleSelectPerson = (person) => {
-    if (person.status === "verified") return; // Don't allow selection of already verified persons
+    if (person.status === "verified") return;
     
     setSelectedPerson(person);
     setShowVerificationModal(true);
@@ -201,8 +200,9 @@ const RequestsVerifyTab = () => {
   };
 
   const handleVerifyCode = () => {
-    if (!selectedPerson) return;
-    
+    Keyboard.dismiss();
+    if (!selectedPerson) return; 
+    setEnteredCode(null);   
     if (enteredCode === selectedPerson.code) {
       // Update the status to verified
       setVerificationData(prevData =>
@@ -213,31 +213,31 @@ const RequestsVerifyTab = () => {
         )
       );
       
-      // Show success message or handle success
-      console.log(`${selectedPerson.name} verified successfully!`);
+      // Show success toast
+      onShowToast(`${selectedPerson.name} verified successfully!`, 'success');
       
       // Reset and close modal
       setShowVerificationModal(false);
       setSelectedPerson(null);
       setEnteredCode("");
     } else {
-      // Handle invalid code
-      console.log("Invalid verification code");
-      // You can show an error message here
+      // Show error toast
+      onShowToast("Invalid verification code", 'error');
     }
   };
 
   const handleResendCode = () => {
     if (!selectedPerson) return;
     console.log(`Resend code for ${selectedPerson.name}`);
-    // Add resend logic here
+    // Show info toast for resend
+    onShowToast(`Verification code resent to ${selectedPerson.name}`, 'success');
   };
 
   const renderVerificationItem = ({ item }) => (
     <TouchableOpacity 
       style={[
         styles.verificationCard,
-        item.status === "verified" && styles.verifiedCard
+        item.status === "verified" && styles.verifiedCard,
       ]}
       onPress={() => handleSelectPerson(item)}
       disabled={item.status === "verified"}
@@ -271,9 +271,11 @@ const RequestsVerifyTab = () => {
   return (
     <View style={styles.tabContainer}>
       <View style={styles.headerInfo}>
+        <View style={styles.headerTitle}>
         <Text style={styles.requestCount}>
           {getVerifiedCount()} of {getTotalCount()} Verified
         </Text>
+        </View>
       </View>
       
       <FlatList
@@ -294,7 +296,7 @@ const RequestsVerifyTab = () => {
             onChangeText={setEnteredCode}
             keyboardType="numeric"
           />
-          <TouchableOpacity style={styles.verifyButton} onPress={handleVerifyCode}>
+          <TouchableOpacity style={styles.verifyButton} onPress={handleVerifyCode} >
             <Text style={styles.verifyButtonText}>Verify {selectedPerson.name}</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.resendButton} onPress={handleResendCode}>
@@ -314,10 +316,31 @@ const RequestVerification = () => {
     { key: "requestsVerify", title: "Accepted" },
   ]);
 
-  const renderScene = SceneMap({
-    requests: RequestsTab,
-    requestsVerify: RequestsVerifyTab,
-  });
+  // Toast state
+  const [toastVisible, setToastVisible] = useState(false);
+  const [toastMessage, setToastMessage] = useState('');
+  const [toastType, setToastType] = useState('success');
+
+  const showToast = (message, type = 'success') => {
+    setToastMessage(message);
+    setToastType(type);
+    setToastVisible(true);
+  };
+
+  const hideToast = () => {
+    setToastVisible(false);
+  };
+
+  const renderScene = ({ route }) => {
+    switch (route.key) {
+      case 'requests':
+        return <RequestsTab />;
+      case 'requestsVerify':
+        return <RequestsVerifyTab onShowToast={showToast} />;
+      default:
+        return null;
+    }
+  };
 
   const renderTabBar = (
     props: SceneRendererProps & { navigationState: State }
@@ -371,6 +394,15 @@ const RequestVerification = () => {
         renderTabBar={renderTabBar}
         onIndexChange={onIndexChange}
         initialLayout={{ width: layout.width }}
+      />
+      
+      {/* Toast Component */}
+      <Toast
+        visible={toastVisible}
+        message={toastMessage}
+        type={toastType}
+        onHide={hideToast}
+        duration={3000}
       />
     </View>
   );
