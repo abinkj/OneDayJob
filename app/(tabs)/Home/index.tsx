@@ -7,6 +7,7 @@ import {
   TextInput,
   FlatList,
   ImageBackground,
+  Button,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { Colors } from "../../../constants/Colors";
@@ -15,6 +16,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { getCurrentLocation } from "../../../services/currentLocation";
 import CustomButton from "../../../components/CustomButton";
 import { useDispatch } from "react-redux";
+import Toast from "react-native-toast-message";
 import { logout } from "../../../redux/reducers/authReducers";
 import { logoutUser } from "../../../utilities/authentication";
 
@@ -177,6 +179,17 @@ const HomeScreen = () => {
             console.log("Logout button pressed");
             dispatch(logoutUser());
           }}
+        />
+        <Button
+          title="Show Success Toast"
+          onPress={() =>
+            Toast.show({
+              type: "success",
+              text1: "Verification Successful",
+              position: "top",
+              visibilityTime: 2000,
+            })
+          }
         />
 
         <FlatList
