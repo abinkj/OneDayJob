@@ -1,5 +1,6 @@
 import React from "react";
 import { TouchableOpacity, Text, StyleSheet } from "react-native";
+import { fontSizes } from "../themes/fonts";
 
 const CustomButton = ({ color, text, onPress }) => {
   return (
@@ -21,7 +22,7 @@ const styles = StyleSheet.create({
     minWidth: 120,
   },
   buttonText: {
-    fontSize: 14,
+    fontSize: fontSizes.size14,
     fontFamily: "bold",
     color: "white",
   },
