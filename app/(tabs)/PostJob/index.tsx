@@ -1018,6 +1018,9 @@ const handlePost = async () => {
       setBudget('200');
       setShowMenu(false);
       setIsMultipleVacancy(false);
+      setCanBeDoneRemotely(false);
+      setIsExactTime(false);
+      setIsFlexible(true);
 
     };
 

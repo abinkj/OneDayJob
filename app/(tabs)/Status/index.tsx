@@ -28,7 +28,9 @@ const MyPostTab = () => {
   const navigation = useNavigation();
   const handleNext = () => {
     console.log("Next button pressed");
-    navigation.navigate("RequestDetails");
+    //navigation.navigate("RequestDetails");
+    navigation.navigate("RequestVerification");
+
   };
   const posts = [
     {
@@ -94,7 +96,8 @@ const AppliedTab = () => {
   const navigation = useNavigation();
   const handleNext = () => {
     console.log("Next button pressed");
-    navigation.navigate("RequestDetails");
+    //navigation.navigate("RequestDetails"); this is not the correct go to reqVerification then req Detail
+    navigation.navigate("RequestVerification");
   };
   const posts = [
     {

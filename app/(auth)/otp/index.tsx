@@ -40,7 +40,12 @@ const Otp = () => {
 
       if (response.data.success) {
         const accessToken = response.data.data.tokens.accessToken;
+       //await AsyncStorage.setItem('token', accessToken);
+
         const refreshToken = response.data.data.tokens.refreshToken;
+       // await AsyncStorage.setItem('refreshToken', refreshToken);
+
+        // Get user data
         const userData = response.data.data.user;
 
         // ✅ Show success image first
