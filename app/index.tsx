@@ -4,6 +4,7 @@ import { useCallback } from "react";
 import { Provider } from "react-redux";
 import RootStackLayout from "./navigation";
 import { store } from "../redux/store";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 
 export default function Index() {
   const [fontsLoaded] = useFonts({
@@ -31,8 +32,10 @@ export default function Index() {
   //   return <Redirect href="/(auth)/" />;
   // }
   return (
-    <Provider store={store}>
-      <RootStackLayout />
-    </Provider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <Provider store={store}>
+        <RootStackLayout />
+      </Provider>
+    </GestureHandlerRootView>
   );
 }

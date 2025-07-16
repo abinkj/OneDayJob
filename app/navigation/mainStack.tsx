@@ -1,5 +1,6 @@
 import TabLayout from "@/(tabs)/_layout";
 import ChatScreen from "@/chatScreen";
+import Notification from "@/main/notification";
 import RequestDetails from "@/publicProfile/requestDetails";
 import RequestVerification from "@/requestVerification";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
@@ -19,9 +20,13 @@ const MainStack = () => {
       <Stack.Screen name="MainHome" component={TabLayout} />
       <Stack.Screen name="ChatScreen" component={ChatScreen} />
       <Stack.Screen name="RequestDetails" component={RequestDetails} />
-      <Stack.Screen name="RequestVerification" component={RequestVerification} />
+      <Stack.Screen
+        name="RequestVerification"
+        component={RequestVerification}
+      />
+      <Stack.Screen name="Notification" component={Notification} />
+      {/* Add other
       {/* <Stack.Screen name="RequestDetails" component={RequestDetails} /> */}
-
     </Stack.Navigator>
   );
 };
