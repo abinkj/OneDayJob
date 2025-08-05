@@ -19,10 +19,17 @@ import { useDispatch } from "react-redux";
 import Toast from "react-native-toast-message";
 import { logout } from "../../../redux/reducers/authReducers";
 import { logoutUser } from "../../../utilities/authentication";
+import { useNavigation } from "@react-navigation/native";
 
 const HomeScreen = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [location, setLocation] = useState(null);
+  const navigation = useNavigation();
+
+  const handleNotificationPress = () => {
+    console.log("Notification icon pressed");
+    navigation.navigate("Notification");
+  };
 
   useEffect(() => {
     (async () => {
@@ -128,7 +135,7 @@ const HomeScreen = () => {
             </Text>
           </View>
         </View>
-        <TouchableOpacity>
+        <TouchableOpacity onPress={handleNotificationPress}>
           <Ionicons
             name="notifications-outline"
             size={24}
