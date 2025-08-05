@@ -32,6 +32,7 @@ const LocationSearch: React.FC<LocationSearchProps> = ({
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [isGettingCurrentLocation, setIsGettingCurrentLocation] = useState(false);
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const [isInputFocused, setIsInputFocused] = useState(false);
 
   useEffect(() => {
     setSearchText(value);
@@ -39,7 +40,7 @@ const LocationSearch: React.FC<LocationSearchProps> = ({
 
   // Debounced search function
   const performSearch = async (query: string) => {
-    if (!query.trim()) {
+    if (!query.trim() || query.trim().length < 2) {
       setSuggestions([]);
       setShowSuggestions(false);
       return;
@@ -58,7 +59,7 @@ const LocationSearch: React.FC<LocationSearchProps> = ({
     }
   };
 
-  // Handle search text changes with debouncing
+  // Handle search text changes with improved debouncing
   const handleSearchTextChange = (text: string) => {
     setSearchText(text);
     
@@ -67,10 +68,19 @@ const LocationSearch: React.FC<LocationSearchProps> = ({
       clearTimeout(searchTimeoutRef.current);
     }
 
-    // Set new timeout for debounced search
+    // Show suggestions immediately if there's text (minimum 2 characters)
+    if (text.trim().length >= 2) {
+      setShowSuggestions(true);
+    } else {
+      setShowSuggestions(false);
+      setSuggestions([]);
+      return; // Don't search if text is too short
+    }
+
+    // Set new timeout for debounced search (reduced from 500ms to 200ms for better responsiveness)
     searchTimeoutRef.current = setTimeout(() => {
       performSearch(text);
-    }, 500);
+    }, 200);
   };
 
   // Handle current location button press
@@ -98,6 +108,7 @@ const LocationSearch: React.FC<LocationSearchProps> = ({
     setSearchText(suggestion.address || `${suggestion.city}, ${suggestion.state}`);
     onLocationSelect(suggestion);
     setShowSuggestions(false);
+    setIsInputFocused(false);
   };
 
   // Render suggestion item
@@ -105,6 +116,7 @@ const LocationSearch: React.FC<LocationSearchProps> = ({
     <TouchableOpacity
       style={styles.suggestionItem}
       onPress={() => handleSuggestionSelect(item)}
+      activeOpacity={0.7}
     >
       <Ionicons name="location-outline" size={20} color={Colors.grey} />
       <View style={styles.suggestionTextContainer}>
@@ -132,13 +144,19 @@ const LocationSearch: React.FC<LocationSearchProps> = ({
             placeholder={placeholder}
             placeholderTextColor={Colors.grey}
             onFocus={() => {
-              if (suggestions.length > 0) {
+              setIsInputFocused(true);
+              if (suggestions.length > 0 || (searchText.trim().length >= 2)) {
                 setShowSuggestions(true);
               }
             }}
             onBlur={() => {
-              // Delay hiding suggestions to allow for selection
-              setTimeout(() => setShowSuggestions(false), 200);
+              setIsInputFocused(false);
+              // Only hide suggestions after a longer delay to allow for selection
+              setTimeout(() => {
+                if (!isInputFocused) {
+                  setShowSuggestions(false);
+                }
+              }, 300);
             }}
           />
           {isLoading && (
@@ -159,15 +177,27 @@ const LocationSearch: React.FC<LocationSearchProps> = ({
         </TouchableOpacity>
       </View>
 
-      {showSuggestions && suggestions.length > 0 && (
+      {showSuggestions && (suggestions.length > 0 || isLoading) && (
         <View style={styles.suggestionsContainer}>
-          <FlatList
-            data={suggestions}
-            renderItem={renderSuggestion}
-            keyExtractor={(item, index) => `${item.coordinates.latitude}-${item.coordinates.longitude}-${index}`}
-            style={styles.suggestionsList}
-            keyboardShouldPersistTaps="handled"
-          />
+          {isLoading && suggestions.length === 0 ? (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="small" color={Colors.primary} />
+              <Text style={styles.loadingText}>Searching...</Text>
+            </View>
+          ) : suggestions.length === 0 && searchText.trim().length >= 2 ? (
+            <View style={styles.loadingContainer}>
+              <Text style={styles.loadingText}>No results found</Text>
+            </View>
+          ) : (
+            <FlatList
+              data={suggestions}
+              renderItem={renderSuggestion}
+              keyExtractor={(item, index) => `${item.coordinates.latitude}-${item.coordinates.longitude}-${index}`}
+              style={styles.suggestionsList}
+              keyboardShouldPersistTaps="handled"
+              nestedScrollEnabled={true}
+            />
+          )}
         </View>
       )}
     </View>
@@ -253,6 +283,17 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: Colors.grey,
     marginTop: 2,
+  },
+  loadingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 20,
+    gap: 10,
+  },
+  loadingText: {
+    fontSize: 14,
+    color: Colors.grey,
   },
 });
 

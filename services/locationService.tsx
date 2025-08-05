@@ -164,6 +164,12 @@ export const getPlaceDetails = async (placeId: string): Promise<LocationData | n
 export const searchPlacesFallback = async (query: string): Promise<LocationData[]> => {
   try {
     console.log("Searching for places with query:", query);
+    
+    // Don't search if query is too short
+    if (query.trim().length < 2) {
+      return [];
+    }
+    
     const results = await Location.geocodeAsync(query);
     console.log("Geocoding results:", results);
 

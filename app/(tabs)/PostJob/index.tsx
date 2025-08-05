@@ -368,6 +368,56 @@ const formatJobData = (photoUrls = []) => {
   return jobData;
 };
 
+
+const resetAllFields = () => {
+  // Reset step
+  setCurrentStep(1);
+  
+  // Reset category
+  setSelectedCategory(null);
+  setSelectedValue("mail");
+  
+  // Reset job details
+  setJobName('');
+  setJobDescription('');
+  setIsMultipleVacancy(false);
+  setVacancyCount(1);
+  setCanBeDoneRemotely(false);
+  setTaskAddress('');
+  setSelectedLocation(null);
+  
+  // Reset time preferences
+  setSelectedTimePreferences([]);
+  setDateMode('flexible');
+  setOnDate(null);
+  setBeforeDate(null);
+  setIsFlexible(true);
+  setIsExactTime(false);
+  setHour('10');
+  setMinute('30');
+  setAmPm('AM');
+  setSelectedDate(null);
+  
+  // Reset budget
+  setBudget('200');
+  
+  // Reset requirements and photos
+  setRequirements([]);
+  setPhotos([]);
+  setUploadedPhotoUrls([]);
+  
+  // Reset modals and UI states
+  setShowRequirementsModal(false);
+  setShowRequirementsList(false);
+  setShowPhotosList(false);
+  setEditingRequirements(false);
+  setCalendarVisible(false);
+  setShowMenu(false);
+  setNewRequirement('');
+  
+  console.log('All form fields have been reset');
+};
+
   // Handle job posting
 // Debug handlePost function
 const handlePost = async () => {
@@ -401,6 +451,7 @@ const handlePost = async () => {
           {
             text: 'OK',
             onPress: () => {
+              resetAllFields();
               // Navigate back or to job list
               navigation.goBack();
             }
@@ -1022,29 +1073,25 @@ const handlePost = async () => {
     };
 
     const handleRemoveJob = () => {
-      // Implement job removal logic
-      // For now, just go back to step 1
-      setCurrentStep(1);
-      setSelectedCategory(null);
-      setJobName('');
-      setJobDescription('');
-      setRequirements([]);
-      setPhotos([]);
-      setTaskAddress('');
-      setSelectedLocation(null);
-      setSelectedTimePreferences([]);
-      setSelectedDate(null);
-      setOnDate(null);
-      setBeforeDate(null);
-      setBudget('200');
-      setShowMenu(false);
-      setIsMultipleVacancy(false);
-      setCanBeDoneRemotely(false);
-      setIsExactTime(false);
-      setIsFlexible(true);
-
+      Alert.alert(
+        'Remove Job',
+        'Are you sure you want to remove this job and clear all data?',
+        [
+          {
+            text: 'Cancel',
+            style: 'cancel',
+          },
+          {
+            text: 'Remove',
+            style: 'destructive',
+            onPress: () => {
+              resetAllFields();
+              setShowMenu(false);
+            }
+          }
+        ]
+      );
     };
-
     return (
       <View style={styles.stepContainer}>
         {/* Header with back button and title */}
