@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import {
   View,
   Text,
@@ -20,6 +20,7 @@ import { Colors } from "../../../constants/Colors";
 import JobApplicationStatus from "../../../components/jobApplicationStatus";
 import ratingStars from "../../../components/ratingStars";
 import { useNavigation } from "@react-navigation/native";
+import { getUserData } from "../../../utilities/asyncStore";
 
 if (
   Platform.OS === "android" &&
@@ -38,6 +39,19 @@ interface Review {
 }
 
 const Profile: React.FC = () => {
+  const [user, setUser] = useState<object | null>(null);
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      const userData = await getUserData();
+      if (userData) {
+        setUser(userData);
+        console.log("User data fetched:", userData);
+      }
+    };
+    fetchUser();
+  }, []);
+
   const navigation = useNavigation();
   const review: Review = {
     id: "1",
@@ -62,6 +76,10 @@ const Profile: React.FC = () => {
     navigation.navigate("RequestDetails");
   };
 
+  const handleEdit = () => {
+    navigation.navigate("EditProfile", {user});
+  };
+
   const toggleDropdown = () => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     setIsDropdownVisible(!isDropdownVisible);
@@ -81,12 +99,17 @@ const Profile: React.FC = () => {
 
   return (
     <View style={styles.container}>
-      <Header title="Profile" />
+      <Header title="Profile" showEditButton onEditPress={handleEdit} />
       <ScrollView>
         {/* Profile Card */}
         <View style={styles.profileCard}>
-          <Image source={review.reviewerImage} style={styles.profileImage} />
-          <Text style={styles.name}>Darell Steward</Text>
+          <Image
+            source={user?.profilePicture || Images.profile.profileImage}
+            style={styles.profileImage}
+          />
+          <Text style={styles.name}>
+            {user?.firstName} {user?.lastName}
+          </Text>
           <View style={styles.locationContainer}>
             <Ionicons name="location-outline" size={16} color="gray" />
             <Text style={styles.locationText}>Downtown, New York</Text>

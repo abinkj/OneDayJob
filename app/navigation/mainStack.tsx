@@ -1,5 +1,6 @@
 import TabLayout from "@/(tabs)/_layout";
 import ChatScreen from "@/chatScreen";
+import EditProfile from "@/main/editProfile";
 import Notification from "@/main/notification";
 import RequestDetails from "@/publicProfile/requestDetails";
 import RequestVerification from "@/requestVerification";
@@ -25,7 +26,7 @@ const MainStack = () => {
         component={RequestVerification}
       />
       <Stack.Screen name="Notification" component={Notification} />
-      {/* Add other
+      <Stack.Screen name="EditProfile" component={EditProfile} />
       {/* <Stack.Screen name="RequestDetails" component={RequestDetails} /> */}
     </Stack.Navigator>
   );

@@ -1,31 +1,47 @@
-import { Ionicons } from "@expo/vector-icons";
+import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 import React from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { useRouter } from "expo-router";
+import { FontAwesome6 } from "@expo/vector-icons";
 
 interface HeaderProps {
   title?: string;
   showBackButton?: boolean;
+  showEditButton?: boolean;
+  onEditPress?: () => void;
 }
 
-export const Header: React.FC<HeaderProps> = ({ title, showBackButton }) => {
+export const Header: React.FC<HeaderProps> = ({
+  title,
+  showBackButton,
+  showEditButton = false,
+  onEditPress,
+}) => {
   const router = useRouter();
 
-  const handlePress = () => {
+  const handleBack = () => {
     router.back();
   };
 
   return (
     <View style={styles.container}>
       {showBackButton && (
-        <TouchableOpacity style={styles.backIcon} onPress={handlePress}>
+        <TouchableOpacity style={styles.backIcon} onPress={handleBack}>
           <Ionicons name="chevron-back" size={24} color="black" />
         </TouchableOpacity>
       )}
+
       <Text style={styles.title}>{title}</Text>
+
+      {showEditButton && (
+        <TouchableOpacity style={styles.editIcon} onPress={onEditPress}>
+          <MaterialIcons name="mode-edit" size={22} color="black" />
+        </TouchableOpacity>
+      )}
     </View>
   );
 };
+
 
 const styles = StyleSheet.create({
   container: {
@@ -34,6 +50,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     paddingHorizontal: 16,
     paddingTop: 16,
+    position: "relative",
   },
   backIcon: {
     position: "absolute",
@@ -43,8 +60,17 @@ const styles = StyleSheet.create({
     padding: 20,
     margin: -20,
   },
+  editIcon: {
+    position: "absolute",
+    right: 16,
+    top: 16,
+    zIndex: 1,
+    padding: 20,
+    margin: -20,
+  },
   title: {
     fontSize: 20,
-    fontWeight: 600,
+    fontWeight: "600",
   },
 });
+

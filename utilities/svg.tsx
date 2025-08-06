@@ -1,16 +1,18 @@
 import React from "react";
 import { SvgXml } from "react-native-svg";
-import { nextRight } from "../assets/svg/profileSvg";
+import { nextRight, edit } from "../assets/svg/profileSvg";
 
 const IMAGES = {
   //profile
   nextRight: nextRight,
+  edit: edit,
 };
 
 export type IconsType =
   | ""
   //profile
-  | "nextRight";
+  | "nextRight"
+  | "edit";
 
 type Props = {
   icon: IconsType;
