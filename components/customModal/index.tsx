@@ -2,13 +2,18 @@ import React from "react";
 import { View, Text, Modal, StyleSheet, TouchableOpacity } from "react-native";
 import { fontSizes } from "../../themes/fonts";
 
+type Button = {
+  title: string;
+  onPress: () => void;
+  style?: object;
+};
+
 type Props = {
   visible: boolean;
   onClose: () => void;
   title: string;
   description: string;
-  buttonTitle: string;
-  buttonFunction: () => void;
+  buttons: Button[];
 };
 
 const CustomModal: React.FC<Props> = ({
@@ -16,8 +21,7 @@ const CustomModal: React.FC<Props> = ({
   onClose,
   title,
   description,
-  buttonTitle,
-  buttonFunction,
+  buttons,
 }) => {
   return (
     <Modal visible={visible} transparent animationType="fade">
@@ -30,13 +34,15 @@ const CustomModal: React.FC<Props> = ({
             <TouchableOpacity onPress={onClose} style={styles.cancelButton}>
               <Text style={styles.cancelText}>Cancel</Text>
             </TouchableOpacity>
-
-            <TouchableOpacity
-              onPress={buttonFunction}
-              style={styles.removeButton}
-            >
-              <Text style={styles.removeText}>{buttonTitle}</Text>
-            </TouchableOpacity>
+            {buttons.map((btn, idx) => (
+              <TouchableOpacity
+                key={btn.title}
+                onPress={btn.onPress}
+                style={[styles.actionButton, btn.style, { marginLeft: idx === 0 ? 10 : 0 }]}
+              >
+                <Text style={styles.actionText}>{btn.title}</Text>
+              </TouchableOpacity>
+            ))}
           </View>
         </View>
       </View>
@@ -92,16 +98,16 @@ const styles = StyleSheet.create({
     color: "#000",
     fontWeight: "500",
   },
-  removeButton: {
+  actionButton: {
     flex: 1,
-    backgroundColor: "#FF6B6B",
+    backgroundColor: "#007AFF",
     paddingVertical: 10,
     borderRadius: 30,
     marginLeft: 10,
   },
-  removeText: {
+  actionText: {
     textAlign: "center",
-    color: "#000",
+    color: "#fff",
     fontWeight: "600",
   },
 });

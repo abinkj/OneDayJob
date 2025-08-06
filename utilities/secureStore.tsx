@@ -5,15 +5,9 @@ const REFRESH_TOKEN_KEY = "REFRESH_TOKEN";
 
 export const saveToken = async (accessToken: string, refreshToken?: string) => {
   try {
-    await SecureStore.setItemAsync(
-      ACCESS_TOKEN_KEY,
-      JSON.stringify(accessToken)
-    );
+    await SecureStore.setItemAsync(ACCESS_TOKEN_KEY, accessToken); // ✅ No stringify
     if (refreshToken) {
-      await SecureStore.setItemAsync(
-        REFRESH_TOKEN_KEY,
-        JSON.stringify(refreshToken)
-      );
+      await SecureStore.setItemAsync(REFRESH_TOKEN_KEY, refreshToken); // ✅ No stringify
     }
   } catch (error) {
     console.error("Failed to save tokens:", error);

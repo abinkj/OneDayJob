@@ -1,8 +1,9 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
+import { getAccessToken } from "../utilities/secureStore";
 
-const API_BASE_URL = 'http://192.168.235.252:8000/api'; //AJ ip address
-//const API_BASE_URL = 'http://192.168.1.5:8000/api'; 
+const API_BASE_URL = "http://192.168.235.252:8000/api"; //AJ ip address
+//const API_BASE_URL = 'http://192.168.1.5:8000/api';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -17,13 +18,16 @@ const api = axios.create({
 api.interceptors.request.use(
   async (config) => {
     try {
-      const token = await AsyncStorage.getItem("token");
-
+      //const token = await AsyncStorage.getItem("token");
+      const token = await getAccessToken(); // Use the secure store function
+      //console.log("accessToken in api.tsx---------------->", token);
+      //console.log('typeof token', typeof token);
       console.log("API Request:", {
         method: config.method?.toUpperCase(),
         url: config.url,
         hasToken: !!token,
-        tokenPreview: token ? token.substring(0, 20) + "..." : "No token",
+        //tokenPreview: token ? token.substring(0, 20) + "..." : "No token",
+        tokenPreview: token ? token : "No token",
       });
 
       if (token) {
@@ -246,5 +250,8 @@ export const getCurrentUser = async () => {
     return null;
   }
 };
+
+// Update user profile
+export const updateProfile = (id, data) => api.put(`/users/${id}`, data);
 
 export default api;

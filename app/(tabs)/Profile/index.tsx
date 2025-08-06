@@ -9,6 +9,8 @@ import {
   LayoutAnimation,
   Platform,
   UIManager,
+  Alert,
+  ActivityIndicator,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import styles from "./styles";
@@ -21,6 +23,7 @@ import JobApplicationStatus from "../../../components/jobApplicationStatus";
 import ratingStars from "../../../components/ratingStars";
 import { useNavigation } from "@react-navigation/native";
 import { getUserData } from "../../../utilities/asyncStore";
+import { User, Review, ProfileScreenProps } from "../../../types";
 
 if (
   Platform.OS === "android" &&
@@ -29,30 +32,30 @@ if (
   UIManager.setLayoutAnimationEnabledExperimental(true);
 }
 
-interface Review {
-  id: string;
-  reviewerName: string;
-  reviewerImage: string;
-  date: string;
-  rating: number;
-  comment: string;
-}
-
 const Profile: React.FC = () => {
-  const [user, setUser] = useState<object | null>(null);
+  const [user, setUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const fetchUser = async () => {
-      const userData = await getUserData();
-      if (userData) {
-        setUser(userData);
-        console.log("User data fetched:", userData);
+      try {
+        setIsLoading(true);
+        const userData = await getUserData();
+        if (userData) {
+          setUser(userData);
+          console.log("User data fetched:", userData);
+        }
+      } catch (error) {
+        console.error("Error fetching user data:", error);
+        Alert.alert("Error", "Failed to load profile data");
+      } finally {
+        setIsLoading(false);
       }
     };
     fetchUser();
   }, []);
 
-  const navigation = useNavigation();
+  const navigation = useNavigation<any>();
   const review: Review = {
     id: "1",
     reviewerName: "Jane Cooper",
@@ -77,8 +80,31 @@ const Profile: React.FC = () => {
   };
 
   const handleEdit = () => {
-    navigation.navigate("EditProfile", {user});
+    if (user) {
+      navigation.navigate("EditProfile", { user });
+    } else {
+      Alert.alert("Error", "User data not available");
+    }
   };
+
+  // Refresh user data when returning from edit profile
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('focus', () => {
+      const fetchUser = async () => {
+        try {
+          const userData = await getUserData();
+          if (userData) {
+            setUser(userData);
+          }
+        } catch (error) {
+          console.error("Error refreshing user data:", error);
+        }
+      };
+      fetchUser();
+    });
+
+    return unsubscribe;
+  }, [navigation]);
 
   const toggleDropdown = () => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
@@ -212,7 +238,7 @@ const Profile: React.FC = () => {
             <CustomButton
               onPress={undefined}
               text={"See all 12 reviews"}
-              color={Colors.backgroundGrey}
+              color={Colors.background}
             />
           </View>
         )}

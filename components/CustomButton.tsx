@@ -2,11 +2,30 @@ import React from "react";
 import { TouchableOpacity, Text, StyleSheet } from "react-native";
 import { fontSizes } from "../themes/fonts";
 
-const CustomButton = ({ color, text, onPress }) => {
+interface CustomButtonProps {
+  color: string;
+  text: string;
+  onPress: () => void;
+  disabled?: boolean;
+}
+
+const CustomButton: React.FC<CustomButtonProps> = ({ 
+  color, 
+  text, 
+  onPress, 
+  disabled = false 
+}) => {
   return (
     <TouchableOpacity
       onPress={onPress}
-      style={[styles.button, { backgroundColor: color }]}
+      disabled={disabled}
+      style={[
+        styles.button, 
+        { 
+          backgroundColor: disabled ? '#ccc' : color,
+          opacity: disabled ? 0.6 : 1
+        }
+      ]}
     >
       <Text style={styles.buttonText}>{text}</Text>
     </TouchableOpacity>

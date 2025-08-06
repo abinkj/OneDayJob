@@ -47,6 +47,7 @@ const Otp = () => {
 
         // Get user data
         const userData = response.data.data.user;
+        console.log("User data from OTP verification:", userData);
 
         // ✅ Show success image first
         setIsOtpSuccess(true);
