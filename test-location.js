@@ -1,111 +1,81 @@
-// Simple test script for location service
-// This can be run with Node.js to test the location service logic
+// Test file to verify location and authentication
+const axios = require('axios');
 
-const testLocationData = {
-  address: "123 Main St",
-  city: "New York",
-  state: "NY",
-  country: "United States",
-  zipCode: "10001",
-  coordinates: {
-    latitude: 40.7128,
-    longitude: -74.0060
+const API_BASE_URL = 'http://192.168.0.125:8000/api';
+
+// Test authentication
+async function testAuth() {
+  try {
+    console.log('Testing authentication...');
+    const response = await axios.get(`${API_BASE_URL}/jobs`);
+    console.log('Auth test successful:', response.status);
+    return true;
+  } catch (error) {
+    console.log('Auth test failed:', error.response?.status);
+    return false;
   }
-};
+}
 
-// Test the transformation logic that would happen in api.tsx
-function testLocationTransformation(locationData) {
-  console.log("Testing location transformation...");
-  console.log("Original location data:", JSON.stringify(locationData, null, 2));
-  
-  if (locationData && locationData.coordinates) {
-    console.log("Location coordinates:", locationData.coordinates);
-    
-    // Validate coordinates exist
-    if (!locationData.coordinates.latitude || !locationData.coordinates.longitude) {
-      console.error("Missing latitude or longitude in location coordinates");
-      throw new Error("Invalid location coordinates: missing latitude or longitude");
-    }
-
-    // Only include non-empty fields to avoid validation errors
-    const transformedLocation = {
-      coordinates: {
-        latitude: locationData.coordinates.latitude,
-        longitude: locationData.coordinates.longitude
+// Test location update
+async function testLocationUpdate() {
+  try {
+    console.log('Testing location update...');
+    const locationData = {
+      location: {
+        coordinates: {
+          type: "Point",
+          coordinates: [76.377494, 10.0000325] // [lng, lat]
+        },
+        address: "Infopark Road",
+        city: "Kakkanad",
+        state: "Kerala",
+        country: "India",
+        zipCode: "682303"
       }
     };
-
-    // Only add address fields if they have content
-    if (locationData.address && locationData.address.trim()) {
-      transformedLocation.address = locationData.address.trim();
-    }
-    if (locationData.city && locationData.city.trim()) {
-      transformedLocation.city = locationData.city.trim();
-    }
-    if (locationData.state && locationData.state.trim()) {
-      transformedLocation.state = locationData.state.trim();
-    }
-    if (locationData.country && locationData.country.trim()) {
-      transformedLocation.country = locationData.country.trim();
-    }
-    if (locationData.zipCode && locationData.zipCode.trim()) {
-      transformedLocation.zipCode = locationData.zipCode.trim();
-    }
     
-    console.log("Transformed location data:", JSON.stringify(transformedLocation, null, 2));
-    return transformedLocation;
-  } else {
-    console.warn("No location data or coordinates found");
-    return null;
+    console.log('Location payload:', JSON.stringify(locationData, null, 2));
+    
+    // Note: This will fail without authentication, but we can see the format
+    const response = await axios.put(`${API_BASE_URL}/users/update-user-location`, locationData);
+    console.log('Location update successful:', response.status);
+    return true;
+  } catch (error) {
+    console.log('Location update failed:', error.response?.status);
+    console.log('Error details:', error.response?.data);
+    return false;
   }
 }
 
-console.log("Starting location transformation tests...\n");
-
-// Test the transformation
-try {
-  console.log("Testing valid location data...");
-  const result = testLocationTransformation(testLocationData);
-  console.log("✅ Location transformation test passed!");
-  console.log("Result:", JSON.stringify(result, null, 2));
-} catch (error) {
-  console.error("❌ Location transformation test failed:", error.message);
+// Test nearby jobs
+async function testNearbyJobs() {
+  try {
+    console.log('Testing nearby jobs...');
+    const response = await axios.get(`${API_BASE_URL}/jobs/nearby-jobs?radius=10`);
+    console.log('Nearby jobs successful:', response.status);
+    console.log('Jobs found:', response.data?.data?.length || 0);
+    return true;
+  } catch (error) {
+    console.log('Nearby jobs failed:', error.response?.status);
+    console.log('Error details:', error.response?.data);
+    return false;
+  }
 }
 
-// Test with missing coordinates
-console.log("\n--- Testing with missing coordinates ---");
-try {
-  const invalidData = {
-    address: "123 Main St",
-    city: "New York",
-    state: "NY",
-    country: "United States",
-    zipCode: "10001",
-    coordinates: {
-      latitude: null,
-      longitude: -74.0060
-    }
-  };
-  const result = testLocationTransformation(invalidData);
-  console.log("❌ Should have failed but didn't");
-} catch (error) {
-  console.log("✅ Correctly caught missing coordinates error:", error.message);
+// Run tests
+async function runTests() {
+  console.log('=== Starting Tests ===');
+  
+  const authResult = await testAuth();
+  console.log('Auth result:', authResult);
+  
+  const locationResult = await testLocationUpdate();
+  console.log('Location update result:', locationResult);
+  
+  const nearbyResult = await testNearbyJobs();
+  console.log('Nearby jobs result:', nearbyResult);
+  
+  console.log('=== Tests Complete ===');
 }
 
-// Test with no coordinates object
-console.log("\n--- Testing with no coordinates object ---");
-try {
-  const noCoordsData = {
-    address: "123 Main St",
-    city: "New York",
-    state: "NY",
-    country: "United States",
-    zipCode: "10001"
-  };
-  const result = testLocationTransformation(noCoordsData);
-  console.log("✅ Correctly handled missing coordinates object");
-} catch (error) {
-  console.log("❌ Unexpected error:", error.message);
-}
-
-console.log("\n--- All tests completed ---"); 
+runTests().catch(console.error); 

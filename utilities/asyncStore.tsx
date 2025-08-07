@@ -1,6 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const USER_DATA_KEY = 'USER_DATA';
+const USER_DATA_KEY = 'user';
 
 export const saveUserData = async (userData: object) => {
   try {

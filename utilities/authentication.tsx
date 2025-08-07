@@ -31,12 +31,15 @@ export const restoreSession = () => async (dispatch) => {
   try {
     const user = await getUserData();
     if (user) {
-      console.log("Restoring session for user:", user);
+      console.log("Restoring session for user:", { 
+        id: user.id, 
+        phone: user.phoneNumber || user.phone,
+        role: user.role 
+      });
       dispatch(login(user));
       return user;
     } else {
       console.log("No user data found, session not restored.");
-      console.log(user, "user data");
     }
     return null;
   } catch (error) {
