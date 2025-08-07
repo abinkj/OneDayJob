@@ -308,18 +308,6 @@ export const verifyOtp = (data) => api.post("/auth/otp/verify", data);
 export const test = () => api.get("/auth/test");
 export const protectedRoute = () => api.get("/auth/protected");
 
-// // Job posting endpoints
-// export const getJobPostings = async () => {
-//   try {
-//     const response = await api.get("/jobs");
-//     console.log("All jobs fetched successfully:", response.data?.data?.length || response.data?.length || 0, "jobs");
-//     // Handle both response structures: { success: true, data: [...] } and direct array
-//     return response;
-//   } catch (error) {
-//     console.error("Error fetching all jobs:", error);
-//     throw error;
-//   }
-// };
 
 export const getJobPosting = (id) => api.get(`/jobs/${id}`);
 export const updateJobPosting = (id, data) => api.put(`/jobs/${id}`, data);
