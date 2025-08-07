@@ -6,7 +6,6 @@ export interface User {
   phone?: string;
   profilePicture?: string | { uri: string };
   location?: string;
-  bio?: string;
   rating?: number;
   completionRate?: number;
   totalJobs?: number;

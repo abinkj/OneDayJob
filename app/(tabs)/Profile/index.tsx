@@ -23,7 +23,7 @@ import JobApplicationStatus from "../../../components/jobApplicationStatus";
 import ratingStars from "../../../components/ratingStars";
 import { useNavigation } from "@react-navigation/native";
 import { getUserData } from "../../../utilities/asyncStore";
-import { User, Review, ProfileScreenProps } from "../../../types";
+import { User, Review } from "../../../types";
 
 if (
   Platform.OS === "android" &&
@@ -35,27 +35,13 @@ if (
 const Profile: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        setIsLoading(true);
-        const userData = await getUserData();
-        if (userData) {
-          setUser(userData);
-          console.log("User data fetched:", userData);
-        }
-      } catch (error) {
-        console.error("Error fetching user data:", error);
-        Alert.alert("Error", "Failed to load profile data");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    fetchUser();
-  }, []);
+  const [isReadyToWork, setIsReadyToWork] = useState(false);
+  const [isDropdownVisible, setIsDropdownVisible] = useState(false);
+  const dropdownHeight = useRef(new Animated.Value(0)).current;
+  const experiencedHeight = 206 * DeviceDimensions.heightRatio;
 
   const navigation = useNavigation<any>();
+
   const review: Review = {
     id: "1",
     reviewerName: "Jane Cooper",
@@ -66,16 +52,36 @@ const Profile: React.FC = () => {
       "Darell was very professional and punctual. He handled my furniture with care and completed the task efficiently. Highly recommended!",
   };
 
-  const [isReadyToWork, setIsReadyToWork] = useState(false);
-  const [isDropdownVisible, setIsDropdownVisible] = useState(false);
-  const dropdownHeight = useRef(new Animated.Value(0)).current;
-  const experiencedHeight = 206 * DeviceDimensions.heightRatio;
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        setIsLoading(true);
+        const userData = await getUserData();
+        if (userData) {
+          setUser(userData);
+        }
+      } catch (error) {
+        console.error("Error fetching user data:", error);
+        Alert.alert("Error", "Failed to load profile data");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchUser();
+  }, []);
+
+  // Refresh user data when returning from edit profile
+  useEffect(() => {
+    const unsubscribe = navigation.addListener("focus", async () => {
+      const userData = await getUserData();
+      if (userData) setUser(userData);
+    });
+
+    return unsubscribe;
+  }, [navigation]);
 
   const handleNext = () => {
-    // router.push({
-    //   pathname: "../../publicProfile/requestDetails",
-    //   params: { review: JSON.stringify(review) },
-    // });
     navigation.navigate("RequestDetails");
   };
 
@@ -87,41 +93,34 @@ const Profile: React.FC = () => {
     }
   };
 
-  // Refresh user data when returning from edit profile
-  useEffect(() => {
-    const unsubscribe = navigation.addListener('focus', () => {
-      const fetchUser = async () => {
-        try {
-          const userData = await getUserData();
-          if (userData) {
-            setUser(userData);
-          }
-        } catch (error) {
-          console.error("Error refreshing user data:", error);
-        }
-      };
-      fetchUser();
-    });
-
-    return unsubscribe;
-  }, [navigation]);
-
   const toggleDropdown = () => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     setIsDropdownVisible(!isDropdownVisible);
 
     Animated.timing(dropdownHeight, {
-      toValue: isDropdownVisible ? 0 : 1, // Using 0-1 range for interpolation
+      toValue: isDropdownVisible ? 0 : 1,
       duration: 300,
       useNativeDriver: false,
     }).start();
   };
 
-  // Interpolate height for smooth animation
   const heightInterpolation = dropdownHeight.interpolate({
     inputRange: [0, 1],
-    outputRange: [0, experiencedHeight], // Adjust this based on your content height
+    outputRange: [0, experiencedHeight],
   });
+
+  if (isLoading) {
+    return (
+      <View style={[styles.container, { justifyContent: "center", alignItems: "center" }]}>
+        <ActivityIndicator size="large" color={Colors.primary} />
+      </View>
+    );
+  }
+
+  const profileImageSrc =
+    typeof user?.profilePicture === "string"
+      ? { uri: user.profilePicture }
+      : user?.profilePicture || Images.profile.profileImage;
 
   return (
     <View style={styles.container}>
@@ -129,30 +128,26 @@ const Profile: React.FC = () => {
       <ScrollView>
         {/* Profile Card */}
         <View style={styles.profileCard}>
-          <Image
-            source={user?.profilePicture || Images.profile.profileImage}
-            style={styles.profileImage}
-          />
-          <Text style={styles.name}>
-            {user?.firstName} {user?.lastName}
-          </Text>
+          <Image source={profileImageSrc} style={styles.profileImage} />
+          <Text style={styles.name}>{user?.firstName} {user?.lastName}</Text>
+
           <View style={styles.locationContainer}>
             <Ionicons name="location-outline" size={16} color="gray" />
-            <Text style={styles.locationText}>Downtown, New York</Text>
+            <Text style={styles.locationText}>{user?.location || "Not specified"}</Text>
           </View>
 
           {/* Stats */}
           <View style={styles.statsContainer}>
             <View style={styles.statBox}>
               <Text style={styles.statLabel}>RATING</Text>
-              <Text style={styles.statNumber}>4.8</Text>
-              <Text style={styles.statSubLabel}>12 Reviews</Text>
+              <Text style={styles.statNumber}>{user?.rating?.toFixed(1) || "0.0"}</Text>
+              <Text style={styles.statSubLabel}>{user?.totalReviews || 0} Reviews</Text>
             </View>
             <View style={styles.separator} />
             <View style={styles.statBox}>
               <Text style={styles.statLabel}>COMPLETION RATE</Text>
               <View style={styles.completionRateContainer}>
-                <Text style={styles.statNumber}>80%</Text>
+                <Text style={styles.statNumber}>{user?.completionRate || 0}%</Text>
                 <Ionicons
                   name="information-circle-outline"
                   size={16}
@@ -160,7 +155,7 @@ const Profile: React.FC = () => {
                   style={styles.infoIcon}
                 />
               </View>
-              <Text style={styles.statSubLabel}>281 Jobs Completed</Text>
+              <Text style={styles.statSubLabel}>{user?.totalJobs || 0} Jobs Completed</Text>
             </View>
           </View>
         </View>
@@ -185,7 +180,7 @@ const Profile: React.FC = () => {
               styles.dropdownContent,
               {
                 height: heightInterpolation,
-                opacity: dropdownHeight, // Fade effect
+                opacity: dropdownHeight,
               },
             ]}
           >
@@ -198,11 +193,9 @@ const Profile: React.FC = () => {
                   • Can disassemble & reassemble furniture if needed
                 </Text>
                 <Text style={styles.dropdownDetail}>
-                  • Furniture moving, loading & unloading, safe lifting
-                  techniques
+                  • Furniture moving, loading & unloading, safe lifting techniques
                 </Text>
 
-                {/* Placeholder Image Row */}
                 <ScrollView
                   horizontal
                   style={styles.imageRow}
@@ -222,7 +215,7 @@ const Profile: React.FC = () => {
         <View style={styles.reviewContainer}>
           <View style={styles.reviewerInfo}>
             <Image
-              source={Images.profile.profileImage}
+              source={review.reviewerImage}
               style={styles.reviewerImage}
             />
             <View style={styles.reviewerNameContainer}>
@@ -233,20 +226,22 @@ const Profile: React.FC = () => {
           </View>
           <Text style={styles.reviewText}>{review.comment}</Text>
         </View>
+
         {!isReadyToWork && (
           <View style={styles.buttonContainer}>
             <CustomButton
-              onPress={undefined}
-              text={"See all 12 reviews"}
-              color={Colors.background}
+              onPress={() => {}}
+              text={"See all reviews"}
+              color={Colors.backgroundGrey}
             />
           </View>
         )}
       </ScrollView>
+
       {isReadyToWork && (
         <View style={styles.fixedBottomContainer}>
           <JobApplicationStatus
-            name="Darell"
+            name={`${user?.firstName}`}
             appliedDate="Mar 31, 2025.2:00 pm"
             onPress={handleNext}
           />

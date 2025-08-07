@@ -11,12 +11,15 @@ import { Calendar } from 'react-native-calendars';
 import { styles } from './styles';
 import CustomSwitch from '../../../components/CustomSwich';
 import JobDescriptionSection from '../../../components/JobDescription';
+import LocationSearch from '../../../components/LocationSearch';
 import {
   createJobPosting,
   getCategories,
   // uploadJobPhotos 
 } from '../../../services/api'; // Adjust the path according to your project structure
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { LocationData } from '../../../services/locationService';
+import { testLocationService } from '../../../services/locationService';
 
 // Default Job Categories (fallback if API fails)
 const defaultJobCategories = [
@@ -51,6 +54,7 @@ const PostJobScreen = ({ navigation }) => {
   const [vacancyCount, setVacancyCount] = useState(1);
   const [canBeDoneRemotely, setCanBeDoneRemotely] = useState(false);
   const [taskAddress, setTaskAddress] = useState('');
+  const [selectedLocation, setSelectedLocation] = useState<LocationData | null>(null);
   const [selectedTimePreferences, setSelectedTimePreferences] = useState([]); // Changed to array
   const [budget, setBudget] = useState('200');
 
@@ -89,6 +93,10 @@ const PostJobScreen = ({ navigation }) => {
   // Load categories on component mount
   useEffect(() => {
     loadCategories();
+    // Test location service
+    testLocationService().then(result => {
+      console.log("Location service test result:", result);
+    });
   }, []);
   useEffect(() => {
     const fetchUser = async () => {
@@ -187,10 +195,11 @@ if (response.data && Array.isArray(response.data.data) && response.data.data.len
   // Format exact time to HH:MM format for backend
   const getSelectedTime = () => {
     const date = new Date();
-    let h = amPm === 'PM' && hour !== 12 ? hour + 12 : hour;
-    if (amPm === 'AM' && hour === 12) h = 0;
+    let h = parseInt(hour);
+    if (amPm === 'PM' && h !== 12) h += 12;
+    if (amPm === 'AM' && h === 12) h = 0;
     date.setHours(h);
-    date.setMinutes(minute);
+    date.setMinutes(parseInt(minute));
     return date;
   };
 
@@ -254,8 +263,8 @@ if (response.data && Array.isArray(response.data.data) && response.data.data.len
       errors.push('Job description must be at least 25 characters long');
     }
 
-    if (!canBeDoneRemotely && !taskAddress) {
-      errors.push('Please provide a task address for onsite jobs');
+    if (!canBeDoneRemotely && !selectedLocation) {
+      errors.push('Please provide a location for onsite jobs');
     }
 
     if (!budget || parseFloat(budget) <= 0) {
@@ -313,7 +322,7 @@ const formatJobData = (photoUrls = []) => {
   console.log("Selected category:", selectedCategory);
   console.log("Backend category ID from mapping:", backendCategoryId);
 
-  const jobData = {
+  const jobData: any = {
     userId: user.id,
     category: backendCategoryId, // Use the mapped backend ID
     name: jobName,
@@ -321,7 +330,7 @@ const formatJobData = (photoUrls = []) => {
     isMultiVacancy: isMultipleVacancy,
     participantsNumber: isMultipleVacancy ? vacancyCount : 1,
     isRemote: canBeDoneRemotely,
-    address: canBeDoneRemotely ? '' : taskAddress,
+    address: canBeDoneRemotely ? '' : (selectedLocation?.address || taskAddress),
     requirements: requirements,
     photos: photoUrls,
     timePreference: selectedTimePreferences, // Send as array
@@ -330,6 +339,14 @@ const formatJobData = (photoUrls = []) => {
     createdAt: currentDate,
     updatedAt: currentDate
   };
+
+  // Add location data if available and not remote
+  if (!canBeDoneRemotely && selectedLocation) {
+    console.log("Adding location to job data:", JSON.stringify(selectedLocation, null, 2));
+    jobData.location = selectedLocation;
+  } else {
+    console.log("No location data added - remote:", canBeDoneRemotely, "selectedLocation:", !!selectedLocation);
+  }
 
   // Handle date/time based on mode
   if (dateMode === 'onDate' && onDate) {
@@ -349,6 +366,56 @@ const formatJobData = (photoUrls = []) => {
   }
   
   return jobData;
+};
+
+
+const resetAllFields = () => {
+  // Reset step
+  setCurrentStep(1);
+  
+  // Reset category
+  setSelectedCategory(null);
+  setSelectedValue("mail");
+  
+  // Reset job details
+  setJobName('');
+  setJobDescription('');
+  setIsMultipleVacancy(false);
+  setVacancyCount(1);
+  setCanBeDoneRemotely(false);
+  setTaskAddress('');
+  setSelectedLocation(null);
+  
+  // Reset time preferences
+  setSelectedTimePreferences([]);
+  setDateMode('flexible');
+  setOnDate(null);
+  setBeforeDate(null);
+  setIsFlexible(true);
+  setIsExactTime(false);
+  setHour('10');
+  setMinute('30');
+  setAmPm('AM');
+  setSelectedDate(null);
+  
+  // Reset budget
+  setBudget('200');
+  
+  // Reset requirements and photos
+  setRequirements([]);
+  setPhotos([]);
+  setUploadedPhotoUrls([]);
+  
+  // Reset modals and UI states
+  setShowRequirementsModal(false);
+  setShowRequirementsList(false);
+  setShowPhotosList(false);
+  setEditingRequirements(false);
+  setCalendarVisible(false);
+  setShowMenu(false);
+  setNewRequirement('');
+  
+  console.log('All form fields have been reset');
 };
 
   // Handle job posting
@@ -384,6 +451,7 @@ const handlePost = async () => {
           {
             text: 'OK',
             onPress: () => {
+              resetAllFields();
               // Navigate back or to job list
               navigation.goBack();
             }
@@ -466,8 +534,8 @@ const handlePost = async () => {
         Alert.alert('Required', 'Job description must be at least 25 characters long');
         return;
       }
-      if (!canBeDoneRemotely && !taskAddress) {
-        Alert.alert('Required', 'Please provide a task address for onsite jobs');
+      if (!canBeDoneRemotely && !selectedLocation) {
+        Alert.alert('Required', 'Please provide a location for onsite jobs');
         return;
       }
     }
@@ -720,20 +788,20 @@ const handlePost = async () => {
       </View>
       {!canBeDoneRemotely && (
         <View>
-          <Text style={styles.sectionTitle2}>Add Task Address</Text>
-          <View style={styles.addressContainer}>
-            <Ionicons name="location-outline" size={20} color={Colors.grey} />
-            <TextInput
-              style={styles.addressInput}
-              value={taskAddress}
-              onChangeText={setTaskAddress}
-              placeholder="Address"
-              placeholderTextColor={Colors.grey}
-            />
-          </View>
+          <Text style={styles.sectionTitle2}>Add Task Location</Text>
+          <LocationSearch
+            value={selectedLocation?.address || taskAddress}
+            onLocationSelect={(location) => {
+              console.log("Location selected:", JSON.stringify(location, null, 2));
+              setSelectedLocation(location);
+              setTaskAddress(location.address || `${location.city}, ${location.state}`);
+            }}
+            placeholder="Search for a location..."
+            style={{ marginBottom: 10 }}
+          />
           <View style={styles.address2}>
             <Text style={styles.addressHelperText}>
-              Exact task address is not shown publicly until a task is assigned
+              Exact task location is not shown publicly until a task is assigned
             </Text>
           </View>
         </View>
@@ -955,7 +1023,8 @@ const handlePost = async () => {
       return category ? category.name : selectedValue;
     };
     const getTimePreferenceName = () => {
-      const timeSlot = timeSlots.find(slot => slot.id === selectedTimePreferences);
+      if (selectedTimePreferences.length === 0) return 'Flexible';
+      const timeSlot = timeSlots.find(slot => slot.id === selectedTimePreferences[0]);
       return timeSlot ? timeSlot.name : 'Flexible';
     };
 
@@ -967,7 +1036,7 @@ const handlePost = async () => {
       if (isExactTime) {
         result += ` ${hour}:${String(minute).padStart(2, '0')} ${amPm}`;
       } else if (selectedTimePreferences) {
-        const timeSlot = timeSlots.find(slot => slot.id === selectedTimePreferences);
+        const timeSlot = timeSlots.find(slot => slot.id === selectedTimePreferences[0]);
         if (timeSlot) {
           result += ` (${timeSlot.time})`;
         }
@@ -994,6 +1063,8 @@ const handlePost = async () => {
       // Reset certain fields but keep others
       setJobName('');
       setJobDescription('');
+      setSelectedLocation(null);
+      setTaskAddress('');
       setSelectedDate(null);
       setOnDate(null);
       setBeforeDate(null);
@@ -1002,28 +1073,25 @@ const handlePost = async () => {
     };
 
     const handleRemoveJob = () => {
-      // Implement job removal logic
-      // For now, just go back to step 1
-      setCurrentStep(1);
-      setSelectedCategory(null);
-      setJobName('');
-      setJobDescription('');
-      setRequirements([]);
-      setPhotos([]);
-      setTaskAddress('');
-      setSelectedTimePreferences([]);
-      setSelectedDate(null);
-      setOnDate(null);
-      setBeforeDate(null);
-      setBudget('200');
-      setShowMenu(false);
-      setIsMultipleVacancy(false);
-      setCanBeDoneRemotely(false);
-      setIsExactTime(false);
-      setIsFlexible(true);
-
+      Alert.alert(
+        'Remove Job',
+        'Are you sure you want to remove this job and clear all data?',
+        [
+          {
+            text: 'Cancel',
+            style: 'cancel',
+          },
+          {
+            text: 'Remove',
+            style: 'destructive',
+            onPress: () => {
+              resetAllFields();
+              setShowMenu(false);
+            }
+          }
+        ]
+      );
     };
-
     return (
       <View style={styles.stepContainer}>
         {/* Header with back button and title */}
@@ -1119,7 +1187,12 @@ const handlePost = async () => {
 
           <View style={styles.detailRow}>
             <Text style={styles.detailLabel}>LOCATION</Text>
-            <Text style={styles.detailValue}>{taskAddress || 'Downtown, New York'}</Text>
+            <Text style={styles.detailValue}>
+              {selectedLocation 
+                ? (selectedLocation.address || `${selectedLocation.city}, ${selectedLocation.state}`)
+                : (taskAddress || 'Downtown, New York')
+              }
+            </Text>
           </View>
 
           <View style={styles.detailRow}>

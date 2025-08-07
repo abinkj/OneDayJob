@@ -6,9 +6,7 @@ import {
   TouchableOpacity,
   ScrollView,
   StyleSheet,
-  TextInput,
   Alert,
-
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation, useRoute } from "@react-navigation/native";
@@ -20,46 +18,40 @@ import Images from "../../../utilities/images";
 import { Header } from "../../../components/header";
 import DeviceDimensions from "../../../constants/DeviceDimenions";
 import LabeledInput from "../../../components/labeledTextInput";
-import { User, EditProfileScreenProps } from "../../../types";
+import { User } from "../../../types";
 import { saveUserData } from "../../../utilities/asyncStore";
-import { updateProfile } from '../../../services/api';
-import CustomModal from '../../../components/customModal';
-import { getAccessToken } from "../../../utilities/secureStore";
+import { updateProfile } from "../../../services/api";
+import CustomModal from "../../../components/customModal";
 
 const EditProfile: React.FC = () => {
   const navigation = useNavigation<any>();
   const route = useRoute();
   const { user: initialUser } = (route.params as { user: User }) || {};
-  
+
   const [user, setUser] = useState<User | null>(null);
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [location, setLocation] = useState("");
-  const [profileImage, setProfileImage] = useState<string | { uri: string }>(Images.profile.profileImage);
-  const [isLoading, setIsLoading] = useState(false);
+  const [profileImage, setProfileImage] = useState<string | { uri: string }>(
+    Images.profile.profileImage
+  );
   const [isSaving, setIsSaving] = useState(false);
   const [imageModalVisible, setImageModalVisible] = useState(false);
 
   useEffect(() => {
-    if (initialUser) {
-      setUser(initialUser);
-      setFirstName(initialUser.firstName || "");
-      setLastName(initialUser.lastName || "");
-      setLocation(initialUser.location || "");
-      setProfileImage(initialUser.profilePicture || Images.profile.profileImage);
-    } else {
-      // Create a new user object if none exists
-      const newUser: User = {
-        firstName: "",
-        lastName: "",
-        email: "",
-        profilePicture: Images.profile.profileImage,
-      };
-      setUser(newUser);
-    }
-    console.log("Initial user data:", initialUser);
-    console.log("User state after initialization:", initialUser?._id);
-  }, [initialUser]);
+    const init = initialUser || {
+      firstName: "",
+      lastName: "",
+      email: "",
+      profilePicture: Images.profile.profileImage,
+    };
+
+    setUser(init);
+    setFirstName(init.firstName || "");
+    setLastName(init.lastName || "");
+    setLocation(init.location || "");
+    setProfileImage(init.profilePicture || Images.profile.profileImage);
+  }, []);
 
   const pickImage = () => {
     setImageModalVisible(true);
@@ -78,7 +70,6 @@ const EditProfile: React.FC = () => {
         setProfileImage({ uri: result.assets[0].uri });
       }
     } catch (error) {
-      console.error("Error taking photo:", error);
       Alert.alert("Error", "Failed to take photo");
     }
   };
@@ -87,19 +78,17 @@ const EditProfile: React.FC = () => {
     setImageModalVisible(false);
     try {
       const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ['images'],
+        mediaTypes: ["images"],
         allowsMultipleSelection: false,
         selectionLimit: 1,
         allowsEditing: true,
         aspect: [1, 1],
         base64: false,
-        quality: 0.8,
       });
       if (!result.canceled && result.assets[0]) {
         setProfileImage({ uri: result.assets[0].uri });
       }
     } catch (error) {
-      console.error("Error picking image:", error);
       Alert.alert("Error", "Failed to pick image");
     }
   };
@@ -117,42 +106,44 @@ const EditProfile: React.FC = () => {
   };
 
   const handleSave = async () => {
-    if (!validateForm()) return;
+    if (!validateForm() || !user?._id) return;
 
-    if (!user?._id) {
-      Alert.alert("Error", "User ID is missing. Cannot update profile.");
-      setIsSaving(false);
+    const hasChanges =
+      user.firstName !== firstName.trim() ||
+      user.lastName !== lastName.trim() ||
+      user.location !== location.trim() ||
+      user.profilePicture !== profileImage;
+
+    if (!hasChanges) {
+      Alert.alert("No Changes", "You haven't made any changes.");
       return;
     }
 
     try {
       setIsSaving(true);
+
       const updatedUser: User = {
         ...user,
-        _id: user._id, // Use MongoDB _id format
         firstName: firstName.trim(),
         lastName: lastName.trim(),
         location: location.trim(),
-        profilePicture: profileImage,
-        createdAt: user?.createdAt || new Date().toISOString(),
+        profilePicture: profileImage?.uri,
         updatedAt: new Date().toISOString(),
       };
-      console.log("Updated user data--------------------->", updatedUser);
-      // 1. Update profile on API (with user ID)
-      const response = await updateProfile(updatedUser._id, updatedUser);
-      if (response.status === 200 || response.status === 201) {
-        // 2. Update AsyncStorage with the new data
-        await saveUserData(response.data);
-        setUser(response.data);
+
+      const { data, status } = await updateProfile(user._id, updatedUser);
+      console.log("Profile update response------------------------->", data);
+      if (status >= 200 && status < 300 && data) {
+        await saveUserData(data.data);
+        setUser(data);
         Alert.alert("Success", "Profile updated successfully", [
-          { text: "OK", onPress: () => navigation.goBack() }
+          { text: "OK", onPress: () => navigation.goBack() },
         ]);
       } else {
-        throw new Error(response.data?.message || 'Failed to update profile');
+        throw new Error("Unexpected response from server.");
       }
     } catch (error: any) {
-      console.error("Error saving profile:", error);
-      Alert.alert("Error", error?.response?.data?.message || error.message || "Failed to save profile changes");
+      Alert.alert("Error", error?.response?.data?.message || "Failed to save profile changes");
     } finally {
       setIsSaving(false);
     }
@@ -161,26 +152,30 @@ const EditProfile: React.FC = () => {
   return (
     <View style={styles.container}>
       <Header title="Edit Profile" showBackButton />
-
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {/* Profile Image */}
         <View style={styles.imageWrapper}>
-          <Image 
-            source={typeof profileImage === 'string' ? { uri: profileImage } : profileImage} 
-            style={styles.profileImage} 
+          <Image
+            source={
+              typeof profileImage === "string"
+                ? { uri: profileImage }
+                : profileImage || Images.profile.profileImage
+            }
+            style={styles.profileImage}
           />
           <TouchableOpacity onPress={pickImage} style={styles.editIcon}>
             <Ionicons name="camera" size={16} color="#fff" />
           </TouchableOpacity>
         </View>
+
         <CustomModal
           visible={imageModalVisible}
           onClose={() => setImageModalVisible(false)}
           title="Change Profile Picture"
           description="Choose an option to update your profile picture."
           buttons={[
-            { title: 'Take Photo', onPress: handleTakePhoto },
-            { title: 'Choose from Gallery', onPress: handleChooseFromGallery },
+            { title: "Take Photo", onPress: handleTakePhoto },
+            { title: "Choose from Gallery", onPress: handleChooseFromGallery },
           ]}
         />
 
@@ -209,6 +204,7 @@ const EditProfile: React.FC = () => {
         />
       </ScrollView>
 
+      {/* Save Button */}
       <View style={styles.bottomButton}>
         <CustomButton
           text={isSaving ? "Saving..." : "Save Changes"}

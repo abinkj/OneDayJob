@@ -7,7 +7,8 @@ import LottieView from "lottie-react-native";
 import { useRoute } from "@react-navigation/native";
 import { useDispatch } from "react-redux";
 import { loginUser } from "../../../utilities/authentication";
-import { styles } from "./styles"; // your original styles file
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { styles } from "./styles";
 
 interface OtpProps {
   phoneNumber?: Number;
@@ -40,14 +41,16 @@ const Otp = () => {
 
       if (response.data.success) {
         const accessToken = response.data.data.tokens.accessToken;
-       //await AsyncStorage.setItem('token', accessToken);
-
         const refreshToken = response.data.data.tokens.refreshToken;
-       // await AsyncStorage.setItem('refreshToken', refreshToken);
-
-        // Get user data
         const userData = response.data.data.user;
-        console.log("User data from OTP verification:", userData);
+        //console.log("User data from OTP verification:", userData);
+
+        // ✅ Store tokens in AsyncStorage
+        await AsyncStorage.setItem('token', accessToken);
+        await AsyncStorage.setItem('refreshToken', refreshToken);
+        await AsyncStorage.setItem('user', JSON.stringify(userData));
+
+        console.log("Tokens and user data stored successfully");
 
         // ✅ Show success image first
         setIsOtpSuccess(true);

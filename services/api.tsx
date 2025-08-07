@@ -147,6 +147,51 @@ export const createJobPosting = async (data) => {
       data.photos = [data.photos];
     }
 
+                    // Transform location data to match backend Joi schema
+                if (data.location && data.location.coordinates) {
+                  console.log("Original location data:", JSON.stringify(data.location, null, 2));
+                  console.log("Location coordinates:", data.location.coordinates);
+
+                  // Validate coordinates exist
+                  if (!data.location.coordinates.latitude || !data.location.coordinates.longitude) {
+                    console.error("Missing latitude or longitude in location coordinates");
+                    throw new Error("Invalid location coordinates: missing latitude or longitude");
+                  }
+
+                                     // Keep the coordinates as latitude/longitude to match Joi schema
+                   // Only include non-empty fields to avoid validation errors
+                   const locationData: any = {
+                     coordinates: {
+                       latitude: data.location.coordinates.latitude,
+                       longitude: data.location.coordinates.longitude
+                     }
+                   };
+
+                   // Only add address fields if they have content
+                   if (data.location.address && data.location.address.trim()) {
+                     locationData.address = data.location.address.trim();
+                   }
+                   if (data.location.city && data.location.city.trim()) {
+                     locationData.city = data.location.city.trim();
+                   }
+                   if (data.location.state && data.location.state.trim()) {
+                     locationData.state = data.location.state.trim();
+                   }
+                   if (data.location.country && data.location.country.trim()) {
+                     locationData.country = data.location.country.trim();
+                   }
+                   if (data.location.zipCode && data.location.zipCode.trim()) {
+                     locationData.zipCode = data.location.zipCode.trim();
+                   }
+
+                   data.location = locationData;
+
+                  console.log("Transformed location data:", JSON.stringify(data.location, null, 2));
+                } else {
+                  console.warn("No location data or coordinates found in job data");
+                  console.log("Data location:", data.location);
+                }
+
     const response = await api.post("/jobs", data);
     console.log("Job posting created successfully:", response.data);
     return response;
