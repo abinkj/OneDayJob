@@ -15,6 +15,8 @@ import LocationSearch from '../../../components/LocationSearch';
 import {
   createJobPosting,
   getCategories,
+   getCurrentUser, // Add this import
+  isAuthenticated,
   // uploadJobPhotos 
 } from '../../../services/api'; // Adjust the path according to your project structure
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -98,27 +100,40 @@ const PostJobScreen = ({ navigation }) => {
       console.log("Location service test result:", result);
     });
   }, []);
-  useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const userDataString = await AsyncStorage.getItem("user");
-        if (userDataString) {
-          const userData = JSON.parse(userDataString);
-          setUser(userData);
-          console.log("Loaded user data:", userData);
-        } else {
-          Alert.alert("Error", "User data not found. Please log in again.");
-          // Optionally navigate back to Login screen
-        }
-      } catch (error) {
-        console.error("Error fetching user data:", error);
-        Alert.alert("Error", "Something went wrong fetching user data.");
+useEffect(() => {
+  const fetchUser = async () => {
+    try {
+      // Use the same getCurrentUser function as HomeScreen
+      const userData = await getCurrentUser();
+      
+      if (userData) {
+        setUser(userData);
+        console.log("Loaded user data in PostJob:", userData);
+      } else {
+        Alert.alert(
+          "Authentication Required", 
+          "Please log in to post a job.",
+          [
+            {
+              text: 'OK',
+              onPress: () => {
+                navigation.navigate('Login'); // Adjust route name as needed
+              }
+            }
+          ]
+        );
       }
-    };
+    } catch (error) {
+      console.error("Error fetching user data in PostJob:", error);
+      Alert.alert(
+        "Error", 
+        "Unable to load user data. Please try logging in again."
+      );
+    }
+  };
 
-    fetchUser();
-  }, []);
- 
+  fetchUser();
+}, []);
 
 // Fixed loadCategories function
 const loadCategories = async () => {
@@ -278,27 +293,40 @@ if (response.data && Array.isArray(response.data.data) && response.data.data.len
 
     return true;
   };
-  const checkAuthStatus = async () => {
-    try {
-      const token = await AsyncStorage.getItem('token');
-      const userString = await AsyncStorage.getItem('user');
-
-      console.log('Token exists:', !!token);
-      console.log('Token preview:', token ? token.substring(0, 20) + '...' : 'No token');
-      console.log('User data:', userString);
-
-      if (!token) {
-        Alert.alert('Authentication Error', 'Please log in again.');
-        // Navigate to login screen
-        return false;
-      }
-
-      return true;
-    } catch (error) {
-      console.error('Error checking auth status:', error);
+const checkAuthStatus = async () => {
+  try {
+    // Use the same authentication check as HomeScreen
+    const authValid = await isAuthenticated();
+    
+    console.log('PostJob Auth check result:', authValid);
+    
+    if (!authValid) {
+      Alert.alert(
+        'Authentication Required', 
+        'Please log in to post a job.',
+        [
+          {
+            text: 'OK',
+            onPress: () => {
+              // Navigate to login screen
+              navigation.navigate('Login'); // Adjust route name as needed
+            }
+          }
+        ]
+      );
       return false;
     }
-  };
+
+    return true;
+  } catch (error) {
+    console.error('Error checking auth status in PostJob:', error);
+    Alert.alert(
+      'Authentication Error', 
+      'Unable to verify authentication. Please try logging in again.'
+    );
+    return false;
+  }
+};
 
 
   const currentDate = new Date();
@@ -430,6 +458,16 @@ const handlePost = async () => {
     return;
   }
 
+  // Double-check user data is available
+  if (!user || !user.id) {
+    Alert.alert(
+      'User Error', 
+      'User information is not available. Please try logging in again.'
+    );
+    return;
+  }
+
+
   console.log('Selected category before posting:', selectedCategory);
   console.log('Category mapping:', categoryMapping);
   console.log('Backend category ID:', categoryMapping[selectedCategory]);
@@ -439,7 +477,7 @@ const handlePost = async () => {
   try {
     // Create job posting
     const jobData = formatJobData();
-    console.log('Final job data being sent:', jobData);
+    console.log('Final job data being sent:', JSON.stringify(jobData, null, 2));
     
     const response = await createJobPosting(jobData);
 
@@ -465,7 +503,12 @@ const handlePost = async () => {
 
     let errorMessage = 'Failed to post job. Please try again.';
 
-    if (error.response?.data?.message) {
+    // Handle specific authentication errors
+    if (error.response?.status === 401 || error.response?.status === 403) {
+      errorMessage = 'Authentication expired. Please log in again.';
+      // Optionally navigate to login
+      // navigation.navigate('Login');
+    } else if (error.response?.data?.message) {
       errorMessage = error.response.data.message;
     } else if (error.response?.data?.errors) {
       const errors = Object.values(error.response.data.errors).flat();
@@ -477,7 +520,6 @@ const handlePost = async () => {
     setIsLoading(false);
   }
 };
-
   // Handle date mode selection
   const handleDateModeChange = (mode) => {
     setDateMode(mode);

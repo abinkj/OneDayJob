@@ -3,7 +3,7 @@ import axios from "axios";
 import { getAccessToken, clearTokens, saveToken, getRefreshToken } from "../utilities/secureStore";
 
 // const API_BASE_URL = 'http://10.0.2.2:8000/api'; 
-const API_BASE_URL = 'http://192.168.0.107:8000/api'; 
+const API_BASE_URL = 'http://192.168.0.100:8000/api'; 
 
 const api = axios.create({
   baseURL: API_BASE_URL,
