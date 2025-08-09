@@ -231,6 +231,39 @@ export const strings = {
     postJobs: "Post Jobs",
   },
 
+  auth: {
+    login: {
+      title: "Log In",
+      subtitle:
+        "Enter your registered mobile number to receive an OTP and get started",
+      placeholderPhone: "Enter mobile number",
+      getOtp: "Get OTP",
+      sendingOtp: "Sending OTP...",
+      createAccountCta: "Don’t have an account? ",
+      createAccountAction: "Create Account",
+    },
+    signup: {
+      title: "Create Account",
+      subtitle: "Enter your mobile number to get started",
+      placeholderName: "Your Name",
+      placeholderPhone: "Enter mobile number",
+      getOtp: "Get OTP",
+      sendingOtp: "Sending OTP...",
+      haveAccountCta: "Already have an account? ",
+      loginAction: "Login",
+    },
+    otp: {
+      title: "Verify account",
+      subtitle: (phone: string) => `Enter the OTP we have sent to ${phone}`,
+      placeholder: "------",
+      verify: "Verify",
+      verifying: "Verifying...",
+      resend: "Resend",
+      resending: "Sending...",
+      success: "Verified Successfully",
+    },
+  },
+
   profile: {
     profile: "Profile",
     editProfile: "Edit Profile",

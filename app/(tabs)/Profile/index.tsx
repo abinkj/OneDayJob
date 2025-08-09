@@ -133,7 +133,9 @@ const Profile: React.FC = () => {
 
           <View style={styles.locationContainer}>
             <Ionicons name="location-outline" size={16} color="gray" />
-            <Text style={styles.locationText}>{user?.location || "Not specified"}</Text>
+            <Text style={styles.locationText}>
+              {user?.locationText || user?.location?.address || "Not specified"}
+            </Text>
           </View>
 
           {/* Stats */}
@@ -224,16 +226,16 @@ const Profile: React.FC = () => {
             </View>
             <Text style={styles.reviewDate}>{review.date}</Text>
           </View>
-          <Text style={styles.reviewText}>{review.comment}</Text>
+              <Text style={styles.reviewText}>{review.comment}</Text>
         </View>
 
         {!isReadyToWork && (
           <View style={styles.buttonContainer}>
-            <CustomButton
-              onPress={() => {}}
-              text={"See all reviews"}
-              color={Colors.backgroundGrey}
-            />
+              <CustomButton
+                onPress={() => {}}
+                text={"See all reviews"}
+                color={Colors.background}
+              />
           </View>
         )}
       </ScrollView>

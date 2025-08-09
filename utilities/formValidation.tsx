@@ -239,6 +239,16 @@ export const validatePhone = (phone: string): PhoneValidationResult => {
   };
 };
 
+export const validateOtpCode = (
+  otp: string
+): { otpError: string; status: boolean } => {
+  const isValid = /^\d{6}$/.test(otp || "");
+  return {
+    otpError: isValid ? "" : strings.validations.invalidOtp,
+    status: isValid,
+  };
+};
+
 export const validateZipCode = (
   zip: string
 ): { zipError: string; status: boolean } => {

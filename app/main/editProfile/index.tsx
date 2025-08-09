@@ -33,24 +33,24 @@ const EditProfile: React.FC = () => {
   const [lastName, setLastName] = useState("");
   const [location, setLocation] = useState("");
   const [profileImage, setProfileImage] = useState<string | { uri: string }>(
-    Images.profile.profileImage
+    Images.profile.profileImage as unknown as { uri: string }
   );
   const [isSaving, setIsSaving] = useState(false);
   const [imageModalVisible, setImageModalVisible] = useState(false);
 
   useEffect(() => {
-    const init = initialUser || {
+    const init = initialUser || ({
       firstName: "",
       lastName: "",
       email: "",
       profilePicture: Images.profile.profileImage,
-    };
+    } as unknown as User);
 
     setUser(init);
     setFirstName(init.firstName || "");
     setLastName(init.lastName || "");
-    setLocation(init.location || "");
-    setProfileImage(init.profilePicture || Images.profile.profileImage);
+    setLocation((init.locationText || init.location?.address || "") as string);
+    setProfileImage((init.profilePicture || Images.profile.profileImage) as any);
   }, []);
 
   const pickImage = () => {
@@ -111,7 +111,7 @@ const EditProfile: React.FC = () => {
     const hasChanges =
       user.firstName !== firstName.trim() ||
       user.lastName !== lastName.trim() ||
-      user.location !== location.trim() ||
+      (user.locationText || user.location?.address || "") !== location.trim() ||
       user.profilePicture !== profileImage;
 
     if (!hasChanges) {
@@ -126,8 +126,12 @@ const EditProfile: React.FC = () => {
         ...user,
         firstName: firstName.trim(),
         lastName: lastName.trim(),
-        location: location.trim(),
-        profilePicture: profileImage?.uri,
+        location: {
+          ...(typeof user.location === 'object' ? user.location : {}),
+          address: location.trim(),
+        },
+        profilePicture:
+          typeof profileImage === 'string' ? profileImage : profileImage?.uri,
         updatedAt: new Date().toISOString(),
       };
 
@@ -196,12 +200,6 @@ const EditProfile: React.FC = () => {
         />
 
         {/* Location */}
-        <LabeledInput
-          title="Location"
-          value={location}
-          onChangeText={setLocation}
-          placeholder="Your city, area"
-        />
       </ScrollView>
 
       {/* Save Button */}

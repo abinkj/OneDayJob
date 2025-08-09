@@ -7,11 +7,10 @@ import LottieView from "lottie-react-native";
 import { useRoute } from "@react-navigation/native";
 import { useDispatch } from "react-redux";
 import { loginUser } from "../../../utilities/authentication";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { styles } from "./styles";
 
-interface OtpProps {
-  phoneNumber?: Number;
+interface RouteParams {
+  phoneNumber: string;
 }
 
 const Otp = () => {
@@ -21,7 +20,7 @@ const Otp = () => {
   const [isOtpSuccess, setIsOtpSuccess] = useState(false);
 
   const route = useRoute();
-  const { phoneNumber } = route.params;
+  const { phoneNumber } = route.params as RouteParams;
   const dispatch = useDispatch();
 
   const handleVerifyOtp = async () => {
@@ -43,20 +42,16 @@ const Otp = () => {
         const accessToken = response.data.data.tokens.accessToken;
         const refreshToken = response.data.data.tokens.refreshToken;
         const userData = response.data.data.user;
+        console.log("User Data on OTP-------------------> ", userData);
         //console.log("User data from OTP verification:", userData);
 
-        // ✅ Store tokens in AsyncStorage
-        await AsyncStorage.setItem('token', accessToken);
-        await AsyncStorage.setItem('refreshToken', refreshToken);
-        await AsyncStorage.setItem('user', JSON.stringify(userData));
-
-        console.log("Tokens and user data stored successfully");
+        console.log("Tokens and user data received successfully");
 
         // ✅ Show success image first
         setIsOtpSuccess(true);
 
         setTimeout(() => {
-          dispatch(loginUser(userData, accessToken, refreshToken));
+          dispatch(loginUser(userData, accessToken, refreshToken) as any);
         }, 2000);
       } else {
         Alert.alert(
@@ -119,7 +114,6 @@ const Otp = () => {
           style={styles.animationContainer}
           speed={0.6}
           resizeMode="contain"
-          accessibilityLabel="OTP Verification Success Animation"
           testID="otp-success-animation"
         />
         <Text style={styles.text}>Verified Successfully</Text>
