@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity, StyleSheet, Image } from "react-native";
 import DeviceDimensions from "../constants/DeviceDimenions";
 import { Colors } from "../constants/Colors";
 import { getFocusedRouteNameFromRoute } from "@react-navigation/native";
+import SvgImage from "../utilities/svg";
 
 const CustomTabBar = ({ state, descriptors, navigation }) => {
   const focusedOptions = descriptors[state.routes[state.index].key].options;
@@ -33,15 +34,20 @@ const CustomTabBar = ({ state, descriptors, navigation }) => {
           onPress={() => navigation.navigate("Home")}
         >
           <View style={styles.tabIconContainer}>
-            <Image
+            {/* <Image
               source={
                 state.index === 0
                   ? require("../assets/icons/homeO.png")
                   : require("../assets/icons/home.png")
               }
               style={styles.icon}
-            />
+            /> */}
             {state.index === 0 && <View style={styles.activeTabLine} />}
+            <SvgImage
+              icon={state.index === 0 ? "homeActive" : "home"}
+              width={24}
+              height={24}
+            />
           </View>
           <Text
             style={[
@@ -59,14 +65,20 @@ const CustomTabBar = ({ state, descriptors, navigation }) => {
           onPress={() => navigation.navigate("Status")}
         >
           <View style={styles.tabIconContainer}>
-            <Image
+            {/* <Image
               source={
                 state.index === 1
                   ? require("../assets/icons/statusO.png")
                   : require("../assets/icons/status.png")
               }
               style={styles.icon}
+            /> */}
+            <SvgImage
+              icon={state.index === 1 ? "statusActive" : "status"}
+              width={24}
+              height={24}
             />
+
             {state.index === 1 && <View style={styles.activeTabLine} />}
           </View>
           <Text
@@ -85,12 +97,13 @@ const CustomTabBar = ({ state, descriptors, navigation }) => {
             style={styles.centerButton}
             onPress={() => navigation.navigate("PostJob")}
           >
-            <View style={styles.centerButtonOutline}>
+            {/* <View style={styles.centerButtonOutline}>
               <Image
                 source={require("../assets/icons/plus.png")}
                 style={styles.addIcon}
               />
-            </View>
+            </View> */}
+            <SvgImage icon={"postJob"} width={72} height={72} />
           </TouchableOpacity>
           <Text
             style={[
@@ -108,14 +121,20 @@ const CustomTabBar = ({ state, descriptors, navigation }) => {
           onPress={() => navigation.navigate("Chat")}
         >
           <View style={styles.tabIconContainer}>
-            <Image
+            {/* <Image
               source={
                 state.index === 3
                   ? require("../assets/icons/chatO.png")
                   : require("../assets/icons/chat.png")
               }
               style={styles.icon}
+            /> */}
+            <SvgImage
+              icon={state.index === 3 ? "messageActive" : "message"}
+              width={24}
+              height={24}
             />
+
             {state.index === 3 && <View style={styles.activeTabLine} />}
           </View>
           <Text
@@ -134,14 +153,20 @@ const CustomTabBar = ({ state, descriptors, navigation }) => {
           onPress={() => navigation.navigate("Profile")}
         >
           <View style={styles.tabIconContainer}>
-            <Image
+            {/* <Image
               source={
                 state.index === 4
                   ? require("../assets/icons/profileO.png")
                   : require("../assets/icons/profile.png")
               }
               style={styles.icon}
+            /> */}
+            <SvgImage
+              icon={state.index === 4 ? "profileActive" : "profile"}
+              width={24}
+              height={24}
             />
+
             {state.index === 4 && <View style={styles.activeTabLine} />}
           </View>
           <Text
@@ -213,12 +238,12 @@ const styles = StyleSheet.create({
   centerButton: {
     alignItems: "center",
     justifyContent: "center",
-    width: 55 * DeviceDimensions.widthRatio,
-    height: 55 * DeviceDimensions.widthRatio,
-    borderRadius: 27.5 * DeviceDimensions.widthRatio,
-    backgroundColor: Colors.blue,
-    borderWidth: 5, // Adjust border width
-    borderColor: Colors.white,
+    // width: 55 * DeviceDimensions.widthRatio,
+    // height: 55 * DeviceDimensions.widthRatio,
+    // borderRadius: 27.5 * DeviceDimensions.widthRatio,
+    // backgroundColor: Colors.blue,
+    // borderWidth: 5, // Adjust border width
+    // borderColor: Colors.white,
   },
   centerButtonOutline: {
     backgroundColor: "transparent",

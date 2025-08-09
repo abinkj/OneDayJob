@@ -1,9 +1,10 @@
 import TabLayout from "@/(tabs)/_layout";
-import ChatScreen from "@/chatScreen";
+import ChatScreen from "@/main/chatScreen";
 import EditProfile from "@/main/editProfile";
 import Notification from "@/main/notification";
+import RequestVerification from "@/main/requestVerification";
 import RequestDetails from "@/publicProfile/requestDetails";
-import RequestVerification from "@/requestVerification";
+
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 
 const Stack = createNativeStackNavigator();
