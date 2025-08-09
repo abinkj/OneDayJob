@@ -22,8 +22,12 @@ import { User } from "../../../types";
 import { saveUserData } from "../../../utilities/asyncStore";
 import { updateProfile } from "../../../services/api";
 import CustomModal from "../../../components/customModal";
+import { logoutUser } from "../../../utilities/authentication";
+import { useDispatch } from "react-redux";
+import Toast from "../../../components/toast";
 
 const EditProfile: React.FC = () => {
+  const dispatch = useDispatch();
   const navigation = useNavigation<any>();
   const route = useRoute();
   const { user: initialUser } = (route.params as { user: User }) || {};
@@ -37,6 +41,16 @@ const EditProfile: React.FC = () => {
   );
   const [isSaving, setIsSaving] = useState(false);
   const [imageModalVisible, setImageModalVisible] = useState(false);
+
+  // Toast state
+  const [toastVisible, setToastVisible] = useState(false);
+  const [toastMessage, setToastMessage] = useState("");
+
+  const showToast = (msg: string) => {
+    setToastMessage(msg);
+    setToastVisible(true);
+    setTimeout(() => setToastVisible(false), 2000);
+  };
 
   useEffect(() => {
     const init = initialUser || ({
@@ -69,8 +83,8 @@ const EditProfile: React.FC = () => {
       if (!result.canceled && result.assets[0]) {
         setProfileImage({ uri: result.assets[0].uri });
       }
-    } catch (error) {
-      Alert.alert("Error", "Failed to take photo");
+    } catch {
+      showToast("Failed to take photo");
     }
   };
 
@@ -88,18 +102,18 @@ const EditProfile: React.FC = () => {
       if (!result.canceled && result.assets[0]) {
         setProfileImage({ uri: result.assets[0].uri });
       }
-    } catch (error) {
-      Alert.alert("Error", "Failed to pick image");
+    } catch {
+      showToast("Failed to pick image");
     }
   };
 
   const validateForm = (): boolean => {
     if (!firstName.trim()) {
-      Alert.alert("Error", "First name is required");
+      showToast("First name is required");
       return false;
     }
     if (!lastName.trim()) {
-      Alert.alert("Error", "Last name is required");
+      showToast("Last name is required");
       return false;
     }
     return true;
@@ -115,7 +129,7 @@ const EditProfile: React.FC = () => {
       user.profilePicture !== profileImage;
 
     if (!hasChanges) {
-      Alert.alert("No Changes", "You haven't made any changes.");
+      showToast("You haven't made any changes");
       return;
     }
 
@@ -127,27 +141,27 @@ const EditProfile: React.FC = () => {
         firstName: firstName.trim(),
         lastName: lastName.trim(),
         location: {
-          ...(typeof user.location === 'object' ? user.location : {}),
+          ...(typeof user.location === "object" ? user.location : {}),
           address: location.trim(),
         },
         profilePicture:
-          typeof profileImage === 'string' ? profileImage : profileImage?.uri,
+          typeof profileImage === "string" ? profileImage : profileImage?.uri,
         updatedAt: new Date().toISOString(),
       };
 
       const { data, status } = await updateProfile(user._id, updatedUser);
       console.log("Profile update response------------------------->", data);
+
       if (status >= 200 && status < 300 && data) {
         await saveUserData(data.data);
         setUser(data);
-        Alert.alert("Success", "Profile updated successfully", [
-          { text: "OK", onPress: () => navigation.goBack() },
-        ]);
+        showToast("Profile updated successfully");
+        setTimeout(() => navigation.goBack(), 1500);
       } else {
         throw new Error("Unexpected response from server.");
       }
     } catch (error: any) {
-      Alert.alert("Error", error?.response?.data?.message || "Failed to save profile changes");
+      showToast(error?.response?.data?.message || "Failed to save profile changes");
     } finally {
       setIsSaving(false);
     }
@@ -200,6 +214,19 @@ const EditProfile: React.FC = () => {
         />
 
         {/* Location */}
+        <CustomButton
+          color={"red"}
+          text={"logout"}
+          onPress={() => {
+            console.log("Logout button pressed");
+            dispatch(logoutUser() as any);
+          }}
+        />
+        <Toast
+          visible={toastVisible}
+          message={toastMessage}
+          onHide={() => setToastVisible(false)}
+        />
       </ScrollView>
 
       {/* Save Button */}
@@ -210,6 +237,7 @@ const EditProfile: React.FC = () => {
           color={Colors.grey}
           disabled={isSaving}
         />
+        
       </View>
     </View>
   );

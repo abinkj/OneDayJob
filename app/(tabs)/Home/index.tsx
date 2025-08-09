@@ -7,7 +7,6 @@ import {
   TextInput,
   FlatList,
   ImageBackground,
-  Button,
   ActivityIndicator,
   RefreshControl,
 } from "react-native";
@@ -15,13 +14,9 @@ import { Ionicons } from "@expo/vector-icons";
 import { Colors } from "../../../constants/Colors";
 import { styles } from "./styles";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { getCurrentLocation } from "../../../services/currentLocation";
 import { getCurrentLocation as getLocationWithAddress, searchPlacesFallback } from "../../../services/locationService";
-import CustomButton from "../../../components/CustomButton";
 import { useDispatch, useSelector } from "react-redux";
 import Toast from "react-native-toast-message";
-import { logout } from "../../../redux/reducers/authReducers";
-import { logoutUser } from "../../../utilities/authentication";
 import { useNavigation } from "@react-navigation/native";
 import { getJobsByLocation, getJobPostings, getCurrentUser, updateUserLocation, updateUserLocationWithRetry, isAuthenticated } from "../../../services/api";
 import { restoreSession } from "../../../utilities/authentication";
@@ -579,14 +574,6 @@ const renderJobsMessage = () => {
       </View>
 
       <View style={styles.filtersScrollContainer}>
-        <CustomButton
-          color={"red"}
-          text={"logout"}
-          onPress={() => {
-            console.log("Logout button pressed");
-            dispatch(logoutUser() as any);
-          }}
-        />
 
         <FlatList
           horizontal

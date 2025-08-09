@@ -19,9 +19,9 @@ import {
 } from "react-native-tab-view";
 import { useNavigation } from "@react-navigation/native";
 import styles from "./styles";
-import { Header } from "../../components/header";
-import ratingStars from "../../components/ratingStars";
-import Toast from "../../components/toast";
+import { Header } from "../../../components/header";
+import ratingStars from "../../../components/ratingStars";
+import Toast from "../../../components/toast";
 
 type Route = {
   key: string;
