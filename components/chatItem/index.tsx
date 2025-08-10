@@ -29,7 +29,12 @@ export default function ChatItem({ item, onPress }) {
 }
 
 const styles = StyleSheet.create({
-  container: { flexDirection: "row", padding: 16, alignItems: "center" },
+  container: {
+    flexDirection: "row",
+    padding: 16,
+    alignItems: "center",
+    backgroundColor: Colors.white,
+  },
   avatar: { width: 48, height: 48, borderRadius: 24, marginRight: 12 },
   textContainer: { flex: 1 },
   name: { fontWeight: "bold", fontSize: 16 },

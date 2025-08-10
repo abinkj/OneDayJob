@@ -2,20 +2,22 @@ import React, { useState } from "react";
 import {
   View,
   Text,
-  TouchableWithoutFeedback,
-  useWindowDimensions,
-  Animated,
+  StyleSheet,
   ScrollView,
+  TouchableWithoutFeedback,
+  Dimensions,
+  ActivityIndicator,
+  Animated,
 } from "react-native";
-import {
-  TabView,
-  SceneMap,
-  SceneRendererProps,
-  NavigationState,
-} from "react-native-tab-view";
-import JobCard from "../../../components/jobCard";
-import { styles } from "./styles";
+import { TabView, SceneMap, TabBar, SceneRendererProps, NavigationState } from "react-native-tab-view";
 import { useNavigation } from "@react-navigation/native";
+import { Ionicons } from "@expo/vector-icons";
+import { Colors } from "../../../constants/Colors";
+import JobCard from "../../../components/jobCard";
+import { getJobPostingsByUserId } from "../../../services/api";
+import { getUserData } from "../../../utilities/asyncStore";
+import { JobPost } from "../../../types";
+import { styles } from "./styles";
 
 type Route = {
   key: string;
@@ -25,60 +27,60 @@ type Route = {
 type State = NavigationState<Route>;
 
 const MyPostTab = () => {
-  const navigation = useNavigation();
-  const handleNext = () => {
-    console.log("Next button pressed");
-    //navigation.navigate("RequestDetails");
-    navigation.navigate("RequestVerification");
+  const navigation = useNavigation<any>();
+  const [posts, setPosts] = useState<JobPost[]>([]);
+  const [loading, setLoading] = useState(true);
 
+  const handleNext = () => {
+    navigation.navigate("RequestVerification");
   };
-  const posts = [
-    {
-      id: "1",
-      title: "Need a painter to paint a 2-bedroom apartment. Contact ASAP!",
-      rate: "₹500/hr",
-      applicants: "0/1",
-      location: "Downtown, New York",
-      date: "Monday, Mar, 31",
-      requests: 10,
-    },
-    {
-      id: "2",
-      title: "My house needs to be painted",
-      rate: "₹500/hr",
-      applicants: "0/1",
-      location: "Downtown, New York",
-      date: "Monday, Mar, 31",
-      requests: 10,
-    },
-    {
-      id: "3",
-      title: "My house needs to be painted",
-      rate: "₹500/hr",
-      applicants: "0/1",
-      location: "Downtown, New York",
-      date: "Monday, Mar, 31",
-      requests: 10,
-    },
-    {
-      id: "4",
-      title: "My house needs to be painted",
-      rate: "₹500/hr",
-      applicants: "0/1",
-      location: "Downtown, New York",
-      date: "Monday, Mar, 31",
-      requests: 10,
-    },
-    {
-      id: "5",
-      title: "My house needs to be painted",
-      rate: "₹500/hr",
-      applicants: "0/1",
-      location: "Downtown, New York",
-      date: "Monday, Mar, 31",
-      requests: 10,
-    },
-  ];
+
+  React.useEffect(() => {
+    const fetchPosts = async () => {
+      try {
+        setLoading(true);
+        const user = await getUserData(); // Assuming it returns { id: '...' }
+        if (!user?.id) {
+          console.error("No user ID found");
+          setPosts([]);
+          return;
+        }
+        console.log("Fetching posts for user ID:", user.id);
+        const res = await getJobPostingsByUserId(user.id);
+        console.log("Fetched posts:", res.data);
+        setPosts(res.data || []); // if API returns array
+      } catch (error) {
+        console.error("Error fetching job postings", error);
+        setPosts([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPosts();
+  }, []);
+
+  if (loading) {
+    return (
+      <View style={{ justifyContent: "center", alignItems: "center", flex: 1 }}>
+       <ActivityIndicator size="large" color={Colors.grey} />
+      </View>
+    );
+  }
+
+  if (posts.length === 0) {
+    return (
+      <View style={{ justifyContent: "center", alignItems: "center", flex: 1, padding: 20 }}>
+        <Ionicons name="document-outline" size={64} color={Colors.grey} />
+        <Text style={{ fontSize: 18, color: Colors.grey, marginTop: 16, textAlign: 'center' }}>
+          No job posts yet
+        </Text>
+        <Text style={{ fontSize: 14, color: Colors.grey, marginTop: 8, textAlign: 'center' }}>
+          Create your first job post to get started
+        </Text>
+      </View>
+    );
+  }
 
   return (
     <ScrollView
@@ -86,28 +88,48 @@ const MyPostTab = () => {
       showsVerticalScrollIndicator={false}
     >
       {posts.map((post) => (
-        <JobCard key={post.id} data={post} onPress={handleNext} />
+        <JobCard key={post._id} data={post} onPress={handleNext} />
       ))}
     </ScrollView>
   );
 };
 
 const AppliedTab = () => {
-  const navigation = useNavigation();
+  const navigation = useNavigation<any>();
   const handleNext = () => {
     console.log("Next button pressed");
     //navigation.navigate("RequestDetails"); this is not the correct go to reqVerification then req Detail
     navigation.navigate("RequestVerification");
   };
+  
+  // Mock data structure that matches JobCardData type
   const posts = [
     {
-      id: "2",
-      title: "My house needs to be painted",
-      rate: "₹500/hr",
-      applicants: "0/1",
-      location: "Downtown, New York",
-      date: "Monday, Mar, 31",
-      requests: 10,
+      _id: "2",
+      name: "My house needs to be painted",
+      budget: 500,
+      applicantCount: 10,
+      location: {
+        address: "Downtown, New York",
+        country: "United States"
+      },
+      createdAt: new Date().toISOString(),
+      status: "active",
+      category: {
+        _id: "1",
+        name: "Painting"
+      },
+      description: "House painting job in downtown area",
+      isRemote: false,
+      isFlexible: true,
+      requirements: ["Paint brushes", "Ladders"],
+      timePreference: ["morning", "afternoon"],
+      userId: {
+        firstName: "John",
+        id: "user1",
+        lastName: "Doe",
+        phoneNumber: "+1234567890"
+      }
     },
   ];
 
@@ -119,14 +141,14 @@ const AppliedTab = () => {
       bounces={false} // iOS only
     >
       {posts.map((post) => (
-        <JobCard key={post.id} data={post} onPress={handleNext} />
+        <JobCard key={post._id} data={post} onPress={handleNext} />
       ))}
     </ScrollView>
   );
 };
 
 const Status = () => {
-  const layout = useWindowDimensions();
+  const layout = Dimensions.get("window");
   const [index, onIndexChange] = useState(0);
   const [routes] = useState<Route[]>([
     { key: "myPost", title: "My post" },

@@ -74,4 +74,76 @@ export interface Review {
   date: string;
   rating: number;
   comment: string;
+}
+
+// Job Post Types
+export interface JobCategory {
+  _id: string;
+  name: string;
+}
+
+export interface JobLocation {
+  address: string;
+  city?: string;
+  coordinates?: {
+    type?: string;
+    coordinates: number[]; // [longitude, latitude]
+  };
+  country: string;
+  state?: string;
+  zipCode?: string;
+}
+
+export interface JobUser {
+  firstName: string;
+  id: string;
+  lastName: string;
+  phoneNumber: string;
+}
+
+export interface JobPost {
+  __v: number;
+  _id: string;
+  address: string;
+  applicantCount: number;
+  assignedUsers: any[];
+  budget: number;
+  category: JobCategory;
+  createdAt: string;
+  description: string;
+  isCompletedByWorker: boolean;
+  isFlexible: boolean;
+  isMultiVacancy: boolean;
+  isOpen?: boolean;
+  isPaymentDone: boolean;
+  isRemote: boolean;
+  isVerifiedByEmployer: boolean;
+  jobStatus: string;
+  location: JobLocation;
+  name: string;
+  participantsNumber: number;
+  photos: string[];
+  requirements: string[];
+  status: string;
+  timePreference: string[];
+  updatedAt: string;
+  userId: JobUser;
+}
+
+// For backward compatibility and convenience
+export interface JobCardData {
+  _id: string;
+  name: string;
+  budget: number;
+  applicantCount: number;
+  location: JobLocation;
+  createdAt: string;
+  status: string;
+  category: JobCategory;
+  description: string;
+  isRemote: boolean;
+  isFlexible: boolean;
+  requirements: string[];
+  timePreference: string[];
+  userId: JobUser;
 } 

@@ -1,6 +1,11 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
-import { getAccessToken, clearTokens, saveToken, getRefreshToken } from "../utilities/secureStore";
+import {
+  getAccessToken,
+  clearTokens,
+  saveToken,
+  getRefreshToken,
+} from "../utilities/secureStore";
 import { normalizeUser } from "../utilities/asyncStore";
 
 const API_BASE_URL = "http://192.168.235.252:8000/api"; //AJ ip address
@@ -77,20 +82,24 @@ api.interceptors.response.use(
         console.log("Attempting token refresh...");
         // Get refresh token from SecureStore
         const refreshTokenValue = await getRefreshToken();
-        
+
         if (!refreshTokenValue) {
           throw new Error("No refresh token available");
         }
 
         // Try to refresh the token using both cookies and body
-        const refreshResponse = await axios.post(`${API_BASE_URL}/auth/refresh-token`, {
-          refreshToken: refreshTokenValue
-        }, {
-          headers: {
-            "Content-Type": "application/json",
+        const refreshResponse = await axios.post(
+          `${API_BASE_URL}/auth/refresh-token`,
+          {
+            refreshToken: refreshTokenValue,
           },
-          withCredentials: true
-        });
+          {
+            headers: {
+              "Content-Type": "application/json",
+            },
+            withCredentials: true,
+          }
+        );
 
         const newToken = refreshResponse.data.accessToken;
 
@@ -163,13 +172,21 @@ export const createJobPosting = async (data) => {
 
     // Transform location data to match backend Joi schema
     if (data.location && data.location.coordinates) {
-      console.log("Original location data:", JSON.stringify(data.location, null, 2));
+      console.log(
+        "Original location data:",
+        JSON.stringify(data.location, null, 2)
+      );
       console.log("Location coordinates:", data.location.coordinates);
 
       // Validate coordinates exist
-      if (!data.location.coordinates.latitude || !data.location.coordinates.longitude) {
+      if (
+        !data.location.coordinates.latitude ||
+        !data.location.coordinates.longitude
+      ) {
         console.error("Missing latitude or longitude in location coordinates");
-        throw new Error("Invalid location coordinates: missing latitude or longitude");
+        throw new Error(
+          "Invalid location coordinates: missing latitude or longitude"
+        );
       }
 
       // Keep the coordinates as latitude/longitude to match Joi schema
@@ -177,8 +194,8 @@ export const createJobPosting = async (data) => {
       const locationData: any = {
         coordinates: {
           latitude: data.location.coordinates.latitude,
-          longitude: data.location.coordinates.longitude
-        }
+          longitude: data.location.coordinates.longitude,
+        },
       };
 
       // Only add address fields if they have content
@@ -200,7 +217,10 @@ export const createJobPosting = async (data) => {
 
       data.location = locationData;
 
-      console.log("Transformed location data:", JSON.stringify(data.location, null, 2));
+      console.log(
+        "Transformed location data:",
+        JSON.stringify(data.location, null, 2)
+      );
     } else {
       console.warn("No location data or coordinates found in job data");
       console.log("Data location:", data.location);
@@ -223,7 +243,7 @@ export const testAuth = async () => {
       console.log("No token found - not authenticated");
       return false;
     }
-    
+
     // Test with a simple jobs endpoint instead of auth endpoints
     const response = await api.get("/jobs", { timeout: 5000 });
     console.log("Auth test successful with jobs endpoint:", response.status);
@@ -264,17 +284,22 @@ export const isAuthenticated = async () => {
       console.log("Authentication verified with server");
       return true;
     } catch (error) {
-      console.log("Server authentication check failed:", error.response?.status);
-      
+      console.log(
+        "Server authentication check failed:",
+        error.response?.status
+      );
+
       // If it's a 403 or 401, the token is invalid
       if (error.response?.status === 403 || error.response?.status === 401) {
         console.log("Token is invalid, clearing auth data");
         await clearAuthData();
         return false;
       }
-      
+
       // For other errors (network, timeout), assume valid if we have token and user
-      console.log("Server verification failed with non-auth error, assuming valid");
+      console.log(
+        "Server verification failed with non-auth error, assuming valid"
+      );
       return true;
     }
   } catch (error) {
@@ -310,7 +335,6 @@ export const verifyOtp = (data) => api.post("/auth/otp/verify", data);
 export const test = () => api.get("/auth/test");
 export const protectedRoute = () => api.get("/auth/protected");
 
-
 export const getJobPosting = (id) => api.get(`/jobs/${id}`);
 export const updateJobPosting = (id, data) => api.put(`/jobs/${id}`, data);
 export const deleteJobPosting = (id) => api.delete(`/jobs/${id}`);
@@ -319,25 +343,28 @@ export const deleteJobPosting = (id) => api.delete(`/jobs/${id}`);
 export const updateUserLocation = async (locationData) => {
   try {
     console.log("Updating user location with data:", locationData);
-    
+
     // Check if user is authenticated first
     const isAuth = await isAuthenticated();
     if (!isAuth) {
       console.log("User not authenticated, skipping location update");
       return null;
     }
-    
+
     // Validate location data structure
     if (!locationData || !locationData.coordinates) {
       console.error("Invalid location data - missing coordinates");
       throw new Error("Invalid location data: missing coordinates");
     }
 
-    if (!locationData.coordinates.latitude || !locationData.coordinates.longitude) {
+    if (
+      !locationData.coordinates.latitude ||
+      !locationData.coordinates.longitude
+    ) {
       console.error("Invalid coordinates - missing latitude or longitude");
       throw new Error("Invalid coordinates: missing latitude or longitude");
     }
-    
+
     // FIXED: Send simple latitude/longitude format (not GeoJSON)
     const locationPayload = {
       latitude: locationData.coordinates.latitude,
@@ -347,13 +374,16 @@ export const updateUserLocation = async (locationData) => {
       ...(locationData.city && { city: locationData.city }),
       ...(locationData.state && { state: locationData.state }),
       ...(locationData.country && { country: locationData.country }),
-      ...(locationData.zipCode && { zipCode: locationData.zipCode })
+      ...(locationData.zipCode && { zipCode: locationData.zipCode }),
     };
-    
+
     console.log("Location payload:", JSON.stringify(locationPayload, null, 2));
-    
-    const response = await api.put('/users/update-user-location', locationPayload);
-    
+
+    const response = await api.put(
+      "/users/update-user-location",
+      locationPayload
+    );
+
     console.log("User location updated successfully:", response.data);
     return response;
   } catch (error) {
@@ -377,28 +407,33 @@ export const getJobsByLocation = async (radius = 10, categoryId = null) => {
     if (categoryId) {
       url += `&categoryId=${categoryId}`;
     }
-    
+
     console.log("Fetching location-based jobs with URL:", url);
     const response = await api.get(url);
-    
+
     const jobsData = response.data?.data || response.data || [];
-    console.log(`Jobs by location fetched successfully: ${jobsData.length} jobs`);
-    
+    console.log(
+      `Jobs by location fetched successfully: ${jobsData.length} jobs`
+    );
+
     // Return the response as-is, let the caller decide whether to fallback
     return response;
   } catch (error) {
     console.error("Error fetching jobs by location:", error);
-    
+
     // Better error handling - check specific error types
     if (error.response?.status === 500) {
       console.log("Server error (500) - will fallback in caller");
-    } else if (error.response?.status === 403 || error.response?.status === 401) {
+    } else if (
+      error.response?.status === 403 ||
+      error.response?.status === 401
+    ) {
       console.log("Authentication error - clearing auth data");
       await clearAuthData();
     } else {
       console.log("Network or other error - will fallback in caller");
     }
-    
+
     // Throw the error so the caller can handle fallback logic
     throw error;
   }
@@ -417,8 +452,18 @@ export const getJobPostings = async () => {
     throw error;
   }
 };
+
+// services/jobService.ts
+export const getJobPostingsByUserId = async (userId: string) => {
+  const res = await api.get(`jobs/user-posts/${userId}`);
+  return res.data;
+};
+
 // FIXED: Enhanced location update with retry logic
-export const updateUserLocationWithRetry = async (locationData, maxRetries = 3) => {
+export const updateUserLocationWithRetry = async (
+  locationData,
+  maxRetries = 3
+) => {
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
       console.log(`Location update attempt ${attempt}/${maxRetries}`);
@@ -426,15 +471,19 @@ export const updateUserLocationWithRetry = async (locationData, maxRetries = 3) 
       console.log(`Location update successful on attempt ${attempt}`);
       return result;
     } catch (error) {
-      console.error(`Location update attempt ${attempt} failed:`, error.response?.status, error.response?.data);
-      
+      console.error(
+        `Location update attempt ${attempt} failed:`,
+        error.response?.status,
+        error.response?.data
+      );
+
       if (attempt === maxRetries) {
         console.error("All location update attempts failed");
         throw error;
       }
-      
+
       // Wait before retry
-      await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+      await new Promise((resolve) => setTimeout(resolve, 1000 * attempt));
     }
   }
 };
@@ -451,7 +500,10 @@ export const getCurrentUser = async () => {
       const legacy = await AsyncStorage.getItem("user");
       if (legacy) {
         const normalizedLegacy = normalizeUser(JSON.parse(legacy));
-        await AsyncStorage.setItem("USER", JSON.stringify(normalizedLegacy, null, 2));
+        await AsyncStorage.setItem(
+          "USER",
+          JSON.stringify(normalizedLegacy, null, 2)
+        );
         await AsyncStorage.removeItem("user");
         userString = JSON.stringify(normalizedLegacy);
       }

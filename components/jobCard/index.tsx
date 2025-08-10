@@ -2,27 +2,61 @@ import React from "react";
 import { View, Text, StyleSheet, Image, TouchableOpacity } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { Colors } from "../../constants/Colors";
+import { JobCardData } from "../../types";
 
-const JobCard = ({ data, onPress }: { data: any; onPress: Function }) => {
+const JobCard = ({ data, onPress }: { data: JobCardData; onPress: Function }) => {
+  const {
+    name,
+    budget,
+    applicantCount,
+    location,
+    createdAt,
+    status = "active",
+    category,
+    description,
+    isRemote,
+    isFlexible,
+    requirements,
+    timePreference,
+  } = data || {};
+
+  const formattedLocation = location?.address
+    ? `${location.address}${location.city ? ", " + location.city : ""}${location.state ? ", " + location.state : ""}${location.country ? ", " + location.country : ""}`
+    : location?.country || "Remote";
+
+  const formatTimePreference = (timePrefs: string[]) => {
+    if (!timePrefs || timePrefs.length === 0) return "Flexible";
+    return timePrefs.map(time => time.charAt(0).toUpperCase() + time.slice(1)).join(", ");
+  };
+
+  const formatRequirements = (reqs: string[]) => {
+    if (!reqs || reqs.length === 0) return "No specific requirements";
+    return reqs.slice(0, 2).join(", ") + (reqs.length > 2 ? ` +${reqs.length - 2} more` : "");
+  };
+
   return (
     <View style={styles.card}>
       <View style={styles.headerRow}>
-        <Image
-          source={{ uri: "https://i.pravatar.cc/50" }}
-          style={styles.icon}
-        />
-        <Text style={styles.category}>PAINTING</Text>
+        <View style={styles.categoryContainer}>
+          <Text style={styles.category}>{category?.name?.toUpperCase() || "GENERAL"}</Text>
+        </View>
         <View style={styles.statusTag}>
-          <Text style={styles.statusText}>Open</Text>
+          <Text style={styles.statusText}>{status}</Text>
         </View>
       </View>
 
-      <Text style={styles.title}>{data.title}</Text>
+      <Text style={styles.title}>{name || "Untitled Job"}</Text>
+      
+      {description && (
+        <Text style={styles.description} numberOfLines={2}>
+          {description}
+        </Text>
+      )}
 
       <View style={styles.metaRow}>
-        <Text style={styles.price}>{data.rate}</Text>
+        <Text style={styles.price}>₹{budget ? budget.toLocaleString() : "0"}</Text>
         <Text style={styles.separator}>|</Text>
-        <Text style={styles.slots}>{data.applicants}</Text>
+        <Text style={styles.slots}>{applicantCount || 0}</Text>
         <Ionicons
           name="person"
           size={14}
@@ -32,16 +66,46 @@ const JobCard = ({ data, onPress }: { data: any; onPress: Function }) => {
       </View>
 
       <View style={styles.metaRow}>
-        <Ionicons name="location" size={14} color={Colors.iconBlack} />
-        <Text style={styles.metaLocation}>{data.location}</Text>
+        <Ionicons 
+          name={isRemote ? "laptop" : "location"} 
+          size={14} 
+          color={Colors.iconBlack} 
+        />
+        <Text style={styles.metaLocation}>
+          {isRemote ? "Remote Work" : formattedLocation}
+        </Text>
         <Ionicons
           name="calendar"
           size={14}
           color={Colors.iconBlack}
           style={{ marginLeft: 14 }}
         />
-        <Text style={styles.metaText}>{data.date}</Text>
+        <Text style={styles.metaText}>
+          {createdAt ? new Date(createdAt).toLocaleDateString() : "N/A"}
+        </Text>
       </View>
+
+      <View style={styles.metaRow}>
+        <Ionicons name="time" size={14} color={Colors.iconBlack} />
+        <Text style={styles.metaText}>
+          {formatTimePreference(timePreference)}
+        </Text>
+        {isFlexible && (
+          <>
+            <Text style={styles.separator}>|</Text>
+            <Text style={styles.flexibleText}>Flexible</Text>
+          </>
+        )}
+      </View>
+
+      {requirements && requirements.length > 0 && (
+        <View style={styles.metaRow}>
+          <Ionicons name="construct" size={14} color={Colors.iconBlack} />
+          <Text style={styles.metaText}>
+            {formatRequirements(requirements)}
+          </Text>
+        </View>
+      )}
 
       <View style={styles.bottomRow}>
         <View style={styles.avatars}>
@@ -57,9 +121,11 @@ const JobCard = ({ data, onPress }: { data: any; onPress: Function }) => {
             source={{ uri: "https://i.pravatar.cc/20?img=3" }}
             style={styles.avatar}
           />
-          <Text style={styles.requestText}>10+ Requests</Text>
+          <Text style={styles.requestText}>
+            {applicantCount > 10 ? "10+ Requests" : `${applicantCount || 0} Requests`}
+          </Text>
         </View>
-        <TouchableOpacity style={styles.button} onPress={onPress}>
+        <TouchableOpacity style={styles.button} onPress={() => onPress()}>
           <Text style={styles.buttonText}>View Requests</Text>
         </TouchableOpacity>
       </View>
@@ -82,19 +148,19 @@ const styles = StyleSheet.create({
   headerRow: {
     flexDirection: "row",
     alignItems: "center",
+    justifyContent: "space-between",
     marginBottom: 12,
   },
-  icon: {
-    width: 24,
-    height: 24,
-    borderRadius: 1234,
-    marginRight: 12,
+  categoryContainer: {
+    backgroundColor: Colors.blue + "20",
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 12,
   },
   category: {
-    fontSize: 12,
-    fontWeight: "500",
-    color: "#2A2A2A80",
-    marginRight: "auto",
+    fontSize: 10,
+    fontWeight: "600",
+    color: Colors.blue,
   },
   statusTag: {
     backgroundColor: Colors.whiteBack,
@@ -113,10 +179,16 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     color: Colors.black,
   },
+  description: {
+    fontSize: 14,
+    color: Colors.subGrey,
+    marginBottom: 8,
+    lineHeight: 20,
+  },
   metaRow: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 12,
+    marginBottom: 8,
   },
   price: {
     color: Colors.blue,
@@ -124,8 +196,8 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   separator: {
-    marginHorizontal: 12,
-    color: Colors.black,
+    marginHorizontal: 8,
+    color: Colors.subGrey,
   },
   slots: {
     fontSize: 14,
@@ -142,6 +214,12 @@ const styles = StyleSheet.create({
     color: Colors.subGrey,
     fontWeight: "400",
     marginLeft: 4,
+    flex: 1,
+  },
+  flexibleText: {
+    fontSize: 12,
+    color: Colors.blue,
+    fontWeight: "500",
   },
   bottomRow: {
     flexDirection: "row",
