@@ -20,12 +20,13 @@ import Toast from "react-native-toast-message";
 import { useNavigation } from "@react-navigation/native";
 import { getJobsByLocation, getJobPostings, getCurrentUser, updateUserLocation, updateUserLocationWithRetry, isAuthenticated } from "../../../services/api";
 import { restoreSession } from "../../../utilities/authentication";
+import { JobPost } from "../../../types";
 
 const HomeScreen = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [location, setLocation] = useState(null);
   const [locationAddress, setLocationAddress] = useState("Loading location...");
-  const [jobs, setJobs] = useState([]);
+  const [jobs, setJobs] = useState<JobPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState(null);
@@ -358,10 +359,10 @@ const fetchJobs = async () => {
     }
   }, [location, selectedCategory, searchRadius, isInitialized]);
 
-  const renderJobCard = ({ item }) => (
+  const renderJobCard = ({ item }: { item: JobPost }) => (
     <TouchableOpacity 
       style={styles.jobCard}
-      onPress={() => navigation.navigate("JobDetails", { jobId: item._id })}
+      onPress={() => navigation.navigate("JobDetails", { jobId: item._id, jobData: item })}
     >
       <View style={styles.jobCardHeader}>
         <View style={styles.categoryContainer}>
@@ -377,7 +378,7 @@ const fetchJobs = async () => {
       <View style={styles.titleContainer}>
         <Text style={styles.jobTitle}>{item.name}</Text>
         <View style={styles.statusContainer}>
-          <Text style={styles.statusText}>{item.isOpen !== false ? "Open" : "Closed"}</Text>
+          <Text style={styles.statusText}>{item.status || "Active"}</Text>
         </View>
       </View>
 
@@ -385,14 +386,16 @@ const fetchJobs = async () => {
         <View style={styles.locationContainer}>
           <Ionicons name="location-outline" size={16} color={Colors.grey} />
           <Text style={styles.locationText}>
-            {item.location?.address || item.location?.city || item.location?.state || "Location not specified"}
+            {item.isRemote ? "Remote Work" : 
+              item.location?.address || item.location?.city || item.location?.state || "Location not specified"
+            }
           </Text>
         </View>
 
         <View style={styles.dateContainer}>
           <Ionicons name="calendar-outline" size={16} color={Colors.grey} />
           <Text style={styles.dateText}>
-            {item.onDate ? new Date(item.onDate).toLocaleDateString() : item.isFlexible ? "Flexible" : "Date not set"}
+            {item.createdAt ? new Date(item.createdAt).toLocaleDateString() : item.isFlexible ? "Flexible" : "Date not set"}
           </Text>
         </View>
       </View>
@@ -400,7 +403,7 @@ const fetchJobs = async () => {
       <View style={styles.jobFooter}>
         <View style={styles.vacanciesContainer}>
           <Text style={styles.vacanciesText}>
-            Vacancies: {item.assignedUsers?.length || 0}/{item.participantsNumber || 1}
+            Vacancies: {item.participantsNumber || 1}
           </Text>
           <Ionicons name="people" size={16} color={Colors.primary} />
         </View>
@@ -607,7 +610,7 @@ const renderJobsMessage = () => {
       <FlatList
         data={jobs}
         renderItem={renderJobCard}
-        keyExtractor={(item) => item._id || item.id}
+        keyExtractor={(item) => item._id}
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />

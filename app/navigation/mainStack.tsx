@@ -4,6 +4,7 @@ import EditProfile from "@/main/editProfile";
 import Notification from "@/main/notification";
 import RequestVerification from "@/main/requestVerification";
 import RequestDetails from "@/publicProfile/requestDetails";
+import JobDetails from "@/main/jobDetails";
 
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 
@@ -28,6 +29,7 @@ const MainStack = () => {
       />
       <Stack.Screen name="Notification" component={Notification} />
       <Stack.Screen name="EditProfile" component={EditProfile} />
+      <Stack.Screen name="JobDetails" component={JobDetails} />
       {/* <Stack.Screen name="RequestDetails" component={RequestDetails} /> */}
     </Stack.Navigator>
   );
