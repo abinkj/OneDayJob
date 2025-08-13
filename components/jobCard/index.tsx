@@ -4,7 +4,13 @@ import { Ionicons } from "@expo/vector-icons";
 import { Colors } from "../../constants/Colors";
 import { JobCardData } from "../../types";
 
-const JobCard = ({ data, onPress }: { data: JobCardData; onPress: Function }) => {
+const JobCard = ({
+  data,
+  onPress,
+}: {
+  data: JobCardData;
+  onPress: Function;
+}) => {
   const {
     name,
     budget,
@@ -20,41 +26,71 @@ const JobCard = ({ data, onPress }: { data: JobCardData; onPress: Function }) =>
     timePreference,
   } = data || {};
 
+  const isApplied = status?.toLowerCase() === "applied";
+
   const formattedLocation = location?.address
-    ? `${location.address}${location.city ? ", " + location.city : ""}${location.state ? ", " + location.state : ""}${location.country ? ", " + location.country : ""}`
+    ? `${location.address}${location.city ? ", " + location.city : ""}${
+        location.state ? ", " + location.state : ""
+      }${location.country ? ", " + location.country : ""}`
     : location?.country || "Remote";
 
   const formatTimePreference = (timePrefs: string[]) => {
     if (!timePrefs || timePrefs.length === 0) return "Flexible";
-    return timePrefs.map(time => time.charAt(0).toUpperCase() + time.slice(1)).join(", ");
+    return timePrefs
+      .map((time) => time.charAt(0).toUpperCase() + time.slice(1))
+      .join(", ");
   };
 
   const formatRequirements = (reqs: string[]) => {
     if (!reqs || reqs.length === 0) return "No specific requirements";
-    return reqs.slice(0, 2).join(", ") + (reqs.length > 2 ? ` +${reqs.length - 2} more` : "");
+    return (
+      reqs.slice(0, 2).join(", ") +
+      (reqs.length > 2 ? ` +${reqs.length - 2} more` : "")
+    );
   };
 
   return (
     <View style={styles.card}>
+      {/* Header Row */}
       <View style={styles.headerRow}>
         <View style={styles.categoryContainer}>
-          <Text style={styles.category}>{category?.name?.toUpperCase() || "GENERAL"}</Text>
+          <Text style={styles.category}>
+            {category?.name?.toUpperCase() || "GENERAL"}
+          </Text>
         </View>
-        <View style={styles.statusTag}>
-          <Text style={styles.statusText}>{status}</Text>
+
+        <View
+          style={[
+            styles.statusTag,
+            isApplied && { backgroundColor: "#28a745" }, // green background if applied
+          ]}
+        >
+          <Text
+            style={[
+              styles.statusText,
+              isApplied && { color: "#fff" }, // white text if applied
+            ]}
+          >
+            {isApplied ? "Applied" : status}
+          </Text>
         </View>
       </View>
 
+      {/* Job Title */}
       <Text style={styles.title}>{name || "Untitled Job"}</Text>
-      
+
+      {/* Description */}
       {description && (
         <Text style={styles.description} numberOfLines={2}>
           {description}
         </Text>
       )}
 
+      {/* Price & Applicants */}
       <View style={styles.metaRow}>
-        <Text style={styles.price}>₹{budget ? budget.toLocaleString() : "0"}</Text>
+        <Text style={styles.price}>
+          ₹{budget ? budget.toLocaleString() : "0"}
+        </Text>
         <Text style={styles.separator}>|</Text>
         <Text style={styles.slots}>{applicantCount || 0}</Text>
         <Ionicons
@@ -65,11 +101,12 @@ const JobCard = ({ data, onPress }: { data: JobCardData; onPress: Function }) =>
         />
       </View>
 
+      {/* Location & Date */}
       <View style={styles.metaRow}>
-        <Ionicons 
-          name={isRemote ? "laptop" : "location"} 
-          size={14} 
-          color={Colors.iconBlack} 
+        <Ionicons
+          name={isRemote ? "laptop" : "location"}
+          size={14}
+          color={Colors.iconBlack}
         />
         <Text style={styles.metaLocation}>
           {isRemote ? "Remote Work" : formattedLocation}
@@ -85,6 +122,7 @@ const JobCard = ({ data, onPress }: { data: JobCardData; onPress: Function }) =>
         </Text>
       </View>
 
+      {/* Time Preference */}
       <View style={styles.metaRow}>
         <Ionicons name="time" size={14} color={Colors.iconBlack} />
         <Text style={styles.metaText}>
@@ -98,6 +136,7 @@ const JobCard = ({ data, onPress }: { data: JobCardData; onPress: Function }) =>
         )}
       </View>
 
+      {/* Requirements */}
       {requirements && requirements.length > 0 && (
         <View style={styles.metaRow}>
           <Ionicons name="construct" size={14} color={Colors.iconBlack} />
@@ -107,6 +146,7 @@ const JobCard = ({ data, onPress }: { data: JobCardData; onPress: Function }) =>
         </View>
       )}
 
+      {/* Bottom Row */}
       <View style={styles.bottomRow}>
         <View style={styles.avatars}>
           <Image
@@ -122,7 +162,9 @@ const JobCard = ({ data, onPress }: { data: JobCardData; onPress: Function }) =>
             style={styles.avatar}
           />
           <Text style={styles.requestText}>
-            {applicantCount > 10 ? "10+ Requests" : `${applicantCount || 0} Requests`}
+            {applicantCount > 10
+              ? "10+ Requests"
+              : `${applicantCount || 0} Requests`}
           </Text>
         </View>
         <TouchableOpacity style={styles.button} onPress={() => onPress()}>

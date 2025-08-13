@@ -223,7 +223,7 @@ const AppliedTab = () => {
       {appliedJobs.map((application) => (
         <JobCard
           key={application.applicationId}
-          data={application.job}
+          data={{ ...application.job, status: "applied" }}
           onPress={handleNext}
         />
       ))}
