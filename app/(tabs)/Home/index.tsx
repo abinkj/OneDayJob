@@ -33,12 +33,10 @@ const HomeScreen = () => {
   const [searchRadius, setSearchRadius] = useState(10);
   const [currentUser, setCurrentUser] = useState(null);
   const [authStatus, setAuthStatus] = useState(false);
-  const [isInitialized, setIsInitialized] = useState(false); // NEW: Track initialization
+  const [isInitialized, setIsInitialized] = useState(false);
   const navigation = useNavigation<any>();
   const userData = useSelector((state: any) => state.authentication.userData);
   const dispatch = useDispatch();
-  const [jobsDisplayMessage, setJobsDisplayMessage] = useState(null);
-
 
   const handleNotificationPress = () => {
     console.log("Notification icon pressed");
@@ -156,7 +154,6 @@ const fetchJobs = async () => {
       const response = await getJobPostings();
       const allJobs = response.data?.data || response.data || [];
       setJobs(allJobs);
-      setJobsDisplayMessage(null); // Clear any previous messages
       return;
     }
 
@@ -171,7 +168,6 @@ const fetchJobs = async () => {
         if (locationJobs.length > 0) {
           console.log(`Found ${locationJobs.length} jobs near your location`);
           setJobs(locationJobs);
-          setJobsDisplayMessage(null); // Clear any previous messages
         } else {
           console.log("No jobs found near location, falling back to all jobs");
           // Fallback to all jobs when no local jobs found
@@ -179,14 +175,14 @@ const fetchJobs = async () => {
           const allJobs = fallbackResponse.data?.data || fallbackResponse.data || [];
           setJobs(allJobs);
           
-          // Set a helpful message for the user
+          // Show toast message instead of display message
           const locationName = locationAddress !== "Loading location..." 
             ? locationAddress 
             : "your location";
-          setJobsDisplayMessage({
+          Toast.show({
             type: 'info',
-            title: 'No jobs found nearby',
-            message: `No jobs found within ${searchRadius}km of ${locationName}. Showing all available jobs instead.`
+            text1: 'No jobs found nearby',
+            text2: `No jobs found within ${searchRadius}km of ${locationName}. Showing all available jobs instead.`,
           });
         }
       } catch (locationError) {
@@ -195,10 +191,10 @@ const fetchJobs = async () => {
         const response = await getJobPostings();
         const allJobs = response.data?.data || response.data || [];
         setJobs(allJobs);
-        setJobsDisplayMessage({
-          type: 'warning',
-          title: 'Location search unavailable',
-          message: 'Unable to search by location. Showing all available jobs.'
+        Toast.show({
+          type: 'info',
+          text1: 'Location search unavailable',
+          text2: 'Unable to search by location. Showing all available jobs.',
         });
       }
     } else {
@@ -207,10 +203,10 @@ const fetchJobs = async () => {
       const response = await getJobPostings();
       const allJobs = response.data?.data || response.data || [];
       setJobs(allJobs);
-      setJobsDisplayMessage({
+      Toast.show({
         type: 'info',
-        title: 'All jobs',
-        message: 'Login to see jobs near your location.'
+        text1: 'All jobs',
+        text2: 'Login to see jobs near your location.',
       });
     }
   } catch (error) {
@@ -221,11 +217,11 @@ const fetchJobs = async () => {
       text2: 'Failed to load jobs',
     });
     setJobs([]);
-    setJobsDisplayMessage(null);
   } finally {
     setLoading(false);
   }
 };
+
   // Handle search
   const handleSearch = async () => {
     if (!searchQuery.trim()) {
@@ -434,61 +430,6 @@ const renderEmptyState = () => (
   </View>
 );
 
-// New component to display job status messages
-const renderJobsMessage = () => {
-  if (!jobsDisplayMessage || jobs.length === 0) return null;
-
-  const messageColors = {
-    info: { bg: '#E3F2FD', border: '#2196F3', text: '#1976D2' },
-    warning: { bg: '#FFF3E0', border: '#FF9800', text: '#F57C00' },
-    success: { bg: '#E8F5E8', border: '#4CAF50', text: '#388E3C' }
-  };
-
-  const colors = messageColors[jobsDisplayMessage.type] || messageColors.info;
- return (
-    <View style={{
-      margin: 16,
-      padding: 12,
-      backgroundColor: colors.bg,
-      borderLeftWidth: 4,
-      borderLeftColor: colors.border,
-      borderRadius: 8,
-      flexDirection: 'row',
-      alignItems: 'center'
-    }}>
-      <Ionicons 
-        name={jobsDisplayMessage.type === 'warning' ? 'warning-outline' : 'information-circle-outline'} 
-        size={20} 
-        color={colors.border}
-        style={{ marginRight: 8 }}
-      />
-      <View style={{ flex: 1 }}>
-        <Text style={{ 
-          fontSize: 14, 
-          fontWeight: '600', 
-          color: colors.text,
-          marginBottom: 2
-        }}>
-          {jobsDisplayMessage.title}
-        </Text>
-        <Text style={{ 
-          fontSize: 12, 
-          color: colors.text,
-          opacity: 0.8
-        }}>
-          {jobsDisplayMessage.message}
-        </Text>
-      </View>
-      <TouchableOpacity 
-        onPress={() => setJobsDisplayMessage(null)}
-        style={{ padding: 4 }}
-      >
-        <Ionicons name="close" size={16} color={colors.text} />
-      </TouchableOpacity>
-    </View>
-  );
-};
-
   // Don't render anything until initialized
   if (!isInitialized) {
     return (
@@ -577,7 +518,6 @@ const renderJobsMessage = () => {
       </View>
 
       <View style={styles.filtersScrollContainer}>
-
         <FlatList
           horizontal
           showsHorizontalScrollIndicator={false}
@@ -616,8 +556,6 @@ const renderJobsMessage = () => {
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
         ListEmptyComponent={renderEmptyState}
-          ListHeaderComponent={renderJobsMessage} // Add this line
-
         ListFooterComponent={
           loading ? (
             <View style={{ padding: 20, alignItems: 'center' }}>
