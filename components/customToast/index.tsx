@@ -6,77 +6,92 @@ import { fontSizes } from "../../themes/fonts";
 
 interface CustomToastProps extends BaseToastProps {
   text1?: string;
+  text2?: string;
 }
 
+const renderToast = (
+  type: "success" | "error" | "info",
+  { text1, text2, hide }: CustomToastProps
+) => {
+  const containerStyle =
+    type === "success"
+      ? styles.successContainer
+      : type === "error"
+      ? styles.errorContainer
+      : styles.infoContainer;
+
+  const textStyle =
+    type === "success"
+      ? styles.successText
+      : type === "error"
+      ? styles.errorText
+      : styles.infoText;
+
+  const subTextStyle =
+    type === "success"
+      ? styles.successSubText
+      : type === "error"
+      ? styles.errorSubText
+      : styles.infoSubText;
+
+  const iconName =
+    type === "success"
+      ? "checkmark-circle"
+      : type === "error"
+      ? "close-circle"
+      : "information-circle";
+
+  const iconColor =
+    type === "success" ? "#12B76A" : type === "error" ? "#F04438" : "#2E90FA";
+
+  return (
+    <View style={[styles.container, containerStyle]}>
+      <Ionicons
+        name={iconName}
+        size={24}
+        color={iconColor}
+        style={styles.icon}
+      />
+      <View style={{ flex: 1 }}>
+        {text1 ? <Text style={[styles.text, textStyle]}>{text1}</Text> : null}
+        {text2 ? (
+          <Text style={[styles.subText, subTextStyle]}>{text2}</Text>
+        ) : null}
+      </View>
+      <TouchableOpacity onPress={hide}>
+        <Ionicons name="close" size={24} color="#4A4A4A" />
+      </TouchableOpacity>
+    </View>
+  );
+};
+
 const toastConfig = {
-  success: ({ text1, hide }: CustomToastProps) => (
-    <View style={[styles.container, styles.successContainer]}>
-      <Ionicons
-        name="checkmark-circle"
-        size={24}
-        color="#12B76A"
-        style={styles.icon}
-      />
-      <Text style={[styles.text, styles.successText]}>{text1}</Text>
-      <TouchableOpacity onPress={hide}>
-        <Ionicons name="close" size={24} color="#4A4A4A" />
-      </TouchableOpacity>
-    </View>
-  ),
-  error: ({ text1, hide }: CustomToastProps) => (
-    <View style={[styles.container, styles.errorContainer]}>
-      <Ionicons
-        name="close-circle"
-        size={24}
-        color="#F04438"
-        style={styles.icon}
-      />
-      <Text style={[styles.text, styles.errorText]}>{text1}</Text>
-      <TouchableOpacity onPress={hide}>
-        <Ionicons name="close" size={24} color="#4A4A4A" />
-      </TouchableOpacity>
-    </View>
-  ),
-  info: ({ text1, hide }: CustomToastProps) => (
-    <View style={[styles.container, styles.infoContainer]}>
-      <Ionicons
-        name="information-circle"
-        size={24}
-        color="#2E90FA"
-        style={styles.icon}
-      />
-      <Text style={[styles.text, styles.infoText]}>{text1}</Text>
-      <TouchableOpacity onPress={hide}>
-        <Ionicons name="close" size={24} color="#4A4A4A" />
-      </TouchableOpacity>
-    </View>
-  ),
+  success: (props: CustomToastProps) => renderToast("success", props),
+  error: (props: CustomToastProps) => renderToast("error", props),
+  info: (props: CustomToastProps) => renderToast("info", props),
 };
 
 export default toastConfig;
 
 const styles = StyleSheet.create({
   container: {
-    flexDirection: "row" as const,
-    alignItems: "center" as const,
+    flexDirection: "row",
+    alignItems: "center",
     borderRadius: 12,
-    paddingVertical: 10,
+    paddingVertical: 8,
     paddingHorizontal: 12,
     marginHorizontal: 16,
-    //   shadowColor: "#000",
-    //   shadowOpacity: 0.1,
-    //   shadowRadius: 10,
-    //   shadowOffset: { width: 0, height: 4 },
-    //   elevation: 4,
-    minHeight: 56,
   },
   icon: {
     marginRight: 12,
   },
   text: {
-    flex: 1,
     fontSize: fontSizes.size14,
     fontWeight: "600",
+  },
+  subText: {
+    fontSize: fontSizes.size12,
+    marginTop: 2,
   },
   successContainer: {
     backgroundColor: "#ECFDF3",
@@ -86,6 +101,9 @@ const styles = StyleSheet.create({
   successText: {
     color: "#027A48",
   },
+  successSubText: {
+    color: "#039855",
+  },
   errorContainer: {
     backgroundColor: "#FEF3F2",
     borderColor: "#FDA29B",
@@ -94,6 +112,9 @@ const styles = StyleSheet.create({
   errorText: {
     color: "#B42318",
   },
+  errorSubText: {
+    color: "#D92D20",
+  },
   infoContainer: {
     backgroundColor: "#EFF8FF",
     borderColor: "#B2DDFF",
@@ -101,5 +122,8 @@ const styles = StyleSheet.create({
   },
   infoText: {
     color: "#175CD3",
+  },
+  infoSubText: {
+    color: "#1570EF",
   },
 });

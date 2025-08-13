@@ -17,11 +17,14 @@ import {
   SceneRendererProps,
   NavigationState,
 } from "react-native-tab-view";
-import { useNavigation } from "@react-navigation/native";
+import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import { Colors } from "../../../constants/Colors";
 import JobCard from "../../../components/jobCard";
-import { getAppliedJobsByUserId, getJobPostingsByUserId } from "../../../services/api";
+import {
+  getAppliedJobsByUserId,
+  getJobPostingsByUserId,
+} from "../../../services/api";
 import { getUserData } from "../../../utilities/asyncStore";
 import { JobPost } from "../../../types";
 import { styles } from "./styles";
@@ -39,42 +42,33 @@ const MyPostTab = () => {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = React.useState(false);
 
-  const onRefresh = React.useCallback(() => {
-    setRefreshing(true);
-    fetchPosts();
-    setTimeout(() => {
-      setRefreshing(false);
-    }, 2000);
-  }, []);
-
   const handleNext = () => {
     navigation.navigate("RequestVerification");
   };
 
-  React.useEffect(() => {
-    const fetchPosts = async () => {
-      try {
-        setLoading(true);
-        const user = await getUserData(); // Assuming it returns { id: '...' }
-        if (!user?.id) {
-          console.error("No user ID found");
-          setPosts([]);
-          return;
-        }
-        console.log("Fetching posts for user ID:", user.id);
-        const res = await getJobPostingsByUserId(user.id);
-        console.log("Fetched posts:", res.data);
-        setPosts(res.data || []); // if API returns array
-      } catch (error) {
-        console.error("Error fetching job postings", error);
+  const fetchPosts = async () => {
+    try {
+      setLoading(true);
+      const user = await getUserData(); // Assuming it returns { id: '...' }
+      if (!user?.id) {
+        console.error("No user ID found");
         setPosts([]);
-      } finally {
-        setLoading(false);
+        return;
       }
-    };
-
-    fetchPosts();
-  }, []);
+      const res = await getJobPostingsByUserId(user.id);
+      setPosts(res.data || []); // if API returns array
+    } catch (error) {
+      console.error("Error fetching job postings", error);
+      setPosts([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+  useFocusEffect(
+    React.useCallback(() => {
+      fetchPosts();
+    }, [])
+  );
 
   if (loading) {
     return (
@@ -154,7 +148,6 @@ const AppliedTab = () => {
         return;
       }
       const res = await getAppliedJobsByUserId(user.id);
-      console.log("Fetched applied jobs:", res.data);
       setAppliedJobs(res.data || []);
     } catch (error) {
       console.error("Error fetching applied jobs", error);
@@ -168,9 +161,11 @@ const AppliedTab = () => {
     }
   };
 
-  React.useEffect(() => {
-    fetchAppliedJobs();
-  }, []);
+  useFocusEffect(
+    React.useCallback(() => {
+      fetchAppliedJobs();
+    }, [])
+  );
 
   if (loading) {
     return (

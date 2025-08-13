@@ -6,7 +6,6 @@ import {
   TouchableOpacity,
   ScrollView,
   ActivityIndicator,
-  Alert,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation, useRoute } from "@react-navigation/native";
@@ -15,7 +14,6 @@ import { styles } from "./styles";
 import { JobPost } from "../../../types";
 import { Header } from "../../../components/header";
 import { applyJob } from "../../../services/api";
-import LottieView from "lottie-react-native";
 import SuccessAnimation from "../../../components/successAnimation";
 import Toast from "react-native-toast-message";
 
