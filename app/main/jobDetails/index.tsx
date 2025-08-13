@@ -14,19 +14,25 @@ import { Colors } from "../../../constants/Colors";
 import { styles } from "./styles";
 import { JobPost } from "../../../types";
 import { Header } from "../../../components/header";
+import { applyJob } from "../../../services/api";
+import LottieView from "lottie-react-native";
+import SuccessAnimation from "../../../components/successAnimation";
+import Toast from "react-native-toast-message";
 
 const JobDetails = () => {
   const navigation = useNavigation<any>();
   const route = useRoute<any>();
   const { jobId, jobData } = route.params || {};
-  
+
   const [job, setJob] = useState<JobPost | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [applied, setApplied] = useState(false);
 
   useEffect(() => {
     if (jobData) {
-      // If job data is passed directly, use it
+      console.log("Job data received:", JSON.stringify(jobData, null, 2));
+      console.log("Job ID from params:", typeof jobId);
       setJob(jobData);
     } else if (jobId) {
       // If only jobId is passed, show error (fallback)
@@ -36,39 +42,66 @@ const JobDetails = () => {
     }
   }, [jobId, jobData]);
 
-  const handleApply = () => {
-    Alert.alert(
-      "Apply for Job",
-      "Are you sure you want to apply for this job?",
-      [
-        { text: "Cancel", style: "cancel" },
-        { text: "Apply", onPress: () => console.log("Applied for job") }
-      ]
-    );
-  };
+  // const handleApply = () => {
+  //   Alert.alert(
+  //     "Apply for Job",
+  //     "Are you sure you want to apply for this job?",
+  //     [
+  //       { text: "Cancel", style: "cancel" },
+  //       { text: "Apply", onPress: () => console.log("Applied for job") }
+  //     ]
+  //   );
+  // };
 
-  const handleContact = () => {
-    if (job?.userId?.phoneNumber) {
-      Alert.alert(
-        "Contact Employer",
-        `Call ${job.userId.firstName} ${job.userId.lastName}?`,
-        [
-          { text: "Cancel", style: "cancel" },
-          { text: "Call", onPress: () => console.log("Calling employer") }
-        ]
-      );
+  const handleApply = async () => {
+    setLoading(true);
+    try {
+      const res = await applyJob(jobId);
+      if (res.data.success) {
+        setApplied(true); // ✅ show success animation
+        setTimeout(() => {
+          navigation.goBack(); // ✅ go back after animation
+        }, 3000); // Adjust delay based on animation length
+      }
+    } catch (err: any) {
+      const errorMessage =
+        err?.response?.data?.error?.message ||
+        err?.message ||
+        "Something went wrong";
+
+      if (errorMessage.includes("overlapping this time slot")) {
+        Toast.show({
+          type: "error",
+          text1: "Application Failed",
+          text2: errorMessage,
+        });
+      } else {
+        Toast.show({
+          type: "error",
+          text1: "Error",
+          text2: errorMessage,
+        });
+      }
+    } finally {
+      setLoading(false);
     }
   };
 
   const formatTimePreference = (timePrefs: string[]) => {
     if (!timePrefs || timePrefs.length === 0) return "Flexible";
-    return timePrefs.map(time => time.charAt(0).toUpperCase() + time.slice(1)).join(", ");
+    return timePrefs
+      .map((time) => time.charAt(0).toUpperCase() + time.slice(1))
+      .join(", ");
   };
 
   const formatRequirements = (reqs: string[]) => {
     if (!reqs || reqs.length === 0) return "No specific requirements";
     return reqs.join(", ");
   };
+
+  if (applied) {
+    return <SuccessAnimation message="Application Submitted Successfully" />;
+  }
 
   if (loading) {
     return (
@@ -84,7 +117,10 @@ const JobDetails = () => {
       <View style={styles.errorContainer}>
         <Ionicons name="alert-circle-outline" size={64} color={Colors.grey} />
         <Text style={styles.errorText}>{error || "Job not found"}</Text>
-        <TouchableOpacity style={styles.retryButton} onPress={() => navigation.goBack()}>
+        <TouchableOpacity
+          style={styles.retryButton}
+          onPress={() => navigation.goBack()}
+        >
           <Text style={styles.retryButtonText}>Go Back</Text>
         </TouchableOpacity>
       </View>
@@ -112,7 +148,9 @@ const JobDetails = () => {
               style={styles.categoryIcon}
               source={require("../../../assets/images/cleaning.png")}
             />
-            <Text style={styles.categoryText}>{job.category?.name?.toUpperCase() || "GENERAL"}</Text>
+            <Text style={styles.categoryText}>
+              {job.category?.name?.toUpperCase() || "GENERAL"}
+            </Text>
           </View>
           <View style={styles.statusContainer}>
             <Text style={styles.statusText}>{job.status}</Text>
@@ -122,7 +160,9 @@ const JobDetails = () => {
         {/* Job Title and Budget */}
         <View style={styles.titleSection}>
           <Text style={styles.jobTitle}>{job.name}</Text>
-          <Text style={styles.budgetText}>₹{job.budget?.toLocaleString() || "0"}</Text>
+          <Text style={styles.budgetText}>
+            ₹{job.budget?.toLocaleString() || "0"}
+          </Text>
         </View>
 
         {/* Description */}
@@ -139,9 +179,13 @@ const JobDetails = () => {
           <View style={styles.locationContainer}>
             <Ionicons name="location-outline" size={20} color={Colors.grey} />
             <Text style={styles.locationText}>
-              {job.isRemote ? "Remote Work" : 
-                `${job.location?.address || ""}${job.location?.city ? ", " + job.location.city : ""}${job.location?.state ? ", " + job.location.state : ""}${job.location?.country ? ", " + job.location.country : ""}`
-              }
+              {job.isRemote
+                ? "Remote Work"
+                : `${job.location?.address || ""}${
+                    job.location?.city ? ", " + job.location.city : ""
+                  }${job.location?.state ? ", " + job.location.state : ""}${
+                    job.location?.country ? ", " + job.location.country : ""
+                  }`}
             </Text>
           </View>
         </View>
@@ -162,7 +206,9 @@ const JobDetails = () => {
         {job.requirements && job.requirements.length > 0 && (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Requirements</Text>
-            <Text style={styles.requirementsText}>{formatRequirements(job.requirements)}</Text>
+            <Text style={styles.requirementsText}>
+              {formatRequirements(job.requirements)}
+            </Text>
           </View>
         )}
 
@@ -176,7 +222,11 @@ const JobDetails = () => {
               <Text style={styles.detailValue}>{job.participantsNumber}</Text>
             </View>
             <View style={styles.detailItem}>
-              <Ionicons name="person-add-outline" size={20} color={Colors.grey} />
+              <Ionicons
+                name="person-add-outline"
+                size={20}
+                color={Colors.grey}
+              />
               <Text style={styles.detailLabel}>Applicants</Text>
               <Text style={styles.detailValue}>{job.applicantCount}</Text>
             </View>
@@ -184,14 +234,16 @@ const JobDetails = () => {
               <Ionicons name="calendar-outline" size={20} color={Colors.grey} />
               <Text style={styles.detailLabel}>Posted</Text>
               <Text style={styles.detailValue}>
-                {job.createdAt ? new Date(job.createdAt).toLocaleDateString() : "N/A"}
+                {job.createdAt
+                  ? new Date(job.createdAt).toLocaleDateString()
+                  : "N/A"}
               </Text>
             </View>
           </View>
         </View>
 
         {/* Employer Info */}
-        <View style={styles.section}>
+        {/* <View style={styles.section}>
           <Text style={styles.sectionTitle}>Employer</Text>
           <View style={styles.employerContainer}>
             <View style={styles.employerAvatar}>
@@ -209,18 +261,18 @@ const JobDetails = () => {
               <Ionicons name="call-outline" size={20} color={Colors.primary} />
             </TouchableOpacity>
           </View>
-        </View>
+        </View> */}
       </ScrollView>
 
       {/* Action Buttons */}
       <View style={styles.actionContainer}>
         <TouchableOpacity style={styles.applyButton} onPress={handleApply}>
-          <Text style={styles.applyButtonText}>Apply Now</Text>
+          <Text style={styles.applyButtonText}>Apply</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.saveButton}>
+        {/* <TouchableOpacity style={styles.saveButton}>
           <Ionicons name="bookmark-outline" size={20} color={Colors.primary} />
           <Text style={styles.saveButtonText}>Save</Text>
-        </TouchableOpacity>
+        </TouchableOpacity> */}
       </View>
     </View>
   );

@@ -459,6 +459,17 @@ export const getJobPostingsByUserId = async (userId: string) => {
   return res.data;
 };
 
+export const getAppliedJobsByUserId = async (userId: string) => {
+  const res = await api.get(`applications/user/${userId}/applied-jobs`);
+  return res.data;
+};
+
+export const applyJob = async (jobId: string) => {
+  console.log("Applying for job with ID:", jobId);
+  const data = await api.post(`applications/jobs/${jobId}/apply`);
+  return data;
+};
+
 // FIXED: Enhanced location update with retry logic
 export const updateUserLocationWithRetry = async (
   locationData,
