@@ -1,36 +1,35 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   View,
-  Text,
   Image,
   TouchableOpacity,
   ScrollView,
-  StyleSheet,
-  Alert,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation, useRoute } from "@react-navigation/native";
-import * as ImagePicker from "expo-image-picker";
+import { styles } from "./styles";
 
 import CustomButton from "../../../components/CustomButton";
 import { Colors } from "../../../constants/Colors";
 import Images from "../../../utilities/images";
 import { Header } from "../../../components/header";
-import DeviceDimensions from "../../../constants/DeviceDimenions";
 import LabeledInput from "../../../components/labeledTextInput";
 import { User } from "../../../types";
 import { saveUserData } from "../../../utilities/asyncStore";
 import { updateProfile } from "../../../services/api";
-import CustomModal from "../../../components/customModal";
 import { logoutUser } from "../../../utilities/authentication";
 import { useDispatch } from "react-redux";
 import Toast from "../../../components/toast";
+import ImagePickerActionSheet, {
+  ImagePickerActionSheetRef,
+} from "../../../components/imagePickerActionSheet";
 
 const EditProfile: React.FC = () => {
   const dispatch = useDispatch();
   const navigation = useNavigation<any>();
   const route = useRoute();
   const { user: initialUser } = (route.params as { user: User }) || {};
+  const imagePickerRef = useRef<ImagePickerActionSheetRef>(null);
 
   const [user, setUser] = useState<User | null>(null);
   const [firstName, setFirstName] = useState("");
@@ -40,7 +39,6 @@ const EditProfile: React.FC = () => {
     Images.profile.profileImage as unknown as { uri: string }
   );
   const [isSaving, setIsSaving] = useState(false);
-  const [imageModalVisible, setImageModalVisible] = useState(false);
 
   // Toast state
   const [toastVisible, setToastVisible] = useState(false);
@@ -67,44 +65,16 @@ const EditProfile: React.FC = () => {
     setProfileImage((init.profilePicture || Images.profile.profileImage) as any);
   }, []);
 
-  const pickImage = () => {
-    setImageModalVisible(true);
+  const showImagePicker = () => {
+    imagePickerRef.current?.show();
   };
 
-  const handleTakePhoto = async () => {
-    setImageModalVisible(false);
-    try {
-      const result = await ImagePicker.launchCameraAsync({
-        allowsEditing: true,
-        aspect: [1, 1],
-        base64: false,
-        quality: 0.8,
-      });
-      if (!result.canceled && result.assets[0]) {
-        setProfileImage({ uri: result.assets[0].uri });
-      }
-    } catch {
-      showToast("Failed to take photo");
-    }
+  const handleImageSelected = (imageUri: string) => {
+    setProfileImage({ uri: imageUri });
   };
 
-  const handleChooseFromGallery = async () => {
-    setImageModalVisible(false);
-    try {
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ["images"],
-        allowsMultipleSelection: false,
-        selectionLimit: 1,
-        allowsEditing: true,
-        aspect: [1, 1],
-        base64: false,
-      });
-      if (!result.canceled && result.assets[0]) {
-        setProfileImage({ uri: result.assets[0].uri });
-      }
-    } catch {
-      showToast("Failed to pick image");
-    }
+  const handleImageError = (error: string) => {
+    showToast(error);
   };
 
   const validateForm = (): boolean => {
@@ -181,21 +151,10 @@ const EditProfile: React.FC = () => {
             }
             style={styles.profileImage}
           />
-          <TouchableOpacity onPress={pickImage} style={styles.editIcon}>
+          <TouchableOpacity onPress={showImagePicker} style={styles.editIcon}>
             <Ionicons name="camera" size={16} color="#fff" />
           </TouchableOpacity>
         </View>
-
-        <CustomModal
-          visible={imageModalVisible}
-          onClose={() => setImageModalVisible(false)}
-          title="Change Profile Picture"
-          description="Choose an option to update your profile picture."
-          buttons={[
-            { title: "Take Photo", onPress: handleTakePhoto },
-            { title: "Choose from Gallery", onPress: handleChooseFromGallery },
-          ]}
-        />
 
         {/* First Name */}
         <LabeledInput
@@ -237,47 +196,18 @@ const EditProfile: React.FC = () => {
           color={Colors.grey}
           disabled={isSaving}
         />
-        
       </View>
+
+      {/* Image Picker ActionSheet */}
+      <ImagePickerActionSheet
+        ref={imagePickerRef}
+        onImageSelected={handleImageSelected}
+        onError={handleImageError}
+        title="Change Profile Picture"
+        primaryColor={Colors.primary}
+      />
     </View>
   );
 };
 
 export default EditProfile;
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Colors.background,
-  },
-  scrollContent: {
-    flexGrow: 1,
-    paddingHorizontal: 16,
-    paddingBottom: 100,
-  },
-  imageWrapper: {
-    alignItems: "center",
-    marginTop: 9 * DeviceDimensions.heightRatio,
-    marginBottom: 16,
-  },
-  profileImage: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    backgroundColor: Colors.tabGrey,
-  },
-  editIcon: {
-    position: "absolute",
-    bottom: 0,
-    right: 120,
-    backgroundColor: Colors.primary,
-    borderRadius: 20,
-    padding: 6,
-  },
-  bottomButton: {
-    position: "absolute",
-    bottom: 16,
-    left: 16,
-    right: 16,
-  },
-});
