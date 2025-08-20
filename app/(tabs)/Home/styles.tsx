@@ -242,31 +242,31 @@ export const styles = StyleSheet.create({
     color: Colors.black,
   },
   sectionHeader: {
-  flexDirection: 'row',
-  alignItems: 'center',
-  paddingHorizontal: 16,
-  paddingVertical: 12,
-  backgroundColor: Colors.background, // or your background color
-},
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    backgroundColor: Colors.background, // or your background color
+  },
 
-sectionHeaderText: {
-  fontSize: 16,
-  fontWeight: '600',
-  color: Colors.primary,
-  marginRight: 12,
-},
+  sectionHeaderText: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: Colors.primary,
+    marginRight: 12,
+  },
 
-sectionHeaderLine: {
-  flex: 1,
-  height: 1,
-  backgroundColor: Colors.grey + '30', // 30% opacity
-},
+  sectionHeaderLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: Colors.grey + "30", // 30% opacity
+  },
 
-// Distance Text Style (add to job card)
-distanceText: {
-  fontSize: 12,
-  color: Colors.grey,
-  marginTop: 2,
-  fontWeight: '500',
-},
+  // Distance Text Style (add to job card)
+  distanceText: {
+    fontSize: 12,
+    color: Colors.grey,
+    marginTop: 2,
+    fontWeight: "500",
+  },
 });

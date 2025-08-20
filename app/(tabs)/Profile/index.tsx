@@ -111,7 +111,12 @@ const Profile: React.FC = () => {
 
   if (isLoading) {
     return (
-      <View style={[styles.container, { justifyContent: "center", alignItems: "center" }]}>
+      <View
+        style={[
+          styles.container,
+          { justifyContent: "center", alignItems: "center" },
+        ]}
+      >
         <ActivityIndicator size="large" color={Colors.primary} />
       </View>
     );
@@ -129,7 +134,9 @@ const Profile: React.FC = () => {
         {/* Profile Card */}
         <View style={styles.profileCard}>
           <Image source={profileImageSrc} style={styles.profileImage} />
-          <Text style={styles.name}>{user?.firstName} {user?.lastName}</Text>
+          <Text style={styles.name}>
+            {user?.firstName} {user?.lastName}
+          </Text>
 
           <View style={styles.locationContainer}>
             <Ionicons name="location-outline" size={16} color="gray" />
@@ -142,14 +149,20 @@ const Profile: React.FC = () => {
           <View style={styles.statsContainer}>
             <View style={styles.statBox}>
               <Text style={styles.statLabel}>RATING</Text>
-              <Text style={styles.statNumber}>{user?.rating?.toFixed(1) || "0.0"}</Text>
-              <Text style={styles.statSubLabel}>{user?.totalReviews || 0} Reviews</Text>
+              <Text style={styles.statNumber}>
+                {user?.rating?.toFixed(1) || "0.0"}
+              </Text>
+              <Text style={styles.statSubLabel}>
+                {user?.totalReviews || 0} Reviews
+              </Text>
             </View>
             <View style={styles.separator} />
             <View style={styles.statBox}>
               <Text style={styles.statLabel}>COMPLETION RATE</Text>
               <View style={styles.completionRateContainer}>
-                <Text style={styles.statNumber}>{user?.completionRate || 0}%</Text>
+                <Text style={styles.statNumber}>
+                  {user?.completionRate || 0}%
+                </Text>
                 <Ionicons
                   name="information-circle-outline"
                   size={16}
@@ -157,7 +170,9 @@ const Profile: React.FC = () => {
                   style={styles.infoIcon}
                 />
               </View>
-              <Text style={styles.statSubLabel}>{user?.totalJobs || 0} Jobs Completed</Text>
+              <Text style={styles.statSubLabel}>
+                {user?.totalJobs || 0} Jobs Completed
+              </Text>
             </View>
           </View>
         </View>
@@ -195,7 +210,8 @@ const Profile: React.FC = () => {
                   • Can disassemble & reassemble furniture if needed
                 </Text>
                 <Text style={styles.dropdownDetail}>
-                  • Furniture moving, loading & unloading, safe lifting techniques
+                  • Furniture moving, loading & unloading, safe lifting
+                  techniques
                 </Text>
 
                 <ScrollView
@@ -216,26 +232,23 @@ const Profile: React.FC = () => {
         {/* Review */}
         <View style={styles.reviewContainer}>
           <View style={styles.reviewerInfo}>
-            <Image
-              source={review.reviewerImage}
-              style={styles.reviewerImage}
-            />
+            <Image source={review.reviewerImage} style={styles.reviewerImage} />
             <View style={styles.reviewerNameContainer}>
               <Text style={styles.reviewerName}>{review.reviewerName}</Text>
               <View style={styles.stars}>{ratingStars(review.rating)}</View>
             </View>
             <Text style={styles.reviewDate}>{review.date}</Text>
           </View>
-              <Text style={styles.reviewText}>{review.comment}</Text>
+          <Text style={styles.reviewText}>{review.comment}</Text>
         </View>
 
         {!isReadyToWork && (
           <View style={styles.buttonContainer}>
-              <CustomButton
-                onPress={() => {}}
-                text={"See all reviews"}
-                color={Colors.background}
-              />
+            <CustomButton
+              onPress={() => {}}
+              text={"See all reviews"}
+              color={Colors.background}
+            />
           </View>
         )}
       </ScrollView>

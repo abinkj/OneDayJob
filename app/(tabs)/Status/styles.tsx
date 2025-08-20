@@ -2,7 +2,7 @@ import { StyleSheet } from "react-native";
 import { Colors } from "../../../constants/Colors";
 import DeviceDimensions from "../../../constants/DeviceDimenions";
 
-export const styles = StyleSheet.create({
+const styles = StyleSheet.create({
   scrollContainer: {
     flex: 1,
     paddingHorizontal: 16,
@@ -43,3 +43,4 @@ export const styles = StyleSheet.create({
     right: 28 * DeviceDimensions.widthRatio, // Adjusted for device width ratio
   },
 });
+export default styles;
