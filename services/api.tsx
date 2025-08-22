@@ -8,7 +8,7 @@ import {
 } from "../utilities/secureStore";
 import { normalizeUser } from "../utilities/asyncStore";
 
-const API_BASE_URL = "http://192.168.0.100:8000/api"; //AJ ip address
+const API_BASE_URL = "http://192.168.235.252:8000/api"; //AJ ip address
 //const API_BASE_URL = 'http://192.168.1.5:8000/api';
 
 const api = axios.create({
@@ -463,6 +463,17 @@ export const getAppliedJobsByUserId = async (userId: string) => {
   const res = await api.get(`applications/user/${userId}/applied-jobs`);
   return res.data;
 };
+
+
+export const withdrawApplication = async (jobId: string) => {
+  const res = await api.post(`applications/jobs/${jobId}/withdraw`);
+  return res.data;
+};
+
+export const getAppliedUser = async (jobId: string) => {
+  const res = await api.get(`applications/jobs/${jobId}/applied-users`);
+  return res.data;
+}
 
 export const applyJob = async (jobId: string) => {
   console.log("Applying for job with ID:", jobId);

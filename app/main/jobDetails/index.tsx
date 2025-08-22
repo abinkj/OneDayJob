@@ -10,7 +10,7 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { Colors } from "../../../constants/Colors";
-import { styles } from "./styles";
+import  styles  from "./styles";
 import { JobPost } from "../../../types";
 import { Header } from "../../../components/header";
 import { applyJob } from "../../../services/api";

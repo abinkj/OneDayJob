@@ -10,6 +10,11 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.background,
     marginBottom: 75 * DeviceDimensions.heightRatio, // Adjusted for device height ratio
   },
+  contentContainer: {
+    justifyContent: "center",
+    alignItems: "center",
+    flex: 1,
+  },
   tabbar: {
     flexDirection: "row",
     justifyContent: "space-around",

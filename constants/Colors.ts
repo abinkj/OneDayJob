@@ -23,7 +23,7 @@ export const Colors={
     messagageBubble:'#CCCCCC',
     whiteBack:'#D9D9D9',
     iconBlack:'#1C274C',
-    
+    red:'#EE5050',
 
     
 
