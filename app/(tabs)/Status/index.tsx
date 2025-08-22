@@ -27,7 +27,7 @@ import {
 } from "../../../services/api";
 import { getUserData } from "../../../utilities/asyncStore";
 import { JobPost } from "../../../types";
-import { styles } from "./styles";
+import  styles  from "./styles";
 
 type Route = {
   key: string;

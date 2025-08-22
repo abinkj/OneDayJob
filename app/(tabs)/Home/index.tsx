@@ -13,7 +13,7 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { Colors } from "../../../constants/Colors";
-import { styles } from "./styles";
+import  styles  from "./styles";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { getCurrentLocation as getLocationWithAddress, searchPlacesFallback } from "../../../services/locationService";
 import { useDispatch, useSelector } from "react-redux";

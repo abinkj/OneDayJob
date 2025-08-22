@@ -2,7 +2,7 @@ import React from "react";
 import { View, FlatList } from "react-native";
 import ChatItem from "../../../components/chatItem";
 import { Header } from "../../../components/header";
-import { styles } from "./styles";
+import  styles  from "./styles";
 import { router } from "expo-router";
 import { useNavigation } from "@react-navigation/native";
 
