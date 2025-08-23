@@ -435,12 +435,12 @@ const HomeScreen = () => {
             </Text>
           </View>
 
-          <View style={styles.dateContainer}>
+          {/* <View style={styles.dateContainer}>
             <Ionicons name="calendar-outline" size={16} color={Colors.grey} />
             <Text style={styles.dateText}>
               {item.createdAt ? new Date(item.createdAt).toLocaleDateString() : item.isFlexible ? "Flexible" : "Date not set"}
             </Text>
-          </View>
+          </View> */}
         </View>
 
         <View style={styles.jobFooter}>
