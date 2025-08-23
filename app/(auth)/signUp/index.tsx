@@ -6,8 +6,10 @@ import {
   TouchableOpacity,
   Image,
   Alert,
+  KeyboardAvoidingView,
+  ScrollView,
 } from "react-native";
-import { styles } from "./styles"; // Import styles
+import styles from "./styles"; // Import styles
 import { router } from "expo-router";
 import { requestOtp } from "../../../services/api"; // Import API function
 import { useNavigation } from "@react-navigation/native";
@@ -53,54 +55,57 @@ const SignUp = () => {
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Create Account</Text>
-      <Image
-        source={require("../../../assets/placeholder-image.png")}
-        style={styles.image}
-      />
-      <Text style={styles.subtitle}>
-        Enter your mobile number to get started
-      </Text>
+    <KeyboardAvoidingView style={styles.container}>
+      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ alignItems: 'center' }} showsVerticalScrollIndicator={false}>
 
-      <View style={styles.inputContainerSignUp}>
-        <TextInput
-          style={styles.input}
-          placeholder="Your Name"
-          value={name}
-          onChangeText={setName}
+        <Text style={styles.title}>Create Account</Text>
+        <Image
+          source={require("../../../assets/placeholder-image.png")}
+          style={styles.image}
         />
-      </View>
-
-      <View style={styles.phoneContainer}>
-        <Text style={styles.countryCode}>+91</Text>
-        <TextInput
-          style={styles.input}
-          keyboardType="numeric"
-          maxLength={10}
-          placeholder="Enter mobile number"
-          value={phone}
-          onChangeText={setPhone}
-        />
-      </View>
-
-      <TouchableOpacity
-        style={[styles.buttonSign, isLoading && styles.disabledButtonSign]}
-        onPress={handleGetOtp}
-        disabled={isLoading}
-      >
-        <Text style={styles.buttonText}>
-          {isLoading ? "Sending OTP..." : "Get OTP"}
+        <Text style={styles.subtitle}>
+          Enter your mobile number to get started
         </Text>
-      </TouchableOpacity>
 
-      <View style={styles.row}>
-        <Text style={styles.footerText}>Already have an account? </Text>
-        <TouchableOpacity onPress={() => navigation.navigate("Login")}>
-          <Text style={styles.createAccount}>Login</Text>
+        <View style={styles.inputContainerSignUp}>
+          <TextInput
+            style={styles.input}
+            placeholder="Your Name"
+            value={name}
+            onChangeText={setName}
+          />
+        </View>
+
+        <View style={styles.phoneContainer}>
+          <Text style={styles.countryCode}>+91</Text>
+          <TextInput
+            style={styles.input}
+            keyboardType="numeric"
+            maxLength={10}
+            placeholder="Enter mobile number"
+            value={phone}
+            onChangeText={setPhone}
+          />
+        </View>
+
+        <TouchableOpacity
+          style={[styles.buttonSign, isLoading && styles.disabledButtonSign]}
+          onPress={handleGetOtp}
+          disabled={isLoading}
+        >
+          <Text style={styles.buttonText}>
+            {isLoading ? "Sending OTP..." : "Get OTP"}
+          </Text>
         </TouchableOpacity>
-      </View>
-    </View>
+
+        <View style={styles.row}>
+          <Text style={styles.footerText}>Already have an account? </Text>
+          <TouchableOpacity onPress={() => navigation.navigate("Login")}>
+            <Text style={styles.createAccount}>Login</Text>
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 };
 

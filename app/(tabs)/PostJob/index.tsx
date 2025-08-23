@@ -8,7 +8,7 @@ import CustomButton from '../../../components/CustomButton';
 import { Picker } from '@react-native-picker/picker';
 import * as ImagePicker from 'expo-image-picker';
 import { Calendar } from 'react-native-calendars';
-import { styles } from './styles';
+import  styles  from './styles';
 import CustomSwitch from '../../../components/CustomSwich';
 import JobDescriptionSection from '../../../components/JobDescription';
 import LocationSearch from '../../../components/LocationSearch';

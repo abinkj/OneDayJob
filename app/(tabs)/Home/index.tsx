@@ -13,7 +13,7 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { Colors } from "../../../constants/Colors";
-import  styles  from "./styles";
+import styles from "./styles";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { getCurrentLocation as getLocationWithAddress, searchPlacesFallback } from "../../../services/locationService";
 import { useDispatch, useSelector } from "react-redux";
@@ -70,7 +70,7 @@ const HomeScreen = () => {
     jobs.forEach(job => {
       if (job.location?.coordinates?.coordinates || (job.location?.coordinates?.latitude && job.location?.coordinates?.longitude)) {
         let jobLat, jobLng;
-        
+
         // Handle both GeoJSON format and lat/lng format
         if (job.location.coordinates.coordinates) {
           // GeoJSON format [lng, lat]
@@ -250,7 +250,7 @@ const HomeScreen = () => {
       if (location && authStatus && allJobs.length > 0) {
         const sections = categorizeJobsByDistance(allJobs, location);
         setJobSections(sections);
-        
+
         // Show appropriate toast messages
         if (sections.length > 1) {
           const nearbyCount = sections[0]?.data?.length || 0;
@@ -417,7 +417,7 @@ const HomeScreen = () => {
             )}
           </View>
         </View>
-        
+
         <View style={styles.titleContainer}>
           <Text style={styles.jobTitle}>{item.description}</Text>
           <View style={styles.statusContainer}>
