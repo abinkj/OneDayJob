@@ -2,13 +2,18 @@ import { StyleSheet } from "react-native";
 import { Colors } from "../../../constants/Colors";
 import DeviceDimensions from "../../../constants/DeviceDimenions";
 
-export const styles = StyleSheet.create({
+const styles = StyleSheet.create({
   scrollContainer: {
     flex: 1,
     paddingHorizontal: 16,
     paddingTop: 14,
     backgroundColor: Colors.background,
     marginBottom: 75 * DeviceDimensions.heightRatio, // Adjusted for device height ratio
+  },
+  contentContainer: {
+    justifyContent: "center",
+    alignItems: "center",
+    flex: 1,
   },
   tabbar: {
     flexDirection: "row",
@@ -43,3 +48,4 @@ export const styles = StyleSheet.create({
     right: 28 * DeviceDimensions.widthRatio, // Adjusted for device width ratio
   },
 });
+export default styles;

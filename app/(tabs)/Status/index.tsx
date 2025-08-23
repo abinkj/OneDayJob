@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import {
   View,
   Text,
-  StyleSheet,
   ScrollView,
   TouchableWithoutFeedback,
   Dimensions,
@@ -13,7 +12,6 @@ import {
 import {
   TabView,
   SceneMap,
-  TabBar,
   SceneRendererProps,
   NavigationState,
 } from "react-native-tab-view";
@@ -24,10 +22,12 @@ import JobCard from "../../../components/jobCard";
 import {
   getAppliedJobsByUserId,
   getJobPostingsByUserId,
+  withdrawApplication,
 } from "../../../services/api";
 import { getUserData } from "../../../utilities/asyncStore";
 import { JobPost } from "../../../types";
-import { styles } from "./styles";
+import styles from "./styles";
+import Toast from "react-native-toast-message";
 
 type Route = {
   key: string;
@@ -42,28 +42,33 @@ const MyPostTab = () => {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = React.useState(false);
 
-  const handleNext = () => {
-    navigation.navigate("RequestVerification");
+  const handleNext = (job: any) => {
+    // navigation.navigate("RequestVerification", { jobId: job.id });
   };
 
-  const fetchPosts = async () => {
+  const fetchPosts = async (isRefresh = false) => {
     try {
-      setLoading(true);
-      const user = await getUserData(); // Assuming it returns { id: '...' }
+      if (!isRefresh) setLoading(true);
+      const user = await getUserData();
       if (!user?.id) {
         console.error("No user ID found");
         setPosts([]);
         return;
       }
       const res = await getJobPostingsByUserId(user.id);
-      setPosts(res.data || []); // if API returns array
+      setPosts(res.data || []);
     } catch (error) {
       console.error("Error fetching job postings", error);
       setPosts([]);
     } finally {
-      setLoading(false);
+      if (isRefresh) {
+        setRefreshing(false);
+      } else {
+        setLoading(false);
+      }
     }
   };
+
   useFocusEffect(
     React.useCallback(() => {
       fetchPosts();
@@ -80,36 +85,33 @@ const MyPostTab = () => {
 
   if (posts.length === 0) {
     return (
-      <View
-        style={{
-          justifyContent: "center",
-          alignItems: "center",
-          flex: 1,
-          padding: 20,
-        }}
+      <ScrollView
+        style={styles.scrollContainer}
+        contentContainerStyle={styles.contentContainer}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={() => {
+              setRefreshing(true);
+              fetchPosts(true);
+            }}
+          />
+        }
       >
-        <Ionicons name="document-outline" size={64} color={Colors.grey} />
-        <Text
+        <View
           style={{
-            fontSize: 18,
-            color: Colors.grey,
-            marginTop: 16,
-            textAlign: "center",
+            justifyContent: "center",
+            alignItems: "center",
+            flex: 1,
+            padding: 20,
           }}
         >
-          No job posts yet
-        </Text>
-        <Text
-          style={{
-            fontSize: 14,
-            color: Colors.grey,
-            marginTop: 8,
-            textAlign: "center",
-          }}
-        >
-          Create your first job post to get started
-        </Text>
-      </View>
+          <Ionicons name="document-outline" size={64} color={Colors.grey} />
+          <Text style={{ fontSize: 18, color: Colors.grey, marginTop: 16 }}>
+            No job posts yet
+          </Text>
+        </View>
+      </ScrollView>
     );
   }
 
@@ -118,7 +120,13 @@ const MyPostTab = () => {
       style={styles.scrollContainer}
       showsVerticalScrollIndicator={false}
       refreshControl={
-        <RefreshControl refreshing={false} onRefresh={() => {}} />
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={() => {
+            setRefreshing(true);
+            fetchPosts(true);
+          }}
+        />
       }
     >
       {posts.map((post) => (
@@ -134,8 +142,30 @@ const AppliedTab = () => {
   const [loading, setLoading] = React.useState(true);
   const [refreshing, setRefreshing] = React.useState(false);
 
-  const handleNext = () => {
-    navigation.navigate("RequestVerification");
+  const handleNext = (job: any) => {
+    navigation.navigate("JobDetails", { jobId: job.id, jobData: job });
+  };
+
+  const handleWithdraw = async (job: any) => {
+    try {
+      console.log("Withdrawing application for job ID:", job.id);
+      await withdrawApplication(job.id);
+      fetchAppliedJobs(true);
+
+      Toast.show({
+        type: "success",
+        text1: "Withdrawn",
+        text2: "You have withdrawn your application successfully",
+      });
+    } catch (error) {
+      console.error("Error withdrawing application:", error);
+
+      Toast.show({
+        type: "error",
+        text1: "Error",
+        text2: "Could not withdraw application",
+      });
+    }
   };
 
   const fetchAppliedJobs = async (isRefresh = false) => {
@@ -179,6 +209,7 @@ const AppliedTab = () => {
     return (
       <ScrollView
         style={styles.scrollContainer}
+        contentContainerStyle={styles.contentContainer}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -224,7 +255,13 @@ const AppliedTab = () => {
         <JobCard
           key={application.applicationId}
           data={{ ...application.job, status: "applied" }}
-          onPress={handleNext}
+          onPress={() => {
+            handleNext(application.job);
+          }}
+          withdraw={true}
+          onWithdraw={() => {
+            handleWithdraw(application.job);
+          }}
         />
       ))}
     </ScrollView>

@@ -7,9 +7,13 @@ import { JobCardData } from "../../types";
 const JobCard = ({
   data,
   onPress,
+  onWithdraw,
+  withdraw = false,
 }: {
   data: JobCardData;
   onPress: Function;
+  onWithdraw?: Function;
+  withdraw?: boolean;
 }) => {
   const {
     name,
@@ -148,7 +152,7 @@ const JobCard = ({
 
       {/* Bottom Row */}
       <View style={styles.bottomRow}>
-        <View style={styles.avatars}>
+        {/* <View style={styles.avatars}>
           <Image
             source={{ uri: "https://i.pravatar.cc/20?img=1" }}
             style={styles.avatar}
@@ -166,10 +170,27 @@ const JobCard = ({
               ? "10+ Requests"
               : `${applicantCount || 0} Requests`}
           </Text>
-        </View>
+        </View> */}
         <TouchableOpacity style={styles.button} onPress={() => onPress()}>
-          <Text style={styles.buttonText}>View Requests</Text>
+          {withdraw ? (
+            <Text style={styles.buttonText}>View Details</Text>
+          ) : (
+            <Text style={styles.buttonText}>View Requests</Text>
+          )}
         </TouchableOpacity>
+        {withdraw && (
+          <TouchableOpacity
+            style={[
+              styles.button,
+              { backgroundColor: Colors.red, marginLeft: 12 },
+            ]}
+            onPress={() => onWithdraw()}
+          >
+            <Text style={[styles.buttonText, { color: Colors.white }]}>
+              Withdraw
+            </Text>
+          </TouchableOpacity>
+        )}
       </View>
     </View>
   );
@@ -265,7 +286,7 @@ const styles = StyleSheet.create({
   },
   bottomRow: {
     flexDirection: "row",
-    justifyContent: "space-between",
+    justifyContent: "flex-end",
     alignItems: "center",
     marginTop: 12,
   },

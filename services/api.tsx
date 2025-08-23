@@ -464,6 +464,17 @@ export const getAppliedJobsByUserId = async (userId: string) => {
   return res.data;
 };
 
+
+export const withdrawApplication = async (jobId: string) => {
+  const res = await api.post(`applications/jobs/${jobId}/withdraw`);
+  return res.data;
+};
+
+export const getAppliedUser = async (jobId: string) => {
+  const res = await api.get(`applications/jobs/${jobId}/applied-users`);
+  return res.data;
+}
+
 export const applyJob = async (jobId: string) => {
   console.log("Applying for job with ID:", jobId);
   const data = await api.post(`applications/jobs/${jobId}/apply`);

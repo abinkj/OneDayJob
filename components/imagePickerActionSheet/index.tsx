@@ -91,6 +91,7 @@ const ImagePickerActionSheet = forwardRef<
           aspect: [1, 1],
           base64: false,
           quality: 0.8,
+          exif: false,
         });
 
         if (!result.canceled && result.assets[0]) {
@@ -158,7 +159,11 @@ const ImagePickerActionSheet = forwardRef<
           backgroundColor: "#ccc",
         }}
         gestureEnabled={true}
-        defaultOverlayOpacity={0.3}
+        defaultOverlayOpacity={0.7}
+        closeOnTouchBackdrop={true}
+        closeOnPressBack={true}
+        statusBarTranslucent={true}
+        animated={true}
       >
         <View style={{ padding: 20 }}>
           <Text style={defaultTitleStyle}>{title}</Text>

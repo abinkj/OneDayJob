@@ -2,7 +2,7 @@ import { StyleSheet } from "react-native";
 import DeviceDimensions from "../../../constants/DeviceDimenions";
 import { Colors } from "../../../constants/Colors";
 
-export const styles = StyleSheet.create({
+const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Colors.background,
@@ -11,3 +11,4 @@ export const styles = StyleSheet.create({
     marginTop: 22 * DeviceDimensions.heightRatio,
   },
 });
+export default styles;

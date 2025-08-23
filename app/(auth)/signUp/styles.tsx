@@ -2,7 +2,7 @@ import { Dimensions, StyleSheet } from "react-native";
 import DeviceDimensions from "../../../constants/DeviceDimenions";
 import { Colors } from "../../../constants/Colors";
 
-export const styles = StyleSheet.create({
+const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 16,
@@ -203,3 +203,5 @@ export const styles = StyleSheet.create({
     color: Colors.grey,
   },
 });
+
+export default styles;
