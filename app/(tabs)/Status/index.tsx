@@ -42,8 +42,9 @@ const MyPostTab = () => {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = React.useState(false);
 
-  const handleNext = (job: any) => {
-    // navigation.navigate("RequestVerification", { jobId: job.id });
+  const handleNext = (jobId: any) => {
+    console.log("id------------------------>", jobId);
+    navigation.navigate("RequestVerification", { jobId: jobId });
   };
 
   const fetchPosts = async (isRefresh = false) => {
@@ -130,7 +131,11 @@ const MyPostTab = () => {
       }
     >
       {posts.map((post) => (
-        <JobCard key={post._id} data={post} onPress={handleNext} />
+        <JobCard
+          key={post._id}
+          data={post}
+          onPress={() => handleNext(post._id)}
+        />
       ))}
     </ScrollView>
   );
@@ -148,10 +153,8 @@ const AppliedTab = () => {
 
   const handleWithdraw = async (job: any) => {
     try {
-      console.log("Withdrawing application for job ID:", job.id);
-      await withdrawApplication(job.id);
+      await withdrawApplication(job._id);
       fetchAppliedJobs(true);
-
       Toast.show({
         type: "success",
         text1: "Withdrawn",

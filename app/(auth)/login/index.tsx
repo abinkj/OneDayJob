@@ -7,7 +7,7 @@ import {
   Image,
   Alert,
 } from "react-native";
-import { styles } from "./styles";
+import  styles  from "./styles";
 import { requestOtp } from "../../../services/api"; // Import the API service
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";

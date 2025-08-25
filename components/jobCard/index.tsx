@@ -151,8 +151,8 @@ const JobCard = ({
       )}
 
       {/* Bottom Row */}
-      <View style={styles.bottomRow}>
-        {/* <View style={styles.avatars}>
+      <View style={styles.bottomRow1}>
+        <View style={styles.avatars}>
           <Image
             source={{ uri: "https://i.pravatar.cc/20?img=1" }}
             style={styles.avatar}
@@ -170,27 +170,29 @@ const JobCard = ({
               ? "10+ Requests"
               : `${applicantCount || 0} Requests`}
           </Text>
-        </View> */}
-        <TouchableOpacity style={styles.button} onPress={() => onPress()}>
-          {withdraw ? (
-            <Text style={styles.buttonText}>View Details</Text>
-          ) : (
-            <Text style={styles.buttonText}>View Requests</Text>
-          )}
-        </TouchableOpacity>
-        {withdraw && (
-          <TouchableOpacity
-            style={[
-              styles.button,
-              { backgroundColor: Colors.red, marginLeft: 12 },
-            ]}
-            onPress={() => onWithdraw()}
-          >
-            <Text style={[styles.buttonText, { color: Colors.white }]}>
-              Withdraw
-            </Text>
+        </View>
+        <View style={styles.bottomRow}>
+          <TouchableOpacity style={styles.button} onPress={() => onPress()}>
+            {withdraw ? (
+              <Text style={styles.buttonText}>View Details</Text>
+            ) : (
+              <Text style={styles.buttonText}>View Requests</Text>
+            )}
           </TouchableOpacity>
-        )}
+          {withdraw && (
+            <TouchableOpacity
+              style={[
+                styles.button,
+                { backgroundColor: Colors.red, marginLeft: 12 },
+              ]}
+              onPress={() => onWithdraw()}
+            >
+              <Text style={[styles.buttonText, { color: Colors.white }]}>
+                Withdraw
+              </Text>
+            </TouchableOpacity>
+          )}
+        </View>
       </View>
     </View>
   );
@@ -287,6 +289,12 @@ const styles = StyleSheet.create({
   bottomRow: {
     flexDirection: "row",
     justifyContent: "flex-end",
+    alignItems: "center",
+    marginTop: 12,
+  },
+  bottomRow1: {
+    flexDirection: "row",
+    justifyContent: "space-between",
     alignItems: "center",
     marginTop: 12,
   },
