@@ -103,12 +103,11 @@ const styles = StyleSheet.create({
     marginBottom: 16 * DeviceDimensions.heightRatio,
   },
   filtersContainer: {
-    flex: 1,
+   alignItems: "center",
   },
   filterButton: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center",
     backgroundColor: Colors.white,
     borderRadius: 16,
     borderWidth: 1,

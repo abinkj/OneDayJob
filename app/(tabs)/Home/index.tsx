@@ -593,10 +593,13 @@ const HomeScreen = () => {
               }}
             >
               <Text style={styles.filterText}>{item.name}</Text>
+             {item.id!="clear" &&(
               <Ionicons name="chevron-down" size={16} color={Colors.black} />
+
+             )}
             </TouchableOpacity>
           )}
-          contentContainerStyle={styles.filtersContainer}
+          
         />
       </View>
 
