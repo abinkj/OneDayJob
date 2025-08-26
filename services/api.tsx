@@ -481,6 +481,13 @@ export const applyJob = async (jobId: string) => {
   return data;
 };
 
+export const selectApplicants = async (jobId: string, selectedUserIds: string[]) => {
+  const res = await api.post(`/jobs/${jobId}/select-applicants`, {
+    selectedUserIds,
+  });
+  return res.data;
+};
+
 // FIXED: Enhanced location update with retry logic
 export const updateUserLocationWithRetry = async (
   locationData,

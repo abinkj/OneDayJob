@@ -44,16 +44,12 @@ const MyPostTab = () => {
   const [refreshing, setRefreshing] = React.useState(false);
 
   const handleNext = (jobId: string) => {
-    console.log("id------------------------>", jobId);
     navigation.navigate("RequestVerification", { jobId: jobId });
   };
 
   const handleDelete = async (jobId: string) => {
     try {
-      console.log("jobId------------------------>", jobId);
-
       const res = await deleteJobPosting(jobId); // make sure you're importing the frontend API fn
-      console.log("res------------------------>", res.data);
 
       if (res?.data.success) {
         fetchPosts();
@@ -157,22 +153,14 @@ const MyPostTab = () => {
         />
       }
     >
-      {posts.map(
-        (post) => (
-          console.log(
-            "post------------------------>",
-            JSON.stringify(post, null, 2)
-          ),
-          (
-            <JobCard
-              key={post._id}
-              data={post}
-              onPress={() => handleNext(post._id)}
-              onDelete={() => handleDelete(post._id)}
-            />
-          )
-        )
-      )}
+      {posts.map((post) => (
+        <JobCard
+          key={post._id}
+          data={post}
+          onPress={() => handleNext(post._id)}
+          onDelete={() => handleDelete(post._id)}
+        />
+      ))}
     </ScrollView>
   );
 };

@@ -20,7 +20,7 @@ import styles from "./styles";
 import { Header } from "../../../components/header";
 import ratingStars from "../../../components/ratingStars";
 import Toast from "../../../components/toast";
-import { getAppliedUser } from "../../../services/api";
+import { getAppliedUser, selectApplicants } from "../../../services/api";
 
 type Route = {
   key: string;
@@ -30,6 +30,9 @@ type State = NavigationState<Route>;
 
 /* -------------------- Request Card -------------------- */
 const RequestCard = ({ data, isSelected, onSelect }) => {
+  const user = data.user || {};
+  console.log("Rendering RequestCard for user:", user);
+
   return (
     <TouchableOpacity
       style={[styles.requestCard, isSelected && styles.selectedCard]}
@@ -38,30 +41,32 @@ const RequestCard = ({ data, isSelected, onSelect }) => {
       <View style={styles.requestHeader}>
         <View style={styles.profileSection}>
           <Image
-            source={{ uri: data.avatar || "https://via.placeholder.com/40" }}
+            source={{ uri: user.avatar || "https://via.placeholder.com/40" }}
             style={styles.profileImage}
           />
-          <TouchableOpacity style={styles.profileInfo}>
-            <Text style={styles.profileName}>{data.name}</Text>
+          <TouchableOpacity style={styles.profileInfo} onPress={() => {}}>
+            <Text style={styles.profileName}>{user.name}</Text>
             <View style={styles.ratingContainer}>
-              {ratingStars(data.rating)}
-              <Text style={styles.ratingText}>({data.rating})</Text>
+              {ratingStars(user.rating)}
+              <Text style={styles.ratingText}>({user.rating})</Text>
             </View>
           </TouchableOpacity>
         </View>
-        <Text style={styles.rate}>{data.rate}</Text>
+        <Text style={styles.rate}>{user.rate}</Text>
       </View>
 
       <View style={styles.row}>
         <Text style={styles.available}>Applied On:</Text>
-        <Text style={styles.available}>{data.appliedOn}</Text>
+        <Text style={styles.available}>
+          {new Date(data.appliedAt).toLocaleDateString()}
+        </Text>
       </View>
 
-      <Text style={styles.requestDescription}>{data.description}</Text>
+      <Text style={styles.requestDescription}>{user.description}</Text>
 
       <View style={styles.requestDetails}>
         <Text style={styles.detailText}>Available</Text>
-        <Text style={styles.detailValue}>{data.availability}</Text>
+        <Text style={styles.detailValue}>{user.availability}</Text>
       </View>
 
       {isSelected && (
@@ -90,14 +95,26 @@ const RequestsTab = ({ jobId }) => {
       try {
         setLoading(true);
         const response = await getAppliedUser(jobId);
-        console.log("resultttt------>", response)
 
-        // ✅ normalize API response into array
-        const applied = Array.isArray(response)
-          ? response
-          : response?.requests || [];
+        // ✅ keep full application objects, not just users
+        const appliedUsers = Array.isArray(response?.data)
+          ? response.data.map((item) => ({
+              _id: item._id, // application id
+              appliedAt: item.appliedAt,
+              status: item.status,
+              user: {
+                id: item.user.id,
+                name: `${item.user.firstName} ${item.user.lastName}`,
+                avatar: item.user.profilePicture,
+                rating: item.user.rating ?? 0,
+                rate: item.user.rate ?? "$0/hr",
+                description: item.user.description ?? "No description provided",
+                availability: item.user.availability ?? "Not specified",
+              },
+            }))
+          : [];
 
-        setRequests(applied);
+        setRequests(appliedUsers);
       } catch (error) {
         console.error("Error fetching applied users:", error);
         setRequests([]); // fallback
@@ -112,12 +129,11 @@ const RequestsTab = ({ jobId }) => {
     if (!Array.isArray(requests)) return [];
     if (selectedFilter === "All") return requests;
 
-    // Example filter logic (adjust according to your API)
     if (selectedFilter === "Highly rated") {
-      return requests.filter((req) => req.rating >= 4.5);
+      return requests.filter((req) => req.user?.rating >= 4.5);
     }
     if (selectedFilter === "Budget Friendly") {
-      return requests.filter((req) => req.rate && req.rate < 50);
+      return requests.filter((req) => req.user?.rate && req.user.rate < 50);
     }
 
     return requests;
@@ -149,9 +165,56 @@ const RequestsTab = ({ jobId }) => {
     setShowMenu(false);
   };
 
-  const handleAcceptSelected = () => {
-    console.log("Accept selected:", selectedRequests);
-    setSelectedRequests([]);
+  const handleAcceptSelected = async () => {
+    try {
+      if (selectedRequests.length === 0) {
+        return Toast.show({
+          type: "error",
+          text1: "No applicants selected",
+          text2: "Please select at least one applicant.",
+        });
+      }
+
+      const response = await selectApplicants(jobId, selectedRequests);
+
+      if (response.success) {
+        Toast.show({
+          type: "success",
+          text1: "Applicants Selected",
+          text2: "You have successfully selected applicants.",
+        });
+
+        // ✅ clear selection
+        setSelectedRequests([]);
+
+        // ✅ refresh the applicants list
+        const refreshed = await getAppliedUser(jobId);
+        const appliedUsers = Array.isArray(refreshed?.data)
+          ? refreshed.data.map((item) => ({
+              _id: item._id,
+              appliedAt: item.appliedAt,
+              status: item.status,
+              user: {
+                id: item.user.id,
+                name: `${item.user.firstName} ${item.user.lastName}`,
+                avatar: item.user.profilePicture,
+                rating: item.user.rating ?? 0,
+                rate: item.user.rate ?? "$0/hr",
+                description: item.user.description ?? "No description provided",
+                availability: item.user.availability ?? "Not specified",
+              },
+            }))
+          : [];
+        setRequests(appliedUsers);
+      }
+    } catch (error) {
+      console.error("Error selecting applicants:", error);
+      Toast.show({
+        type: "error",
+        text1: "Error",
+        text2: "Failed to select applicants. Please try again.",
+      });
+    }
   };
 
   const handleRejectSelected = () => {
