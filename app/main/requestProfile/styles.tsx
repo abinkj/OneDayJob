@@ -1,17 +1,18 @@
 import { StyleSheet } from "react-native";
-import { Colors } from "react-native/Libraries/NewAppScreen";
 import DeviceDimensions from "../../../constants/DeviceDimenions";
+import { Colors } from "../../../constants/Colors";
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.white,
+    backgroundColor: Colors.background,
   },
   profileCard: {
     backgroundColor: "rgba(255,255,255,0.5)",
+    //backgroundColor: Colors.tabGrey,
     borderRadius: 12,
     marginHorizontal: 16,
-    marginTop: 39 * DeviceDimensions.heightRatio,
+    marginTop: 9 * DeviceDimensions.heightRatio,
     padding: 16,
     alignItems: "center",
     // shadowColor:'black',
@@ -25,7 +26,6 @@ const styles = StyleSheet.create({
     height: 100,
     borderRadius: 80,
     marginBottom: 8,
-    marginTop: -50 * DeviceDimensions.heightRatio,
   },
   name: {
     fontSize: 20,

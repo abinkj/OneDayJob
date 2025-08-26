@@ -32,6 +32,11 @@ type State = NavigationState<Route>;
 const RequestCard = ({ data, isSelected, onSelect }) => {
   const user = data.user || {};
   console.log("Rendering RequestCard for user:", user);
+  const navigation = useNavigation();
+
+  const handleProfilePress = (userId: string) => {
+    navigation.navigate("RequestProfile", { userId });
+  };
 
   return (
     <TouchableOpacity
@@ -44,7 +49,12 @@ const RequestCard = ({ data, isSelected, onSelect }) => {
             source={{ uri: user.avatar || "https://via.placeholder.com/40" }}
             style={styles.profileImage}
           />
-          <TouchableOpacity style={styles.profileInfo} onPress={() => {}}>
+          <TouchableOpacity
+            style={styles.profileInfo}
+            onPress={() => {
+              handleProfilePress(user.id);
+            }}
+          >
             <Text style={styles.profileName}>{user.name}</Text>
             <View style={styles.ratingContainer}>
               {ratingStars(user.rating)}

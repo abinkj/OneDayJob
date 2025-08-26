@@ -464,7 +464,6 @@ export const getAppliedJobsByUserId = async (userId: string) => {
   return res.data;
 };
 
-
 export const withdrawApplication = async (jobId: string) => {
   const res = await api.post(`applications/jobs/${jobId}/withdraw`);
   return res.data;
@@ -473,7 +472,7 @@ export const withdrawApplication = async (jobId: string) => {
 export const getAppliedUser = async (jobId: string) => {
   const res = await api.get(`applications/jobs/${jobId}/applied-users`);
   return res.data;
-}
+};
 
 export const applyJob = async (jobId: string) => {
   console.log("Applying for job with ID:", jobId);
@@ -481,10 +480,19 @@ export const applyJob = async (jobId: string) => {
   return data;
 };
 
-export const selectApplicants = async (jobId: string, selectedUserIds: string[]) => {
+export const selectApplicants = async (
+  jobId: string,
+  selectedUserIds: string[]
+) => {
   const res = await api.post(`/jobs/${jobId}/select-applicants`, {
     selectedUserIds,
   });
+  return res.data;
+};
+
+// Get user profile by ID
+export const getUserProfile = async (userId: string) => {
+  const res = await api.get(`/users/${userId}`);
   return res.data;
 };
 
