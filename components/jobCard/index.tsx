@@ -8,11 +8,13 @@ const JobCard = ({
   data,
   onPress,
   onWithdraw,
+  onDelete,
   withdraw = false,
 }: {
   data: JobCardData;
   onPress: Function;
   onWithdraw?: Function;
+  onDelete?: Function;
   withdraw?: boolean;
 }) => {
   const {
@@ -179,16 +181,32 @@ const JobCard = ({
               <Text style={styles.buttonText}>View Requests</Text>
             )}
           </TouchableOpacity>
-          {withdraw && (
+          {withdraw ? (
             <TouchableOpacity
               style={[
                 styles.button,
                 { backgroundColor: Colors.red, marginLeft: 12 },
               ]}
-              onPress={() => onWithdraw()}
+              onPress={() => {
+                if (onWithdraw) onWithdraw();
+              }}
             >
               <Text style={[styles.buttonText, { color: Colors.white }]}>
                 Withdraw
+              </Text>
+            </TouchableOpacity>
+          ) : (
+            <TouchableOpacity
+              style={[
+                styles.button,
+                { backgroundColor: Colors.red, marginLeft: 12 },
+              ]}
+              onPress={() => {
+                if (onDelete) onDelete();
+              }}
+            >
+              <Text style={[styles.buttonText, { color: Colors.white }]}>
+                Delete
               </Text>
             </TouchableOpacity>
           )}

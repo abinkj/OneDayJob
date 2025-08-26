@@ -7,7 +7,7 @@ import LottieView from "lottie-react-native";
 import { useRoute } from "@react-navigation/native";
 import { useDispatch } from "react-redux";
 import { loginUser } from "../../../utilities/authentication";
-import  styles  from "./styles";
+import styles  from "./styles";
 
 interface RouteParams {
   phoneNumber: string;

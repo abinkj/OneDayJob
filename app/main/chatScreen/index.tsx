@@ -11,7 +11,7 @@ import {
 import AntDesign from "@expo/vector-icons/AntDesign";
 import * as ImagePicker from "expo-image-picker";
 import { Ionicons } from "@expo/vector-icons";
-import { styles } from "./styles";
+import  styles  from "./styles";
 import { Header } from "../../../components/header";
 import { Colors } from "../../../constants/Colors";
 import { useLocalSearchParams } from "expo-router";
