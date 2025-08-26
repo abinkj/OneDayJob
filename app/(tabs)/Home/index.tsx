@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import {
   View,
   Text,
@@ -9,7 +9,8 @@ import {
   ImageBackground,
   ActivityIndicator,
   RefreshControl,
-  SectionList,
+  ScrollView,
+  Animated,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { Colors } from "../../../constants/Colors";
@@ -27,7 +28,7 @@ const HomeScreen = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [location, setLocation] = useState(null);
   const [locationAddress, setLocationAddress] = useState("Loading location...");
-  const [jobSections, setJobSections] = useState([]); // Changed from jobs to jobSections
+  const [jobSections, setJobSections] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState(null);
@@ -35,9 +36,18 @@ const HomeScreen = () => {
   const [currentUser, setCurrentUser] = useState(null);
   const [authStatus, setAuthStatus] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
+  const [isFilterSticky, setIsFilterSticky] = useState(false);
+  
   const navigation = useNavigation<any>();
   const userData = useSelector((state: any) => state.authentication.userData);
   const dispatch = useDispatch();
+  const scrollY = useRef(new Animated.Value(0)).current;
+  const filterRowRef = useRef(null);
+  const [filterRowHeight, setFilterRowHeight] = useState(0);
+  const HEADER_HEIGHT = 70; // Approximate header height
+  const SEARCH_HEIGHT = 66; // Search container height
+  const BANNER_HEIGHT = 156; // Banner height
+  const STICKY_OFFSET = HEADER_HEIGHT + SEARCH_HEIGHT + BANNER_HEIGHT;
 
   const handleNotificationPress = () => {
     console.log("Notification icon pressed");
@@ -61,11 +71,10 @@ const HomeScreen = () => {
   // Enhanced function to categorize jobs by distance
   const categorizeJobsByDistance = (jobs: JobPost[], userLocation: any) => {
     if (!userLocation || !jobs.length) {
-      return [{ title: "All Jobs", data: jobs }];
+      return jobs;
     }
 
-    const nearbyJobs = [];
-    const distantJobs = [];
+    const jobsWithDistance = [];
 
     jobs.forEach(job => {
       if (job.location?.coordinates?.coordinates || (job.location?.coordinates?.latitude && job.location?.coordinates?.longitude)) {
@@ -89,42 +98,21 @@ const HomeScreen = () => {
           jobLng
         );
 
-        const jobWithDistance = { ...job, distance };
-
-        if (distance <= searchRadius) {
-          nearbyJobs.push(jobWithDistance);
-        } else {
-          distantJobs.push(jobWithDistance);
-        }
+        jobsWithDistance.push({ ...job, distance });
       } else {
-        // Jobs without location go to distant jobs
-        distantJobs.push({ ...job, distance: null });
+        // Jobs without location
+        jobsWithDistance.push({ ...job, distance: null });
       }
     });
 
-    const sections = [];
+    // Sort jobs by distance (nearby first)
+    return jobsWithDistance.sort((a, b) => {
+      if (a.distance === null && b.distance === null) return 0;
+      if (a.distance === null) return 1;
+      if (b.distance === null) return -1;
+      return a.distance - b.distance;
+    });
 
-    if (nearbyJobs.length > 0) {
-      sections.push({
-        title: `Jobs within ${searchRadius}km`,
-        data: nearbyJobs.sort((a, b) => (a.distance || 0) - (b.distance || 0))
-      });
-    }
-
-    if (distantJobs.length > 0) {
-      sections.push({
-        title: `Jobs beyond ${searchRadius}km from you`,
-        data: distantJobs.sort((a, b) => {
-          // Sort by distance if available, otherwise by creation date
-          if (a.distance !== null && b.distance !== null) {
-            return a.distance - b.distance;
-          }
-          return new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime();
-        })
-      });
-    }
-
-    return sections.length > 0 ? sections : [{ title: "All Jobs", data: jobs }];
   };
 
   // FIXED: Better authentication status check
@@ -214,7 +202,6 @@ const HomeScreen = () => {
         selectedCategory
       });
 
-      let nearbyJobs = [];
       let allJobs = [];
 
       // Always fetch all jobs as fallback
@@ -233,40 +220,19 @@ const HomeScreen = () => {
         return;
       }
 
-      // Try to get nearby jobs if location and auth are available
-      if (location && authStatus && currentUser) {
-        try {
-          console.log("Attempting location-based search");
-          const nearbyResponse = await getJobsByLocation(searchRadius, selectedCategory);
-          nearbyJobs = nearbyResponse.data?.data || nearbyResponse.data || [];
-          console.log(`Found ${nearbyJobs.length} jobs within ${searchRadius}km`);
-        } catch (locationError) {
-          console.error("Location search failed:", locationError);
-          nearbyJobs = [];
-        }
-      }
-
       // Categorize jobs based on location and distance
       if (location && authStatus && allJobs.length > 0) {
-        const sections = categorizeJobsByDistance(allJobs, location);
-        setJobSections(sections);
+        const sortedJobs = categorizeJobsByDistance(allJobs, location);
+        setJobSections([{ title: "All Jobs", data: sortedJobs }]);
 
-        // Show appropriate toast messages
-        if (sections.length > 1) {
-          const nearbyCount = sections[0]?.data?.length || 0;
-          const distantCount = sections[1]?.data?.length || 0;
-          Toast.show({
-            type: 'success',
-            text1: 'Jobs loaded',
-            text2: `${nearbyCount} nearby jobs, ${distantCount} jobs beyond ${searchRadius}km`,
-          });
-        } else if (sections[0]?.title.includes('within')) {
-          Toast.show({
-            type: 'success',
-            text1: 'Nearby jobs',
-            text2: `Found ${sections[0].data.length} jobs within ${searchRadius}km`,
-          });
-        }
+        const nearbyCount = sortedJobs.filter(job => job.distance !== null && job.distance <= searchRadius).length;
+        const distantCount = sortedJobs.length - nearbyCount;
+
+        Toast.show({
+          type: 'success',
+          text1: 'Jobs loaded',
+          text2: `${nearbyCount} nearby, ${distantCount} distant jobs`,
+        });
       } else {
         // Fallback to simple list without distance categorization
         setJobSections([{ title: "All Jobs", data: allJobs }]);
@@ -274,7 +240,7 @@ const HomeScreen = () => {
           Toast.show({
             type: 'info',
             text1: 'All jobs',
-            text2: 'Login to see jobs organized by distance from your location.',
+            text2: 'Login to see jobs organized by distance.',
           });
         } else if (!location) {
           Toast.show({
@@ -321,7 +287,6 @@ const HomeScreen = () => {
           }
         }
 
-        // Fetch and categorize jobs for the new location
         await fetchJobs();
       }
     } catch (error) {
@@ -357,6 +322,18 @@ const HomeScreen = () => {
   const handleCategoryFilter = async (categoryId) => {
     setSelectedCategory(categoryId === selectedCategory ? null : categoryId);
   };
+
+  // Handle scroll to determine when filter row should be sticky
+  const handleScroll = Animated.event(
+    [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+    { 
+      useNativeDriver: false,
+      listener: (event) => {
+        const offsetY = event.nativeEvent.contentOffset.y;
+        setIsFilterSticky(offsetY >= STICKY_OFFSET);
+      }
+    }
+  );
 
   useEffect(() => {
     const initializeApp = async () => {
@@ -434,13 +411,6 @@ const HomeScreen = () => {
               }
             </Text>
           </View>
-
-          {/* <View style={styles.dateContainer}>
-            <Ionicons name="calendar-outline" size={16} color={Colors.grey} />
-            <Text style={styles.dateText}>
-              {item.createdAt ? new Date(item.createdAt).toLocaleDateString() : item.isFlexible ? "Flexible" : "Date not set"}
-            </Text>
-          </View> */}
         </View>
 
         <View style={styles.jobFooter}>
@@ -458,15 +428,50 @@ const HomeScreen = () => {
     );
   };
 
-  const renderSectionHeader = ({ section: { title } }) => (
-    <View style={styles.sectionHeader}>
-      <Text style={styles.sectionHeaderText}>{title}</Text>
-      <View style={styles.sectionHeaderLine} />
+  const renderFilterRow = () => (
+    <View 
+      ref={filterRowRef}
+      style={[
+        styles.filtersScrollContainer,
+        isFilterSticky && styles.stickyFilterContainer
+      ]}
+      onLayout={(event) => {
+        const { height } = event.nativeEvent.layout;
+        setFilterRowHeight(height);
+      }}
+    >
+      <FlatList
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        data={[
+          { id: "category", name: "Category" },
+          { id: "price", name: "Price" },
+          { id: "distance", name: "Distance" },
+          { id: "clear", name: "Clear" },
+        ]}
+        keyExtractor={(item) => item.id}
+        renderItem={({ item }) => (
+          <TouchableOpacity
+            style={styles.filterButton}
+            onPress={() => {
+              if (item.id === "clear") {
+                setSelectedCategory(null);
+                setSearchRadius(10);
+              }
+            }}
+          >
+            <Text style={styles.filterText}>{item.name}</Text>
+            {item.id != "clear" && (
+              <Ionicons name="chevron-down" size={16} color={Colors.black} />
+            )}
+          </TouchableOpacity>
+        )}
+      />
     </View>
   );
 
   const renderEmptyState = () => (
-    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 }}>
+    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20, minHeight: 300 }}>
       <Ionicons name="search-outline" size={64} color={Colors.grey} />
       <Text style={{ fontSize: 18, color: Colors.grey, marginTop: 16, textAlign: 'center' }}>
         {loading ? 'Loading jobs...' : 'No jobs available'}
@@ -494,135 +499,149 @@ const HomeScreen = () => {
     );
   }
 
+  const allJobs = jobSections.length > 0 ? jobSections[0].data || [] : [];
+
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <View style={styles.locationHeader}>
-          <Ionicons name="location" size={24} color={Colors.primary} />
-          <View>
-            <TouchableOpacity style={styles.locationSelector}>
-              <Text style={styles.locationTitle}>
-                {locationAddress}
-              </Text>
-              <Ionicons name="chevron-down" size={16} color={Colors.black} />
-            </TouchableOpacity>
-            <Text style={styles.locationSubtitle}>
-              {location ? `${location.latitude.toFixed(4)}, ${location.longitude.toFixed(4)}` : "Getting location..."}
-              {authStatus ? " • Authenticated" : " • Not logged in"}
-            </Text>
-          </View>
-          <TouchableOpacity
-            onPress={fetchCurrentLocation}
-            style={{ marginLeft: 8, padding: 4 }}
-          >
-            <Ionicons name="refresh" size={20} color={Colors.primary} />
-          </TouchableOpacity>
-        </View>
-        <TouchableOpacity onPress={handleNotificationPress}>
-          <Ionicons
-            name="notifications-outline"
-            size={24}
-            color={Colors.black}
+      {/* Sticky Filter Row - positioned absolutely when sticky */}
+      {isFilterSticky && (
+        <View style={[styles.stickyFilterContainer, { position: 'absolute', top: 0, left: 0, right: 0, zIndex: 1000 }]}>
+          <FlatList
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            data={[
+              { id: "category", name: "Category" },
+              { id: "price", name: "Price" },
+              { id: "distance", name: "Distance" },
+              { id: "clear", name: "Clear" },
+            ]}
+            keyExtractor={(item) => item.id}
+            renderItem={({ item }) => (
+              <TouchableOpacity
+                style={styles.filterButton}
+                onPress={() => {
+                  if (item.id === "clear") {
+                    setSelectedCategory(null);
+                    setSearchRadius(10);
+                  }
+                }}
+              >
+                <Text style={styles.filterText}>{item.name}</Text>
+                {item.id != "clear" && (
+                  <Ionicons name="chevron-down" size={16} color={Colors.black} />
+                )}
+              </TouchableOpacity>
+            )}
           />
-        </TouchableOpacity>
-      </View>
+        </View>
+      )}
 
-      {/* Search Bar */}
-      <View style={styles.searchContainer}>
-        <Ionicons
-          name="search"
-          size={20}
-          color={Colors.grey}
-          style={styles.searchIcon}
-        />
-        <TextInput
-          style={styles.searchInput}
-          placeholder="Search jobs or locations"
-          placeholderTextColor={Colors.black}
-          value={searchQuery}
-          onChangeText={setSearchQuery}
-          onSubmitEditing={handleSearch}
-          returnKeyType="search"
-        />
-        {searchQuery.length > 0 && (
-          <TouchableOpacity onPress={() => setSearchQuery("")}>
-            <Ionicons name="close-circle" size={20} color={Colors.grey} />
-          </TouchableOpacity>
-        )}
-      </View>
-
-      {/* Banner */}
-      <View style={styles.bannerContainer}>
-        <ImageBackground
-          style={styles.banner}
-          source={require("../../../assets/images/banner.png")}
-          resizeMode="stretch"
-        >
-          <View style={styles.bannerTextContainer}>
-            <Text style={styles.bannerTitle}>Help Is One Click Away –</Text>
-            <Text style={styles.bannerSubtitle}>Post Your Task Now!</Text>
-            <TouchableOpacity
-              style={styles.postNowButton}
-              onPress={() => navigation.navigate("PostJob")}
-            >
-              <Text style={styles.postNowText}>Post Now</Text>
-            </TouchableOpacity>
-          </View>
-        </ImageBackground>
-      </View>
-
-      <View style={styles.filtersScrollContainer}>
-        <FlatList
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          data={[
-            { id: "category", name: "Category" },
-            { id: "price", name: "Price" },
-            { id: "distance", name: "Distance" },
-            { id: "clear", name: "Clear" },
-          ]}
-          keyExtractor={(item) => item.id}
-          renderItem={({ item }) => (
-            <TouchableOpacity
-              style={styles.filterButton}
-              onPress={() => {
-                if (item.id === "clear") {
-                  setSelectedCategory(null);
-                  setSearchRadius(10);
-                }
-              }}
-            >
-              <Text style={styles.filterText}>{item.name}</Text>
-             {item.id!="clear" &&(
-              <Ionicons name="chevron-down" size={16} color={Colors.black} />
-
-             )}
-            </TouchableOpacity>
-          )}
-          
-        />
-      </View>
-
-      {/* Job Listings using SectionList */}
-      <SectionList
-        sections={jobSections}
-        renderItem={renderJobCard}
-        renderSectionHeader={renderSectionHeader}
-        keyExtractor={(item) => item._id}
+      {/* Main Scrollable Content */}
+      <Animated.ScrollView
+        style={[styles.scrollContainer, isFilterSticky && { paddingTop: filterRowHeight }]}
         showsVerticalScrollIndicator={false}
+        onScroll={handleScroll}
+        scrollEventThrottle={16}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
-        ListEmptyComponent={renderEmptyState}
-        ListFooterComponent={
-          loading ? (
+      >
+        {/* Header */}
+        <View style={styles.header}>
+          <View style={styles.locationHeader}>
+            <Ionicons name="location" size={24} color={Colors.primary} />
+            <View>
+              <TouchableOpacity style={styles.locationSelector}>
+                <Text style={styles.locationTitle}>
+                  {locationAddress}
+                </Text>
+                <Ionicons name="chevron-down" size={16} color={Colors.black} />
+              </TouchableOpacity>
+              <Text style={styles.locationSubtitle}>
+                {location ? `${location.latitude.toFixed(4)}, ${location.longitude.toFixed(4)}` : "Getting location..."}
+                {authStatus ? " • Authenticated" : " • Not logged in"}
+              </Text>
+            </View>
+            <TouchableOpacity
+              onPress={fetchCurrentLocation}
+              style={{ marginLeft: 8, padding: 4 }}
+            >
+              <Ionicons name="refresh" size={20} color={Colors.primary} />
+            </TouchableOpacity>
+          </View>
+          <TouchableOpacity onPress={handleNotificationPress}>
+            <Ionicons
+              name="notifications-outline"
+              size={24}
+              color={Colors.black}
+            />
+          </TouchableOpacity>
+        </View>
+
+        {/* Search Bar */}
+        <View style={styles.searchContainer}>
+          <Ionicons
+            name="search"
+            size={20}
+            color={Colors.grey}
+            style={styles.searchIcon}
+          />
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Search jobs or locations"
+            placeholderTextColor={Colors.black}
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            onSubmitEditing={handleSearch}
+            returnKeyType="search"
+          />
+          {searchQuery.length > 0 && (
+            <TouchableOpacity onPress={() => setSearchQuery("")}>
+              <Ionicons name="close-circle" size={20} color={Colors.grey} />
+            </TouchableOpacity>
+          )}
+        </View>
+
+        {/* Banner */}
+        <View style={styles.bannerContainer}>
+          <ImageBackground
+            style={styles.banner}
+            source={require("../../../assets/images/banner.png")}
+            resizeMode="stretch"
+          >
+            <View style={styles.bannerTextContainer}>
+              <Text style={styles.bannerTitle}>Help Is One Click Away –</Text>
+              <Text style={styles.bannerSubtitle}>Post Your Task Now!</Text>
+              <TouchableOpacity
+                style={styles.postNowButton}
+                onPress={() => navigation.navigate("PostJob")}
+              >
+                <Text style={styles.postNowText}>Post Now</Text>
+              </TouchableOpacity>
+            </View>
+          </ImageBackground>
+        </View>
+
+        {/* Filter Row (normal position) */}
+        {!isFilterSticky && renderFilterRow()}
+
+        {/* Job Cards */}
+        <View style={{ paddingBottom: 20 }}>
+          {loading ? (
             <View style={{ padding: 20, alignItems: 'center' }}>
               <ActivityIndicator size="large" color={Colors.primary} />
             </View>
-          ) : null
-        }
-        stickySectionHeadersEnabled={false}
-      />
+          ) : allJobs.length > 0 ? (
+            allJobs.map((item, index) => (
+              <View key={item._id || index}>
+                {renderJobCard({ item })}
+              </View>
+            ))
+          ) : (
+            renderEmptyState()
+          )}
+        </View>
+      </Animated.ScrollView>
     </SafeAreaView>
   );
 };

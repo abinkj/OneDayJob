@@ -8,6 +8,9 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.background,
     padding: 16,
   },
+  scrollContainer: {
+    flex: 1,
+  },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -101,6 +104,23 @@ const styles = StyleSheet.create({
   },
   filtersScrollContainer: {
     marginBottom: 16 * DeviceDimensions.heightRatio,
+    backgroundColor: Colors.background,
+    paddingVertical: 8,
+  },
+  stickyFilterContainer: {
+    backgroundColor: Colors.background,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.grey + "20",
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 4,
   },
   filtersContainer: {
    alignItems: "center",
@@ -113,7 +133,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: Colors.black,
     paddingHorizontal: 12 * DeviceDimensions.widthRatio,
-    paddingVertical: 12 * DeviceDimensions.heightRatio,
+    paddingVertical: 8 * DeviceDimensions.heightRatio,
     marginRight: 12 * DeviceDimensions.widthRatio,
   },
   filterText: {
