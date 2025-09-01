@@ -103,14 +103,13 @@ const styles = StyleSheet.create({
     height: "100%",
   },
   filtersScrollContainer: {
-    marginBottom: 16 * DeviceDimensions.heightRatio,
     backgroundColor: Colors.background,
     paddingVertical: 8,
   },
   stickyFilterContainer: {
     backgroundColor: Colors.background,
     paddingVertical: 8,
-    paddingHorizontal: 16,
+    paddingHorizontal: 6,
     borderBottomWidth: 1,
     borderBottomColor: Colors.grey + "20",
     shadowColor: "#000",
@@ -288,6 +287,127 @@ const styles = StyleSheet.create({
     marginTop: 2,
     fontWeight: "500",
   },
+  
+
+modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-end',
+  },
+  modalContainer: {
+    backgroundColor: Colors.background,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    maxHeight: '70%',
+    paddingTop: 20,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingBottom: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.addressGrey,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: Colors.black,
+  },
+  modalOption: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 15,
+    paddingHorizontal: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.addressGrey,
+  },
+  selectedOption: {
+    backgroundColor: Colors.addressGrey,
+  },
+  modalOptionText: {
+    fontSize: 16,
+    color: Colors.black,
+  },
+  selectedOptionText: {
+    color: Colors.primary,
+    fontWeight: '500',
+  },
+
+  // Active filters styles
+  activeFiltersContainer: {
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    backgroundColor: Colors.addressGrey,
+    marginHorizontal: 16,
+    borderRadius: 8,
+    marginVertical: 8,
+  },
+  activeFiltersTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: Colors.black,
+    marginBottom: 8,
+  },
+  activeFiltersRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  activeFilterChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'white',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: Colors.primary,
+    marginBottom: 4,
+  },
+  activeFilterText: {
+    fontSize: 12,
+    color: Colors.primary,
+    marginRight: 4,
+  },
+
+  // Results and pagination styles
+  resultsContainer: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+  },
+  resultsText: {
+    fontSize: 14,
+    color: Colors.grey,
+    fontWeight: '500',
+  },
+  loadMoreContainer: {
+    alignItems: 'center',
+    paddingVertical: 20,
+  },
+  loadMoreButton: {
+    backgroundColor: Colors.primary,
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 8,
+  },
+  loadMoreText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '500',
+  },
+  endOfResultsContainer: {
+    alignItems: 'center',
+    paddingVertical: 16,
+  },
+  endOfResultsText: {
+    fontSize: 14,
+    color: Colors.grey,
+    fontStyle: 'italic',
+  },
+
 });
 
 
