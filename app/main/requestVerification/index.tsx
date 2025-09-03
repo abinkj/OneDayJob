@@ -19,8 +19,8 @@ import { useNavigation, useRoute } from "@react-navigation/native";
 import styles from "./styles";
 import { Header } from "../../../components/header";
 import ratingStars from "../../../components/ratingStars";
-import Toast from "../../../components/toast";
 import { getAppliedUser, selectApplicants } from "../../../services/api";
+import Toast from "react-native-toast-message";
 
 type Route = {
   key: string;
@@ -41,7 +41,7 @@ const RequestCard = ({ data, isSelected, onSelect }) => {
   return (
     <TouchableOpacity
       style={[styles.requestCard, isSelected && styles.selectedCard]}
-      onPress={() => onSelect(data._id)}
+      onPress={() => onSelect(user.id)} /* ✅ pass user.id, not data._id */
     >
       <View style={styles.requestHeader}>
         <View style={styles.profileSection}>
@@ -51,9 +51,7 @@ const RequestCard = ({ data, isSelected, onSelect }) => {
           />
           <TouchableOpacity
             style={styles.profileInfo}
-            onPress={() => {
-              handleProfilePress(user.id);
-            }}
+            onPress={() => handleProfilePress(user.id)}
           >
             <Text style={styles.profileName}>{user.name}</Text>
             <View style={styles.ratingContainer}>
@@ -149,11 +147,12 @@ const RequestsTab = ({ jobId }) => {
     return requests;
   };
 
-  const handleSelectRequest = (requestId: string) => {
+  const handleSelectRequest = (userId: string) => {
+    console.log("Toggling selection for user ID:", userId);
     setSelectedRequests((prev) =>
-      prev.includes(requestId)
-        ? prev.filter((id) => id !== requestId)
-        : [...prev, requestId]
+      prev.includes(userId)
+        ? prev.filter((id) => id !== userId)
+        : [...prev, userId]
     );
   };
 
@@ -186,7 +185,7 @@ const RequestsTab = ({ jobId }) => {
       }
 
       const response = await selectApplicants(jobId, selectedRequests);
-
+      console.log("Select applicants response:", response);
       if (response.success) {
         Toast.show({
           type: "success",
@@ -235,7 +234,7 @@ const RequestsTab = ({ jobId }) => {
   const renderRequest = ({ item }) => (
     <RequestCard
       data={item}
-      isSelected={selectedRequests.includes(item._id)}
+      isSelected={selectedRequests.includes(item.user.id)} // ✅ check against user.id
       onSelect={handleSelectRequest}
     />
   );
@@ -441,14 +440,6 @@ const RequestVerification = () => {
         renderTabBar={renderTabBar}
         onIndexChange={onIndexChange}
         initialLayout={{ width: layout.width }}
-      />
-
-      <Toast
-        visible={toastVisible}
-        message={toastMessage}
-        type={toastType}
-        onHide={hideToast}
-        duration={3000}
       />
     </View>
   );
