@@ -8,7 +8,7 @@ import {
 } from "../utilities/secureStore";
 import { normalizeUser } from "../utilities/asyncStore";
 
-const API_BASE_URL = "http://192.168.0.104:8000/api"; //AJ ip address
+const API_BASE_URL = "http://192.168.1.2:8000/api"; //AJ ip address
 //const API_BASE_URL = 'http://192.168.1.5:8000/api';
 
 const api = axios.create({
@@ -499,7 +499,6 @@ export const getAppliedJobsByUserId = async (userId: string) => {
   return res.data;
 };
 
-
 export const withdrawApplication = async (jobId: string) => {
   const res = await api.post(`applications/jobs/${jobId}/withdraw`);
   return res.data;
@@ -508,12 +507,28 @@ export const withdrawApplication = async (jobId: string) => {
 export const getAppliedUser = async (jobId: string) => {
   const res = await api.get(`applications/jobs/${jobId}/applied-users`);
   return res.data;
-}
+};
 
 export const applyJob = async (jobId: string) => {
   console.log("Applying for job with ID:", jobId);
   const data = await api.post(`applications/jobs/${jobId}/apply`);
   return data;
+};
+
+export const selectApplicants = async (
+  jobId: string,
+  selectedUserIds: string[]
+) => {
+  const res = await api.post(`/jobs/${jobId}/select-applicants`, {
+    selectedUserIds,
+  });
+  return res.data;
+};
+
+// Get user profile by ID
+export const getUserProfile = async (userId: string) => {
+  const res = await api.get(`/users/${userId}`);
+  return res.data;
 };
 
 // FIXED: Enhanced location update with retry logic

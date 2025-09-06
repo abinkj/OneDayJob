@@ -3,10 +3,10 @@ import ChatScreen from "@/main/chatScreen";
 import EditProfile from "@/main/editProfile";
 import Notification from "@/main/notification";
 import RequestVerification from "@/main/requestVerification";
-import RequestDetails from "@/publicProfile/requestDetails";
 import JobDetails from "@/main/jobDetails";
 
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
+import RequestProfile from "@/main/requestProfile";
 
 const Stack = createNativeStackNavigator();
 
@@ -22,7 +22,7 @@ const MainStack = () => {
     >
       <Stack.Screen name="MainHome" component={TabLayout} />
       <Stack.Screen name="ChatScreen" component={ChatScreen} />
-      <Stack.Screen name="RequestDetails" component={RequestDetails} />
+      <Stack.Screen name="RequestProfile" component={RequestProfile} />
       <Stack.Screen
         name="RequestVerification"
         component={RequestVerification}

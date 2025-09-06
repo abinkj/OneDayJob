@@ -20,6 +20,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { Colors } from "../../../constants/Colors";
 import JobCard from "../../../components/jobCard";
 import {
+  deleteJobPosting,
   getAppliedJobsByUserId,
   getJobPostingsByUserId,
   withdrawApplication,
@@ -42,8 +43,31 @@ const MyPostTab = () => {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = React.useState(false);
 
-  const handleNext = (job: any) => {
-    // navigation.navigate("RequestVerification", { jobId: job.id });
+  const handleNext = (jobId: string) => {
+    navigation.navigate("RequestVerification", { jobId: jobId });
+  };
+
+  const handleDelete = async (jobId: string) => {
+    try {
+      const res = await deleteJobPosting(jobId); // make sure you're importing the frontend API fn
+
+      if (res?.data.success) {
+        fetchPosts();
+
+        Toast.show({
+          type: "success",
+          text1: "Deleted",
+          text2: "Job post deleted successfully",
+        });
+      }
+    } catch (error: any) {
+      console.error("Delete failed:", error);
+      Toast.show({
+        type: "error",
+        text1: "Error",
+        text2: error.response?.data?.message || "Failed to delete job",
+      });
+    }
   };
 
   const fetchPosts = async (isRefresh = false) => {
@@ -130,7 +154,12 @@ const MyPostTab = () => {
       }
     >
       {posts.map((post) => (
-        <JobCard key={post._id} data={post} onPress={handleNext} />
+        <JobCard
+          key={post._id}
+          data={post}
+          onPress={() => handleNext(post._id)}
+          onDelete={() => handleDelete(post._id)}
+        />
       ))}
     </ScrollView>
   );
@@ -148,10 +177,8 @@ const AppliedTab = () => {
 
   const handleWithdraw = async (job: any) => {
     try {
-      console.log("Withdrawing application for job ID:", job.id);
-      await withdrawApplication(job.id);
+      await withdrawApplication(job._id);
       fetchAppliedJobs(true);
-
       Toast.show({
         type: "success",
         text1: "Withdrawn",

@@ -58,7 +58,7 @@ const PostJobScreen = ({ navigation }) => {
   const [taskAddress, setTaskAddress] = useState('');
   const [selectedLocation, setSelectedLocation] = useState<LocationData | null>(null);
   const [selectedTimePreferences, setSelectedTimePreferences] = useState([]); // Changed to array
-  const [budget, setBudget] = useState('200');
+  const [budget, setBudget] = useState(null);
 
   // Date/Time mode - only one should be active
   const [dateMode, setDateMode] = useState('flexible'); // 'flexible', 'onDate', 'beforeDate'

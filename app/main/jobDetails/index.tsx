@@ -30,7 +30,6 @@ const JobDetails = () => {
   useEffect(() => {
     if (jobData) {
       console.log("Job data received:", JSON.stringify(jobData, null, 2));
-      console.log("Job ID from params:", typeof jobId);
       setJob(jobData);
     } else if (jobId) {
       // If only jobId is passed, show error (fallback)
@@ -241,7 +240,7 @@ const JobDetails = () => {
         </View>
 
         {/* Employer Info */}
-        {/* <View style={styles.section}>
+        <View style={styles.section}>
           <Text style={styles.sectionTitle}>Employer</Text>
           <View style={styles.employerContainer}>
             <View style={styles.employerAvatar}>
@@ -255,11 +254,11 @@ const JobDetails = () => {
               </Text>
               <Text style={styles.employerPhone}>{job.userId?.phoneNumber}</Text>
             </View>
-            <TouchableOpacity style={styles.contactButton} onPress={handleContact}>
+            <TouchableOpacity style={styles.contactButton} onPress={() => {}}>
               <Ionicons name="call-outline" size={20} color={Colors.primary} />
             </TouchableOpacity>
           </View>
-        </View> */}
+        </View>
       </ScrollView>
 
       {/* Action Buttons */}
