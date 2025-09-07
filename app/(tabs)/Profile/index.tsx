@@ -24,6 +24,8 @@ import ratingStars from "../../../components/ratingStars";
 import { useNavigation } from "@react-navigation/native";
 import { getUserData } from "../../../utilities/asyncStore";
 import { User, Review } from "../../../types";
+import { createConversation, getCurrentUser } from "../../../services/api";
+import Toast from "react-native-toast-message";
 
 if (
   Platform.OS === "android" &&
@@ -93,6 +95,44 @@ const Profile: React.FC = () => {
     }
   };
 
+  const handleChat = async () => {
+    if (!user) {
+      Alert.alert("Error", "User data not available");
+      return;
+    }
+
+    // Get current user to check if they're trying to chat with themselves
+    const currentUser = await getCurrentUser();
+    if (currentUser && (currentUser.id === user.id || currentUser._id === user._id)) {
+      Alert.alert("Error", "You cannot chat with yourself");
+      return;
+    }
+
+    try {
+      // Create or get existing conversation with this user
+      const userId = user.id || user._id;
+      console.log('Creating conversation with user ID:', userId);
+      const conversation = await createConversation(userId);
+      
+      // Navigate to chat screen with conversation data
+      navigation.navigate("ChatScreen", {
+        conversationId: conversation.data._id,
+        participant: {
+          id: user.id || user._id,
+          name: `${user.firstName} ${user.lastName}`,
+          avatar: user.profilePicture,
+        },
+      });
+    } catch (error) {
+      console.error("Error starting chat:", error);
+      Toast.show({
+        type: "error",
+        text1: "Error",
+        text2: "Failed to start chat. Please try again.",
+      });
+    }
+  };
+
   const toggleDropdown = () => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     setIsDropdownVisible(!isDropdownVisible);
@@ -129,7 +169,13 @@ const Profile: React.FC = () => {
 
   return (
     <View style={styles.container}>
-      <Header title="Profile" showEditButton onEditPress={handleEdit} />
+      <Header 
+        title="Profile" 
+        showEditButton 
+        onEditPress={handleEdit}
+        showChatButton
+        onChatPress={handleChat}
+      />
       <ScrollView>
         {/* Profile Card */}
         <View style={styles.profileCard}>

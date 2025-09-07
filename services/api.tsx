@@ -608,4 +608,75 @@ export const getCurrentUser = async () => {
 // Update user profile
 export const updateProfile = (id, data) => api.put(`/users/${id}`, data);
 
+// Conversation API endpoints
+export const getConversations = async () => {
+  try {
+    const response = await api.get('/conversations');
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching conversations:', error);
+    throw error;
+  }
+};
+
+export const getConversation = async (conversationId: string) => {
+  try {
+    const response = await api.get(`/conversations/${conversationId}`);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching conversation:', error);
+    throw error;
+  }
+};
+
+export const getConversationMessages = async (conversationId: string) => {
+  try {
+    const response = await api.get(`/conversations/${conversationId}/messages`);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching conversation messages:', error);
+    throw error;
+  }
+};
+
+export const createConversation = async (participantId: string) => {
+  try {
+    const response = await api.post('/conversations', {
+      participants: [participantId],
+      type: 'individual',
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error creating conversation:', error);
+    throw error;
+  }
+};
+
+export const sendMessage = async (conversationId: string, text: string, type: string = 'text') => {
+  try {
+    const response = await api.post(`/conversations/${conversationId}/messages`, {
+      content: {
+        text: text,
+      },
+      messageType: type,
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error sending message:', error);
+    throw error;
+  }
+};
+
+export const markMessagesAsRead = async (conversationId: string) => {
+  try {
+    const response = await api.put(`/conversations/${conversationId}/read`);
+    return response.data;
+  } catch (error) {
+    console.error('Error marking messages as read:', error);
+    throw error;
+  }
+};
+
 export default api;
+
+

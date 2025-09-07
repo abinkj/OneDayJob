@@ -9,6 +9,8 @@ interface HeaderProps {
   showBackButton?: boolean;
   showEditButton?: boolean;
   onEditPress?: () => void;
+  showChatButton?: boolean;
+  onChatPress?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -16,6 +18,8 @@ export const Header: React.FC<HeaderProps> = ({
   showBackButton,
   showEditButton = false,
   onEditPress,
+  showChatButton = false,
+  onChatPress,
 }) => {
   const router = useRouter();
 
@@ -36,6 +40,12 @@ export const Header: React.FC<HeaderProps> = ({
       {showEditButton && (
         <TouchableOpacity style={styles.editIcon} onPress={onEditPress}>
           <MaterialIcons name="mode-edit" size={22} color="black" />
+        </TouchableOpacity>
+      )}
+
+      {showChatButton && (
+        <TouchableOpacity style={styles.chatIcon} onPress={onChatPress}>
+          <Ionicons name="chatbubble-outline" size={22} color="black" />
         </TouchableOpacity>
       )}
     </View>
@@ -63,6 +73,14 @@ const styles = StyleSheet.create({
   editIcon: {
     position: "absolute",
     right: 16,
+    top: 16,
+    zIndex: 1,
+    padding: 20,
+    margin: -20,
+  },
+  chatIcon: {
+    position: "absolute",
+    right: 60,
     top: 16,
     zIndex: 1,
     padding: 20,

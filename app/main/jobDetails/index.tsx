@@ -13,7 +13,7 @@ import { Colors } from "../../../constants/Colors";
 import  styles  from "./styles";
 import { JobPost } from "../../../types";
 import { Header } from "../../../components/header";
-import { applyJob } from "../../../services/api";
+import { applyJob, createConversation, getCurrentUser } from "../../../services/api";
 import SuccessAnimation from "../../../components/successAnimation";
 import Toast from "react-native-toast-message";
 
@@ -84,6 +84,55 @@ const JobDetails = () => {
     }
   };
 
+  const handleChat = async () => {
+    if (!job?.userId) {
+      Toast.show({
+        type: "error",
+        text1: "Error",
+        text2: "Employer information not available",
+      });
+      return;
+    }
+
+    // Get current user to check if they're trying to chat with themselves
+    const currentUser = await getCurrentUser();
+    const jobPosterId = job.userId._id || job.userId.id;
+    if (currentUser && (currentUser.id === jobPosterId || currentUser._id === jobPosterId)) {
+      Toast.show({
+        type: "error",
+        text1: "Error",
+        text2: "You cannot chat with yourself",
+      });
+      return;
+    }
+
+    try {
+      // Create or get existing conversation with the job poster
+      console.log('Creating conversation with job poster ID:', jobPosterId);
+      const conversation = await createConversation(jobPosterId);
+      console.log('Conversation created:', conversation);
+      
+      // Navigate to chat screen with conversation data
+      const navigationParams = {
+        conversationId: conversation.data._id,
+        participant: {
+          id: job.userId._id || job.userId.id,
+          name: `${job.userId.firstName} ${job.userId.lastName}`,
+          avatar: job.userId.profilePicture,
+        },
+      };
+      console.log('Navigating to ChatScreen with params:', navigationParams);
+      navigation.navigate("ChatScreen", navigationParams);
+    } catch (error) {
+      console.error("Error starting chat:", error);
+      Toast.show({
+        type: "error",
+        text1: "Error",
+        text2: "Failed to start chat. Please try again.",
+      });
+    }
+  };
+
   const formatTimePreference = (timePrefs: string[]) => {
     if (!timePrefs || timePrefs.length === 0) return "Flexible";
     return timePrefs
@@ -136,7 +185,12 @@ const JobDetails = () => {
           <Ionicons name="share-outline" size={24} color={Colors.black} />
         </TouchableOpacity>
       </View> */}
-      <Header title="Job Details" showBackButton />
+      <Header 
+        title="Job Details" 
+        showBackButton 
+        showChatButton
+        onChatPress={handleChat}
+      />
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {/* Job Header */}
         <View style={styles.jobHeader}>
