@@ -24,7 +24,7 @@ import Toast from "react-native-toast-message";
 
 export default function ChatScreen() {
   const route = useRoute();
-  const { conversationId, participant } = route.params || {};
+  const { conversationId, participant } = (route.params as any) || {};
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(true);
@@ -38,6 +38,25 @@ export default function ChatScreen() {
   // Parse participant data if it's a string
   const participantData = typeof participant === 'string' ? JSON.parse(participant) : participant;
   const conversationIdString = Array.isArray(conversationId) ? conversationId[0] : conversationId;
+  
+  // Helper function to normalize user IDs for consistent comparison
+  const normalizeUserId = (user: any) => {
+    return String(user?.id || user?._id || '');
+  };
+
+  // Helper function to add message with deduplication
+  const addMessage = (newMessage: any) => {
+    setMessages(prev => {
+      // Check if message already exists to prevent duplicates
+      const exists = prev.some(msg => msg.id === newMessage.id);
+      if (exists) {
+        console.log('Message already exists, skipping:', newMessage.id);
+        return prev;
+      }
+      console.log('Adding new message:', newMessage);
+      return [...prev, newMessage];
+    });
+  };
   
   // Debug logging
   console.log('ChatScreen - route.params:', route.params);
@@ -68,25 +87,42 @@ export default function ChatScreen() {
         console.log('Current user ID type:', typeof user?.id);
         setCurrentUser(user);
 
-        // Connect to socket
-        const socket = await socketService.connect();
-        if (!socket) {
-          throw new Error('Failed to connect to socket');
+        // Connect to socket with retry logic
+        let socket = null;
+        let retryCount = 0;
+        const maxRetries = 3;
+        
+        while (!socket && retryCount < maxRetries) {
+          try {
+            socket = await socketService.connect();
+            if (socket) {
+              // Wait for socket to be fully ready
+              await new Promise(resolve => setTimeout(resolve, 1000));
+              break;
+            }
+          } catch (error) {
+            console.error(`Socket connection attempt ${retryCount + 1} failed:`, error);
+            retryCount++;
+            if (retryCount < maxRetries) {
+              await new Promise(resolve => setTimeout(resolve, 2000));
+            }
+          }
         }
-
-        // Wait a moment for socket to be fully ready
-        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        if (!socket) {
+          console.warn('Socket connection failed, continuing with REST API fallback');
+        }
 
         // Setup socket event listeners after connection is established
         setupSocketListeners();
 
-        // Join conversation
-        if (conversationIdString) {
+        // Join conversation only if socket is connected
+        if (conversationIdString && socketService.isSocketConnected()) {
           socketService.joinConversation(conversationIdString);
         }
 
-        // Load existing messages
-        await loadMessages();
+        // Load existing messages with the user data
+        await loadMessages(user);
 
         // Mark messages as read
         if (conversationIdString) {
@@ -119,22 +155,26 @@ export default function ChatScreen() {
 
   const setupSocketListeners = () => {
     // Listen for new messages
-    socketService.on('new-message', (data) => {
+    socketService.on('new-message', (data: any) => {
       if (data.conversationId === conversationIdString) {
         console.log('New message received - sender ID:', data.message.sender?.id);
         console.log('New message received - current user ID:', currentUser?.id);
         console.log('New message received - sender ID type:', typeof data.message.sender?.id);
         console.log('New message received - current user ID type:', typeof currentUser?.id);
         
-        // More robust user ID comparison
-        const currentUserId = currentUser?.id || currentUser?._id;
-        const senderId = data.message.sender?.id || data.message.sender?._id;
+        // More robust user ID comparison using helper function
+        const currentUserId = normalizeUserId(currentUser);
+        const senderId = normalizeUserId(data.message.sender);
         const messageType = senderId === currentUserId ? 'me' : 'other';
         
+        console.log('New message type determined:', messageType);
+        console.log('Current user ID normalized:', currentUserId);
+        console.log('Sender ID normalized:', senderId);
+        
         const newMessage = {
-          id: data.message._id,
+          id: data.message._id || data.message.id,
           type: messageType,
-          text: data.message.content?.text || '',
+          text: data.message.content?.text || data.message.text || '',
           time: new Date(data.message.createdAt).toLocaleTimeString([], {
             hour: '2-digit',
             minute: '2-digit',
@@ -142,9 +182,9 @@ export default function ChatScreen() {
           senderId: senderId,
         };
         
-        console.log('New message type determined:', newMessage.type);
+        console.log('New message created:', newMessage);
         
-        setMessages(prev => [...prev, newMessage]);
+        addMessage(newMessage);
         
         // Scroll to bottom
         setTimeout(() => {
@@ -155,7 +195,7 @@ export default function ChatScreen() {
 
     // Listen for typing indicators
     socketService.on('user-typing', (data) => {
-      if (data.conversationId === conversationIdString && data.userId !== currentUser?.id) {
+      if (data.conversationId === conversationIdString && normalizeUserId({id: data.userId}) !== normalizeUserId(currentUser)) {
         setOtherUserTyping(data.isTyping);
       }
     });
@@ -168,34 +208,43 @@ export default function ChatScreen() {
     });
   };
 
-  const loadMessages = async () => {
+  const loadMessages = async (userData = null) => {
     try {
       if (!conversationIdString) return;
+      
+      // Use the passed userData or current state
+      const userToUse = userData || currentUser;
+      if (!userToUse) {
+        console.log('No user data available for loading messages');
+        return;
+      }
       
       const response = await getConversationMessages(conversationIdString);
       const messagesData = response.data?.messages || [];
       
       const transformedMessages = messagesData.map((msg: any) => {
         console.log('Loading message - sender ID:', msg.sender?.id);
-        console.log('Loading message - current user ID:', currentUser?.id);
+        console.log('Loading message - current user ID:', userToUse?.id);
         console.log('Loading message - sender ID type:', typeof msg.sender?.id);
-        console.log('Loading message - current user ID type:', typeof currentUser?.id);
+        console.log('Loading message - current user ID type:', typeof userToUse?.id);
         
-        // More robust user ID comparison
-        const currentUserId = currentUser?.id || currentUser?._id;
-        const senderId = msg.sender?.id || msg.sender?._id;
+        // More robust user ID comparison using helper function
+        const currentUserId = normalizeUserId(userToUse);
+        const senderId = normalizeUserId(msg.sender);
         const messageType = senderId === currentUserId ? 'me' : 'other';
         console.log('Loading message type determined:', messageType);
+        console.log('Current user ID normalized:', currentUserId);
+        console.log('Sender ID normalized:', senderId);
         
         return {
-          id: msg._id,
+          id: msg._id || msg.id,
           type: messageType,
-          text: msg.content?.text || '',
+          text: msg.content?.text || msg.text || '',
           time: new Date(msg.createdAt).toLocaleTimeString([], {
             hour: '2-digit',
             minute: '2-digit',
           }),
-          senderId: msg.sender?.id,
+          senderId: senderId,
         };
       });
       
@@ -242,7 +291,22 @@ export default function ChatScreen() {
         socketService.sendMessage(conversationIdString, messageText, 'text');
       } else {
         // Fallback to REST API if socket is not connected
-        await sendMessageAPI(conversationIdString, messageText, 'text');
+        const response = await sendMessageAPI(conversationIdString, messageText, 'text');
+        
+        // Add the message locally since socket won't receive it
+        if (response?.data?.message) {
+          const newMessage = {
+            id: response.data.message._id || response.data.message.id,
+            type: 'me',
+            text: messageText,
+            time: new Date().toLocaleTimeString([], {
+              hour: '2-digit',
+              minute: '2-digit',
+            }),
+            senderId: normalizeUserId(currentUser),
+          };
+          addMessage(newMessage);
+        }
       }
       
       // Stop typing indicator

@@ -3,7 +3,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getAccessToken } from '../utilities/secureStore';
 
 // Socket.IO configuration
-const SOCKET_URL = 'http://192.168.1.2:8000'; // Same as your API base URL
+const SOCKET_URL = 'http://192.168.0.110:8000'; // Same as your API base URL
 let socket: Socket | null = null;
 
 // Socket event types
@@ -69,9 +69,13 @@ class SocketService {
       
       this.socket = io(SOCKET_URL, {
         auth: { token },
-        transports: ['websocket', 'polling'],
-        timeout: 10000,
+        transports: ['polling', 'websocket'], // Prefer polling first for better stability
+        timeout: 60000, // Match server timeout
         forceNew: true,
+        reconnection: true,
+        reconnectionAttempts: 5,
+        reconnectionDelay: 1000,
+        reconnectionDelayMax: 5000,
       });
 
       this.setupEventListeners();
@@ -110,7 +114,11 @@ class SocketService {
     this.socket.on('connect_error', (error) => {
       console.error('Socket connection error:', error);
       this.isConnected = false;
-      this.attemptReconnect();
+      
+      // Only attempt reconnect if it's not a manual disconnect
+      if (error.message !== 'xhr poll error') {
+        this.attemptReconnect();
+      }
     });
 
     this.socket.on('error', (error) => {
@@ -126,7 +134,7 @@ class SocketService {
     }
 
     this.reconnectAttempts++;
-    const delay = this.reconnectDelay * Math.pow(2, this.reconnectAttempts - 1);
+    const delay = Math.min(this.reconnectDelay * Math.pow(2, this.reconnectAttempts - 1), 10000);
     
     console.log(`Attempting to reconnect in ${delay}ms (attempt ${this.reconnectAttempts})`);
     
@@ -240,6 +248,17 @@ class SocketService {
   // Get connection status
   isSocketConnected(): boolean {
     return this.isConnected && this.socket?.connected === true;
+  }
+
+  // Get detailed connection status
+  getConnectionStatus() {
+    return {
+      isConnected: this.isConnected,
+      socketConnected: this.socket?.connected || false,
+      reconnectAttempts: this.reconnectAttempts,
+      maxReconnectAttempts: this.maxReconnectAttempts,
+      socketId: this.socket?.id || null
+    };
   }
 
   // Disconnect socket
