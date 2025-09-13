@@ -12,7 +12,7 @@ import {
 import AntDesign from "@expo/vector-icons/AntDesign";
 import * as ImagePicker from "expo-image-picker";
 import { Ionicons } from "@expo/vector-icons";
-import  styles  from "./styles";
+import styles from "./styles";
 import { Header } from "../../../components/header";
 import { Colors } from "../../../constants/Colors";
 import { useRoute } from "@react-navigation/native";
@@ -34,6 +34,7 @@ export default function ChatScreen() {
   const [otherUserTyping, setOtherUserTyping] = useState(false);
   const flatListRef = useRef(null);
   const typingTimeoutRef = useRef(null);
+  const currentUserRef = useRef(null); // Add ref to store current user for socket callbacks
 
   // Parse participant data if it's a string
   const participantData = typeof participant === 'string' ? JSON.parse(participant) : participant;
@@ -42,6 +43,13 @@ export default function ChatScreen() {
   // Helper function to normalize user IDs for consistent comparison
   const normalizeUserId = (user: any) => {
     return String(user?.id || user?._id || '');
+  };
+
+  // Helper function to determine message type
+  const getMessageType = (senderId: string, currentUserId: string) => {
+    const normalizedSender = normalizeUserId({ id: senderId });
+    const normalizedCurrent = normalizeUserId({ id: currentUserId });
+    return normalizedSender === normalizedCurrent ? 'me' : 'other';
   };
 
   // Helper function to add message with deduplication
@@ -54,7 +62,14 @@ export default function ChatScreen() {
         return prev;
       }
       console.log('Adding new message:', newMessage);
-      return [...prev, newMessage];
+      const updatedMessages = [...prev, newMessage];
+      
+      // Scroll to bottom after state update
+      setTimeout(() => {
+        flatListRef.current?.scrollToEnd({ animated: true });
+      }, 100);
+      
+      return updatedMessages;
     });
   };
   
@@ -63,6 +78,55 @@ export default function ChatScreen() {
   console.log('ChatScreen - conversationId from params:', conversationId);
   console.log('ChatScreen - conversationIdString:', conversationIdString);
   console.log('ChatScreen - participantData:', participantData);
+
+  // Setup socket event listeners with current user ref
+  const setupSocketListeners = () => {
+    // Listen for new messages
+    socketService.on('new-message', (data: any) => {
+      if (data.conversationId === conversationIdString) {
+        console.log('New message received - sender ID:', data.message.sender?.id);
+        console.log('New message received - current user ID from ref:', currentUserRef.current?.id);
+        
+        // Use the ref instead of state to avoid stale closure
+        const currentUserId = normalizeUserId(currentUserRef.current);
+        const senderId = normalizeUserId(data.message.sender);
+        const messageType = senderId === currentUserId ? 'me' : 'other';
+        
+        console.log('New message type determined:', messageType);
+        console.log('Current user ID normalized:', currentUserId);
+        console.log('Sender ID normalized:', senderId);
+        
+        const newMessage = {
+          id: data.message._id || data.message.id,
+          type: messageType,
+          text: data.message.content?.text || data.message.text || '',
+          time: new Date(data.message.createdAt).toLocaleTimeString([], {
+            hour: '2-digit',
+            minute: '2-digit',
+          }),
+          senderId: senderId,
+        };
+        
+        console.log('New message created:', newMessage);
+        addMessage(newMessage);
+      }
+    });
+
+    // Listen for typing indicators
+    socketService.on('user-typing', (data) => {
+      if (data.conversationId === conversationIdString && 
+          normalizeUserId({id: data.userId}) !== normalizeUserId(currentUserRef.current)) {
+        setOtherUserTyping(data.isTyping);
+      }
+    });
+
+    // Listen for messages read
+    socketService.on('messages-read', (data) => {
+      if (data.conversationId === conversationIdString) {
+        console.log(`${data.readCount} messages marked as read`);
+      }
+    });
+  };
 
   // Initialize socket connection and load messages
   useEffect(() => {
@@ -80,12 +144,12 @@ export default function ChatScreen() {
           return;
         }
 
-        // Get current user
+        // Get current user first
         const user = await getCurrentUser();
         console.log('Current user loaded:', user);
         console.log('Current user ID:', user?.id);
-        console.log('Current user ID type:', typeof user?.id);
         setCurrentUser(user);
+        currentUserRef.current = user; // Store in ref for socket callbacks
 
         // Connect to socket with retry logic
         let socket = null;
@@ -153,61 +217,6 @@ export default function ChatScreen() {
     };
   }, [conversationIdString]);
 
-  const setupSocketListeners = () => {
-    // Listen for new messages
-    socketService.on('new-message', (data: any) => {
-      if (data.conversationId === conversationIdString) {
-        console.log('New message received - sender ID:', data.message.sender?.id);
-        console.log('New message received - current user ID:', currentUser?.id);
-        console.log('New message received - sender ID type:', typeof data.message.sender?.id);
-        console.log('New message received - current user ID type:', typeof currentUser?.id);
-        
-        // More robust user ID comparison using helper function
-        const currentUserId = normalizeUserId(currentUser);
-        const senderId = normalizeUserId(data.message.sender);
-        const messageType = senderId === currentUserId ? 'me' : 'other';
-        
-        console.log('New message type determined:', messageType);
-        console.log('Current user ID normalized:', currentUserId);
-        console.log('Sender ID normalized:', senderId);
-        
-        const newMessage = {
-          id: data.message._id || data.message.id,
-          type: messageType,
-          text: data.message.content?.text || data.message.text || '',
-          time: new Date(data.message.createdAt).toLocaleTimeString([], {
-            hour: '2-digit',
-            minute: '2-digit',
-          }),
-          senderId: senderId,
-        };
-        
-        console.log('New message created:', newMessage);
-        
-        addMessage(newMessage);
-        
-        // Scroll to bottom
-        setTimeout(() => {
-          flatListRef.current?.scrollToEnd({ animated: true });
-        }, 100);
-      }
-    });
-
-    // Listen for typing indicators
-    socketService.on('user-typing', (data) => {
-      if (data.conversationId === conversationIdString && normalizeUserId({id: data.userId}) !== normalizeUserId(currentUser)) {
-        setOtherUserTyping(data.isTyping);
-      }
-    });
-
-    // Listen for messages read
-    socketService.on('messages-read', (data) => {
-      if (data.conversationId === conversationIdString) {
-        console.log(`${data.readCount} messages marked as read`);
-      }
-    });
-  };
-
   const loadMessages = async (userData = null) => {
     try {
       if (!conversationIdString) return;
@@ -225,16 +234,12 @@ export default function ChatScreen() {
       const transformedMessages = messagesData.map((msg: any) => {
         console.log('Loading message - sender ID:', msg.sender?.id);
         console.log('Loading message - current user ID:', userToUse?.id);
-        console.log('Loading message - sender ID type:', typeof msg.sender?.id);
-        console.log('Loading message - current user ID type:', typeof userToUse?.id);
         
         // More robust user ID comparison using helper function
         const currentUserId = normalizeUserId(userToUse);
         const senderId = normalizeUserId(msg.sender);
         const messageType = senderId === currentUserId ? 'me' : 'other';
         console.log('Loading message type determined:', messageType);
-        console.log('Current user ID normalized:', currentUserId);
-        console.log('Sender ID normalized:', senderId);
         
         return {
           id: msg._id || msg.id,
@@ -249,6 +254,14 @@ export default function ChatScreen() {
       });
       
       setMessages(transformedMessages);
+      
+      // Scroll to bottom after messages are loaded and rendered
+      setTimeout(() => {
+        if (transformedMessages.length > 0) {
+          flatListRef.current?.scrollToEnd({ animated: false }); // Use animated: false for initial load
+        }
+      }, 500); // Increased timeout to ensure rendering is complete
+      
     } catch (error) {
       console.error('Error loading messages:', error);
     }
@@ -285,27 +298,54 @@ export default function ChatScreen() {
     const messageText = input.trim();
     setInput("");
 
+    // Create optimistic message for immediate UI feedback
+    const optimisticMessage = {
+      id: `temp-${Date.now()}`,
+      type: 'me',
+      text: messageText,
+      time: new Date().toLocaleTimeString([], {
+        hour: '2-digit',
+        minute: '2-digit',
+      }),
+      senderId: normalizeUserId(currentUser),
+      isOptimistic: true, // Flag to identify temporary messages
+    };
+
+    // Add optimistic message immediately
+    addMessage(optimisticMessage);
+
     try {
       // Send message via Socket.IO if connected, otherwise fallback to REST API
       if (socketService.isSocketConnected()) {
         socketService.sendMessage(conversationIdString, messageText, 'text');
+        
+        // Remove optimistic message when real message arrives via socket
+        // The socket listener will handle adding the real message
+        setTimeout(() => {
+          setMessages(prev => prev.filter(msg => msg.id !== optimisticMessage.id));
+        }, 1000);
+        
       } else {
         // Fallback to REST API if socket is not connected
         const response = await sendMessageAPI(conversationIdString, messageText, 'text');
         
-        // Add the message locally since socket won't receive it
+        // Replace optimistic message with real message
         if (response?.data?.message) {
-          const newMessage = {
+          const realMessage = {
             id: response.data.message._id || response.data.message.id,
             type: 'me',
             text: messageText,
-            time: new Date().toLocaleTimeString([], {
+            time: new Date(response.data.message.createdAt).toLocaleTimeString([], {
               hour: '2-digit',
               minute: '2-digit',
             }),
             senderId: normalizeUserId(currentUser),
           };
-          addMessage(newMessage);
+          
+          setMessages(prev => {
+            const filtered = prev.filter(msg => msg.id !== optimisticMessage.id);
+            return [...filtered, realMessage];
+          });
         }
       }
       
@@ -322,13 +362,16 @@ export default function ChatScreen() {
       }
     } catch (error) {
       console.error('Error sending message:', error);
+      
+      // Remove optimistic message on error and restore input
+      setMessages(prev => prev.filter(msg => msg.id !== optimisticMessage.id));
+      setInput(messageText);
+      
       Toast.show({
         type: 'error',
         text1: 'Error',
         text2: 'Failed to send message',
       });
-      // Restore input on error
-      setInput(messageText);
     } finally {
       setSending(false);
     }
@@ -338,13 +381,7 @@ export default function ChatScreen() {
     setInput(text);
     
     // Only handle typing indicators if we have a valid conversation ID and socket is connected
-    if (!conversationIdString) {
-      console.log('No conversation ID available for typing indicator');
-      return;
-    }
-    
-    if (!socketService.isSocketConnected()) {
-      console.log('Socket not connected, skipping typing indicator');
+    if (!conversationIdString || !socketService.isSocketConnected()) {
       return;
     }
     
@@ -369,36 +406,17 @@ export default function ChatScreen() {
   };
 
   const renderItem = ({ item }) => (
-    // <View
-    //   style={[
-    //     styles.messageBubble,
-    //     item.type === "me" ? styles.myMessage : styles.otherMessage,
-    //   ]}
-    // >
-    //   <Text style={styles.messageText}>{item.text}</Text>
-
-    //   <View style={styles.timeContainer}>
-    //     <Text style={styles.messageTime}>{item.time}</Text>
-    //     {item.type === "me" && (
-    //       <>
-    //         <AntDesign
-    //           name="check"
-    //           size={12}
-    //           color="#ccc"
-    //           style={styles.tickIcon}
-    //         />
-    //         <AntDesign
-    //           name="check"
-    //           size={12}
-    //           color="#ccc"
-    //           style={styles.tickIcon}
-    //         />
-    //       </>
-    //     )}
-    //   </View>
-    // </View>
     <MessageBubble text={item.text} time={item.time} type={item.type} />
   );
+
+  // Handle content size change to scroll to bottom
+  const handleContentSizeChange = () => {
+    if (messages.length > 0) {
+      setTimeout(() => {
+        flatListRef.current?.scrollToEnd({ animated: true });
+      }, 100);
+    }
+  };
 
   if (loading) {
     return (
@@ -431,9 +449,15 @@ export default function ChatScreen() {
         renderItem={renderItem}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.messagesContainer}
-        onContentSizeChange={() =>
-          flatListRef.current?.scrollToEnd({ animated: true })
-        }
+        onContentSizeChange={handleContentSizeChange}
+        onLayout={() => {
+          // Scroll to bottom when FlatList is first laid out
+          if (messages.length > 0) {
+            setTimeout(() => {
+              flatListRef.current?.scrollToEnd({ animated: false });
+            }, 100);
+          }
+        }}
         ListFooterComponent={
           otherUserTyping ? (
             <View style={{ padding: 10, alignItems: 'center' }}>
