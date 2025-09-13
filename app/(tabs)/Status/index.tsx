@@ -180,9 +180,16 @@ const AppliedTab = () => {
   const handleWithdraw = async (applicationId: string, jobId: string) => {
     try {
       console.log("Withdrawing application - jobId:", jobId, "applicationId:", applicationId);
+      
+      // Immediately remove from UI for better UX
+      setAppliedJobs(prev => prev.filter(app => app.applicationId !== applicationId));
+      
       // Use jobId for withdrawal, not applicationId
       await withdrawApplication(jobId);
+      
+      // Refresh the list to ensure consistency
       await fetchAppliedJobs(true);
+      
       Toast.show({
         type: "success",
         text1: "Withdrawn",
@@ -191,6 +198,10 @@ const AppliedTab = () => {
     } catch (error) {
       console.error("Error withdrawing application:", error);
       console.error("Error details:", error.response?.data);
+      
+      // If withdrawal failed, refresh the list to restore the card
+      await fetchAppliedJobs(true);
+      
       Toast.show({
         type: "error",
         text1: "Error",
@@ -211,17 +222,33 @@ const AppliedTab = () => {
       const res = await getAppliedJobsByUserId(user.id);
       console.log("Applied jobs response:", JSON.stringify(res, null, 2));
       
-      // Filter out applications with null or incomplete job data
-      const validApplications = (res.data || []).filter(
+      // Debug: Log all application statuses
+      const allApplications = res.data || [];
+      console.log("All application statuses:", allApplications.map(app => ({ 
+        id: app.applicationId, 
+        status: app.status,
+        jobName: app.job?.name,
+        appliedAt: app.appliedAt
+      })));
+      
+      // Check if there are any withdrawn applications
+      const withdrawnApps = allApplications.filter(app => app.status === 'withdrawn');
+      if (withdrawnApps.length > 0) {
+        console.log("Found withdrawn applications:", withdrawnApps);
+      }
+      
+      // Filter out applications with null or incomplete job data and withdrawn applications
+      const validApplications = allApplications.filter(
         (application: any) => 
           application && 
           application.job && 
           application.job._id && 
-          application.applicationId 
-          //application.status != 'withdrawn' // Ensure status exists
+          application.applicationId &&
+          application.status !== 'withdrawn' // Filter out withdrawn applications
       );
       
-      console.log("Valid applications:", validApplications.length);
+      console.log("Valid applications after filtering:", validApplications.length);
+      console.log("Filtered out withdrawn applications:", allApplications.length - validApplications.length);
       setAppliedJobs(validApplications);
     } catch (error) {
       console.error("Error fetching applied jobs", error);
