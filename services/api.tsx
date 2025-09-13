@@ -439,17 +439,52 @@ export const getJobsByLocation = async (radius = 10, categoryId = null) => {
   }
 };
 
-// Enhanced getJobPostings with better logging
-export const getJobPostings = async () => {
+export const getJobPostings = async (filters = {}) => {
   try {
-    const response = await api.get("/jobs");
-    const jobsData = response.data?.data || response.data || [];
-    console.log(`All jobs fetched successfully: ${jobsData.length} jobs`);
-    // Handle both response structures: { success: true, data: [...] } and direct array
+    const params = new URLSearchParams();
+    
+    // Add filters to query parameters - REMOVED pagination
+    if (filters.category) params.append('category', filters.category);
+    if (filters.priceSort) params.append('priceSort', filters.priceSort);
+    if (filters.distance) params.append('distance', filters.distance);
+    if (filters.search) params.append('search', filters.search);
+    
+    // Add user location if available (for distance filtering)
+    if (filters.userLocation) {
+      params.append('userLatitude', filters.userLocation.latitude.toString());
+      params.append('userLongitude', filters.userLocation.longitude.toString());
+    }
+
+    const queryString = params.toString();
+    const url = queryString ? `/jobs?${queryString}` : '/jobs';
+    
+    console.log('Fetching jobs with filters:', url, filters);
+    
+    const response = await api.get(url);
+    
+    // FIXED: Log the actual response structure for debugging
+    console.log('Backend response structure:', {
+      hasData: !!response.data?.data,
+      hasJobs: !!response.data?.jobs,
+      isArray: Array.isArray(response.data),
+      dataType: typeof response.data,
+      keysInResponse: Object.keys(response.data || {}),
+      actualStructure: response.data
+    });
+    
     return response;
   } catch (error) {
-    console.error("Error fetching all jobs:", error);
+    console.error("Error fetching jobs with filters:", error);
     throw error;
+  }
+};
+export const getCategoriesForFilter = async () => {
+  try {
+    const response = await getCategories();
+    return response.data?.data || response.data || [];
+  } catch (error) {
+    console.error("Error fetching categories for filter:", error);
+    return [];
   }
 };
 
@@ -582,4 +617,75 @@ export const getCurrentUser = async () => {
 // Update user profile
 export const updateProfile = (id, data) => api.put(`/users/${id}`, data);
 
+// Conversation API endpoints
+export const getConversations = async () => {
+  try {
+    const response = await api.get('/conversations');
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching conversations:', error);
+    throw error;
+  }
+};
+
+export const getConversation = async (conversationId: string) => {
+  try {
+    const response = await api.get(`/conversations/${conversationId}`);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching conversation:', error);
+    throw error;
+  }
+};
+
+export const getConversationMessages = async (conversationId: string) => {
+  try {
+    const response = await api.get(`/conversations/${conversationId}/messages`);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching conversation messages:', error);
+    throw error;
+  }
+};
+
+export const createConversation = async (participantId: string) => {
+  try {
+    const response = await api.post('/conversations', {
+      participants: [participantId],
+      type: 'individual',
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error creating conversation:', error);
+    throw error;
+  }
+};
+
+export const sendMessage = async (conversationId: string, text: string, type: string = 'text') => {
+  try {
+    const response = await api.post(`/conversations/${conversationId}/messages`, {
+      content: {
+        text: text,
+      },
+      messageType: type,
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error sending message:', error);
+    throw error;
+  }
+};
+
+export const markMessagesAsRead = async (conversationId: string) => {
+  try {
+    const response = await api.put(`/conversations/${conversationId}/read`);
+    return response.data;
+  } catch (error) {
+    console.error('Error marking messages as read:', error);
+    throw error;
+  }
+};
+
 export default api;
+
+

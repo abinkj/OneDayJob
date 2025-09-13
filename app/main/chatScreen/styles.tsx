@@ -90,6 +90,15 @@ const styles = StyleSheet.create({
     height: 40,
     width: 40,
   },
+  typingIndicator: {
+    padding: 10,
+    alignItems: 'center',
+  },
+  typingText: {
+    color: Colors.grey,
+    fontSize: 14,
+    fontStyle: 'italic',
+  },
 });
 
 export default styles;

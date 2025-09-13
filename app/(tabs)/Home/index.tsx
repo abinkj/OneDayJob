@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import {
   View,
   Text,
@@ -9,7 +9,9 @@ import {
   ImageBackground,
   ActivityIndicator,
   RefreshControl,
-  SectionList,
+  ScrollView,
+  Animated,
+  Modal
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { Colors } from "../../../constants/Colors";
@@ -19,7 +21,15 @@ import { getCurrentLocation as getLocationWithAddress, searchPlacesFallback } fr
 import { useDispatch, useSelector } from "react-redux";
 import Toast from "react-native-toast-message";
 import { useNavigation } from "@react-navigation/native";
-import { getJobsByLocation, getJobPostings, getCurrentUser, updateUserLocation, updateUserLocationWithRetry, isAuthenticated } from "../../../services/api";
+import { 
+  getJobsByLocation, 
+  getJobPostings, 
+  getCurrentUser, 
+  updateUserLocation, 
+  updateUserLocationWithRetry, 
+  isAuthenticated,
+  getCategoriesForFilter 
+} from "../../../services/api";
 import { restoreSession } from "../../../utilities/authentication";
 import { JobPost } from "../../../types";
 
@@ -27,17 +37,48 @@ const HomeScreen = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [location, setLocation] = useState(null);
   const [locationAddress, setLocationAddress] = useState("Loading location...");
-  const [jobSections, setJobSections] = useState([]); // Changed from jobs to jobSections
+  const [jobSections, setJobSections] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState(null);
+  const [selectedPriceSort, setSelectedPriceSort] = useState(null);
+  const [selectedDistance, setSelectedDistance] = useState(null);
   const [searchRadius, setSearchRadius] = useState(10);
   const [currentUser, setCurrentUser] = useState(null);
   const [authStatus, setAuthStatus] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
+  const [isFilterSticky, setIsFilterSticky] = useState(false);
+  
+  // Filter modal states
+  const [showCategoryModal, setShowCategoryModal] = useState(false);
+  const [showPriceModal, setShowPriceModal] = useState(false);
+  const [showDistanceModal, setShowDistanceModal] = useState(false);
+  const [categories, setCategories] = useState([]);
+
   const navigation = useNavigation<any>();
   const userData = useSelector((state: any) => state.authentication.userData);
   const dispatch = useDispatch();
+  const scrollY = useRef(new Animated.Value(0)).current;
+  const filterRowRef = useRef(null);
+  const [filterRowHeight, setFilterRowHeight] = useState(0);
+  const HEADER_HEIGHT = 70;
+  const SEARCH_HEIGHT = 66;
+  const BANNER_HEIGHT = 156;
+  const STICKY_OFFSET = HEADER_HEIGHT + SEARCH_HEIGHT + BANNER_HEIGHT;
+
+  // Filter options
+  const priceOptions = [
+    { id: null, name: "All Prices" },
+    { id: "low-to-high", name: "Price: Low to High" },
+    { id: "high-to-low", name: "Price: High to Low" },
+  ];
+
+  const distanceOptions = [
+    { id: null, name: "All Locations" },
+    { id: "remote", name: "Remote Work" },
+    { id: "within-10km", name: "Within 10km" },
+    { id: "above-10km", name: "Above 10km" },
+  ];
 
   const handleNotificationPress = () => {
     console.log("Notification icon pressed");
@@ -46,7 +87,7 @@ const HomeScreen = () => {
 
   // Helper function to calculate distance between two coordinates
   const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
-    const R = 6371; // Radius of the Earth in kilometers
+    const R = 6371;
     const dLat = (lat2 - lat1) * Math.PI / 180;
     const dLon = (lon2 - lon1) * Math.PI / 180;
     const a =
@@ -54,18 +95,16 @@ const HomeScreen = () => {
       Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
       Math.sin(dLon / 2) * Math.sin(dLon / 2);
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    const distance = R * c; // Distance in kilometers
-    return Math.round(distance * 10) / 10; // Round to 1 decimal place
+    const distance = R * c;
+    return Math.round(distance * 10) / 10;
   };
 
-  // Enhanced function to categorize jobs by distance
   const categorizeJobsByDistance = (jobs: JobPost[], userLocation: any) => {
     if (!userLocation || !jobs.length) {
-      return [{ title: "All Jobs", data: jobs }];
+      return jobs;
     }
 
-    const nearbyJobs = [];
-    const distantJobs = [];
+    const jobsWithDistance = [];
 
     jobs.forEach(job => {
       if (job.location?.coordinates?.coordinates || (job.location?.coordinates?.latitude && job.location?.coordinates?.longitude)) {
@@ -89,42 +128,34 @@ const HomeScreen = () => {
           jobLng
         );
 
-        const jobWithDistance = { ...job, distance };
-
-        if (distance <= searchRadius) {
-          nearbyJobs.push(jobWithDistance);
-        } else {
-          distantJobs.push(jobWithDistance);
-        }
+        jobsWithDistance.push({ ...job, distance });
       } else {
-        // Jobs without location go to distant jobs
-        distantJobs.push({ ...job, distance: null });
+        // Jobs without location
+        jobsWithDistance.push({ ...job, distance: null });
       }
     });
 
-    const sections = [];
-
-    if (nearbyJobs.length > 0) {
-      sections.push({
-        title: `Jobs within ${searchRadius}km`,
-        data: nearbyJobs.sort((a, b) => (a.distance || 0) - (b.distance || 0))
+    // Sort jobs by distance (nearby first) only if no other sorting is applied
+    if (!selectedPriceSort) {
+      return jobsWithDistance.sort((a, b) => {
+        if (a.distance === null && b.distance === null) return 0;
+        if (a.distance === null) return 1;
+        if (b.distance === null) return -1;
+        return a.distance - b.distance;
       });
     }
 
-    if (distantJobs.length > 0) {
-      sections.push({
-        title: `Jobs beyond ${searchRadius}km from you`,
-        data: distantJobs.sort((a, b) => {
-          // Sort by distance if available, otherwise by creation date
-          if (a.distance !== null && b.distance !== null) {
-            return a.distance - b.distance;
-          }
-          return new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime();
-        })
-      });
-    }
+    return jobsWithDistance;
+  };
 
-    return sections.length > 0 ? sections : [{ title: "All Jobs", data: jobs }];
+  // Load categories for filter
+  const loadCategories = async () => {
+    try {
+      const categoriesData = await getCategoriesForFilter();
+      setCategories([{ _id: null, name: "All Categories" }, ...categoriesData]);
+    } catch (error) {
+      console.error("Failed to load categories:", error);
+    }
   };
 
   // FIXED: Better authentication status check
@@ -202,88 +233,92 @@ const HomeScreen = () => {
     }
   };
 
-  // Enhanced fetchJobs function with distance categorization
-  const fetchJobs = async () => {
+  // FIXED: Simplified fetchJobs function without pagination
+  const fetchJobs = async (resetJobs = true) => {
     try {
-      setLoading(true);
+      if (resetJobs) {
+        setLoading(true);
+      }
 
-      console.log("Fetch strategy:", {
+      console.log("Fetch strategy with filters:", {
         authStatus,
         hasLocation: !!location,
-        searchRadius,
-        selectedCategory
+        selectedCategory,
+        selectedPriceSort,
+        selectedDistance,
+        searchQuery,
       });
 
-      let nearbyJobs = [];
-      let allJobs = [];
+      // Build filters object for backend
+      const filters = {};
 
-      // Always fetch all jobs as fallback
-      try {
-        const allJobsResponse = await getJobPostings();
-        allJobs = allJobsResponse.data?.data || allJobsResponse.data || [];
-        console.log(`Fetched ${allJobs.length} total jobs`);
-      } catch (error) {
-        console.error("Failed to fetch all jobs:", error);
-        Toast.show({
-          type: 'error',
-          text1: 'Error',
-          text2: 'Failed to load jobs',
-        });
-        setJobSections([]);
-        return;
+      // Add search filter
+      if (searchQuery.trim()) {
+        filters.search = searchQuery.trim();
       }
 
-      // Try to get nearby jobs if location and auth are available
-      if (location && authStatus && currentUser) {
-        try {
-          console.log("Attempting location-based search");
-          const nearbyResponse = await getJobsByLocation(searchRadius, selectedCategory);
-          nearbyJobs = nearbyResponse.data?.data || nearbyResponse.data || [];
-          console.log(`Found ${nearbyJobs.length} jobs within ${searchRadius}km`);
-        } catch (locationError) {
-          console.error("Location search failed:", locationError);
-          nearbyJobs = [];
-        }
+      // Add category filter
+      if (selectedCategory) {
+        filters.category = selectedCategory;
       }
 
-      // Categorize jobs based on location and distance
-      if (location && authStatus && allJobs.length > 0) {
-        const sections = categorizeJobsByDistance(allJobs, location);
-        setJobSections(sections);
+      // Add price sort filter
+      if (selectedPriceSort) {
+        filters.priceSort = selectedPriceSort;
+      }
 
-        // Show appropriate toast messages
-        if (sections.length > 1) {
-          const nearbyCount = sections[0]?.data?.length || 0;
-          const distantCount = sections[1]?.data?.length || 0;
-          Toast.show({
-            type: 'success',
-            text1: 'Jobs loaded',
-            text2: `${nearbyCount} nearby jobs, ${distantCount} jobs beyond ${searchRadius}km`,
-          });
-        } else if (sections[0]?.title.includes('within')) {
-          Toast.show({
-            type: 'success',
-            text1: 'Nearby jobs',
-            text2: `Found ${sections[0].data.length} jobs within ${searchRadius}km`,
-          });
-        }
+      // Add distance filter (only if user has location)
+      if (selectedDistance && location) {
+        filters.distance = selectedDistance;
+        filters.userLocation = {
+          latitude: location.latitude,
+          longitude: location.longitude
+        };
+      }
+
+      console.log("Sending filters to backend:", filters);
+
+      const response = await getJobPostings(filters);
+      
+      // FIXED: Handle response structure properly
+      let jobs = [];
+      if (response.data?.data) {
+        // Handle nested data structure
+        jobs = Array.isArray(response.data.data) ? response.data.data : [];
+      } else if (response.data?.jobs) {
+        // Handle paginated response structure
+        jobs = Array.isArray(response.data.jobs) ? response.data.jobs : [];
+      } else if (Array.isArray(response.data)) {
+        // Handle direct array response
+        jobs = response.data;
       } else {
-        // Fallback to simple list without distance categorization
-        setJobSections([{ title: "All Jobs", data: allJobs }]);
-        if (!authStatus) {
-          Toast.show({
-            type: 'info',
-            text1: 'All jobs',
-            text2: 'Login to see jobs organized by distance from your location.',
-          });
-        } else if (!location) {
-          Toast.show({
-            type: 'info',
-            text1: 'All jobs',
-            text2: 'Enable location to see jobs organized by distance.',
-          });
-        }
+        console.warn("Unexpected response structure:", response.data);
+        jobs = [];
       }
+
+      console.log(`Jobs received from backend: ${jobs.length} jobs`);
+
+      // Add distance to jobs for display if location is available
+      const jobsWithDistance = location ? categorizeJobsByDistance(jobs, location) : jobs;
+
+      setJobSections([{ title: "Jobs", data: jobsWithDistance }]);
+
+      console.log(`Jobs loaded: ${jobs.length} jobs`);
+
+      if (jobs.length > 0) {
+        Toast.show({
+          type: 'success',
+          text1: 'Jobs loaded',
+          text2: `${jobs.length} jobs found`,
+        });
+      } else {
+        Toast.show({
+          type: 'info',
+          text1: 'No jobs found',
+          text2: 'Try adjusting your filters',
+        });
+      }
+
     } catch (error) {
       console.error("Job fetch error:", error);
       Toast.show({
@@ -300,12 +335,13 @@ const HomeScreen = () => {
   // Handle search
   const handleSearch = async () => {
     if (!searchQuery.trim()) {
-      fetchJobs();
+      fetchJobs(true);
       return;
     }
 
     try {
       setLoading(true);
+      // First try to search for places if it looks like a location
       const searchResults = await searchPlacesFallback(searchQuery);
       if (searchResults.length > 0) {
         const selectedLocation = searchResults[0];
@@ -320,17 +356,14 @@ const HomeScreen = () => {
             console.error("Failed to update user location in backend:", updateError);
           }
         }
-
-        // Fetch and categorize jobs for the new location
-        await fetchJobs();
       }
+      
+      // Then search for jobs with the query
+      await fetchJobs(true);
     } catch (error) {
       console.error("Error searching:", error);
-      Toast.show({
-        type: 'error',
-        text1: 'Error',
-        text2: 'Search failed. Please try again.',
-      });
+      // If location search fails, still try to search jobs
+      await fetchJobs(true);
     } finally {
       setLoading(false);
     }
@@ -341,7 +374,7 @@ const HomeScreen = () => {
     try {
       await checkAuthStatus();
       await fetchCurrentLocation();
-      await fetchJobs();
+      await fetchJobs(true);
     } catch (error) {
       console.error("Error during refresh:", error);
       Toast.show({
@@ -354,9 +387,40 @@ const HomeScreen = () => {
     }
   };
 
-  const handleCategoryFilter = async (categoryId) => {
+  // Filter handlers
+  const handleCategoryFilter = (categoryId) => {
     setSelectedCategory(categoryId === selectedCategory ? null : categoryId);
+    setShowCategoryModal(false);
   };
+
+  const handlePriceFilter = (priceSort) => {
+    setSelectedPriceSort(priceSort === selectedPriceSort ? null : priceSort);
+    setShowPriceModal(false);
+  };
+
+  const handleDistanceFilter = (distance) => {
+    setSelectedDistance(distance === selectedDistance ? null : distance);
+    setShowDistanceModal(false);
+  };
+
+  const clearAllFilters = () => {
+    setSelectedCategory(null);
+    setSelectedPriceSort(null);
+    setSelectedDistance(null);
+    setSearchQuery("");
+  };
+
+  // Handle scroll to determine when filter row should be sticky
+  const handleScroll = Animated.event(
+    [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+    { 
+      useNativeDriver: false,
+      listener: (event) => {
+        const offsetY = event.nativeEvent.contentOffset.y;
+        setIsFilterSticky(offsetY >= STICKY_OFFSET);
+      }
+    }
+  );
 
   useEffect(() => {
     const initializeApp = async () => {
@@ -365,6 +429,7 @@ const HomeScreen = () => {
         setLoading(true);
         await dispatch(restoreSession() as any);
         const { authValid, user } = await checkAuthStatus();
+        await loadCategories();
         setIsInitialized(true);
         console.log("HomeScreen initialization complete");
       } catch (error) {
@@ -389,12 +454,13 @@ const HomeScreen = () => {
     fetchLocationAndJobs();
   }, [isInitialized, authStatus, currentUser]);
 
+  // FIXED: Updated useEffect to trigger on filter changes without pagination
   useEffect(() => {
-    if (isInitialized && (location || !authStatus)) {
-      console.log("Location or filters changed, fetching jobs...");
-      fetchJobs();
+    if (isInitialized) {
+      console.log("Filters changed, fetching jobs...");
+      fetchJobs(true);
     }
-  }, [location, selectedCategory, searchRadius, isInitialized]);
+  }, [selectedCategory, selectedPriceSort, selectedDistance, searchQuery, isInitialized]);
 
   const renderJobCard = ({ item }: { item: JobPost & { distance?: number | null } }) => {
     return (
@@ -434,13 +500,6 @@ const HomeScreen = () => {
               }
             </Text>
           </View>
-
-          {/* <View style={styles.dateContainer}>
-            <Ionicons name="calendar-outline" size={16} color={Colors.grey} />
-            <Text style={styles.dateText}>
-              {item.createdAt ? new Date(item.createdAt).toLocaleDateString() : item.isFlexible ? "Flexible" : "Date not set"}
-            </Text>
-          </View> */}
         </View>
 
         <View style={styles.jobFooter}>
@@ -458,18 +517,130 @@ const HomeScreen = () => {
     );
   };
 
-  const renderSectionHeader = ({ section: { title } }) => (
-    <View style={styles.sectionHeader}>
-      <Text style={styles.sectionHeaderText}>{title}</Text>
-      <View style={styles.sectionHeaderLine} />
-    </View>
+  const renderFilterRow = () => {
+    const getFilterButtonStyle = (isSelected) => [
+      styles.filterButton,
+      isSelected && { backgroundColor: Colors.primary }
+    ];
+
+    const getFilterTextStyle = (isSelected) => [
+      styles.filterText,
+      isSelected && { color: 'white' }
+    ];
+
+    const getSelectedCategoryName = () => {
+      if (!selectedCategory) return "Category";
+      const category = categories.find(cat => cat._id === selectedCategory);
+      return category ? category.name : "Category";
+    };
+
+    const getSelectedPriceName = () => {
+      if (!selectedPriceSort) return "Price";
+      const priceOption = priceOptions.find(opt => opt.id === selectedPriceSort);
+      return priceOption ? priceOption.name : "Price";
+    };
+
+    const getSelectedDistanceName = () => {
+      if (!selectedDistance) return "Distance";
+      const distanceOption = distanceOptions.find(opt => opt.id === selectedDistance);
+      return distanceOption ? distanceOption.name : "Distance";
+    };
+
+    return (
+      <View 
+        ref={filterRowRef}
+        style={[
+          
+          isFilterSticky?styles.stickyFilterContainer:styles.filtersScrollContainer
+        ]}
+        onLayout={(event) => {
+          const { height } = event.nativeEvent.layout;
+          setFilterRowHeight(height);
+        }}
+      >
+        <FlatList
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          data={[
+            { id: "category", name: getSelectedCategoryName(), isSelected: !!selectedCategory },
+            { id: "price", name: getSelectedPriceName(), isSelected: !!selectedPriceSort },
+            { id: "distance", name: getSelectedDistanceName(), isSelected: !!selectedDistance },
+            { id: "clear", name: "Clear", isSelected: false },
+          ]}
+          keyExtractor={(item) => item.id}
+          renderItem={({ item }) => (
+            <TouchableOpacity
+              style={getFilterButtonStyle(item.isSelected)}
+              onPress={() => {
+                if (item.id === "category") setShowCategoryModal(true);
+                else if (item.id === "price") setShowPriceModal(true);
+                else if (item.id === "distance") setShowDistanceModal(true);
+                else if (item.id === "clear") clearAllFilters();
+              }}
+            >
+              <Text style={getFilterTextStyle(item.isSelected)}>{item.name}</Text>
+              {item.id !== "clear" && (
+                <Ionicons 
+                  name="chevron-down" 
+                  size={16} 
+                  color={item.isSelected ? 'white' : Colors.black} 
+                />
+              )}
+            </TouchableOpacity>
+          )}
+        />
+      </View>
+    );
+  };
+
+  const renderFilterModal = (visible, setVisible, title, options, selectedValue, onSelect) => (
+    <Modal
+      visible={visible}
+      transparent
+      animationType="slide"
+      onRequestClose={() => setVisible(false)}
+    >
+      <View style={styles.modalOverlay}>
+        <View style={styles.modalContainer}>
+          <View style={styles.modalHeader}>
+            <Text style={styles.modalTitle}>{title}</Text>
+            <TouchableOpacity onPress={() => setVisible(false)}>
+              <Ionicons name="close" size={24} color={Colors.black} />
+            </TouchableOpacity>
+          </View>
+          <FlatList
+            data={options}
+            keyExtractor={(item) => String(item.id || item._id)}
+            renderItem={({ item }) => (
+              <TouchableOpacity
+                style={[
+                  styles.modalOption,
+                  selectedValue === (item.id || item._id) && styles.selectedOption
+                ]}
+                onPress={() => onSelect(item.id || item._id)}
+              >
+                <Text style={[
+                  styles.modalOptionText,
+                  selectedValue === (item.id || item._id) && styles.selectedOptionText
+                ]}>
+                  {item.name}
+                </Text>
+                {selectedValue === (item.id || item._id) && (
+                  <Ionicons name="checkmark" size={20} color={Colors.primary} />
+                )}
+              </TouchableOpacity>
+            )}
+          />
+        </View>
+      </View>
+    </Modal>
   );
 
   const renderEmptyState = () => (
-    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 }}>
+    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20, minHeight: 300 }}>
       <Ionicons name="search-outline" size={64} color={Colors.grey} />
       <Text style={{ fontSize: 18, color: Colors.grey, marginTop: 16, textAlign: 'center' }}>
-        {loading ? 'Loading jobs...' : 'No jobs available'}
+        {loading ? 'Loading jobs...' : 'No jobs found'}
       </Text>
       <Text style={{ fontSize: 14, color: Colors.grey, marginTop: 8, textAlign: 'center' }}>
         {!authStatus ? 'Login to see location-based jobs' : 'Try adjusting your search filters'}
@@ -494,135 +665,162 @@ const HomeScreen = () => {
     );
   }
 
+  const allJobs = jobSections.length > 0 ? jobSections[0].data || [] : [];
+
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <View style={styles.locationHeader}>
-          <Ionicons name="location" size={24} color={Colors.primary} />
-          <View>
-            <TouchableOpacity style={styles.locationSelector}>
-              <Text style={styles.locationTitle}>
-                {locationAddress}
-              </Text>
-              <Ionicons name="chevron-down" size={16} color={Colors.black} />
-            </TouchableOpacity>
-            <Text style={styles.locationSubtitle}>
-              {location ? `${location.latitude.toFixed(4)}, ${location.longitude.toFixed(4)}` : "Getting location..."}
-              {authStatus ? " • Authenticated" : " • Not logged in"}
-            </Text>
-          </View>
-          <TouchableOpacity
-            onPress={fetchCurrentLocation}
-            style={{ marginLeft: 8, padding: 4 }}
-          >
-            <Ionicons name="refresh" size={20} color={Colors.primary} />
-          </TouchableOpacity>
+      {/* Filter Modals */}
+      {renderFilterModal(
+        showCategoryModal,
+        setShowCategoryModal,
+        "Select Category",
+        categories,
+        selectedCategory,
+        handleCategoryFilter
+      )}
+      
+      {renderFilterModal(
+        showPriceModal,
+        setShowPriceModal,
+        "Sort by Price",
+        priceOptions,
+        selectedPriceSort,
+        handlePriceFilter
+      )}
+      
+      {renderFilterModal(
+        showDistanceModal,
+        setShowDistanceModal,
+        "Filter by Distance",
+        distanceOptions,
+        selectedDistance,
+        handleDistanceFilter
+      )}
+
+      {/* Sticky Filter Row - positioned absolutely when sticky */}
+      {isFilterSticky && (
+        <View style={[styles.stickyFilterContainer, { position: 'absolute', top: 0, left: 0, right: 0, zIndex: 1000 }]}>
+          {renderFilterRow()}
         </View>
-        <TouchableOpacity onPress={handleNotificationPress}>
-          <Ionicons
-            name="notifications-outline"
-            size={24}
-            color={Colors.black}
-          />
-        </TouchableOpacity>
-      </View>
+      )}
 
-      {/* Search Bar */}
-      <View style={styles.searchContainer}>
-        <Ionicons
-          name="search"
-          size={20}
-          color={Colors.grey}
-          style={styles.searchIcon}
-        />
-        <TextInput
-          style={styles.searchInput}
-          placeholder="Search jobs or locations"
-          placeholderTextColor={Colors.black}
-          value={searchQuery}
-          onChangeText={setSearchQuery}
-          onSubmitEditing={handleSearch}
-          returnKeyType="search"
-        />
-        {searchQuery.length > 0 && (
-          <TouchableOpacity onPress={() => setSearchQuery("")}>
-            <Ionicons name="close-circle" size={20} color={Colors.grey} />
-          </TouchableOpacity>
-        )}
-      </View>
-
-      {/* Banner */}
-      <View style={styles.bannerContainer}>
-        <ImageBackground
-          style={styles.banner}
-          source={require("../../../assets/images/banner.png")}
-          resizeMode="stretch"
-        >
-          <View style={styles.bannerTextContainer}>
-            <Text style={styles.bannerTitle}>Help Is One Click Away –</Text>
-            <Text style={styles.bannerSubtitle}>Post Your Task Now!</Text>
-            <TouchableOpacity
-              style={styles.postNowButton}
-              onPress={() => navigation.navigate("PostJob")}
-            >
-              <Text style={styles.postNowText}>Post Now</Text>
-            </TouchableOpacity>
-          </View>
-        </ImageBackground>
-      </View>
-
-      <View style={styles.filtersScrollContainer}>
-        <FlatList
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          data={[
-            { id: "category", name: "Category" },
-            { id: "price", name: "Price" },
-            { id: "distance", name: "Distance" },
-            { id: "clear", name: "Clear" },
-          ]}
-          keyExtractor={(item) => item.id}
-          renderItem={({ item }) => (
-            <TouchableOpacity
-              style={styles.filterButton}
-              onPress={() => {
-                if (item.id === "clear") {
-                  setSelectedCategory(null);
-                  setSearchRadius(10);
-                }
-              }}
-            >
-              <Text style={styles.filterText}>{item.name}</Text>
-             {item.id!="clear" &&(
-              <Ionicons name="chevron-down" size={16} color={Colors.black} />
-
-             )}
-            </TouchableOpacity>
-          )}
-          
-        />
-      </View>
-
-      {/* Job Listings using SectionList */}
-      <SectionList
-        sections={jobSections}
-        renderItem={renderJobCard}
-        renderSectionHeader={renderSectionHeader}
-        keyExtractor={(item) => item._id}
+      {/* Main Scrollable Content */}
+      <Animated.ScrollView
+        style={[styles.scrollContainer, isFilterSticky && { paddingTop: filterRowHeight }]}
         showsVerticalScrollIndicator={false}
+        onScroll={handleScroll}
+        scrollEventThrottle={16}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
-        ListEmptyComponent={renderEmptyState}
-        ListFooterComponent={
-          loading ? (
+      >
+        {/* Header */}
+        <View style={styles.header}>
+          <View style={styles.locationHeader}>
+            <Ionicons name="location" size={24} color={Colors.primary} />
+            <View>
+              <TouchableOpacity style={styles.locationSelector}>
+                <Text style={styles.locationTitle}>
+                  {locationAddress}
+                </Text>
+                <Ionicons name="chevron-down" size={16} color={Colors.black} />
+              </TouchableOpacity>
+              <Text style={styles.locationSubtitle}>
+                {location ? `${location.latitude.toFixed(4)}, ${location.longitude.toFixed(4)}` : "Getting location..."}
+                {authStatus ? " • Authenticated" : " • Not logged in"}
+              </Text>
+            </View>
+            <TouchableOpacity
+              onPress={fetchCurrentLocation}
+              style={{ marginLeft: 8, padding: 4 }}
+            >
+              <Ionicons name="refresh" size={20} color={Colors.primary} />
+            </TouchableOpacity>
+          </View>
+          <TouchableOpacity onPress={handleNotificationPress}>
+            <Ionicons
+              name="notifications-outline"
+              size={24}
+              color={Colors.black}
+            />
+          </TouchableOpacity>
+        </View>
+
+        {/* Search Bar */}
+        <View style={styles.searchContainer}>
+          <Ionicons
+            name="search"
+            size={20}
+            color={Colors.grey}
+            style={styles.searchIcon}
+          />
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Search jobs or locations"
+            placeholderTextColor={Colors.black}
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            onSubmitEditing={handleSearch}
+            returnKeyType="search"
+          />
+          {searchQuery.length > 0 && (
+            <TouchableOpacity onPress={() => setSearchQuery("")}>
+              <Ionicons name="close-circle" size={20} color={Colors.grey} />
+            </TouchableOpacity>
+          )}
+        </View>
+
+        {/* Banner */}
+        <View style={styles.bannerContainer}>
+          <ImageBackground
+            style={styles.banner}
+            source={require("../../../assets/images/banner.png")}
+            resizeMode="stretch"
+          >
+            <View style={styles.bannerTextContainer}>
+              <Text style={styles.bannerTitle}>Help Is One Click Away –</Text>
+              <Text style={styles.bannerSubtitle}>Post Your Task Now!</Text>
+              <TouchableOpacity
+                style={styles.postNowButton}
+                onPress={() => navigation.navigate("PostJob")}
+              >
+                <Text style={styles.postNowText}>Post Now</Text>
+              </TouchableOpacity>
+            </View>
+          </ImageBackground>
+        </View>
+
+        {/* Filter Row (normal position) */}
+        {!isFilterSticky && renderFilterRow()}
+
+        {/* Job Results Summary */}
+        {!loading && allJobs.length > 0 && (
+          <View style={styles.resultsContainer}>
+            <Text style={styles.resultsText}>
+              {allJobs.length} jobs found
+            </Text>
+          </View>
+        )}
+
+        {/* Job Cards */}
+        <View style={{ paddingBottom: 20 }}>
+          {loading ? (
             <View style={{ padding: 20, alignItems: 'center' }}>
               <ActivityIndicator size="large" color={Colors.primary} />
             </View>
-          ) : null
-        }
-        stickySectionHeadersEnabled={false}
-      />
+          ) : allJobs.length > 0 ? (
+            <>
+              {allJobs.map((item, index) => (
+                <View key={item._id || index}>
+                  {renderJobCard({ item })}
+                </View>
+              ))}
+            </>
+          ) : (
+            renderEmptyState()
+          )}
+        </View>
+      </Animated.ScrollView>
     </SafeAreaView>
   );
 };
