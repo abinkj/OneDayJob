@@ -172,13 +172,17 @@ const AppliedTab = () => {
   const [refreshing, setRefreshing] = React.useState(false);
 
   const handleNext = (job: any) => {
-    navigation.navigate("JobDetails", { jobId: job.id, jobData: job });
+    if (job && job._id) {
+      navigation.navigate("JobDetails", { jobId: job._id, jobData: job });
+    }
   };
 
-  const handleWithdraw = async (job: any) => {
+  const handleWithdraw = async (applicationId: string, jobId: string) => {
     try {
-      await withdrawApplication(job._id);
-      fetchAppliedJobs(true);
+      console.log("Withdrawing application - jobId:", jobId, "applicationId:", applicationId);
+      // Use jobId for withdrawal, not applicationId
+      await withdrawApplication(jobId);
+      await fetchAppliedJobs(true);
       Toast.show({
         type: "success",
         text1: "Withdrawn",
@@ -186,7 +190,7 @@ const AppliedTab = () => {
       });
     } catch (error) {
       console.error("Error withdrawing application:", error);
-
+      console.error("Error details:", error.response?.data);
       Toast.show({
         type: "error",
         text1: "Error",
@@ -205,7 +209,20 @@ const AppliedTab = () => {
         return;
       }
       const res = await getAppliedJobsByUserId(user.id);
-      setAppliedJobs(res.data || []);
+      console.log("Applied jobs response:", JSON.stringify(res, null, 2));
+      
+      // Filter out applications with null or incomplete job data
+      const validApplications = (res.data || []).filter(
+        (application: any) => 
+          application && 
+          application.job && 
+          application.job._id && 
+          application.applicationId 
+          //application.status != 'withdrawn' // Ensure status exists
+      );
+      
+      console.log("Valid applications:", validApplications.length);
+      setAppliedJobs(validApplications);
     } catch (error) {
       console.error("Error fetching applied jobs", error);
       setAppliedJobs([]);
@@ -278,19 +295,27 @@ const AppliedTab = () => {
         />
       }
     >
-      {appliedJobs.map((application) => (
-        <JobCard
-          key={application.applicationId}
-          data={{ ...application.job, status: "applied" }}
-          onPress={() => {
-            handleNext(application.job);
-          }}
-          withdraw={true}
-          onWithdraw={() => {
-            handleWithdraw(application.job);
-          }}
-        />
-      ))}
+      {appliedJobs.map((application) => {
+        // Additional safety check
+        if (!application || !application.job || !application.applicationId) {
+          return null;
+        }
+
+        return (
+          <JobCard
+            key={application.applicationId}
+            data={{
+              ...application.job,
+              status:  "applied"
+            }}
+            onPress={() => handleNext(application.job)}
+            withdraw={true}
+            onWithdraw={() => 
+              handleWithdraw(application.applicationId, application.job._id)
+            }
+          />
+        );
+      })}
     </ScrollView>
   );
 };

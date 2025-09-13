@@ -66,11 +66,13 @@ const PostJobScreen = ({ navigation }) => {
   const [beforeDate, setBeforeDate] = useState(null);
   const [isFlexible, setIsFlexible] = useState(true);
 
-  // Exact time settings - FIXED
-  const [isExactTime, setIsExactTime] = useState(false);
-  const [hour, setHour] = useState('10');
-  const [minute, setMinute] = useState('30');
-  const [amPm, setAmPm] = useState('AM');
+  // Time range settings - fromTime and toTime are required for non-flexible jobs
+  const [fromHour, setFromHour] = useState('10');
+  const [fromMinute, setFromMinute] = useState('00');
+  const [fromAmPm, setFromAmPm] = useState('AM');
+  const [toHour, setToHour] = useState('12');
+  const [toMinute, setToMinute] = useState('00');
+  const [toAmPm, setToAmPm] = useState('PM');
 
   const [selectedValue, setSelectedValue] = useState("mail");
   const [requirements, setRequirements] = useState([]);
@@ -207,59 +209,86 @@ if (response.data && Array.isArray(response.data.data) && response.data.data.len
 };
 
 
-  // Format exact time to HH:MM format for backend
-  const getSelectedTime = () => {
-    const date = new Date();
-    let h = parseInt(hour);
-    if (amPm === 'PM' && h !== 12) h += 12;
-    if (amPm === 'AM' && h === 12) h = 0;
-    date.setHours(h);
-    date.setMinutes(parseInt(minute));
-    return date;
-  };
-
-  // Time picker increment/decrement functions
-  const incrementHour = () => {
-    const newHour = parseInt(hour) + 1;
-    if (newHour > 12) {
-      setHour('1');
-    } else {
-      setHour(String(newHour));
-    }
-  };
-
-  const decrementHour = () => {
-    const newHour = parseInt(hour) - 1;
-    if (newHour < 1) {
-      setHour('12');
-    } else {
-      setHour(String(newHour));
-    }
-  };
-
-  const incrementMinute = () => {
-    const newMinute = parseInt(minute) + 5;
-    if (newMinute > 59) {
-      setMinute('0');
-    } else {
-      setMinute(String(newMinute));
-    }
-  };
-
-  const decrementMinute = () => {
-    const newMinute = parseInt(minute) - 5;
-    if (newMinute < 0) {
-      setMinute('59');
-    } else {
-      setMinute(String(newMinute));
-    }
-  };
-
+  // Format time to HH:MM format for backend
   const get24HourTime = (hour, minute, amPm) => {
     let h = parseInt(hour);
     if (amPm === 'PM' && h !== 12) h += 12;
     if (amPm === 'AM' && h === 12) h = 0;
     return `${String(h).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
+  };
+
+  // Time picker increment/decrement functions for FROM time
+  const incrementFromHour = () => {
+    const newHour = parseInt(fromHour) + 1;
+    if (newHour > 12) {
+      setFromHour('1');
+    } else {
+      setFromHour(String(newHour));
+    }
+  };
+
+  const decrementFromHour = () => {
+    const newHour = parseInt(fromHour) - 1;
+    if (newHour < 1) {
+      setFromHour('12');
+    } else {
+      setFromHour(String(newHour));
+    }
+  };
+
+  const incrementFromMinute = () => {
+    const newMinute = parseInt(fromMinute) + 5;
+    if (newMinute > 59) {
+      setFromMinute('0');
+    } else {
+      setFromMinute(String(newMinute));
+    }
+  };
+
+  const decrementFromMinute = () => {
+    const newMinute = parseInt(fromMinute) - 5;
+    if (newMinute < 0) {
+      setFromMinute('59');
+    } else {
+      setFromMinute(String(newMinute));
+    }
+  };
+
+  // Time picker increment/decrement functions for TO time
+  const incrementToHour = () => {
+    const newHour = parseInt(toHour) + 1;
+    if (newHour > 12) {
+      setToHour('1');
+    } else {
+      setToHour(String(newHour));
+    }
+  };
+
+  const decrementToHour = () => {
+    const newHour = parseInt(toHour) - 1;
+    if (newHour < 1) {
+      setToHour('12');
+    } else {
+      setToHour(String(newHour));
+    }
+  };
+
+  const incrementToMinute = () => {
+    const newMinute = parseInt(toMinute) + 5;
+    if (newMinute > 59) {
+      setToMinute('0');
+    } else {
+      setToMinute(String(newMinute));
+    }
+  };
+
+  const decrementToMinute = () => {
+    const newMinute = parseInt(toMinute) - 5;
+    if (newMinute < 0) {
+      setToMinute('59');
+    } else {
+      setToMinute(String(newMinute));
+    }
   };
 
   // Validate form data before submission
@@ -284,6 +313,26 @@ if (response.data && Array.isArray(response.data.data) && response.data.data.len
 
     if (!budget || parseFloat(budget) <= 0) {
       errors.push('Please enter a valid budget');
+    }
+
+    // Validate time fields for non-flexible jobs
+    if (!isFlexible) {
+      if (!fromHour || !fromMinute || !fromAmPm) {
+        errors.push('Please set the start time for the job');
+      }
+      if (!toHour || !toMinute || !toAmPm) {
+        errors.push('Please set the end time for the job');
+      }
+      
+      // Validate that end time is after start time
+      if (fromHour && fromMinute && fromAmPm && toHour && toMinute && toAmPm) {
+        const fromTime24 = get24HourTime(fromHour, fromMinute, fromAmPm);
+        const toTime24 = get24HourTime(toHour, toMinute, toAmPm);
+        
+        if (fromTime24 >= toTime24) {
+          errors.push('End time must be after start time');
+        }
+      }
     }
 
     if (errors.length > 0) {
@@ -387,10 +436,10 @@ const formatJobData = (photoUrls = []) => {
     jobData.isFlexible = true;
   }
 
-  if (isExactTime) {
-    jobData.fromTime = get24HourTime(hour, minute, amPm);
-    // If you need toTime, calculate it (e.g., +1 hour)
-    jobData.toTime = get24HourTime(hour, minute, amPm);
+  // Add time fields for non-flexible jobs
+  if (!isFlexible) {
+    jobData.fromTime = get24HourTime(fromHour, fromMinute, fromAmPm);
+    jobData.toTime = get24HourTime(toHour, toMinute, toAmPm);
   }
   
   return jobData;
@@ -420,10 +469,12 @@ const resetAllFields = () => {
   setOnDate(null);
   setBeforeDate(null);
   setIsFlexible(true);
-  setIsExactTime(false);
-  setHour('10');
-  setMinute('30');
-  setAmPm('AM');
+  setFromHour('10');
+  setFromMinute('00');
+  setFromAmPm('AM');
+  setToHour('12');
+  setToMinute('00');
+  setToAmPm('PM');
   setSelectedDate(null);
   
   // Reset budget
@@ -534,6 +585,18 @@ const handlePost = async () => {
     }
   };
 
+  // Format date for display
+  const formatDateForDisplay = (dateString) => {
+    if (!dateString) return 'No date selected';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+  };
+
   // Handle calendar date selection
   const handleDateSelect = (day) => {
     const selectedDateString = day.dateString;
@@ -579,6 +642,29 @@ const handlePost = async () => {
       if (!canBeDoneRemotely && !selectedLocation) {
         Alert.alert('Required', 'Please provide a location for onsite jobs');
         return;
+      }
+    }
+
+    if (currentStep === 3) {
+      // Validate time fields for non-flexible jobs
+      if (!isFlexible) {
+        if (!fromHour || !fromMinute || !fromAmPm) {
+          Alert.alert('Required', 'Please set the start time for the job');
+          return;
+        }
+        if (!toHour || !toMinute || !toAmPm) {
+          Alert.alert('Required', 'Please set the end time for the job');
+          return;
+        }
+        
+        // Validate that end time is after start time
+        const fromTime24 = get24HourTime(fromHour, fromMinute, fromAmPm);
+        const toTime24 = get24HourTime(toHour, toMinute, toAmPm);
+        
+        if (fromTime24 >= toTime24) {
+          Alert.alert('Invalid Time', 'End time must be after start time');
+          return;
+        }
       }
     }
 
@@ -864,7 +950,9 @@ const handlePost = async () => {
             setCalendarVisible(true);
           }}
         >
-          <Text style={styles.timeOptionText}>On Date</Text>
+          <Text style={styles.timeOptionText}>
+            On Date {onDate ? `(${new Date(onDate).toLocaleDateString()})` : ''}
+          </Text>
           <Ionicons name="chevron-down" size={16} color={Colors.black} />
         </TouchableOpacity>
 
@@ -875,7 +963,9 @@ const handlePost = async () => {
             setCalendarVisible(true);
           }}
         >
-          <Text style={styles.timeOptionText}>Before date</Text>
+          <Text style={styles.timeOptionText}>
+            Before date {beforeDate ? `(${new Date(beforeDate).toLocaleDateString()})` : ''}
+          </Text>
           <Ionicons name="chevron-down" size={16} color={Colors.black} />
         </TouchableOpacity>
 
@@ -917,10 +1007,12 @@ const handlePost = async () => {
         </View>
       </Modal>
 
-      {dateMode !== 'flexible' && selectedDate && (
-        <Text style={styles.dateText}>
-          {dateMode === 'onDate' ? 'On Date' : 'Before Date'}: {selectedDate}
-        </Text>
+      {dateMode !== 'flexible' && (
+        <View style={styles.selectedDateContainer}>
+          <Text style={styles.dateText}>
+            {dateMode === 'onDate' ? 'On Date' : 'Before Date'}: {formatDateForDisplay(onDate || beforeDate)}
+          </Text>
+        </View>
       )}
 
       <Text style={styles.sectionTitle}>Mention your time preference</Text>
@@ -987,53 +1079,95 @@ const handlePost = async () => {
         ))}
       </View>
 
-      {/* Exact Time Switch */}
-      <View style={styles.switchContainer}>
-        <Text style={styles.switchLabel}>Set exact time</Text>
-        <CustomSwitch
-          value={isExactTime}
-          onValueChange={setIsExactTime}
-        />
-      </View>
+      {/* Time Range Picker - Required for non-flexible jobs */}
+      {!isFlexible && (
+        <View style={styles.timeRangeContainer}>
+          <Text style={styles.sectionTitle}>Set time range (Required)</Text>
+          
+          {/* From Time */}
+          <View style={styles.timeRangeSection}>
+            <Text style={styles.timeRangeLabel}>From:</Text>
+            <View style={styles.timePickerContainer}>
+              <View style={styles.timePickerColumn}>
+                <TouchableOpacity onPress={incrementFromHour} style={styles.timePickerArrow}>
+                  <Ionicons name="chevron-up" size={24} color={Colors.grey} />
+                </TouchableOpacity>
+                <Text style={styles.timePickerValue}>{String(fromHour).padStart(2, '0')}</Text>
+                <TouchableOpacity onPress={decrementFromHour} style={styles.timePickerArrow}>
+                  <Ionicons name="chevron-down" size={24} color={Colors.grey} />
+                </TouchableOpacity>
+              </View>
 
-      {/* Exact Time Picker */}
-      {isExactTime && (
-        <View style={styles.timePickerContainer}>
-          <View style={styles.timePickerColumn}>
-            <TouchableOpacity onPress={incrementHour} style={styles.timePickerArrow}>
-              <Ionicons name="chevron-up" size={24} color={Colors.grey} />
-            </TouchableOpacity>
-            <Text style={styles.timePickerValue}>{String(hour).padStart(2, '0')}</Text>
-            <TouchableOpacity onPress={decrementHour} style={styles.timePickerArrow}>
-              <Ionicons name="chevron-down" size={24} color={Colors.grey} />
-            </TouchableOpacity>
+              <Text style={styles.timePickerSeparator}>:</Text>
+
+              <View style={styles.timePickerColumn}>
+                <TouchableOpacity onPress={incrementFromMinute} style={styles.timePickerArrow}>
+                  <Ionicons name="chevron-up" size={24} color={Colors.grey} />
+                </TouchableOpacity>
+                <Text style={styles.timePickerValue}>{String(fromMinute).padStart(2, '0')}</Text>
+                <TouchableOpacity onPress={decrementFromMinute} style={styles.timePickerArrow}>
+                  <Ionicons name="chevron-down" size={24} color={Colors.grey} />
+                </TouchableOpacity>
+              </View>
+
+              <View style={styles.amPmContainer}>
+                <TouchableOpacity
+                  style={[styles.amPmButton, fromAmPm === 'AM' && styles.selectedAmPm]}
+                  onPress={() => setFromAmPm('AM')}
+                >
+                  <Text style={fromAmPm === 'AM' ? styles.amPmText2 : styles.amPmText}>AM</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.amPmButton, fromAmPm === 'PM' && styles.selectedAmPm]}
+                  onPress={() => setFromAmPm('PM')}
+                >
+                  <Text style={fromAmPm === 'PM' ? styles.amPmText2 : styles.amPmText}>PM</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
           </View>
 
-          <Text style={styles.timePickerSeparator}>:</Text>
+          {/* To Time */}
+          <View style={styles.timeRangeSection}>
+            <Text style={styles.timeRangeLabel}>To:</Text>
+            <View style={styles.timePickerContainer}>
+              <View style={styles.timePickerColumn}>
+                <TouchableOpacity onPress={incrementToHour} style={styles.timePickerArrow}>
+                  <Ionicons name="chevron-up" size={24} color={Colors.grey} />
+                </TouchableOpacity>
+                <Text style={styles.timePickerValue}>{String(toHour).padStart(2, '0')}</Text>
+                <TouchableOpacity onPress={decrementToHour} style={styles.timePickerArrow}>
+                  <Ionicons name="chevron-down" size={24} color={Colors.grey} />
+                </TouchableOpacity>
+              </View>
 
-          <View style={styles.timePickerColumn}>
-            <TouchableOpacity onPress={incrementMinute} style={styles.timePickerArrow}>
-              <Ionicons name="chevron-up" size={24} color={Colors.grey} />
-            </TouchableOpacity>
-            <Text style={styles.timePickerValue}>{String(minute).padStart(2, '0')}</Text>
-            <TouchableOpacity onPress={decrementMinute} style={styles.timePickerArrow}>
-              <Ionicons name="chevron-down" size={24} color={Colors.grey} />
-            </TouchableOpacity>
-          </View>
+              <Text style={styles.timePickerSeparator}>:</Text>
 
-          <View style={styles.amPmContainer}>
-            <TouchableOpacity
-              style={[styles.amPmButton, amPm === 'AM' && styles.selectedAmPm]}
-              onPress={() => setAmPm('AM')}
-            >
-              <Text style={amPm === 'AM' ? styles.amPmText2 : styles.amPmText}>AM</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.amPmButton, amPm === 'PM' && styles.selectedAmPm]}
-              onPress={() => setAmPm('PM')}
-            >
-              <Text style={amPm === 'PM' ? styles.amPmText2 : styles.amPmText}>PM</Text>
-            </TouchableOpacity>
+              <View style={styles.timePickerColumn}>
+                <TouchableOpacity onPress={incrementToMinute} style={styles.timePickerArrow}>
+                  <Ionicons name="chevron-up" size={24} color={Colors.grey} />
+                </TouchableOpacity>
+                <Text style={styles.timePickerValue}>{String(toMinute).padStart(2, '0')}</Text>
+                <TouchableOpacity onPress={decrementToMinute} style={styles.timePickerArrow}>
+                  <Ionicons name="chevron-down" size={24} color={Colors.grey} />
+                </TouchableOpacity>
+              </View>
+
+              <View style={styles.amPmContainer}>
+                <TouchableOpacity
+                  style={[styles.amPmButton, toAmPm === 'AM' && styles.selectedAmPm]}
+                  onPress={() => setToAmPm('AM')}
+                >
+                  <Text style={toAmPm === 'AM' ? styles.amPmText2 : styles.amPmText}>AM</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.amPmButton, toAmPm === 'PM' && styles.selectedAmPm]}
+                  onPress={() => setToAmPm('PM')}
+                >
+                  <Text style={toAmPm === 'PM' ? styles.amPmText2 : styles.amPmText}>PM</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
           </View>
         </View>
       )}
@@ -1072,18 +1206,24 @@ const handlePost = async () => {
 
     // Get time preference names
     const getFormattedDateTime = () => {
-      if (!selectedDate) return 'Flexible';
-
-      let result = selectedDate;
-      if (isExactTime) {
-        result += ` ${hour}:${String(minute).padStart(2, '0')} ${amPm}`;
-      } else if (selectedTimePreferences) {
-        const timeSlot = timeSlots.find(slot => slot.id === selectedTimePreferences[0]);
-        if (timeSlot) {
-          result += ` (${timeSlot.time})`;
+      if (isFlexible) return 'Flexible';
+      
+      if (selectedDate) {
+        let result = selectedDate;
+        if (!isFlexible && fromHour && toHour) {
+          const fromTime = `${fromHour}:${String(fromMinute).padStart(2, '0')} ${fromAmPm}`;
+          const toTime = `${toHour}:${String(toMinute).padStart(2, '0')} ${toAmPm}`;
+          result += ` ${fromTime} - ${toTime}`;
+        } else if (selectedTimePreferences && selectedTimePreferences.length > 0) {
+          const timeSlot = timeSlots.find(slot => slot.id === selectedTimePreferences[0]);
+          if (timeSlot) {
+            result += ` (${timeSlot.time})`;
+          }
         }
+        return result;
       }
-      return result;
+      
+      return 'Flexible';
     };
     const toggleMenu = () => {
       setShowMenu(!showMenu);

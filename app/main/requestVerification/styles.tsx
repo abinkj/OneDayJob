@@ -1,10 +1,10 @@
 import { StyleSheet } from "react-native";
-import { Colors } from "../../../constants/Colors"; 
+import { Colors } from "../../../constants/Colors";
 import DeviceDimensions from "../../../constants/DeviceDimenions";
 
 const styles = StyleSheet.create({
-  container:{
-    flex:1,
+  container: {
+    flex: 1,
     backgroundColor: Colors.white,
   },
   tabContainer: {
@@ -18,7 +18,7 @@ const styles = StyleSheet.create({
   headerInfo: {
     flexDirection: "row",
     justifyContent: "flex-end",
-    alignItems:'center'
+    alignItems: "center",
   },
   headerTitle: {
     alignItems: "center",
@@ -27,8 +27,8 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.addressGrey,
     borderBottomWidth: 1,
     borderBottomColor: "#E5E5E5",
-    borderRadius:20,
-    marginTop:3
+    borderRadius: 20,
+    marginTop: 3,
   },
   requestCount: {
     fontSize: 12,
@@ -40,7 +40,7 @@ const styles = StyleSheet.create({
     color: "#666",
     fontWeight: "500",
   },
-  
+
   // Filter Section Styles
   filterSection: {
     flexDirection: "row",
@@ -48,14 +48,102 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
   },
+  // Add these styles to your existing styles object
+
+  acceptedCard: {
+    backgroundColor: "#f8f9fa",
+    borderRadius: 12,
+    padding: 16,
+    marginVertical: 8,
+    marginHorizontal: 16,
+    borderLeftWidth: 4,
+    borderLeftColor: "#28a745",
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+
+  acceptedHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+    marginBottom: 12,
+  },
+
+  acceptedUserInfo: {
+    flex: 1,
+    marginLeft: 12,
+  },
+
+  acceptedUserName: {
+    fontSize: 18,
+    fontWeight: "600",
+    color: "#333",
+    marginBottom: 4,
+  },
+
+  acceptedRate: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#28a745",
+  },
+
+  acceptedDate: {
+    fontSize: 12,
+    color: "#6c757d",
+    marginTop: 4,
+  },
+
+  contactInfo: {
+    backgroundColor: "white",
+    borderRadius: 8,
+    padding: 12,
+    marginVertical: 8,
+  },
+
+  contactRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 4,
+  },
+
+  contactLabel: {
+    fontSize: 14,
+    fontWeight: "500",
+    color: "#6c757d",
+    width: 60,
+  },
+
+  phoneNumber: {
+    fontSize: 14,
+    color: "#007bff",
+    textDecorationLine: "underline",
+  },
+
+  emailText: {
+    fontSize: 14,
+    color: "#333",
+  },
+
+  acceptedDescription: {
+    fontSize: 14,
+    color: "#6c757d",
+    fontStyle: "italic",
+    marginTop: 8,
+  },
   filterButton: {
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 20,
     backgroundColor: "#F5F5F5",
     marginRight: 8,
-    borderWidth:1,
-    borderColor:Colors.black,
+    borderWidth: 1,
+    borderColor: Colors.black,
   },
   activeFilterButton: {
     backgroundColor: "#000",
@@ -82,7 +170,7 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     color: "#666",
   },
-  
+
   // Menu Options Styles
   menuOptions: {
     position: "absolute",
@@ -111,7 +199,7 @@ const styles = StyleSheet.create({
     fontWeight: "500",
     color: "#000",
   },
-  
+
   // Selection Info Styles
   selectionInfo: {
     paddingHorizontal: 16,
@@ -123,7 +211,7 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: "#000",
   },
-  
+
   // Request Card Styles
   requestCard: {
     backgroundColor: Colors.white,
@@ -189,12 +277,12 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: "#000",
   },
-  row:{
-    flexDirection: 'row',
+  row: {
+    flexDirection: "row",
   },
-  available:{
+  available: {
     fontSize: 12,
-    color:Colors.grey,
+    color: Colors.grey,
   },
   requestDescription: {
     fontSize: 14,
@@ -215,7 +303,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#666",
   },
-  
+
   // Checkbox Styles
   checkboxContainer: {
     position: "absolute",
@@ -235,7 +323,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "bold",
   },
-  
+
   // Bottom Actions Styles
   bottomActions: {
     position: "absolute",
@@ -250,7 +338,7 @@ const styles = StyleSheet.create({
     borderTopColor: "#E5E5E5",
     gap: 12,
   },
-  
+
   // Action Button Styles
   rejectButton: {
     flex: 1,
@@ -278,7 +366,7 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: "#FFF",
   },
-  
+
   // Verification Card Styles
   verificationCard: {
     backgroundColor: Colors.white,
@@ -325,7 +413,7 @@ const styles = StyleSheet.create({
   verificationPhone: {
     fontSize: 15,
     color: Colors.grey,
-    fontFamily:'medium'
+    fontFamily: "medium",
   },
   statusBadge: {
     backgroundColor: "#F0F0F0",
@@ -345,12 +433,12 @@ const styles = StyleSheet.create({
   verifiedBadgeText: {
     color: "#FFF",
   },
-  
+
   // Verification Code Section
   verificationCodeSection: {
     backgroundColor: Colors.white,
     paddingHorizontal: 16,
-    paddingVertical:8,
+    paddingVertical: 8,
     marginHorizontal: 16,
     borderRadius: 12,
     shadowColor: Colors.black,
@@ -379,7 +467,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   verifyButton: {
-    backgroundColor:Colors.grey,
+    backgroundColor: Colors.grey,
     borderRadius: 8,
     paddingVertical: 14,
     alignItems: "center",
@@ -402,7 +490,7 @@ const styles = StyleSheet.create({
     color: "#666",
     textDecorationLine: "underline",
   },
-  
+
   // Tab Bar Styles
   tabbar: {
     flexDirection: "row",
@@ -436,6 +524,125 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.whiteBack || "#000",
     borderBottomEndRadius: 10,
     borderBottomStartRadius: 10,
+  },
+
+  // New styles for enhanced functionality
+  cardContent: {
+    flex: 1,
+  },
+  actionButtonsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: '#F0F0F0',
+    marginTop: 12,
+  },
+  statusContainer: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: '#F0F0F0',
+    marginTop: 12,
+  },
+  selectedAcceptedCard: {
+    borderWidth: 2,
+    borderColor: Colors.primary || '#000',
+  },
+  acceptedRightSection: {
+    alignItems: 'flex-end',
+  },
+  verifiedBadge: {
+    backgroundColor: '#4CAF50',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    marginTop: 4,
+  },
+  verifiedBadgeText: {
+    color: '#FFF',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  verificationStatus: {
+    position: 'absolute',
+    top: 50,
+    left: 16,
+    right: 16,
+    backgroundColor: '#F0F0F0',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    alignItems: 'center',
+  },
+  verificationStatusText: {
+    fontSize: 12,
+    fontWeight: '500',
+    color: '#666',
+  },
+
+  // New Accepted Card Styles (Reference Design)
+  acceptedCardNew: {
+    backgroundColor: '#FFF',
+    borderRadius: 12,
+    padding: 16,
+    marginVertical: 6,
+    marginHorizontal: 16,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  acceptedCardContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  acceptedProfileImage: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: '#E5E5E5',
+    marginRight: 12,
+  },
+  acceptedUserInfoNew: {
+    flex: 1,
+  },
+  acceptedUserNameNew: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 8,
+  },
+  phoneContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  phoneIconContainer: {
+    marginRight: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  phoneNumberNew: {
+    fontSize: 14,
+    color: '#333',
+    fontWeight: '500',
+  },
+  verifiedBadgeNew: {
+    backgroundColor: '#4CAF50',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    marginLeft: 8,
+  },
+  verifiedBadgeTextNew: {
+    color: '#FFF',
+    fontSize: 12,
+    fontWeight: '600',
   },
 });
 

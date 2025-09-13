@@ -126,6 +126,8 @@ export interface JobPost {
   requirements: string[];
   status: string;
   timePreference: string[];
+  fromTime?: string; // HH:MM format for non-flexible jobs
+  toTime?: string; // HH:MM format for non-flexible jobs
   updatedAt: string;
   userId: JobUser;
 }
@@ -145,5 +147,7 @@ export interface JobCardData {
   isFlexible: boolean;
   requirements: string[];
   timePreference: string[];
+  fromTime?: string; // HH:MM format for non-flexible jobs
+  toTime?: string; // HH:MM format for non-flexible jobs
   userId: JobUser;
 } 

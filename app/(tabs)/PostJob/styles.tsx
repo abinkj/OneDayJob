@@ -240,10 +240,26 @@ const styles = StyleSheet.create({
     color: Colors.grey,
   },
   dateText: {
-    fontSize: 12,
-    fontFamily: 'regular',
-    color: Colors.grey,
+    fontSize: 14,
+    fontFamily: 'medium',
+    color: Colors.black,
     marginBottom: 8,
+  },
+  selectedDateContainer: {
+    backgroundColor: Colors.white,
+    borderRadius: 8,
+    padding: 12,
+    marginVertical: 8,
+    borderWidth: 1,
+    borderColor: Colors.primary || '#000',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
   },
   timeOptionContainer: {
     flexDirection: 'row',
@@ -268,7 +284,8 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontFamily: 'regular',
     color: Colors.black,
-
+    flex: 1,
+    textAlign: 'center',
   },
   timeSlotGrid: {
     flexDirection: 'row',
@@ -789,6 +806,19 @@ const styles = StyleSheet.create({
   nameContainer1: {
     flex: 1,
     justifyContent: 'space-between'
+  },
+  timeRangeContainer: {
+    marginTop: 20 * DeviceDimensions.heightRatio,
+    marginBottom: 20 * DeviceDimensions.heightRatio,
+  },
+  timeRangeSection: {
+    marginBottom: 20 * DeviceDimensions.heightRatio,
+  },
+  timeRangeLabel: {
+    fontSize: 16,
+    fontFamily: 'medium',
+    color: Colors.black,
+    marginBottom: 8 * DeviceDimensions.heightRatio,
   },
 
 }); 

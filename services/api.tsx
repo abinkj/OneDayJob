@@ -8,7 +8,7 @@ import {
 } from "../utilities/secureStore";
 import { normalizeUser } from "../utilities/asyncStore";
 
-const API_BASE_URL = "http://192.168.1.5:8000/api"; //AJ ip address
+const API_BASE_URL = "http://192.168.33.252:8000/api"; //AJ ip address
 //const API_BASE_URL = 'http://192.168.1.5:8000/api';
 
 const api = axios.create({
@@ -482,10 +482,19 @@ export const applyJob = async (jobId: string) => {
 
 export const selectApplicants = async (
   jobId: string,
-  selectedUserIds: string[]
+  selectedApplicationIds: string[] // Changed from selectedUserIds
 ) => {
   const res = await api.post(`/jobs/${jobId}/select-applicants`, {
-    selectedUserIds,
+    selectedApplicationIds, // Changed from selectedUserIds
+  });
+  return res.data;
+};
+
+// api/jobs.ts
+export const rejectApplicants = async (jobId: string, applicants: string[]) => {
+  console.log("Rejecting applicants for job ID:", jobId, applicants);
+  const res = await api.post(`applications/jobs/${jobId}/reject`, {
+    applicants, // backend expects this in body
   });
   return res.data;
 };
