@@ -463,10 +463,25 @@ const HomeScreen = () => {
   }, [selectedCategory, selectedPriceSort, selectedDistance, searchQuery, isInitialized]);
 
   const renderJobCard = ({ item }: { item: JobPost & { distance?: number | null } }) => {
+    const isInProgress = item.jobStatus?.toLowerCase() === 'in_progress' || 
+                        item.status?.toLowerCase() === 'in_progress';
+    
+    const handleJobPress = () => {
+      if (isInProgress) {
+        navigation.navigate("JobTimer", { 
+          jobId: item._id, 
+          jobName: item.name,
+          isEmployer: false 
+        });
+      } else {
+        navigation.navigate("JobDetails", { jobId: item._id, jobData: item });
+      }
+    };
+
     return (
       <TouchableOpacity
         style={styles.jobCard}
-        onPress={() => navigation.navigate("JobDetails", { jobId: item._id, jobData: item })}
+        onPress={handleJobPress}
       >
         <View style={styles.jobCardHeader}>
           <View style={styles.categoryContainer}>
@@ -486,8 +501,16 @@ const HomeScreen = () => {
 
         <View style={styles.titleContainer}>
           <Text style={styles.jobTitle}>{item.description}</Text>
-          <View style={styles.statusContainer}>
-            <Text style={styles.statusText}>{item.status || "Active"}</Text>
+          <View style={[
+            styles.statusContainer,
+            isInProgress && { backgroundColor: '#FF9800' }
+          ]}>
+            <Text style={[
+              styles.statusText,
+              isInProgress && { color: '#fff' }
+            ]}>
+              {isInProgress ? "In Progress" : (item.status || "Active")}
+            </Text>
           </View>
         </View>
 

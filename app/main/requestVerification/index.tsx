@@ -33,6 +33,8 @@ import {
   scheduleVerification,
   syncAcceptedApplications,
   forceGenerateVerificationCodes,
+  initiateJobExecution,
+  getJobDashboard,
 } from "../../../services/api";
 import Toast from "react-native-toast-message";
 
@@ -580,6 +582,8 @@ const RequestsVerifyTab = ({ jobId, onCountUpdate }) => {
   const [verifying, setVerifying] = useState(false);
   const [verificationStatus, setVerificationStatus] = useState<any>(null);
   const [scheduling, setScheduling] = useState(false);
+  const [jobInitiated, setJobInitiated] = useState(false);
+  const [initiatingJob, setInitiatingJob] = useState(false);
 
   const fetchAcceptedUsers = useCallback(async () => {
     try {
@@ -792,6 +796,25 @@ const RequestsVerifyTab = ({ jobId, onCountUpdate }) => {
         }
       }
       
+      // For immediate code generation, try force generation first
+      console.log("🔄 Attempting immediate code generation...");
+      try {
+        const forceResponse = await forceGenerateVerificationCodes(jobId);
+        if (forceResponse.data.success) {
+          Toast.show({
+            type: "success",
+            text1: "Codes Generated!",
+            text2: "Verification codes have been generated and sent to your phone.",
+          });
+          
+          // Refresh the data to show updated status
+          await fetchAcceptedUsers();
+          return; // Exit early on success
+        }
+      } catch (forceError) {
+        console.log("⚠️ Force generation failed, trying normal scheduling:", forceError.message);
+      }
+      
       const response = await scheduleVerification(jobId);
       
       if (response.data.success) {
@@ -824,7 +847,29 @@ const RequestsVerifyTab = ({ jobId, onCountUpdate }) => {
         // Check if it's a scheduling issue (job is today or in the past)
         if (error.response?.data?.message?.includes("schedule") || 
             error.response?.data?.message?.includes("time") ||
-            error.response?.data?.message?.includes("date")) {
+            error.response?.data?.message?.includes("date") ||
+            error.response?.data?.message?.includes("already passed")) {
+          
+          console.log("⚠️ Normal scheduling failed due to time issues, trying force generation...");
+          
+          // Automatically try force generation as fallback
+          try {
+            const forceResponse = await forceGenerateVerificationCodes(jobId);
+            if (forceResponse.data.success) {
+              Toast.show({
+                type: "success",
+                text1: "Codes Generated!",
+                text2: "Verification codes have been generated and sent to your phone.",
+              });
+              
+              // Refresh the data to show updated status
+              await fetchAcceptedUsers();
+              return; // Exit early on success
+            }
+          } catch (forceError) {
+            console.error("❌ Force generation also failed:", forceError);
+          }
+          
           errorMessage = "Cannot schedule verification for jobs today. Use 'Generate Codes Now (Test)' for immediate testing.";
         } else {
           errorMessage = "Cannot schedule verification at this time.";
@@ -921,6 +966,52 @@ const RequestsVerifyTab = ({ jobId, onCountUpdate }) => {
     }
   };
 
+  const handleStartJob = async () => {
+    try {
+      setInitiatingJob(true);
+      
+      console.log("Starting job execution for job:", jobId);
+      
+      const response = await initiateJobExecution(jobId);
+      
+      if (response.data.success) {
+        setJobInitiated(true);
+        
+        Toast.show({
+          type: "success",
+          text1: "Job Started!",
+          text2: `Job execution initiated. ${response.data.data.workersNotified} workers have been notified.`,
+        });
+        
+        // Refresh the verification status to show updated state
+        await fetchAcceptedUsers();
+        
+      } else {
+        throw new Error(response.data.message || "Failed to start job");
+      }
+      
+    } catch (error) {
+      console.error("Error starting job:", error);
+      
+      let errorMessage = "Failed to start job. Please try again.";
+      if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.response?.status === 404) {
+        errorMessage = "Job not found.";
+      } else if (error.response?.status === 400) {
+        errorMessage = "Cannot start job at this time. Check if all workers are verified.";
+      }
+      
+      Toast.show({
+        type: "error",
+        text1: "Start Job Error",
+        text2: errorMessage,
+      });
+    } finally {
+      setInitiatingJob(false);
+    }
+  };
+
   const renderAcceptedUser = ({ item }) => (
     <AcceptedUserCard 
       data={item} 
@@ -992,6 +1083,46 @@ const RequestsVerifyTab = ({ jobId, onCountUpdate }) => {
                   )}
                 </TouchableOpacity>
               )}
+            </View>
+          )}
+          
+          {/* Start Job Button */}
+          {verificationStatus && 
+           verificationStatus.verifiedCount > 0 && 
+           verificationStatus.verifiedCount === verificationStatus.totalParticipants && 
+           !jobInitiated && (
+            <View style={styles.startJobContainer}>
+              <TouchableOpacity
+                style={[styles.startJobButton, initiatingJob && styles.startJobButtonDisabled]}
+                onPress={handleStartJob}
+                disabled={initiatingJob}
+              >
+                {initiatingJob ? (
+                  <ActivityIndicator size="small" color="#fff" />
+                ) : (
+                  <>
+                    <Ionicons name="play-circle" size={24} color="#fff" style={{ marginRight: 8 }} />
+                    <Text style={styles.startJobButtonText}>Start Job</Text>
+                  </>
+                )}
+              </TouchableOpacity>
+              <Text style={styles.startJobDescription}>
+                All workers have been verified. Click to start the job and begin time tracking.
+              </Text>
+            </View>
+          )}
+          
+          {/* Job Started Status */}
+          {jobInitiated && (
+            <View style={styles.jobStartedContainer}>
+              <View style={styles.jobStartedHeader}>
+                <Ionicons name="checkmark-circle" size={24} color="#4CAF50" />
+                <Text style={styles.jobStartedTitle}>Job Started Successfully!</Text>
+              </View>
+              <Text style={styles.jobStartedDescription}>
+                Workers have been notified and can now start their work sessions. 
+                You can monitor their progress in the dashboard.
+              </Text>
             </View>
           )}
           

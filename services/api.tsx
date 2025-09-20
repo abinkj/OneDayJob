@@ -791,8 +791,10 @@ export const forceGenerateVerificationCodes = async (jobId: string) => {
   try {
     console.log("Force generating verification codes for job:", jobId);
     
-    // Call the verification scheduler service directly to process immediately
-    const response = await api.post(`/verification/process`);
+    // Use the resend codes endpoint which generates codes immediately
+    const response = await api.post(`/jobs/${jobId}/resend-codes`, {
+      reason: "Force generation for immediate testing"
+    });
     
     console.log("Force generate codes response:", response.data);
     return response;
@@ -836,6 +838,202 @@ export const syncAcceptedApplications = async (jobId: string, applicationIds: st
     console.error("Error syncing applications:", error);
     throw error;
   }
+};
+
+// ============================================================================
+// JOB TIMER API FUNCTIONS
+// ============================================================================
+
+/**
+ * Initiate job execution (Employer)
+ * POST /api/job-timer/jobs/:jobId/initiate
+ */
+export const initiateJobExecution = async (jobId: string) => {
+  try {
+    console.log("Initiating job execution for job:", jobId);
+    
+    const response = await api.post(`/job-timer/jobs/${jobId}/initiate`);
+    
+    console.log("Job execution initiated:", response.data);
+    return response;
+  } catch (error) {
+    console.error("Error initiating job execution:", error);
+    throw error;
+  }
+};
+
+/**
+ * Get employer dashboard data
+ * GET /api/job-timer/jobs/:jobId/dashboard
+ */
+export const getJobDashboard = async (jobId: string, refresh = false) => {
+  try {
+    console.log("Getting dashboard for job:", jobId, "Refresh:", refresh);
+    
+    const url = `/job-timer/jobs/${jobId}/dashboard?refresh=${refresh}`;
+    const response = await api.get(url);
+    
+    console.log("Dashboard data retrieved:", response.data);
+    return response;
+  } catch (error) {
+    console.error("Error getting dashboard:", error);
+    throw error;
+  }
+};
+
+/**
+ * Start worker session
+ * POST /api/job-timer/jobs/:jobId/sessions/start
+ */
+export const startWorkerSession = async (jobId: string) => {
+  try {
+    console.log("Starting worker session for job:", jobId);
+    
+    const response = await api.post(`/job-timer/jobs/${jobId}/sessions/start`);
+    
+    console.log("Worker session started:", response.data);
+    return response;
+  } catch (error) {
+    console.error("Error starting worker session:", error);
+    throw error;
+  }
+};
+
+/**
+ * Get worker session details
+ * GET /api/job-timer/jobs/:jobId/sessions/worker
+ */
+export const getWorkerSession = async (jobId: string, includeHistory = false) => {
+  try {
+    console.log("Getting worker session for job:", jobId, "Include history:", includeHistory);
+    
+    const url = `/job-timer/jobs/${jobId}/sessions/worker?includeHistory=${includeHistory}`;
+    const response = await api.get(url);
+    
+    console.log("Worker session data retrieved:", response.data);
+    return response;
+  } catch (error) {
+    console.error("Error getting worker session:", error);
+    throw error;
+  }
+};
+
+/**
+ * Pause worker session
+ * PUT /api/job-timer/sessions/:sessionId/pause
+ */
+export const pauseWorkerSession = async (sessionId: string) => {
+  try {
+    console.log("Pausing worker session:", sessionId);
+    
+    const response = await api.put(`/job-timer/sessions/${sessionId}/pause`);
+    
+    console.log("Worker session paused:", response.data);
+    return response;
+  } catch (error) {
+    console.error("Error pausing worker session:", error);
+    throw error;
+  }
+};
+
+/**
+ * Resume worker session
+ * PUT /api/job-timer/sessions/:sessionId/resume
+ */
+export const resumeWorkerSession = async (sessionId: string) => {
+  try {
+    console.log("Resuming worker session:", sessionId);
+    
+    const response = await api.put(`/job-timer/sessions/${sessionId}/resume`);
+    
+    console.log("Worker session resumed:", response.data);
+    return response;
+  } catch (error) {
+    console.error("Error resuming worker session:", error);
+    throw error;
+  }
+};
+
+/**
+ * Complete worker session
+ * PUT /api/job-timer/sessions/:sessionId/complete
+ */
+export const completeWorkerSession = async (sessionId: string, notes = '') => {
+  try {
+    console.log("Completing worker session:", sessionId, "Notes:", notes);
+    
+    const response = await api.put(`/job-timer/sessions/${sessionId}/complete`, {
+      notes
+    });
+    
+    console.log("Worker session completed:", response.data);
+    return response;
+  } catch (error) {
+    console.error("Error completing worker session:", error);
+    throw error;
+  }
+};
+
+/**
+ * Sync time for worker session
+ * PUT /api/job-timer/sessions/:sessionId/sync
+ */
+export const syncWorkerTime = async (sessionId: string, additionalSeconds: number, currentStatus: string, heartbeat = false) => {
+  try {
+    console.log("Syncing worker time:", sessionId, "Additional seconds:", additionalSeconds, "Status:", currentStatus);
+    
+    const response = await api.put(`/job-timer/sessions/${sessionId}/sync`, {
+      additionalSeconds,
+      currentStatus,
+      heartbeat
+    });
+    
+    console.log("Worker time synced:", response.data);
+    return response;
+  } catch (error) {
+    console.error("Error syncing worker time:", error);
+    throw error;
+  }
+};
+
+// ============================================================================
+// TIME FORMAT UTILITIES
+// ============================================================================
+
+/**
+ * Convert seconds to readable format (HH:MM:SS or MM:SS)
+ */
+export const formatTime = (seconds: number): string => {
+  const hours = Math.floor(seconds / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+  const secs = seconds % 60;
+  
+  if (hours > 0) {
+    return `${hours}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  }
+  return `${minutes}:${secs.toString().padStart(2, '0')}`;
+};
+
+/**
+ * Convert seconds to hours and minutes
+ */
+export const formatDuration = (seconds: number): string => {
+  const hours = Math.floor(seconds / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+  
+  if (hours > 0) {
+    return `${hours}h ${minutes}m`;
+  }
+  return `${minutes}m`;
+};
+
+/**
+ * Calculate completion percentage
+ */
+export const calculateCompletion = (workedSeconds: number, targetHours: number): number => {
+  if (!targetHours) return 0;
+  const targetSeconds = targetHours * 3600;
+  return Math.min((workedSeconds / targetSeconds) * 100, 100);
 };
 
 export default api;

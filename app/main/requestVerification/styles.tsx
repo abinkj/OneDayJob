@@ -717,6 +717,68 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "600",
   },
+
+  // Start Job Button Styles
+  startJobContainer: {
+    backgroundColor: "#E8F5E8",
+    padding: 16,
+    borderRadius: 12,
+    marginTop: 16,
+    marginHorizontal: 16,
+    borderWidth: 1,
+    borderColor: "#4CAF50",
+  },
+  startJobButton: {
+    backgroundColor: "#4CAF50",
+    paddingVertical: 16,
+    paddingHorizontal: 24,
+    borderRadius: 12,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 12,
+  },
+  startJobButtonDisabled: {
+    backgroundColor: "#A5D6A7",
+  },
+  startJobButtonText: {
+    color: "#fff",
+    fontSize: 18,
+    fontWeight: "700",
+  },
+  startJobDescription: {
+    fontSize: 14,
+    color: "#2E7D32",
+    textAlign: "center",
+    lineHeight: 20,
+  },
+
+  // Job Started Status Styles
+  jobStartedContainer: {
+    backgroundColor: "#E8F5E8",
+    padding: 16,
+    borderRadius: 12,
+    marginTop: 16,
+    marginHorizontal: 16,
+    borderWidth: 1,
+    borderColor: "#4CAF50",
+  },
+  jobStartedHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 8,
+  },
+  jobStartedTitle: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#2E7D32",
+    marginLeft: 8,
+  },
+  jobStartedDescription: {
+    fontSize: 14,
+    color: "#2E7D32",
+    lineHeight: 20,
+  },
 });
 
 export default styles;

@@ -381,26 +381,32 @@ const checkAuthStatus = async () => {
   const currentDate = new Date();
 
 
-// Helper function to combine date and time properly
-const combineDateAndTime = (dateString, hour, minute, amPm) => {
-  // Parse the date string (format: "2025-09-20")
+// Helper function to combine date and time properly (IST → UTC)
+const combineDateAndTime = (dateString: string, hour: string, minute: string, amPm: "AM" | "PM") => {
+  // Parse the date string (format: "YYYY-MM-DD")
   const [year, month, day] = dateString.split('-').map(Number);
-  
+
   // Convert time to 24-hour format
-  let hour24 = parseInt(hour);
-  if (amPm === 'PM' && hour24 !== 12) {
+  let hour24 = parseInt(hour, 10);
+  if (amPm === "PM" && hour24 !== 12) {
     hour24 += 12;
-  } else if (amPm === 'AM' && hour24 === 12) {
+  } else if (amPm === "AM" && hour24 === 12) {
     hour24 = 0;
   }
-  
-  // Create a new Date object with the combined date and time
-  const combinedDate = new Date(year, month - 1, day, hour24, parseInt(minute), 0, 0);
-  
-  console.log(`Combining date ${dateString} with time ${hour}:${minute} ${amPm} = ${combinedDate.toISOString()}`);
-  
-  return combinedDate;
+
+  // Create date in local timezone (IST)
+  const localDate = new Date(year, month - 1, day, hour24, parseInt(minute, 10), 0, 0);
+
+  // Convert automatically to UTC string
+  const utcString = localDate.toISOString();
+
+  console.log(`🕐 Input: ${dateString} ${hour}:${minute} ${amPm} (IST assumed)`);
+  console.log(`   Local time (IST): ${localDate.toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })}`);
+  console.log(`   UTC time: ${utcString}`);
+
+  return utcString;
 };
+
 
 // Fixed formatJobData function
 const formatJobData = (photoUrls = []) => {

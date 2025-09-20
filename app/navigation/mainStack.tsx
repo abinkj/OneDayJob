@@ -4,6 +4,7 @@ import EditProfile from "@/main/editProfile";
 import Notification from "@/main/notification";
 import RequestVerification from "@/main/requestVerification";
 import JobDetails from "@/main/jobDetails";
+import JobTimer from "@/main/jobTimer";
 
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import RequestProfile from "@/main/requestProfile";
@@ -30,6 +31,7 @@ const MainStack = () => {
       <Stack.Screen name="Notification" component={Notification} />
       <Stack.Screen name="EditProfile" component={EditProfile} />
       <Stack.Screen name="JobDetails" component={JobDetails} />
+      <Stack.Screen name="JobTimer" component={JobTimer} />
       {/* <Stack.Screen name="RequestDetails" component={RequestDetails} /> */}
     </Stack.Navigator>
   );

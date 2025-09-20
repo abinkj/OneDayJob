@@ -33,6 +33,7 @@ const JobCard = ({
   } = data || {};
 
   const isApplied = status?.toLowerCase() === "applied";
+  const isInProgress = status?.toLowerCase() === "in_progress" || status?.toLowerCase() === "in progress";
 
   const formattedLocation = location?.address
     ? `${location.address}${location.city ? ", " + location.city : ""}${
@@ -69,15 +70,17 @@ const JobCard = ({
           style={[
             styles.statusTag,
             isApplied && { backgroundColor: "#28a745" }, // green background if applied
+            isInProgress && { backgroundColor: "#FF9800" }, // orange background if in progress
           ]}
         >
           <Text
             style={[
               styles.statusText,
               isApplied && { color: "#fff" }, // white text if applied
+              isInProgress && { color: "#fff" }, // white text if in progress
             ]}
           >
-            {isApplied ? "Applied" : status}
+            {isApplied ? "Applied" : isInProgress ? "In Progress" : status}
           </Text>
         </View>
       </View>
@@ -177,6 +180,8 @@ const JobCard = ({
           <TouchableOpacity style={styles.button} onPress={() => onPress()}>
             {withdraw ? (
               <Text style={styles.buttonText}>View Details</Text>
+            ) : isInProgress ? (
+              <Text style={styles.buttonText}>Start Timer</Text>
             ) : (
               <Text style={styles.buttonText}>View Requests</Text>
             )}
