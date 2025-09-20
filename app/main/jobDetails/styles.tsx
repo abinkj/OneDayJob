@@ -347,6 +347,48 @@ const styles = StyleSheet.create({
     flex: 1,
     lineHeight: 20,
   },
+  verificationCodeContainer: {
+    backgroundColor: "#E3F2FD",
+    padding: 16,
+    borderRadius: 12,
+    marginTop: 12,
+    borderWidth: 1,
+    borderColor: "#2196F3",
+  },
+  verificationCodeLabel: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#1976D2",
+    marginBottom: 8,
+  },
+  verificationCodeBox: {
+    backgroundColor: "#fff",
+    padding: 16,
+    borderRadius: 8,
+    borderWidth: 2,
+    borderColor: "#2196F3",
+    alignItems: "center",
+    marginBottom: 12,
+  },
+  verificationCodeText: {
+    fontSize: 32,
+    fontWeight: "bold",
+    color: "#1976D2",
+    letterSpacing: 4,
+  },
+  verificationCodeInstructions: {
+    fontSize: 14,
+    color: "#1976D2",
+    textAlign: "center",
+    marginBottom: 8,
+    lineHeight: 20,
+  },
+  verificationCodeExpiry: {
+    fontSize: 12,
+    color: "#666",
+    textAlign: "center",
+    fontStyle: "italic",
+  },
 });
 
 export default styles;

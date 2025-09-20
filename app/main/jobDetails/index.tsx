@@ -349,6 +349,24 @@ const JobDetails = () => {
                   </View>
                 </View>
                 
+                {/* Verification Code Display */}
+                {verificationStatus.verificationCode && !verificationStatus.isVerified && (
+                  <View style={styles.verificationCodeContainer}>
+                    <Text style={styles.verificationCodeLabel}>Your Verification Code:</Text>
+                    <View style={styles.verificationCodeBox}>
+                      <Text style={styles.verificationCodeText}>{verificationStatus.verificationCode}</Text>
+                    </View>
+                    <Text style={styles.verificationCodeInstructions}>
+                      📱 Show this code to your employer when you arrive at the job location
+                    </Text>
+                    {verificationStatus.expiresAt && (
+                      <Text style={styles.verificationCodeExpiry}>
+                        ⏰ Code expires: {new Date(verificationStatus.expiresAt).toLocaleString()}
+                      </Text>
+                    )}
+                  </View>
+                )}
+                
                 {verificationStatus.isVerified && (
                   <View style={styles.verificationSuccessContainer}>
                     <Text style={styles.verificationSuccessText}>
