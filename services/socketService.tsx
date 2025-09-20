@@ -3,7 +3,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getAccessToken } from '../utilities/secureStore';
 
 // Socket.IO configuration
-const SOCKET_URL = 'http://192.168.0.107:8000'; // Same as your API base URL
+const SOCKET_URL = 'http://192.168.1.9:8000'; // Same as your API base URL
 let socket: Socket | null = null;
 
 // Socket event types

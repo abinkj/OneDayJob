@@ -32,6 +32,7 @@ import {
   resendVerificationCodes,
   scheduleVerification,
   syncAcceptedApplications,
+  forceGenerateVerificationCodes,
 } from "../../../services/api";
 import Toast from "react-native-toast-message";
 
@@ -657,10 +658,19 @@ const RequestsVerifyTab = ({ jobId, onCountUpdate }) => {
     try {
       setVerifying(true);
       
+      console.log("🔍 Testing verification for:", {
+        jobId,
+        employeeId: selectedUser.user.id,
+        employeeName: selectedUser.user.name,
+        verificationCode: code
+      });
+      
       // Call the actual verification API
       const response = await verifyEmployee(jobId, selectedUser.user.id, code);
       
       if (response.data.success) {
+        console.log("✅ Verification successful:", response.data);
+        
         Toast.show({
           type: "success",
           text1: "Verification Successful",
@@ -673,6 +683,7 @@ const RequestsVerifyTab = ({ jobId, onCountUpdate }) => {
         setSelectedUser(null);
         setVerificationCode('');
       } else {
+        console.log("❌ Verification failed:", response.data);
         Toast.show({
           type: "error",
           text1: "Verification Failed",
@@ -680,7 +691,7 @@ const RequestsVerifyTab = ({ jobId, onCountUpdate }) => {
         });
       }
     } catch (error) {
-      console.error("Error verifying code:", error);
+      console.error("❌ Error verifying code:", error);
       
       // Handle specific error cases
       let errorMessage = "Invalid verification code. Please try again.";
@@ -810,12 +821,19 @@ const RequestsVerifyTab = ({ jobId, onCountUpdate }) => {
       } else if (error.response?.status === 404) {
         errorMessage = "Job not found.";
       } else if (error.response?.status === 400) {
-        errorMessage = "Cannot schedule verification at this time.";
+        // Check if it's a scheduling issue (job is today or in the past)
+        if (error.response?.data?.message?.includes("schedule") || 
+            error.response?.data?.message?.includes("time") ||
+            error.response?.data?.message?.includes("date")) {
+          errorMessage = "Cannot schedule verification for jobs today. Use 'Generate Codes Now (Test)' for immediate testing.";
+        } else {
+          errorMessage = "Cannot schedule verification at this time.";
+        }
       }
       
       Toast.show({
         type: "error",
-        text1: "Error",
+        text1: "Scheduling Error",
         text2: errorMessage,
       });
     } finally {
@@ -827,31 +845,70 @@ const RequestsVerifyTab = ({ jobId, onCountUpdate }) => {
     try {
       setScheduling(true);
       
-      // Force trigger the verification scheduler to process immediately
-      const response = await scheduleVerification(jobId);
+      console.log("🔄 Attempting manual code generation...");
       
-      if (response.data.success) {
-        Toast.show({
-          type: "success",
-          text1: "Codes Generated",
-          text2: "Verification codes have been generated and sent to your phone.",
-        });
+      // First try the normal scheduling approach
+      try {
+        const response = await scheduleVerification(jobId);
         
-        // Refresh the data to show updated status
-        await fetchAcceptedUsers();
-      } else {
-        Toast.show({
-          type: "error",
-          text1: "Generation Failed",
-          text2: response.data.message || "Failed to generate codes. Please try again.",
-        });
+        if (response.data.success) {
+          console.log("✅ Manual code generation successful:", response.data);
+          
+          Toast.show({
+            type: "success",
+            text1: "Codes Generated",
+            text2: "Verification codes have been generated and sent to your phone.",
+          });
+          
+          // Wait a moment for codes to be processed, then refresh
+          setTimeout(async () => {
+            await fetchAcceptedUsers();
+          }, 2000);
+          return;
+        }
+      } catch (scheduleError) {
+        console.log("⚠️ Normal scheduling failed, trying force generation:", scheduleError.response?.data);
+        
+        // If normal scheduling fails (e.g., job is today), try force generation
+        try {
+          const forceResponse = await forceGenerateVerificationCodes(jobId);
+          
+          if (forceResponse.data.success) {
+            console.log("✅ Force code generation successful:", forceResponse.data);
+            
+            Toast.show({
+              type: "success",
+              text1: "Codes Generated (Force)",
+              text2: "Verification codes have been generated immediately for testing.",
+            });
+            
+            // Wait a moment for codes to be processed, then refresh
+            setTimeout(async () => {
+              await fetchAcceptedUsers();
+            }, 2000);
+            return;
+          }
+        } catch (forceError) {
+          console.log("❌ Force generation also failed:", forceError.response?.data);
+          throw forceError;
+        }
       }
+      
+      // If we get here, both methods failed
+      Toast.show({
+        type: "error",
+        text1: "Generation Failed",
+        text2: "Could not generate codes. Please check backend logs.",
+      });
+      
     } catch (error) {
-      console.error("Error generating codes manually:", error);
+      console.error("❌ Error generating codes manually:", error);
       
       let errorMessage = "Failed to generate codes. Please try again.";
       if (error.response?.data?.message) {
         errorMessage = error.response.data.message;
+      } else if (error.response?.data?.errors) {
+        errorMessage = error.response.data.errors.join(", ");
       }
       
       Toast.show({

@@ -8,7 +8,7 @@ import {
 } from "../utilities/secureStore";
 import { normalizeUser } from "../utilities/asyncStore";
 
-const API_BASE_URL = "http://192.168.0.107:8000/api"; //AJ ip address
+const API_BASE_URL = "http://192.168.1.9:8000/api"; //AJ ip address
 //const API_BASE_URL = 'http://192.168.1.5:8000/api';
 
 const api = axios.create({
@@ -779,6 +779,25 @@ export const scheduleVerification = async (jobId: string) => {
     return response;
   } catch (error) {
     console.error("Error scheduling verification:", error);
+    throw error;
+  }
+};
+
+/**
+ * Force generate verification codes immediately (for testing)
+ * This bypasses the normal scheduling logic
+ */
+export const forceGenerateVerificationCodes = async (jobId: string) => {
+  try {
+    console.log("Force generating verification codes for job:", jobId);
+    
+    // Call the verification scheduler service directly to process immediately
+    const response = await api.post(`/verification/process`);
+    
+    console.log("Force generate codes response:", response.data);
+    return response;
+  } catch (error) {
+    console.error("Error force generating codes:", error);
     throw error;
   }
 };

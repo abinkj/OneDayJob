@@ -381,6 +381,27 @@ const checkAuthStatus = async () => {
   const currentDate = new Date();
 
 
+// Helper function to combine date and time properly
+const combineDateAndTime = (dateString, hour, minute, amPm) => {
+  // Parse the date string (format: "2025-09-20")
+  const [year, month, day] = dateString.split('-').map(Number);
+  
+  // Convert time to 24-hour format
+  let hour24 = parseInt(hour);
+  if (amPm === 'PM' && hour24 !== 12) {
+    hour24 += 12;
+  } else if (amPm === 'AM' && hour24 === 12) {
+    hour24 = 0;
+  }
+  
+  // Create a new Date object with the combined date and time
+  const combinedDate = new Date(year, month - 1, day, hour24, parseInt(minute), 0, 0);
+  
+  console.log(`Combining date ${dateString} with time ${hour}:${minute} ${amPm} = ${combinedDate.toISOString()}`);
+  
+  return combinedDate;
+};
+
 // Fixed formatJobData function
 const formatJobData = (photoUrls = []) => {
   if (!user || !user.id) {
@@ -427,7 +448,9 @@ const formatJobData = (photoUrls = []) => {
 
   // Handle date/time based on mode
   if (dateMode === 'onDate' && onDate) {
-    jobData.onDate = new Date(onDate);
+    // Combine date and time properly
+    const dateTime = combineDateAndTime(onDate, fromHour, fromMinute, fromAmPm);
+    jobData.onDate = dateTime;
     jobData.isFlexible = false;
   } else if (dateMode === 'beforeDate' && beforeDate) {
     jobData.beforeDate = new Date(beforeDate);
