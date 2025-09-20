@@ -8,7 +8,7 @@ import {
 } from "../utilities/secureStore";
 import { normalizeUser } from "../utilities/asyncStore";
 
-const API_BASE_URL = "http://192.168.33.252:8000/api"; //AJ ip address
+const API_BASE_URL = "http://192.168.0.107:8000/api"; //AJ ip address
 //const API_BASE_URL = 'http://192.168.1.5:8000/api';
 
 const api = axios.create({
@@ -439,7 +439,7 @@ export const getJobsByLocation = async (radius = 10, categoryId = null) => {
   }
 };
 
-export const getJobPostings = async (filters = {}) => {
+export const getJobPostings = async (filters: any = {}) => {
   try {
     const params = new URLSearchParams();
     
@@ -682,6 +682,139 @@ export const markMessagesAsRead = async (conversationId: string) => {
     return response.data;
   } catch (error) {
     console.error('Error marking messages as read:', error);
+    throw error;
+  }
+};
+
+// ==================== VERIFICATION API ENDPOINTS ====================
+
+/**
+ * Verify an employee using their verification code
+ * POST /api/jobs/:jobId/verify-employee
+ */
+export const verifyEmployee = async (jobId: string, employeeId: string, verificationCode: string) => {
+  try {
+    console.log("Verifying employee:", { jobId, employeeId, verificationCode });
+    
+    const response = await api.post(`/jobs/${jobId}/verify-employee`, {
+      employeeId,
+      verificationCode
+    });
+    
+    console.log("Employee verification response:", response.data);
+    return response;
+  } catch (error) {
+    console.error("Error verifying employee:", error);
+    throw error;
+  }
+};
+
+/**
+ * Get verification status for a job (employer view)
+ * GET /api/jobs/:jobId/verification-status
+ */
+export const getJobVerificationStatus = async (jobId: string) => {
+  try {
+    console.log("Getting verification status for job:", jobId);
+    
+    const response = await api.get(`/jobs/${jobId}/verification-status`);
+    
+    console.log("Verification status response:", response.data);
+    return response;
+  } catch (error) {
+    console.error("Error getting verification status:", error);
+    throw error;
+  }
+};
+
+/**
+ * Resend verification codes for a job
+ * POST /api/jobs/:jobId/resend-codes
+ */
+export const resendVerificationCodes = async (jobId: string, reason?: string) => {
+  try {
+    console.log("Resending verification codes for job:", jobId, "Reason:", reason);
+    
+    const response = await api.post(`/jobs/${jobId}/resend-codes`, {
+      reason: reason || "Manual resend requested"
+    });
+    
+    console.log("Resend codes response:", response.data);
+    return response;
+  } catch (error) {
+    console.error("Error resending verification codes:", error);
+    throw error;
+  }
+};
+
+/**
+ * Get employee's personal verification status for a job
+ * GET /api/jobs/:jobId/my-verification-status
+ */
+export const getEmployeeVerificationStatus = async (jobId: string) => {
+  try {
+    console.log("Getting employee verification status for job:", jobId);
+    
+    const response = await api.get(`/jobs/${jobId}/my-verification-status`);
+    
+    console.log("Employee verification status response:", response.data);
+    return response;
+  } catch (error) {
+    console.error("Error getting employee verification status:", error);
+    throw error;
+  }
+};
+
+/**
+ * Schedule verification for a job (manual trigger)
+ * POST /api/verification/schedule/:jobId
+ */
+export const scheduleVerification = async (jobId: string) => {
+  try {
+    console.log("Scheduling verification for job:", jobId);
+    
+    const response = await api.post(`/verification/schedule/${jobId}`);
+    
+    console.log("Schedule verification response:", response.data);
+    return response;
+  } catch (error) {
+    console.error("Error scheduling verification:", error);
+    throw error;
+  }
+};
+
+/**
+ * Cancel scheduled verification for a job
+ * POST /api/verification/cancel/:jobId
+ */
+export const cancelVerification = async (jobId: string) => {
+  try {
+    console.log("Cancelling verification for job:", jobId);
+    
+    const response = await api.post(`/verification/cancel/${jobId}`);
+    
+    console.log("Cancel verification response:", response.data);
+    return response;
+  } catch (error) {
+    console.error("Error cancelling verification:", error);
+    throw error;
+  }
+};
+
+/**
+ * Sync accepted applications with job's assignedUsers field
+ * This is a helper function to fix the mismatch between accepted applications and job assignments
+ */
+export const syncAcceptedApplications = async (jobId: string, applicationIds: string[]) => {
+  try {
+    console.log("Syncing accepted applications for job:", jobId, "Applications:", applicationIds);
+    
+    const response = await selectApplicants(jobId, applicationIds);
+    
+    console.log("Sync applications response:", response);
+    return response;
+  } catch (error) {
+    console.error("Error syncing applications:", error);
     throw error;
   }
 };

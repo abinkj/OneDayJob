@@ -13,7 +13,7 @@ import { Colors } from "../../../constants/Colors";
 import  styles  from "./styles";
 import { JobPost } from "../../../types";
 import { Header } from "../../../components/header";
-import { applyJob, createConversation, getCurrentUser } from "../../../services/api";
+import { applyJob, createConversation, getCurrentUser, getEmployeeVerificationStatus } from "../../../services/api";
 import SuccessAnimation from "../../../components/successAnimation";
 import Toast from "react-native-toast-message";
 
@@ -26,11 +26,18 @@ const JobDetails = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [applied, setApplied] = useState(false);
+  const [verificationStatus, setVerificationStatus] = useState<any>(null);
+  const [checkingVerification, setCheckingVerification] = useState(false);
 
   useEffect(() => {
     if (jobData) {
       console.log("Job data received:", JSON.stringify(jobData, null, 2));
       setJob(jobData);
+      
+      // Check verification status if job requires verification
+      if (jobData.requiresVerification && jobId) {
+        checkVerificationStatus();
+      }
     } else if (jobId) {
       // If only jobId is passed, show error (fallback)
       setError("Job data not available. Please go back and try again.");
@@ -38,6 +45,25 @@ const JobDetails = () => {
       setError("No job information provided");
     }
   }, [jobId, jobData]);
+
+  const checkVerificationStatus = async () => {
+    if (!jobId) return;
+    
+    try {
+      setCheckingVerification(true);
+      const response = await getEmployeeVerificationStatus(jobId);
+      
+      if (response.data.success) {
+        setVerificationStatus(response.data.data);
+        console.log("Verification status:", response.data.data);
+      }
+    } catch (error) {
+      console.log("No verification status available or user not assigned to job:", error.message);
+      // This is expected for users who haven't applied or been accepted
+    } finally {
+      setCheckingVerification(false);
+    }
+  };
 
   // const handleApply = () => {
   //   Alert.alert(
@@ -292,6 +318,71 @@ const JobDetails = () => {
             </View>
           </View>
         </View>
+
+        {/* Verification Status Section */}
+        {job.requiresVerification && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Verification Status</Text>
+            {checkingVerification ? (
+              <View style={styles.verificationLoadingContainer}>
+                <ActivityIndicator size="small" color={Colors.primary} />
+                <Text style={styles.verificationLoadingText}>Checking verification status...</Text>
+              </View>
+            ) : verificationStatus ? (
+              <View style={styles.verificationStatusContainer}>
+                <View style={styles.verificationStatusRow}>
+                  <Ionicons 
+                    name={verificationStatus.isVerified ? "checkmark-circle" : "time-outline"} 
+                    size={24} 
+                    color={verificationStatus.isVerified ? "#4CAF50" : "#FF9800"} 
+                  />
+                  <View style={styles.verificationStatusInfo}>
+                    <Text style={[
+                      styles.verificationStatusText,
+                      { color: verificationStatus.isVerified ? "#4CAF50" : "#FF9800" }
+                    ]}>
+                      {verificationStatus.isVerified ? "Verified" : "Pending Verification"}
+                    </Text>
+                    <Text style={styles.verificationMessageText}>
+                      {verificationStatus.message}
+                    </Text>
+                  </View>
+                </View>
+                
+                {verificationStatus.isVerified && (
+                  <View style={styles.verificationSuccessContainer}>
+                    <Text style={styles.verificationSuccessText}>
+                      ✅ You can start working on this job!
+                    </Text>
+                  </View>
+                )}
+                
+                {verificationStatus.isExpired && (
+                  <View style={styles.verificationErrorContainer}>
+                    <Text style={styles.verificationErrorText}>
+                      ⚠️ Your verification code has expired. Please contact your employer.
+                    </Text>
+                  </View>
+                )}
+                
+                {verificationStatus.isLocked && (
+                  <View style={styles.verificationErrorContainer}>
+                    <Text style={styles.verificationErrorText}>
+                      🔒 Verification is temporarily locked due to failed attempts.
+                    </Text>
+                  </View>
+                )}
+              </View>
+            ) : (
+              <View style={styles.verificationNotAssignedContainer}>
+                <Ionicons name="information-circle-outline" size={24} color={Colors.grey} />
+                <Text style={styles.verificationNotAssignedText}>
+                  Verification status will be available after you apply and are accepted for this job.
+                </Text>
+              </View>
+            )}
+          </View>
+        )}
 
         {/* Employer Info */}
         <View style={styles.section}>

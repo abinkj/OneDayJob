@@ -644,6 +644,79 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '600',
   },
+
+  // Verification Status Header Styles
+  verificationStatusHeader: {
+    backgroundColor: Colors.white,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: "#E5E5E5",
+    marginBottom: 8,
+  },
+  verificationProgressContainer: {
+    marginBottom: 12,
+  },
+  verificationProgressText: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#333",
+    marginBottom: 8,
+  },
+  syncWarningText: {
+    fontSize: 12,
+    color: "#FF9800",
+    fontWeight: "500",
+    marginBottom: 8,
+    fontStyle: "italic",
+  },
+  progressBar: {
+    height: 6,
+    backgroundColor: "#E5E5E5",
+    borderRadius: 3,
+    overflow: "hidden",
+  },
+  progressFill: {
+    height: "100%",
+    backgroundColor: "#4CAF50",
+    borderRadius: 3,
+  },
+  scheduleButton: {
+    backgroundColor: "#007AFF",
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 8,
+    alignItems: "center",
+    justifyContent: "center",
+    minHeight: 44,
+  },
+  scheduleButtonDisabled: {
+    backgroundColor: "#B0B0B0",
+  },
+  scheduleButtonText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "600",
+  },
+  buttonContainer: {
+    flexDirection: "row",
+    gap: 12,
+  },
+  manualTriggerButton: {
+    backgroundColor: "#FF9800",
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 8,
+    alignItems: "center",
+    justifyContent: "center",
+    minHeight: 44,
+    flex: 1,
+  },
+  manualTriggerButtonText: {
+    color: "#fff",
+    fontSize: 14,
+    fontWeight: "600",
+  },
 });
 
 export default styles;

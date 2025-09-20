@@ -279,6 +279,74 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "600",
   },
+
+  // Verification Status Styles
+  verificationLoadingContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 12,
+  },
+  verificationLoadingText: {
+    fontSize: 14,
+    color: Colors.grey,
+    marginLeft: 8,
+  },
+  verificationStatusContainer: {
+    paddingVertical: 8,
+  },
+  verificationStatusRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    marginBottom: 8,
+  },
+  verificationStatusInfo: {
+    flex: 1,
+    marginLeft: 12,
+  },
+  verificationStatusText: {
+    fontSize: 16,
+    fontWeight: "600",
+    marginBottom: 4,
+  },
+  verificationMessageText: {
+    fontSize: 14,
+    color: Colors.grey,
+    lineHeight: 20,
+  },
+  verificationSuccessContainer: {
+    backgroundColor: "#E8F5E8",
+    padding: 12,
+    borderRadius: 8,
+    marginTop: 8,
+  },
+  verificationSuccessText: {
+    fontSize: 14,
+    color: "#4CAF50",
+    fontWeight: "500",
+  },
+  verificationErrorContainer: {
+    backgroundColor: "#FFEBEE",
+    padding: 12,
+    borderRadius: 8,
+    marginTop: 8,
+  },
+  verificationErrorText: {
+    fontSize: 14,
+    color: "#F44336",
+    fontWeight: "500",
+  },
+  verificationNotAssignedContainer: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    paddingVertical: 12,
+  },
+  verificationNotAssignedText: {
+    fontSize: 14,
+    color: Colors.grey,
+    marginLeft: 8,
+    flex: 1,
+    lineHeight: 20,
+  },
 });
 
 export default styles;

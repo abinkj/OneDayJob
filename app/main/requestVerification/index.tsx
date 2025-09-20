@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   View,
   Text,
@@ -17,7 +17,7 @@ import {
   SceneRendererProps,
   NavigationState,
 } from "react-native-tab-view";
-import { useNavigation, useRoute } from "@react-navigation/native";
+import { useNavigation, useRoute, useFocusEffect } from "@react-navigation/native";
 import styles from "./styles";
 import { Header } from "../../../components/header";
 import ratingStars from "../../../components/ratingStars";
@@ -27,6 +27,11 @@ import {
   getAppliedUser,
   rejectApplicants,
   selectApplicants,
+  verifyEmployee,
+  getJobVerificationStatus,
+  resendVerificationCodes,
+  scheduleVerification,
+  syncAcceptedApplications,
 } from "../../../services/api";
 import Toast from "react-native-toast-message";
 
@@ -49,7 +54,7 @@ const RequestCard = ({
   const navigation = useNavigation();
 
   const handleProfilePress = (userId: string) => {
-    navigation.navigate("RequestProfile", { userId });
+    (navigation as any).navigate("RequestProfile", { userId });
   };
 
   const handleAccept = () => {
@@ -197,10 +202,21 @@ const AcceptedUserCard = ({ data, onSelect, isSelected = false }) => {
           </View>
         </View>
         
-        {/* Verified Badge */}
-        {data.isVerified && (
-          <View style={styles.verifiedBadgeNew}>
+        {/* Verification Status Badge */}
+        {data.isVerified ? (
+          <View style={[styles.verifiedBadgeNew, { backgroundColor: '#4CAF50' }]}>
             <Text style={styles.verifiedBadgeTextNew}>Verified</Text>
+          </View>
+        ) : data.verificationStatus ? (
+          <View style={[styles.verifiedBadgeNew, { backgroundColor: '#FF9800' }]}>
+            <Text style={styles.verifiedBadgeTextNew}>
+              {data.verificationStatus.isExpired ? 'Expired' : 
+               data.verificationStatus.isLocked ? 'Locked' : 'Pending'}
+            </Text>
+          </View>
+        ) : (
+          <View style={[styles.verifiedBadgeNew, { backgroundColor: '#9E9E9E' }]}>
+            <Text style={styles.verifiedBadgeTextNew}>No Code</Text>
           </View>
         )}
       </View>
@@ -209,7 +225,7 @@ const AcceptedUserCard = ({ data, onSelect, isSelected = false }) => {
 };
 
 /* -------------------- Requests Tab -------------------- */
-const RequestsTab = ({ jobId, onCountUpdate }) => {
+const RequestsTab = ({ jobId, onCountUpdate, onDataChange }) => {
   const [selectedFilter, setSelectedFilter] = useState("All");
   const [selectedRequests, setSelectedRequests] = useState<string[]>([]);
   const [showMenu, setShowMenu] = useState(false);
@@ -219,7 +235,7 @@ const RequestsTab = ({ jobId, onCountUpdate }) => {
 
   const filters = ["All", "Highly rated", "Budget Friendly"];
 
-  const fetchRequests = async () => {
+  const fetchRequests = useCallback(async () => {
     try {
       setLoading(true);
       const response = await getAppliedUser(jobId);
@@ -251,20 +267,30 @@ const RequestsTab = ({ jobId, onCountUpdate }) => {
       const accepted = appliedUsers.filter(req => req.status === "accepted").length;
       const verified = appliedUsers.filter(req => req.status === "accepted" && req.isVerified).length;
       
+      // Notify parent component about data changes
       if (onCountUpdate) {
         onCountUpdate(pending, accepted, verified);
+      }
+      if (onDataChange) {
+        onDataChange({ pending, accepted, total: appliedUsers.length });
       }
     } catch (error) {
       console.error("Error fetching applied users:", error);
       setRequests([]);
+      if (onCountUpdate) {
+        onCountUpdate(0, 0, 0);
+      }
+      if (onDataChange) {
+        onDataChange({ pending: 0, accepted: 0, total: 0 });
+      }
     } finally {
       setLoading(false);
     }
-  };
+  }, [jobId, onCountUpdate, onDataChange]);
 
   useEffect(() => {
     fetchRequests();
-  }, [jobId]);
+  }, [fetchRequests]);
 
   const getFilteredRequests = () => {
     if (!Array.isArray(requests)) return [];
@@ -353,7 +379,6 @@ const RequestsTab = ({ jobId, onCountUpdate }) => {
         });
       }
       
-      // Fixed: Use selectedApplicationIds instead of selectedUserIds
       const response = await rejectApplicants(jobId, selectedRequests);
       if (response.success) {
         Toast.show({
@@ -512,9 +537,15 @@ const RequestsTab = ({ jobId, onCountUpdate }) => {
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.listContainer}
           ListEmptyComponent={
-            <Text style={{ textAlign: "center", marginTop: 20 }}>
-              No pending applicants found
-            </Text>
+            <View style={{ alignItems: 'center', marginTop: 40 }}>
+              <Ionicons name="checkmark-circle-outline" size={64} color="#ccc" />
+              <Text style={{ textAlign: "center", marginTop: 16, fontSize: 16, color: '#666' }}>
+                No pending requests
+              </Text>
+              <Text style={{ textAlign: "center", marginTop: 8, fontSize: 14, color: '#999' }}>
+                All applications have been processed
+              </Text>
+            </View>
           }
         />
       )}
@@ -546,21 +577,38 @@ const RequestsVerifyTab = ({ jobId, onCountUpdate }) => {
   const [selectedUser, setSelectedUser] = useState<any>(null);
   const [verificationCode, setVerificationCode] = useState('');
   const [verifying, setVerifying] = useState(false);
+  const [verificationStatus, setVerificationStatus] = useState<any>(null);
+  const [scheduling, setScheduling] = useState(false);
 
-  useEffect(() => {
-    const fetchAcceptedUsers = async () => {
-      try {
-        setLoading(true);
-        const response = await getAppliedUser(jobId);
+  const fetchAcceptedUsers = useCallback(async () => {
+    try {
+      setLoading(true);
+      
+      // Fetch both applied users and verification status
+      const [appliedResponse, verificationResponse] = await Promise.all([
+        getAppliedUser(jobId),
+        getJobVerificationStatus(jobId).catch(err => {
+          console.log("No verification status available yet:", err.message);
+          return { data: { data: { participants: [] } } };
+        })
+      ]);
 
-        const accepted = Array.isArray(response?.data)
-          ? response.data
-              .filter((item) => item.status === "accepted")
-              .map((item) => ({
+      const accepted = Array.isArray(appliedResponse?.data)
+        ? appliedResponse.data
+            .filter((item) => item.status === "accepted")
+            .map((item) => {
+              // Find verification status for this user
+              const verificationStatus = verificationResponse.data?.data?.participants?.find(
+                (participant: any) => participant.employeeId === item.user.id
+              );
+              
+              return {
                 _id: item._id,
                 appliedAt: item.appliedAt,
                 acceptedAt: item.acceptedAt,
                 status: item.status,
+                isVerified: verificationStatus?.isVerified || false,
+                verificationStatus: verificationStatus,
                 user: {
                   id: item.user.id,
                   name: `${item.user.firstName} ${item.user.lastName}`,
@@ -572,53 +620,86 @@ const RequestsVerifyTab = ({ jobId, onCountUpdate }) => {
                   phoneNumber: item.user.phoneNumber || item.user.phone,
                   email: item.user.email,
                 },
-              }))
-          : [];
+              };
+            })
+        : [];
 
-        setAcceptedUsers(accepted);
-        
-        // Update counts
-        const verified = accepted.filter(user => user.isVerified).length;
-        if (onCountUpdate) {
-          onCountUpdate(0, accepted.length, verified);
-        }
-      } catch (error) {
-        console.error("Error fetching accepted users:", error);
-        setAcceptedUsers([]);
-      } finally {
-        setLoading(false);
+      setAcceptedUsers(accepted);
+      
+      // Store verification status for display
+      if (verificationResponse.data?.data) {
+        setVerificationStatus(verificationResponse.data.data);
       }
-    };
+      
+      // Update counts
+      const verified = accepted.filter(user => user.isVerified).length;
+      if (onCountUpdate) {
+        onCountUpdate(0, accepted.length, verified);
+      }
+    } catch (error) {
+      console.error("Error fetching accepted users:", error);
+      setAcceptedUsers([]);
+      if (onCountUpdate) {
+        onCountUpdate(0, 0, 0);
+      }
+    } finally {
+      setLoading(false);
+    }
+  }, [jobId, onCountUpdate]);
 
+  useEffect(() => {
     fetchAcceptedUsers();
-  }, [jobId]);
+  }, [fetchAcceptedUsers]);
 
   const handleVerifyCode = async (code: string) => {
     if (!selectedUser) return;
     
     try {
       setVerifying(true);
-      // TODO: Implement actual verification API call
-      // const response = await verifyUserCode(selectedUser._id, code);
       
-      // Simulate verification for now
-      setTimeout(() => {
+      // Call the actual verification API
+      const response = await verifyEmployee(jobId, selectedUser.user.id, code);
+      
+      if (response.data.success) {
         Toast.show({
           type: "success",
           text1: "Verification Successful",
           text2: `${selectedUser.user.name} has been verified.`,
         });
+        
+        // Refresh the accepted users list to show updated verification status
+        await fetchAcceptedUsers();
+        
         setSelectedUser(null);
         setVerificationCode('');
-        setVerifying(false);
-      }, 1000);
+      } else {
+        Toast.show({
+          type: "error",
+          text1: "Verification Failed",
+          text2: response.data.message || "Invalid verification code. Please try again.",
+        });
+      }
     } catch (error) {
       console.error("Error verifying code:", error);
+      
+      // Handle specific error cases
+      let errorMessage = "Invalid verification code. Please try again.";
+      if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.response?.status === 400) {
+        errorMessage = "Invalid or expired verification code.";
+      } else if (error.response?.status === 403) {
+        errorMessage = "You don't have permission to verify this employee.";
+      } else if (error.response?.status === 404) {
+        errorMessage = "Employee or job not found.";
+      }
+      
       Toast.show({
         type: "error",
         text1: "Verification Failed",
-        text2: "Invalid verification code. Please try again.",
+        text2: errorMessage,
       });
+    } finally {
       setVerifying(false);
     }
   };
@@ -627,26 +708,160 @@ const RequestsVerifyTab = ({ jobId, onCountUpdate }) => {
     if (!selectedUser) return;
     
     try {
-      // TODO: Implement actual resend code API call
-      // const response = await resendVerificationCode(selectedUser._id);
+      // Call the actual resend codes API
+      const response = await resendVerificationCodes(jobId, "Manual resend requested by employer");
       
-      Toast.show({
-        type: "success",
-        text1: "Code Sent",
-        text2: "A new verification code has been sent.",
-      });
+      if (response.data.success) {
+        Toast.show({
+          type: "success",
+          text1: "Codes Sent",
+          text2: "New verification codes have been sent to your phone.",
+        });
+      } else {
+        Toast.show({
+          type: "error",
+          text1: "Error",
+          text2: response.data.message || "Failed to resend codes. Please try again.",
+        });
+      }
     } catch (error) {
       console.error("Error resending code:", error);
+      
+      // Handle specific error cases
+      let errorMessage = "Failed to resend codes. Please try again.";
+      if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.response?.status === 403) {
+        errorMessage = "You don't have permission to resend codes for this job.";
+      } else if (error.response?.status === 404) {
+        errorMessage = "Job not found.";
+      } else if (error.response?.status === 400) {
+        errorMessage = "Cannot resend codes at this time.";
+      }
+      
       Toast.show({
         type: "error",
         text1: "Error",
-        text2: "Failed to resend code. Please try again.",
+        text2: errorMessage,
       });
     }
   };
 
   const handleUserSelect = (user: any) => {
     setSelectedUser(user);
+  };
+
+  const handleScheduleVerification = async () => {
+    try {
+      setScheduling(true);
+      
+      // First, try to sync accepted applications with job's assignedUsers
+      if (acceptedUsers.length > 0) {
+        console.log("Syncing accepted applications with job assignedUsers...");
+        const applicationIds = acceptedUsers.map(user => user._id);
+        
+        try {
+          const syncResponse = await syncAcceptedApplications(jobId, applicationIds);
+          console.log("Sync response:", syncResponse);
+          
+          if (syncResponse.success) {
+            Toast.show({
+              type: "success",
+              text1: "Applications Synced",
+              text2: "Accepted applications have been synced with the job.",
+            });
+          }
+        } catch (syncError) {
+          console.log("Sync failed, continuing with verification scheduling:", syncError.message);
+          Toast.show({
+            type: "warning",
+            text1: "Sync Warning",
+            text2: "Could not sync applications, but continuing with verification...",
+          });
+        }
+      }
+      
+      const response = await scheduleVerification(jobId);
+      
+      if (response.data.success) {
+        Toast.show({
+          type: "success",
+          text1: "Verification Scheduled",
+          text2: "Verification codes will be generated and sent to your phone.",
+        });
+        
+        // Refresh the data to show updated status
+        await fetchAcceptedUsers();
+      } else {
+        Toast.show({
+          type: "error",
+          text1: "Scheduling Failed",
+          text2: response.data.message || "Failed to schedule verification. Please try again.",
+        });
+      }
+    } catch (error) {
+      console.error("Error scheduling verification:", error);
+      
+      let errorMessage = "Failed to schedule verification. Please try again.";
+      if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.response?.status === 403) {
+        errorMessage = "You don't have permission to schedule verification for this job.";
+      } else if (error.response?.status === 404) {
+        errorMessage = "Job not found.";
+      } else if (error.response?.status === 400) {
+        errorMessage = "Cannot schedule verification at this time.";
+      }
+      
+      Toast.show({
+        type: "error",
+        text1: "Error",
+        text2: errorMessage,
+      });
+    } finally {
+      setScheduling(false);
+    }
+  };
+
+  const handleManualCodeGeneration = async () => {
+    try {
+      setScheduling(true);
+      
+      // Force trigger the verification scheduler to process immediately
+      const response = await scheduleVerification(jobId);
+      
+      if (response.data.success) {
+        Toast.show({
+          type: "success",
+          text1: "Codes Generated",
+          text2: "Verification codes have been generated and sent to your phone.",
+        });
+        
+        // Refresh the data to show updated status
+        await fetchAcceptedUsers();
+      } else {
+        Toast.show({
+          type: "error",
+          text1: "Generation Failed",
+          text2: response.data.message || "Failed to generate codes. Please try again.",
+        });
+      }
+    } catch (error) {
+      console.error("Error generating codes manually:", error);
+      
+      let errorMessage = "Failed to generate codes. Please try again.";
+      if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      }
+      
+      Toast.show({
+        type: "error",
+        text1: "Error",
+        text2: errorMessage,
+      });
+    } finally {
+      setScheduling(false);
+    }
   };
 
   const renderAcceptedUser = ({ item }) => (
@@ -670,11 +885,59 @@ const RequestsVerifyTab = ({ jobId, onCountUpdate }) => {
   return (
     <View style={styles.tabContainer}>
       {acceptedUsers.length === 0 ? (
-        <Text style={{ textAlign: "center", marginTop: 20 }}>
-          No accepted applicants yet
-        </Text>
+        <View style={{ alignItems: 'center', marginTop: 40 }}>
+          <Ionicons name="people-outline" size={64} color="#ccc" />
+          <Text style={{ textAlign: "center", marginTop: 16, fontSize: 16, color: '#666' }}>
+            No accepted applicants yet
+          </Text>
+          <Text style={{ textAlign: "center", marginTop: 8, fontSize: 14, color: '#999' }}>
+            Accept some requests to see them here
+          </Text>
+        </View>
       ) : (
         <>
+          {/* Verification Status Header */}
+          {verificationStatus && (
+            <View style={styles.verificationStatusHeader}>
+              <View style={styles.verificationProgressContainer}>
+                <Text style={styles.verificationProgressText}>
+                  Verification Progress: {verificationStatus.verifiedCount || 0} / {verificationStatus.totalParticipants || 0}
+                </Text>
+                {verificationStatus.totalParticipants === 0 && acceptedUsers.length > 0 && (
+                  <Text style={styles.syncWarningText}>
+                    ⚠️ Accepted users need to be synced with the job. Click "Sync & Generate Codes" to fix this.
+                  </Text>
+                )}
+                <View style={styles.progressBar}>
+                  <View 
+                    style={[
+                      styles.progressFill, 
+                      { 
+                        width: `${verificationStatus.verificationProgress || 0}%` 
+                      }
+                    ]} 
+                  />
+                </View>
+              </View>
+              
+              {verificationStatus.sessionStatus === 'pending' && (
+                <TouchableOpacity
+                  style={[styles.scheduleButton, scheduling && styles.scheduleButtonDisabled]}
+                  onPress={handleScheduleVerification}
+                  disabled={scheduling}
+                >
+                  {scheduling ? (
+                    <ActivityIndicator size="small" color="#fff" />
+                  ) : (
+                    <Text style={styles.scheduleButtonText}>
+                      {verificationStatus.totalParticipants === 0 ? 'Sync & Generate Codes' : 'Generate Codes'}
+                    </Text>
+                  )}
+                </TouchableOpacity>
+              )}
+            </View>
+          )}
+          
           <FlatList
             data={acceptedUsers}
             renderItem={renderAcceptedUser}
@@ -708,22 +971,60 @@ const RequestVerification = () => {
   const [pendingCount, setPendingCount] = useState(0);
   const [acceptedCount, setAcceptedCount] = useState(0);
   const [verifiedCount, setVerifiedCount] = useState(0);
+  const [initialDataLoaded, setInitialDataLoaded] = useState(false);
   
   const [routes] = useState([
     { key: "requests", title: "Requests" },
     { key: "requestsVerify", title: "Accepted" },
   ]);
 
-  const handleCountUpdate = (pending: number, accepted: number, verified: number) => {
+  const handleCountUpdate = useCallback((pending: number, accepted: number, verified: number) => {
     setPendingCount(pending);
     setAcceptedCount(accepted);
     setVerifiedCount(verified);
-  };
+  }, []);
+
+  // Handle initial data load and smart tab switching
+  const handleDataChange = useCallback((data: { pending: number, accepted: number, total: number }) => {
+    if (!initialDataLoaded) {
+      setInitialDataLoaded(true);
+      
+      // Smart tab switching logic:
+      // - If there are pending requests, stay on Requests tab (index 0)
+      // - If no pending but there are accepted, switch to Accepted tab (index 1)
+      // - If no data at all, stay on Requests tab
+      if (data.pending === 0 && data.accepted > 0 && data.total > 0) {
+        // Only switch if there are no pending requests but there are accepted ones
+        console.log('Auto-switching to Accepted tab: no pending requests but accepted users exist');
+        onIndexChange(1);
+      }
+      // If there are pending requests or no data, stay on Requests tab (index 0)
+    }
+  }, [initialDataLoaded]);
+
+  // Reset when navigating to this screen
+  useFocusEffect(
+    useCallback(() => {
+      // Reset state when screen comes into focus
+      setInitialDataLoaded(false);
+      setPendingCount(0);
+      setAcceptedCount(0);
+      setVerifiedCount(0);
+      // Always start on Requests tab when first entering
+      onIndexChange(0);
+    }, [])
+  );
 
   const renderScene = ({ route }) => {
     switch (route.key) {
       case "requests":
-        return <RequestsTab jobId={jobId} onCountUpdate={handleCountUpdate} />;
+        return (
+          <RequestsTab 
+            jobId={jobId} 
+            onCountUpdate={handleCountUpdate}
+            onDataChange={handleDataChange}
+          />
+        );
       case "requestsVerify":
         return <RequestsVerifyTab jobId={jobId} onCountUpdate={handleCountUpdate} />;
       default:
@@ -763,7 +1064,7 @@ const RequestVerification = () => {
         ))}
         
         {/* Verification Status Indicator */}
-        {index === 1 && verifiedCount > 0 && (
+        {index === 1 && verifiedCount > 0 && acceptedCount > 0 && (
           <View style={styles.verificationStatus}>
             <Text style={styles.verificationStatusText}>
               {verifiedCount} out of {acceptedCount} Verified
