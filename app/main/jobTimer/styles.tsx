@@ -171,6 +171,44 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     lineHeight: 20,
   },
+
+  // Worker Card Styles
+  workerCard: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    backgroundColor: '#f8f9fa',
+    borderRadius: 8,
+    marginBottom: 8,
+  },
+  workerInfo: {
+    flex: 1,
+  },
+  workerName: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 4,
+  },
+  workerEmail: {
+    fontSize: 12,
+    color: '#666',
+  },
+  workerStatus: {
+    alignItems: 'flex-end',
+  },
+  workerStatusText: {
+    fontSize: 12,
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  workerTime: {
+    fontSize: 12,
+    color: '#666',
+    fontWeight: '500',
+  },
 });
 
 export default styles;

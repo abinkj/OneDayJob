@@ -468,10 +468,29 @@ const HomeScreen = () => {
     
     const handleJobPress = () => {
       if (isInProgress) {
+        // Debug: Log the full job item to see available fields
+        console.log("Full job item data:", JSON.stringify(item, null, 2));
+        
+        // Check if user is the job poster (employer) or an applicant (worker)
+        // The backend populates userId with user data, so we need to check both _id and id
+        const jobOwnerId = item.userId?._id || item.userId?.id || item.postedBy?._id || item.postedBy?.id || item.createdBy || item.ownerId;
+        const isEmployer = userData?.id === jobOwnerId || userData?._id === jobOwnerId;
+        
+        console.log("Job ownership check:", {
+          userDataId: userData?.id,
+          userData_id: userData?._id,
+          jobOwnerId: jobOwnerId,
+          jobUserId: item.userId,
+          jobPostedBy: item.postedBy,
+          jobCreatedBy: item.createdBy,
+          isEmployer: isEmployer,
+          jobName: item.name
+        });
+        
         navigation.navigate("JobTimer", { 
           jobId: item._id, 
           jobName: item.name,
-          isEmployer: false 
+          isEmployer: isEmployer 
         });
       } else {
         navigation.navigate("JobDetails", { jobId: item._id, jobData: item });

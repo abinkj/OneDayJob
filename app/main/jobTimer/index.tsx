@@ -13,6 +13,8 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import { Header } from '../../../components/header';
 import {
   getWorkerSession,
+  getJobDashboard,
+  initiateJobExecution,
   startWorkerSession,
   pauseWorkerSession,
   resumeWorkerSession,
@@ -99,14 +101,53 @@ const JobTimerScreen = () => {
   const loadSessionData = async () => {
     try {
       setLoading(true);
-      const response = await getWorkerSession(jobId, true);
       
-      if (response.data.success) {
-        const session = response.data.data.session;
-        setSessionData(response.data.data);
-        setIsActive(session.status === 'active');
-        setCurrentTime(session.totalWorkedSeconds || 0);
-        setLastSyncTime(session.totalWorkedSeconds || 0);
+      console.log("JobTimer - isEmployer:", isEmployer, "jobId:", jobId);
+      
+      if (isEmployer) {
+        // Load employer dashboard data
+        console.log("Loading employer dashboard for job:", jobId);
+        const response = await getJobDashboard(jobId, true);
+        
+        if (response.data.success) {
+          setSessionData(response.data.data);
+          // For employer view, we don't need timer states
+          setIsActive(false);
+          setCurrentTime(0);
+          setLastSyncTime(0);
+        }
+      } else {
+        // Load worker session data
+        console.log("Loading worker session for job:", jobId);
+        try {
+          const response = await getWorkerSession(jobId, true);
+          
+          if (response.data.success) {
+            const session = response.data.data.session;
+            console.log("Worker session data received:", {
+              session: session,
+              sessionStatus: session?.status,
+              hasSession: !!session,
+              sessionId: session?.id || session?._id
+            });
+            setSessionData(response.data.data);
+            setIsActive(session.status === 'active');
+            setCurrentTime(session.totalWorkedSeconds || 0);
+            setLastSyncTime(session.totalWorkedSeconds || 0);
+          }
+        } catch (sessionError: any) {
+          // Handle case where no session exists yet (404 error)
+          if (sessionError.response?.status === 404 || sessionError.response?.status === 403) {
+            console.log("No worker session found yet - showing start button");
+            setSessionData(null);
+            setIsActive(false);
+            setCurrentTime(0);
+            setLastSyncTime(0);
+          } else {
+            // Re-throw other errors
+            throw sessionError;
+          }
+        }
       }
     } catch (error) {
       console.error('Error loading session data:', error);
@@ -117,6 +158,33 @@ const JobTimerScreen = () => {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleInitiateJob = async () => {
+    try {
+      setActionLoading(true);
+      console.log("Initiating job execution for job:", jobId);
+      const response = await initiateJobExecution(jobId);
+      
+      if (response.data.success) {
+        await loadSessionData(); // Reload to get updated dashboard data
+        
+        Toast.show({
+          type: 'success',
+          text1: 'Job Initiated',
+          text2: 'Job execution has been started. Workers can now begin their sessions.',
+        });
+      }
+    } catch (error) {
+      console.error('Error initiating job:', error);
+      Toast.show({
+        type: 'error',
+        text1: 'Error',
+        text2: 'Failed to initiate job execution',
+      });
+    } finally {
+      setActionLoading(false);
     }
   };
 
@@ -270,18 +338,26 @@ const JobTimerScreen = () => {
   }
 
   const session = sessionData?.session;
-  const job = sessionData?.job;
+  const job = sessionData?.job || sessionData?.jobInfo;
   const employer = sessionData?.employer;
+  const summary = sessionData?.summary;
+  
+  console.log("Render state:", {
+    isEmployer: isEmployer,
+    hasSessionData: !!sessionData,
+    hasSession: !!session,
+    sessionStatus: session?.status
+  });
 
   return (
     <View style={styles.container}>
-      <Header title="Job Timer" showBackButton />
+      <Header title={isEmployer ? "Job Dashboard" : "Job Timer"} showBackButton />
       
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {/* Job Info */}
         <View style={styles.jobInfoCard}>
           <Text style={styles.jobTitle}>{jobName || job?.name}</Text>
-          {employer && (
+          {employer && !isEmployer && (
             <Text style={styles.employerName}>
               Employer: {employer.firstName} {employer.lastName}
             </Text>
@@ -291,119 +367,275 @@ const JobTimerScreen = () => {
           )}
         </View>
 
-        {/* Timer Display */}
-        <View style={styles.timerCard}>
-          <Text style={styles.timerLabel}>Work Time</Text>
-          <Text style={styles.timerDisplay}>{formatTime(currentTime)}</Text>
-          <Text style={styles.timerStatus}>
-            {isActive ? '⏱️ Active' : session?.status === 'paused' ? '⏸️ Paused' : '⏹️ Stopped'}
-          </Text>
-        </View>
-
-        {/* Session Stats */}
-        {session && (
-          <View style={styles.statsCard}>
-            <Text style={styles.statsTitle}>Session Statistics</Text>
-            <View style={styles.statsRow}>
-              <Text style={styles.statsLabel}>Total Time:</Text>
-              <Text style={styles.statsValue}>{formatDuration(session.totalWorkedSeconds || 0)}</Text>
-            </View>
-            <View style={styles.statsRow}>
-              <Text style={styles.statsLabel}>Status:</Text>
-              <Text style={styles.statsValue}>{session.status}</Text>
-            </View>
-            {session.targetHours && (
-              <View style={styles.statsRow}>
-                <Text style={styles.statsLabel}>Target:</Text>
-                <Text style={styles.statsValue}>{session.targetHours}h</Text>
+        {isEmployer ? (
+          /* Employer Dashboard View */
+          <>
+            {/* Job Summary */}
+            {summary && (
+              <View style={styles.statsCard}>
+                <Text style={styles.statsTitle}>Job Summary</Text>
+                <View style={styles.statsRow}>
+                  <Text style={styles.statsLabel}>Total Workers:</Text>
+                  <Text style={styles.statsValue}>{summary.totalWorkers}</Text>
+                </View>
+                <View style={styles.statsRow}>
+                  <Text style={styles.statsLabel}>Active Workers:</Text>
+                  <Text style={[styles.statsValue, { color: '#4CAF50' }]}>{summary.activeWorkers}</Text>
+                </View>
+                <View style={styles.statsRow}>
+                  <Text style={styles.statsLabel}>Paused Workers:</Text>
+                  <Text style={[styles.statsValue, { color: '#FF9800' }]}>{summary.pausedWorkers}</Text>
+                </View>
+                <View style={styles.statsRow}>
+                  <Text style={styles.statsLabel}>Completed Workers:</Text>
+                  <Text style={[styles.statsValue, { color: '#2196F3' }]}>{summary.completedWorkers}</Text>
+                </View>
+                <View style={styles.statsRow}>
+                  <Text style={styles.statsLabel}>Total Time Spent:</Text>
+                  <Text style={styles.statsValue}>{formatDuration(summary.totalTimeSpent || 0)}</Text>
+                </View>
+                <View style={styles.statsRow}>
+                  <Text style={styles.statsLabel}>Average Time:</Text>
+                  <Text style={styles.statsValue}>{formatDuration(summary.averageTimePerWorker || 0)}</Text>
+                </View>
               </View>
             )}
-          </View>
+
+            {/* Initiate Job Button for Employer */}
+            {!summary && (
+              <View style={styles.actionButtons}>
+                <TouchableOpacity
+                  style={[styles.actionButton, styles.startButton]}
+                  onPress={handleInitiateJob}
+                  disabled={actionLoading}
+                >
+                  {actionLoading ? (
+                    <ActivityIndicator size="small" color="#fff" />
+                  ) : (
+                    <>
+                      <Ionicons name="play" size={24} color="#fff" />
+                      <Text style={styles.actionButtonText}>Initiate Job</Text>
+                    </>
+                  )}
+                </TouchableOpacity>
+              </View>
+            )}
+
+            {/* Workers List */}
+            {summary?.workers && summary.workers.length > 0 && (
+              <View style={styles.statsCard}>
+                <Text style={styles.statsTitle}>Workers Status</Text>
+                {summary.workers.map((worker: any, index: number) => (
+                  <View key={worker.id || index} style={styles.workerCard}>
+                    <View style={styles.workerInfo}>
+                      <Text style={styles.workerName}>{worker.name}</Text>
+                      <Text style={styles.workerEmail}>{worker.email}</Text>
+                    </View>
+                    <View style={styles.workerStatus}>
+                      <Text style={[
+                        styles.workerStatusText,
+                        { color: worker.status === 'active' ? '#4CAF50' : 
+                                 worker.status === 'paused' ? '#FF9800' : '#757575' }
+                      ]}>
+                        {worker.status === 'active' ? '⏱️ Active' : 
+                         worker.status === 'paused' ? '⏸️ Paused' : 
+                         worker.status === 'completed' ? '✅ Completed' : '⏹️ Not Started'}
+                      </Text>
+                      <Text style={styles.workerTime}>{formatDuration(worker.timeSpent || 0)}</Text>
+                    </View>
+                  </View>
+                ))}
+              </View>
+            )}
+
+            {/* Instructions for Employer */}
+            <View style={styles.instructionsCard}>
+              <Text style={styles.instructionsTitle}>Employer Instructions</Text>
+              {!summary ? (
+                <>
+                  <Text style={styles.instructionsText}>
+                    • First, tap "Initiate Job" to start the job execution
+                  </Text>
+                  <Text style={styles.instructionsText}>
+                    • This will create sessions for all accepted workers
+                  </Text>
+                  <Text style={styles.instructionsText}>
+                    • Workers can then start their timers and begin working
+                  </Text>
+                </>
+              ) : (
+                <>
+                  <Text style={styles.instructionsText}>
+                    • Monitor all workers' progress in real-time
+                  </Text>
+                  <Text style={styles.instructionsText}>
+                    • Green indicates active workers
+                  </Text>
+                  <Text style={styles.instructionsText}>
+                    • Orange indicates paused workers
+                  </Text>
+                  <Text style={styles.instructionsText}>
+                    • Data refreshes automatically every 30 seconds
+                  </Text>
+                </>
+              )}
+            </View>
+          </>
+        ) : (
+          /* Worker Timer View */
+          <>
+            {/* Timer Display */}
+            <View style={styles.timerCard}>
+              <Text style={styles.timerLabel}>Work Time</Text>
+              <Text style={styles.timerDisplay}>{formatTime(currentTime)}</Text>
+              <Text style={styles.timerStatus}>
+                {isActive ? '⏱️ Active' : 
+                 session?.status === 'paused' ? '⏸️ Paused' : 
+                 session?.status === 'not_started' ? '⏹️ Not Started' : '⏹️ Stopped'}
+              </Text>
+            </View>
+
+            {/* Session Stats */}
+            {session && (
+              <View style={styles.statsCard}>
+                <Text style={styles.statsTitle}>Session Statistics</Text>
+                <View style={styles.statsRow}>
+                  <Text style={styles.statsLabel}>Total Time:</Text>
+                  <Text style={styles.statsValue}>{formatDuration(session.totalWorkedSeconds || 0)}</Text>
+                </View>
+                <View style={styles.statsRow}>
+                  <Text style={styles.statsLabel}>Status:</Text>
+                  <Text style={styles.statsValue}>{session.status}</Text>
+                </View>
+                {session.targetHours && (
+                  <View style={styles.statsRow}>
+                    <Text style={styles.statsLabel}>Target:</Text>
+                    <Text style={styles.statsValue}>{session.targetHours}h</Text>
+                  </View>
+                )}
+              </View>
+            )}
+
+            {/* Action Buttons */}
+            <View style={styles.actionButtons}>
+              {(() => {
+                console.log("Button rendering logic:", {
+                  hasSession: !!session,
+                  sessionStatus: session?.status,
+                  isActive: isActive,
+                  actionLoading: actionLoading
+                });
+                
+                if (!session) {
+                  return (
+                    <TouchableOpacity
+                      style={[styles.actionButton, styles.startButton]}
+                      onPress={handleStartSession}
+                      disabled={actionLoading}
+                    >
+                      {actionLoading ? (
+                        <ActivityIndicator size="small" color="#fff" />
+                      ) : (
+                        <>
+                          <Ionicons name="play" size={24} color="#fff" />
+                          <Text style={styles.actionButtonText}>Start Work</Text>
+                        </>
+                      )}
+                    </TouchableOpacity>
+                  );
+                } else if (session.status === 'not_started') {
+                  return (
+                    <TouchableOpacity
+                      style={[styles.actionButton, styles.startButton]}
+                      onPress={handleStartSession}
+                      disabled={actionLoading}
+                    >
+                      {actionLoading ? (
+                        <ActivityIndicator size="small" color="#fff" />
+                      ) : (
+                        <>
+                          <Ionicons name="play" size={24} color="#fff" />
+                          <Text style={styles.actionButtonText}>Start Work</Text>
+                        </>
+                      )}
+                    </TouchableOpacity>
+                  );
+                } else if (session.status === 'active') {
+                  return (
+                    <TouchableOpacity
+                      style={[styles.actionButton, styles.pauseButton]}
+                      onPress={handlePauseSession}
+                      disabled={actionLoading}
+                    >
+                      {actionLoading ? (
+                        <ActivityIndicator size="small" color="#fff" />
+                      ) : (
+                        <>
+                          <Ionicons name="pause" size={24} color="#fff" />
+                          <Text style={styles.actionButtonText}>Pause</Text>
+                        </>
+                      )}
+                    </TouchableOpacity>
+                  );
+                } else if (session.status === 'paused') {
+                  return (
+                    <TouchableOpacity
+                      style={[styles.actionButton, styles.resumeButton]}
+                      onPress={handleResumeSession}
+                      disabled={actionLoading}
+                    >
+                      {actionLoading ? (
+                        <ActivityIndicator size="small" color="#fff" />
+                      ) : (
+                        <>
+                          <Ionicons name="play" size={24} color="#fff" />
+                          <Text style={styles.actionButtonText}>Resume</Text>
+                        </>
+                      )}
+                    </TouchableOpacity>
+                  );
+                } else {
+                  console.log("No action button shown - session status:", session.status);
+                  return null;
+                }
+              })()}
+
+              {session && session.status !== 'completed' && (
+                <TouchableOpacity
+                  style={[styles.actionButton, styles.completeButton]}
+                  onPress={handleCompleteSession}
+                  disabled={actionLoading}
+                >
+                  {actionLoading ? (
+                    <ActivityIndicator size="small" color="#fff" />
+                  ) : (
+                    <>
+                      <Ionicons name="checkmark" size={24} color="#fff" />
+                      <Text style={styles.actionButtonText}>Complete</Text>
+                    </>
+                  )}
+                </TouchableOpacity>
+              )}
+            </View>
+
+            {/* Instructions for Worker */}
+            <View style={styles.instructionsCard}>
+              <Text style={styles.instructionsTitle}>Instructions</Text>
+              <Text style={styles.instructionsText}>
+                • Start your work session when you begin working
+              </Text>
+              <Text style={styles.instructionsText}>
+                • Pause when taking breaks
+              </Text>
+              <Text style={styles.instructionsText}>
+                • Complete when you finish the job
+              </Text>
+              <Text style={styles.instructionsText}>
+                • Time is automatically synced every 30 seconds
+              </Text>
+            </View>
+          </>
         )}
-
-        {/* Action Buttons */}
-        <View style={styles.actionButtons}>
-          {!session ? (
-            <TouchableOpacity
-              style={[styles.actionButton, styles.startButton]}
-              onPress={handleStartSession}
-              disabled={actionLoading}
-            >
-              {actionLoading ? (
-                <ActivityIndicator size="small" color="#fff" />
-              ) : (
-                <>
-                  <Ionicons name="play" size={24} color="#fff" />
-                  <Text style={styles.actionButtonText}>Start Work</Text>
-                </>
-              )}
-            </TouchableOpacity>
-          ) : session.status === 'active' ? (
-            <TouchableOpacity
-              style={[styles.actionButton, styles.pauseButton]}
-              onPress={handlePauseSession}
-              disabled={actionLoading}
-            >
-              {actionLoading ? (
-                <ActivityIndicator size="small" color="#fff" />
-              ) : (
-                <>
-                  <Ionicons name="pause" size={24} color="#fff" />
-                  <Text style={styles.actionButtonText}>Pause</Text>
-                </>
-              )}
-            </TouchableOpacity>
-          ) : session.status === 'paused' ? (
-            <TouchableOpacity
-              style={[styles.actionButton, styles.resumeButton]}
-              onPress={handleResumeSession}
-              disabled={actionLoading}
-            >
-              {actionLoading ? (
-                <ActivityIndicator size="small" color="#fff" />
-              ) : (
-                <>
-                  <Ionicons name="play" size={24} color="#fff" />
-                  <Text style={styles.actionButtonText}>Resume</Text>
-                </>
-              )}
-            </TouchableOpacity>
-          ) : null}
-
-          {session && session.status !== 'completed' && (
-            <TouchableOpacity
-              style={[styles.actionButton, styles.completeButton]}
-              onPress={handleCompleteSession}
-              disabled={actionLoading}
-            >
-              {actionLoading ? (
-                <ActivityIndicator size="small" color="#fff" />
-              ) : (
-                <>
-                  <Ionicons name="checkmark" size={24} color="#fff" />
-                  <Text style={styles.actionButtonText}>Complete</Text>
-                </>
-              )}
-            </TouchableOpacity>
-          )}
-        </View>
-
-        {/* Instructions */}
-        <View style={styles.instructionsCard}>
-          <Text style={styles.instructionsTitle}>Instructions</Text>
-          <Text style={styles.instructionsText}>
-            • Start your work session when you begin working
-          </Text>
-          <Text style={styles.instructionsText}>
-            • Pause when taking breaks
-          </Text>
-          <Text style={styles.instructionsText}>
-            • Complete when you finish the job
-          </Text>
-          <Text style={styles.instructionsText}>
-            • Time is automatically synced every 30 seconds
-          </Text>
-        </View>
       </ScrollView>
     </View>
   );
