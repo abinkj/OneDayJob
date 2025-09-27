@@ -10,6 +10,7 @@ import {
   ScrollView,
   ActivityIndicator,
   Linking,
+  RefreshControl,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import {
@@ -223,13 +224,18 @@ const RequestsTab = ({ jobId, onCountUpdate, onDataChange }) => {
   const [showMenu, setShowMenu] = useState(false);
   const [requests, setRequests] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
 
   const filters = ["All", "Highly rated", "Budget Friendly"];
 
-  const fetchRequests = useCallback(async () => {
+  const fetchRequests = useCallback(async (isRefresh = false) => {
     try {
-      setLoading(true);
+      if (isRefresh) {
+        setRefreshing(true);
+      } else {
+        setLoading(true);
+      }
       const response = await getAppliedUser(jobId);
       console.log("Response------------------>", response);
       const appliedUsers = Array.isArray(response?.data)
@@ -283,8 +289,13 @@ const RequestsTab = ({ jobId, onCountUpdate, onDataChange }) => {
       }
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
   }, [jobId, onCountUpdate, onDataChange]);
+
+  const onRefresh = useCallback(() => {
+    fetchRequests(true);
+  }, [fetchRequests]);
 
   useEffect(() => {
     fetchRequests();
@@ -472,38 +483,40 @@ const RequestsTab = ({ jobId, onCountUpdate, onDataChange }) => {
         </View>
       )}
 
-      {/* Filter Section */}
-      <View style={styles.filterSection}>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-          {filters.map((filter) => (
-            <TouchableOpacity
-              key={filter}
-              style={[
-                styles.filterButton,
-                selectedFilter === filter && styles.activeFilterButton,
-              ]}
-              onPress={() => setSelectedFilter(filter)}
-            >
-              <Text
+      {/* Filter Section - Only show when there's data */}
+      {filteredRequests.length > 0 && (
+        <View style={styles.filterSection}>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+            {filters.map((filter) => (
+              <TouchableOpacity
+                key={filter}
                 style={[
-                  styles.filterButtonText,
-                  selectedFilter === filter && styles.activeFilterButtonText,
+                  styles.filterButton,
+                  selectedFilter === filter && styles.activeFilterButton,
                 ]}
+                onPress={() => setSelectedFilter(filter)}
               >
-                {filter}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
+                <Text
+                  style={[
+                    styles.filterButtonText,
+                    selectedFilter === filter && styles.activeFilterButtonText,
+                  ]}
+                >
+                  {filter}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
 
-        {/* Menu Button */}
-        <TouchableOpacity
-          style={styles.menuButton}
-          onPress={() => setShowMenu(!showMenu)}
-        >
-          <Text style={styles.menuButtonText}>⋮</Text>
-        </TouchableOpacity>
-      </View>
+          {/* Menu Button */}
+          <TouchableOpacity
+            style={styles.menuButton}
+            onPress={() => setShowMenu(!showMenu)}
+          >
+            <Text style={styles.menuButtonText}>⋮</Text>
+          </TouchableOpacity>
+        </View>
+      )}
 
       {showMenu && (
         <View style={styles.menuOptions}>
@@ -526,7 +539,10 @@ const RequestsTab = ({ jobId, onCountUpdate, onDataChange }) => {
       )}
 
       {loading ? (
-        <ActivityIndicator size="large" style={{ marginTop: 20 }} />
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#007AFF" />
+          <Text style={styles.loadingText}>Loading requests...</Text>
+        </View>
       ) : (
         <FlatList
           data={filteredRequests}
@@ -534,6 +550,14 @@ const RequestsTab = ({ jobId, onCountUpdate, onDataChange }) => {
           keyExtractor={(item) => item._id}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.listContainer}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              colors={['#007AFF']}
+              tintColor="#007AFF"
+            />
+          }
           ListEmptyComponent={
             <View style={{ alignItems: "center", marginTop: 40 }}>
               <Ionicons
@@ -590,6 +614,7 @@ const RequestsTab = ({ jobId, onCountUpdate, onDataChange }) => {
 const RequestsVerifyTab = ({ jobId, onCountUpdate }) => {
   const [acceptedUsers, setAcceptedUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [selectedUser, setSelectedUser] = useState<any>(null);
   const [verificationCode, setVerificationCode] = useState("");
   const [verifying, setVerifying] = useState(false);
@@ -598,9 +623,13 @@ const RequestsVerifyTab = ({ jobId, onCountUpdate }) => {
   const [jobInitiated, setJobInitiated] = useState(false);
   const [initiatingJob, setInitiatingJob] = useState(false);
 
-  const fetchAcceptedUsers = useCallback(async () => {
+  const fetchAcceptedUsers = useCallback(async (isRefresh = false) => {
     try {
-      setLoading(true);
+      if (isRefresh) {
+        setRefreshing(true);
+      } else {
+        setLoading(true);
+      }
 
       // Fetch both applied users and verification status
       const [appliedResponse, verificationResponse] = await Promise.all([
@@ -664,8 +693,13 @@ const RequestsVerifyTab = ({ jobId, onCountUpdate }) => {
       }
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
   }, [jobId, onCountUpdate]);
+
+  const onRefresh = useCallback(() => {
+    fetchAcceptedUsers(true);
+  }, [fetchAcceptedUsers]);
 
   useEffect(() => {
     fetchAcceptedUsers();
@@ -1074,7 +1108,10 @@ const RequestsVerifyTab = ({ jobId, onCountUpdate }) => {
   if (loading) {
     return (
       <View style={styles.tabContainer}>
-        <ActivityIndicator size="large" style={{ marginTop: 20 }} />
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#007AFF" />
+          <Text style={styles.loadingText}>Loading accepted users...</Text>
+        </View>
       </View>
     );
   }
@@ -1219,6 +1256,14 @@ const RequestsVerifyTab = ({ jobId, onCountUpdate }) => {
             keyExtractor={(item) => item._id}
             showsVerticalScrollIndicator={false}
             contentContainerStyle={styles.listContainer}
+            refreshControl={
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={onRefresh}
+                colors={['#007AFF']}
+                tintColor="#007AFF"
+              />
+            }
           />
 
           {/* Verification Code Section */}
