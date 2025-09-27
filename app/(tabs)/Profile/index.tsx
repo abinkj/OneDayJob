@@ -103,7 +103,10 @@ const Profile: React.FC = () => {
 
     // Get current user to check if they're trying to chat with themselves
     const currentUser = await getCurrentUser();
-    if (currentUser && (currentUser.id === user.id || currentUser._id === user._id)) {
+    if (
+      currentUser &&
+      (currentUser.id === user.id || currentUser._id === user._id)
+    ) {
       Alert.alert("Error", "You cannot chat with yourself");
       return;
     }
@@ -111,9 +114,9 @@ const Profile: React.FC = () => {
     try {
       // Create or get existing conversation with this user
       const userId = user.id || user._id;
-      console.log('Creating conversation with user ID:', userId);
+      console.log("Creating conversation with user ID:", userId);
       const conversation = await createConversation(userId);
-      
+
       // Navigate to chat screen with conversation data
       navigation.navigate("ChatScreen", {
         conversationId: conversation.data._id,
@@ -169,9 +172,9 @@ const Profile: React.FC = () => {
 
   return (
     <View style={styles.container}>
-      <Header 
-        title="Profile" 
-        showEditButton 
+      <Header
+        title="Profile"
+        showEditButton
         onEditPress={handleEdit}
         showChatButton
         onChatPress={handleChat}
@@ -224,7 +227,7 @@ const Profile: React.FC = () => {
         </View>
 
         {/* Experience/Skills Dropdown */}
-        <View style={styles.experienceContainer}>
+        {/* <View style={styles.experienceContainer}>
           <TouchableOpacity
             style={styles.dropdownHeader}
             onPress={toggleDropdown}
@@ -273,10 +276,10 @@ const Profile: React.FC = () => {
               </>
             )}
           </Animated.View>
-        </View>
+        </View> */}
 
         {/* Review */}
-        <View style={styles.reviewContainer}>
+        {/* <View style={styles.reviewContainer}>
           <View style={styles.reviewerInfo}>
             <Image source={review.reviewerImage} style={styles.reviewerImage} />
             <View style={styles.reviewerNameContainer}>
@@ -286,9 +289,9 @@ const Profile: React.FC = () => {
             <Text style={styles.reviewDate}>{review.date}</Text>
           </View>
           <Text style={styles.reviewText}>{review.comment}</Text>
-        </View>
+        </View> */}
 
-        {!isReadyToWork && (
+        {/* {!isReadyToWork && (
           <View style={styles.buttonContainer}>
             <CustomButton
               onPress={() => {}}
@@ -296,10 +299,10 @@ const Profile: React.FC = () => {
               color={Colors.background}
             />
           </View>
-        )}
+        )} */}
       </ScrollView>
 
-      {isReadyToWork && (
+      {/* {isReadyToWork && (
         <View style={styles.fixedBottomContainer}>
           <JobApplicationStatus
             name={`${user?.firstName}`}
@@ -307,7 +310,7 @@ const Profile: React.FC = () => {
             onPress={handleNext}
           />
         </View>
-      )}
+      )} */}
     </View>
   );
 };

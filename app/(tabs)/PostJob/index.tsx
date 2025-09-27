@@ -67,12 +67,12 @@ const PostJobScreen = ({ navigation }) => {
   const [isFlexible, setIsFlexible] = useState(true);
 
   // Time range settings - fromTime and toTime are required for non-flexible jobs
-  const [fromHour, setFromHour] = useState('10');
+  const [fromHour, setFromHour] = useState('00');
   const [fromMinute, setFromMinute] = useState('00');
   const [fromAmPm, setFromAmPm] = useState('AM');
-  const [toHour, setToHour] = useState('12');
+  const [toHour, setToHour] = useState('00');
   const [toMinute, setToMinute] = useState('00');
-  const [toAmPm, setToAmPm] = useState('PM');
+  const [toAmPm, setToAmPm] = useState('AM');
 
   const [selectedValue, setSelectedValue] = useState("mail");
   const [requirements, setRequirements] = useState([]);
@@ -215,6 +215,21 @@ if (response.data && Array.isArray(response.data.data) && response.data.data.len
     if (amPm === 'PM' && h !== 12) h += 12;
     if (amPm === 'AM' && h === 12) h = 0;
     return `${String(h).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
+  };
+
+  // Helper function to validate time is within 12 AM to 11:59 PM range
+  const isValidTimeRange = (hour, minute, amPm) => {
+    // 12 AM to 11:59 PM is valid (00:00 to 23:59 in 24-hour format)
+    const hour24 = parseInt(hour);
+    const minute24 = parseInt(minute);
+    
+    if (amPm === 'AM') {
+      // AM: 12 AM (00:00) to 11:59 AM (11:59)
+      return (hour24 === 12 && minute24 >= 0) || (hour24 >= 1 && hour24 <= 11);
+    } else {
+      // PM: 12 PM (12:00) to 11:59 PM (23:59)
+      return hour24 >= 1 && hour24 <= 12;
+    }
   };
 
   // Time picker increment/decrement functions for FROM time
@@ -455,7 +470,7 @@ const formatJobData = (photoUrls = []) => {
   // Handle date/time based on mode
   if (dateMode === 'onDate' && onDate) {
     // Combine date and time properly
-    const dateTime = combineDateAndTime(onDate, fromHour, fromMinute, fromAmPm);
+    const dateTime = combineDateAndTime(onDate, fromHour, fromMinute, fromAmPm as "AM" | "PM");
     jobData.onDate = dateTime;
     jobData.isFlexible = false;
   } else if (dateMode === 'beforeDate' && beforeDate) {
@@ -498,12 +513,12 @@ const resetAllFields = () => {
   setOnDate(null);
   setBeforeDate(null);
   setIsFlexible(true);
-  setFromHour('10');
+  setFromHour('00');
   setFromMinute('00');
   setFromAmPm('AM');
-  setToHour('12');
+  setToHour('00');
   setToMinute('00');
-  setToAmPm('PM');
+  setToAmPm('AM');
   setSelectedDate(null);
   
   // Reset budget
@@ -640,13 +655,13 @@ const handlePost = async () => {
     setCalendarVisible(false);
   };
 
-  // Handle time preference selection (multiple allowed)
+  // Handle time preference selection (only one allowed)
   const handleTimePreferenceToggle = (timeSlotId) => {
     setSelectedTimePreferences(prev => {
       if (prev.includes(timeSlotId)) {
-        return prev.filter(id => id !== timeSlotId);
+        return []; // Deselect if already selected
       } else {
-        return [...prev, timeSlotId];
+        return [timeSlotId]; // Select only this one
       }
     });
   };
@@ -672,9 +687,22 @@ const handlePost = async () => {
         Alert.alert('Required', 'Please provide a location for onsite jobs');
         return;
       }
+      
+      // Debug logging
+      console.log('Step 2 validation:', {
+        canBeDoneRemotely,
+        selectedLocation: !!selectedLocation,
+        taskAddress
+      });
     }
 
     if (currentStep === 3) {
+      // Check if no time preference is selected
+      if (selectedTimePreferences.length === 0) {
+        Alert.alert('Time Preference Required', 'Please select a time preference for your job');
+        return;
+      }
+      
       // Validate time fields for non-flexible jobs
       if (!isFlexible) {
         if (!fromHour || !fromMinute || !fromAmPm) {
@@ -692,6 +720,36 @@ const handlePost = async () => {
         
         if (fromTime24 >= toTime24) {
           Alert.alert('Invalid Time', 'End time must be after start time');
+          return;
+        }
+      }
+      
+      // Validate time selection when time preference is selected
+      if (selectedTimePreferences.length > 0) {
+        // Check if time is still at initial values (00:00 AM)
+        if (fromHour === '00' && fromMinute === '00' && fromAmPm === 'AM' && 
+            toHour === '00' && toMinute === '00' && toAmPm === 'AM') {
+          Alert.alert('Time Selection Required', 'Please select the time range for your job');
+          return;
+        }
+        
+        // Validate that end time is after start time for time preferences
+        const fromTime24 = get24HourTime(fromHour, fromMinute, fromAmPm);
+        const toTime24 = get24HourTime(toHour, toMinute, toAmPm);
+        
+        if (fromTime24 >= toTime24) {
+          Alert.alert('Invalid Time', 'End time must be after start time');
+          return;
+        }
+        
+        // Validate time is within 12 AM to 11:59 PM range
+        if (!isValidTimeRange(fromHour, fromMinute, fromAmPm)) {
+          Alert.alert('Invalid Time', 'Start time must be between 12 AM and 11:59 PM');
+          return;
+        }
+        
+        if (!isValidTimeRange(toHour, toMinute, toAmPm)) {
+          Alert.alert('Invalid Time', 'End time must be between 12 AM and 11:59 PM');
           return;
         }
       }
@@ -940,7 +998,14 @@ const handlePost = async () => {
         <Text style={styles.switchLabel}>Can this job be done remotely?</Text>
         <CustomSwitch
           value={canBeDoneRemotely}
-          onValueChange={setCanBeDoneRemotely}
+          onValueChange={(value) => {
+            setCanBeDoneRemotely(value);
+            // Clear location data when switching to remote
+            if (value) {
+              setSelectedLocation(null);
+              setTaskAddress('');
+            }
+          }}
         />
       </View>
       {!canBeDoneRemotely && (
@@ -1389,7 +1454,7 @@ const handlePost = async () => {
 
             <View style={styles.detailRow}>
               <Text style={styles.detailLabel}>NO. OF TASKERS REQUIRED</Text>
-              <Text style={styles.detailValue}>{isMultipleVacancy ? vacancyCount : '02'}</Text>
+              <Text style={styles.detailValue}>{isMultipleVacancy ? vacancyCount : '01'}</Text>
             </View>
 
           </View>
@@ -1401,7 +1466,7 @@ const handlePost = async () => {
             <Text style={styles.detailValue}>
               {selectedLocation 
                 ? (selectedLocation.address || `${selectedLocation.city}, ${selectedLocation.state}`)
-                : (taskAddress || 'Downtown, New York')
+                : (taskAddress || 'Remote')
               }
             </Text>
           </View>
@@ -1431,24 +1496,18 @@ const handlePost = async () => {
           )}
 
           {/* Requirements Section */}
-          {(requirements.length > 0 || true) && (
+          {requirements.length > 0 && (
             <>
               <View style={styles.detailRow}>
                 <Text style={styles.detailLabel}>REQUIREMENTS</Text>
               </View>
               <View style={styles.requirementsContainer}>
-                {requirements.length > 0 ?
-                  requirements.map((req, index) => (
-                    <View key={index} style={styles.requirementItemPreview}>
-                      <Ionicons name="checkmark" size={16} color={Colors.primary} />
-                      <Text style={styles.requirementTextPreview}>{req}</Text>
-                    </View>
-                  )) :
-                  <View style={styles.requirementItemPreview}>
+                {requirements.map((req, index) => (
+                  <View key={index} style={styles.requirementItemPreview}>
                     <Ionicons name="checkmark" size={16} color={Colors.primary} />
-                    <Text style={styles.requirementTextPreview}>Pick up van</Text>
+                    <Text style={styles.requirementTextPreview}>{req}</Text>
                   </View>
-                }
+                ))}
               </View>
             </>
           )}

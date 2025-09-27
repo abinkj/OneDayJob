@@ -8,6 +8,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   ActivityIndicator,
+  RefreshControl,
 } from "react-native";
 import AntDesign from "@expo/vector-icons/AntDesign";
 import * as ImagePicker from "expo-image-picker";
@@ -28,6 +29,7 @@ export default function ChatScreen() {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [sending, setSending] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
   const [isTyping, setIsTyping] = useState(false);
@@ -217,7 +219,7 @@ export default function ChatScreen() {
     };
   }, [conversationIdString]);
 
-  const loadMessages = async (userData = null) => {
+  const loadMessages = async (userData = null, isRefresh = false) => {
     try {
       if (!conversationIdString) return;
       
@@ -264,7 +266,16 @@ export default function ChatScreen() {
       
     } catch (error) {
       console.error('Error loading messages:', error);
+    } finally {
+      if (isRefresh) {
+        setRefreshing(false);
+      }
     }
+  };
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    await loadMessages(currentUser, true);
   };
 
   const handleAttachmentSelect = async () => {
@@ -458,6 +469,12 @@ export default function ChatScreen() {
             }, 100);
           }
         }}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={handleRefresh}
+          />
+        }
         ListFooterComponent={
           otherUserTyping ? (
             <View style={{ padding: 10, alignItems: 'center' }}>
