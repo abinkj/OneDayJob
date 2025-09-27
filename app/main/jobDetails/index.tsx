@@ -10,10 +10,15 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { Colors } from "../../../constants/Colors";
-import  styles  from "./styles";
+import styles from "./styles";
 import { JobPost } from "../../../types";
 import { Header } from "../../../components/header";
-import { applyJob, createConversation, getCurrentUser, getEmployeeVerificationStatus } from "../../../services/api";
+import {
+  applyJob,
+  createConversation,
+  getCurrentUser,
+  getEmployeeVerificationStatus,
+} from "../../../services/api";
 import SuccessAnimation from "../../../components/successAnimation";
 import Toast from "react-native-toast-message";
 
@@ -33,7 +38,7 @@ const JobDetails = () => {
     if (jobData) {
       console.log("Job data received:", JSON.stringify(jobData, null, 2));
       setJob(jobData);
-      
+
       // Check verification status if job requires verification
       if (jobData.requiresVerification && jobId) {
         checkVerificationStatus();
@@ -48,17 +53,20 @@ const JobDetails = () => {
 
   const checkVerificationStatus = async () => {
     if (!jobId) return;
-    
+
     try {
       setCheckingVerification(true);
       const response = await getEmployeeVerificationStatus(jobId);
-      
+
       if (response.data.success) {
         setVerificationStatus(response.data.data);
         console.log("Verification status:", response.data.data);
       }
     } catch (error) {
-      console.log("No verification status available or user not assigned to job:", error.message);
+      console.log(
+        "No verification status available or user not assigned to job:",
+        error.message
+      );
       // This is expected for users who haven't applied or been accepted
     } finally {
       setCheckingVerification(false);
@@ -123,7 +131,10 @@ const JobDetails = () => {
     // Get current user to check if they're trying to chat with themselves
     const currentUser = await getCurrentUser();
     const jobPosterId = job.userId._id || job.userId.id;
-    if (currentUser && (currentUser.id === jobPosterId || currentUser._id === jobPosterId)) {
+    if (
+      currentUser &&
+      (currentUser.id === jobPosterId || currentUser._id === jobPosterId)
+    ) {
       Toast.show({
         type: "error",
         text1: "Error",
@@ -134,10 +145,10 @@ const JobDetails = () => {
 
     try {
       // Create or get existing conversation with the job poster
-      console.log('Creating conversation with job poster ID:', jobPosterId);
+      console.log("Creating conversation with job poster ID:", jobPosterId);
       const conversation = await createConversation(jobPosterId);
-      console.log('Conversation created:', conversation);
-      
+      console.log("Conversation created:", conversation);
+
       // Navigate to chat screen with conversation data
       const navigationParams = {
         conversationId: conversation.data._id,
@@ -147,7 +158,7 @@ const JobDetails = () => {
           avatar: job.userId.profilePicture,
         },
       };
-      console.log('Navigating to ChatScreen with params:', navigationParams);
+      console.log("Navigating to ChatScreen with params:", navigationParams);
       navigation.navigate("ChatScreen", navigationParams);
     } catch (error) {
       console.error("Error starting chat:", error);
@@ -211,9 +222,9 @@ const JobDetails = () => {
           <Ionicons name="share-outline" size={24} color={Colors.black} />
         </TouchableOpacity>
       </View> */}
-      <Header 
-        title="Job Details" 
-        showBackButton 
+      <Header
+        title="Job Details"
+        showBackButton
         showChatButton
         onChatPress={handleChat}
       />
@@ -326,47 +337,72 @@ const JobDetails = () => {
             {checkingVerification ? (
               <View style={styles.verificationLoadingContainer}>
                 <ActivityIndicator size="small" color={Colors.primary} />
-                <Text style={styles.verificationLoadingText}>Checking verification status...</Text>
+                <Text style={styles.verificationLoadingText}>
+                  Checking verification status...
+                </Text>
               </View>
             ) : verificationStatus ? (
               <View style={styles.verificationStatusContainer}>
                 <View style={styles.verificationStatusRow}>
-                  <Ionicons 
-                    name={verificationStatus.isVerified ? "checkmark-circle" : "time-outline"} 
-                    size={24} 
-                    color={verificationStatus.isVerified ? "#4CAF50" : "#FF9800"} 
+                  <Ionicons
+                    name={
+                      verificationStatus.isVerified
+                        ? "checkmark-circle"
+                        : "time-outline"
+                    }
+                    size={24}
+                    color={
+                      verificationStatus.isVerified ? "#4CAF50" : "#FF9800"
+                    }
                   />
                   <View style={styles.verificationStatusInfo}>
-                    <Text style={[
-                      styles.verificationStatusText,
-                      { color: verificationStatus.isVerified ? "#4CAF50" : "#FF9800" }
-                    ]}>
-                      {verificationStatus.isVerified ? "Verified" : "Pending Verification"}
+                    <Text
+                      style={[
+                        styles.verificationStatusText,
+                        {
+                          color: verificationStatus.isVerified
+                            ? "#4CAF50"
+                            : "#FF9800",
+                        },
+                      ]}
+                    >
+                      {verificationStatus.isVerified
+                        ? "Verified"
+                        : "Pending Verification"}
                     </Text>
                     <Text style={styles.verificationMessageText}>
                       {verificationStatus.message}
                     </Text>
                   </View>
                 </View>
-                
+
                 {/* Verification Code Display */}
-                {verificationStatus.verificationCode && !verificationStatus.isVerified && (
-                  <View style={styles.verificationCodeContainer}>
-                    <Text style={styles.verificationCodeLabel}>Your Verification Code:</Text>
-                    <View style={styles.verificationCodeBox}>
-                      <Text style={styles.verificationCodeText}>{verificationStatus.verificationCode}</Text>
-                    </View>
-                    <Text style={styles.verificationCodeInstructions}>
-                      📱 Show this code to your employer when you arrive at the job location
-                    </Text>
-                    {verificationStatus.expiresAt && (
-                      <Text style={styles.verificationCodeExpiry}>
-                        ⏰ Code expires: {new Date(verificationStatus.expiresAt).toLocaleString()}
+                {verificationStatus.verificationCode &&
+                  !verificationStatus.isVerified && (
+                    <View style={styles.verificationCodeContainer}>
+                      <Text style={styles.verificationCodeLabel}>
+                        Your Verification Code:
                       </Text>
-                    )}
-                  </View>
-                )}
-                
+                      <View style={styles.verificationCodeBox}>
+                        <Text style={styles.verificationCodeText}>
+                          {verificationStatus.verificationCode}
+                        </Text>
+                      </View>
+                      <Text style={styles.verificationCodeInstructions}>
+                        📱 Show this code to your employer when you arrive at
+                        the job location
+                      </Text>
+                      {verificationStatus.expiresAt && (
+                        <Text style={styles.verificationCodeExpiry}>
+                          ⏰ Code expires:{" "}
+                          {new Date(
+                            verificationStatus.expiresAt
+                          ).toLocaleString()}
+                        </Text>
+                      )}
+                    </View>
+                  )}
+
                 {verificationStatus.isVerified && (
                   <View style={styles.verificationSuccessContainer}>
                     <Text style={styles.verificationSuccessText}>
@@ -374,28 +410,35 @@ const JobDetails = () => {
                     </Text>
                   </View>
                 )}
-                
+
                 {verificationStatus.isExpired && (
                   <View style={styles.verificationErrorContainer}>
                     <Text style={styles.verificationErrorText}>
-                      ⚠️ Your verification code has expired. Please contact your employer.
+                      ⚠️ Your verification code has expired. Please contact your
+                      employer.
                     </Text>
                   </View>
                 )}
-                
+
                 {verificationStatus.isLocked && (
                   <View style={styles.verificationErrorContainer}>
                     <Text style={styles.verificationErrorText}>
-                      🔒 Verification is temporarily locked due to failed attempts.
+                      🔒 Verification is temporarily locked due to failed
+                      attempts.
                     </Text>
                   </View>
                 )}
               </View>
             ) : (
               <View style={styles.verificationNotAssignedContainer}>
-                <Ionicons name="information-circle-outline" size={24} color={Colors.grey} />
+                <Ionicons
+                  name="information-circle-outline"
+                  size={24}
+                  color={Colors.grey}
+                />
                 <Text style={styles.verificationNotAssignedText}>
-                  Verification status will be available after you apply and are accepted for this job.
+                  Verification status will be available after you apply and are
+                  accepted for this job.
                 </Text>
               </View>
             )}
@@ -408,14 +451,17 @@ const JobDetails = () => {
           <View style={styles.employerContainer}>
             <View style={styles.employerAvatar}>
               <Text style={styles.employerInitials}>
-                {job.userId?.firstName?.charAt(0)}{job.userId?.lastName?.charAt(0)}
+                {job.userId?.firstName?.charAt(0)}
+                {job.userId?.lastName?.charAt(0)}
               </Text>
             </View>
             <View style={styles.employerInfo}>
               <Text style={styles.employerName}>
                 {job.userId?.firstName} {job.userId?.lastName}
               </Text>
-              <Text style={styles.employerPhone}>{job.userId?.phoneNumber}</Text>
+              <Text style={styles.employerPhone}>
+                {job.userId?.phoneNumber}
+              </Text>
             </View>
             <TouchableOpacity style={styles.contactButton} onPress={() => {}}>
               <Ionicons name="call-outline" size={20} color={Colors.primary} />

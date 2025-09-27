@@ -779,6 +779,18 @@ const styles = StyleSheet.create({
     color: "#2E7D32",
     lineHeight: 20,
   },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingVertical: 40,
+  },
+  loadingText: {
+    marginTop: 16,
+    fontSize: 16,
+    color: "#666",
+    textAlign: "center",
+  },
 });
 
 export default styles;

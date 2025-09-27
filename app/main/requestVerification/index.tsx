@@ -10,6 +10,7 @@ import {
   ScrollView,
   ActivityIndicator,
   Linking,
+  RefreshControl,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import {
@@ -17,7 +18,11 @@ import {
   SceneRendererProps,
   NavigationState,
 } from "react-native-tab-view";
-import { useNavigation, useRoute, useFocusEffect } from "@react-navigation/native";
+import {
+  useNavigation,
+  useRoute,
+  useFocusEffect,
+} from "@react-navigation/native";
 import styles from "./styles";
 import { Header } from "../../../components/header";
 import ratingStars from "../../../components/ratingStars";
@@ -45,14 +50,7 @@ type Route = {
 type State = NavigationState<Route>;
 
 /* -------------------- Request Card -------------------- */
-const RequestCard = ({ 
-  data, 
-  isSelected, 
-  onSelect, 
-  onAccept, 
-  onReject, 
-  loading = false 
-}) => {
+const RequestCard = ({ data, isSelected, onSelect, loading = false }) => {
   const user = data.user || {};
   const navigation = useNavigation();
 
@@ -60,19 +58,11 @@ const RequestCard = ({
     (navigation as any).navigate("RequestProfile", { userId });
   };
 
-  const handleAccept = () => {
-    onAccept(data._id);
-  };
-
-  const handleReject = () => {
-    onReject(data._id);
-  };
-
   const getStatusInfo = () => {
     switch (data.status) {
-      case 'accepted':
+      case "accepted":
         return { isAccepted: true, isRejected: false };
-      case 'rejected':
+      case "rejected":
         return { isAccepted: false, isRejected: true };
       default:
         return { isAccepted: false, isRejected: false };
@@ -131,17 +121,6 @@ const RequestCard = ({
         )}
       </TouchableOpacity>
 
-      {/* Individual Accept/Reject Buttons */}
-      {!statusInfo.isAccepted && !statusInfo.isRejected && (
-        <View style={styles.actionButtonsContainer}>
-          <AcceptRejectButtons
-            onAccept={handleAccept}
-            onReject={handleReject}
-            loading={loading}
-          />
-        </View>
-      )}
-
       {/* Status Display */}
       {(statusInfo.isAccepted || statusInfo.isRejected) && (
         <View style={styles.statusContainer}>
@@ -174,10 +153,10 @@ const AcceptedUserCard = ({ data, onSelect, isSelected = false }) => {
   };
 
   return (
-    <TouchableOpacity 
+    <TouchableOpacity
       style={[
-        styles.acceptedCardNew, 
-        isSelected && styles.selectedAcceptedCard
+        styles.acceptedCardNew,
+        isSelected && styles.selectedAcceptedCard,
       ]}
       onPress={handleCardPress}
     >
@@ -187,38 +166,49 @@ const AcceptedUserCard = ({ data, onSelect, isSelected = false }) => {
           source={{ uri: user.avatar || "https://via.placeholder.com/50" }}
           style={styles.acceptedProfileImage}
         />
-        
+
         {/* User Info */}
         <View style={styles.acceptedUserInfoNew}>
           <Text style={styles.acceptedUserNameNew}>{user.name}</Text>
-          
+
           {/* Phone Number with Icon */}
           <View style={styles.phoneContainer}>
             <View style={styles.phoneIconContainer}>
               <Ionicons name="call" size={16} color="#007AFF" />
             </View>
-            <TouchableOpacity onPress={() => handleCall(user.phoneNumber || user.phone)}>
+            <TouchableOpacity
+              onPress={() => handleCall(user.phoneNumber || user.phone)}
+            >
               <Text style={styles.phoneNumberNew}>
                 {user.phoneNumber || user.phone || "Not provided"}
               </Text>
             </TouchableOpacity>
           </View>
         </View>
-        
+
         {/* Verification Status Badge */}
         {data.isVerified ? (
-          <View style={[styles.verifiedBadgeNew, { backgroundColor: '#4CAF50' }]}>
+          <View
+            style={[styles.verifiedBadgeNew, { backgroundColor: "#4CAF50" }]}
+          >
             <Text style={styles.verifiedBadgeTextNew}>Verified</Text>
           </View>
         ) : data.verificationStatus ? (
-          <View style={[styles.verifiedBadgeNew, { backgroundColor: '#FF9800' }]}>
+          <View
+            style={[styles.verifiedBadgeNew, { backgroundColor: "#FF9800" }]}
+          >
             <Text style={styles.verifiedBadgeTextNew}>
-              {data.verificationStatus.isExpired ? 'Expired' : 
-               data.verificationStatus.isLocked ? 'Locked' : 'Pending'}
+              {data.verificationStatus.isExpired
+                ? "Expired"
+                : data.verificationStatus.isLocked
+                ? "Locked"
+                : "Pending"}
             </Text>
           </View>
         ) : (
-          <View style={[styles.verifiedBadgeNew, { backgroundColor: '#9E9E9E' }]}>
+          <View
+            style={[styles.verifiedBadgeNew, { backgroundColor: "#9E9E9E" }]}
+          >
             <Text style={styles.verifiedBadgeTextNew}>No Code</Text>
           </View>
         )}
@@ -234,15 +224,20 @@ const RequestsTab = ({ jobId, onCountUpdate, onDataChange }) => {
   const [showMenu, setShowMenu] = useState(false);
   const [requests, setRequests] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
 
   const filters = ["All", "Highly rated", "Budget Friendly"];
 
-  const fetchRequests = useCallback(async () => {
+  const fetchRequests = useCallback(async (isRefresh = false) => {
     try {
-      setLoading(true);
+      if (isRefresh) {
+        setRefreshing(true);
+      } else {
+        setLoading(true);
+      }
       const response = await getAppliedUser(jobId);
-
+      console.log("Response------------------>", response);
       const appliedUsers = Array.isArray(response?.data)
         ? response.data.map((item) => ({
             _id: item._id,
@@ -264,12 +259,18 @@ const RequestsTab = ({ jobId, onCountUpdate, onDataChange }) => {
         : [];
 
       setRequests(appliedUsers);
-      
+
       // Update counts
-      const pending = appliedUsers.filter(req => req.status !== "accepted" && req.status !== "rejected").length;
-      const accepted = appliedUsers.filter(req => req.status === "accepted").length;
-      const verified = appliedUsers.filter(req => req.status === "accepted" && req.isVerified).length;
-      
+      const pending = appliedUsers.filter(
+        (req) => req.status !== "accepted" && req.status !== "rejected"
+      ).length;
+      const accepted = appliedUsers.filter(
+        (req) => req.status === "accepted"
+      ).length;
+      const verified = appliedUsers.filter(
+        (req) => req.status === "accepted" && req.isVerified
+      ).length;
+
       // Notify parent component about data changes
       if (onCountUpdate) {
         onCountUpdate(pending, accepted, verified);
@@ -288,8 +289,13 @@ const RequestsTab = ({ jobId, onCountUpdate, onDataChange }) => {
       }
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
   }, [jobId, onCountUpdate, onDataChange]);
+
+  const onRefresh = useCallback(() => {
+    fetchRequests(true);
+  }, [fetchRequests]);
 
   useEffect(() => {
     fetchRequests();
@@ -297,7 +303,7 @@ const RequestsTab = ({ jobId, onCountUpdate, onDataChange }) => {
 
   const getFilteredRequests = () => {
     if (!Array.isArray(requests)) return [];
-    
+
     // Filter out accepted and rejected applications - only show pending
     const pendingRequests = requests.filter(
       (req) => req.status !== "accepted" && req.status !== "rejected"
@@ -309,7 +315,9 @@ const RequestsTab = ({ jobId, onCountUpdate, onDataChange }) => {
       return pendingRequests.filter((req) => req.user?.rating >= 4.5);
     }
     if (selectedFilter === "Budget Friendly") {
-      return pendingRequests.filter((req) => req.user?.rate && req.user.rate < 50);
+      return pendingRequests.filter(
+        (req) => req.user?.rate && req.user.rate < 50
+      );
     }
 
     return pendingRequests;
@@ -350,7 +358,7 @@ const RequestsTab = ({ jobId, onCountUpdate, onDataChange }) => {
           text2: "Please select at least one applicant.",
         });
       }
-      
+
       const response = await selectApplicants(jobId, selectedRequests);
       if (response.success) {
         Toast.show({
@@ -381,7 +389,7 @@ const RequestsTab = ({ jobId, onCountUpdate, onDataChange }) => {
           text2: "Please select at least one applicant.",
         });
       }
-      
+
       const response = await rejectApplicants(jobId, selectedRequests);
       if (response.success) {
         Toast.show({
@@ -457,8 +465,6 @@ const RequestsTab = ({ jobId, onCountUpdate, onDataChange }) => {
       data={item}
       isSelected={selectedRequests.includes(item._id)}
       onSelect={handleSelectRequest}
-      onAccept={handleIndividualAccept}
-      onReject={handleIndividualReject}
       loading={actionLoading === item._id}
     />
   );
@@ -477,38 +483,40 @@ const RequestsTab = ({ jobId, onCountUpdate, onDataChange }) => {
         </View>
       )}
 
-      {/* Filter Section */}
-      <View style={styles.filterSection}>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-          {filters.map((filter) => (
-            <TouchableOpacity
-              key={filter}
-              style={[
-                styles.filterButton,
-                selectedFilter === filter && styles.activeFilterButton,
-              ]}
-              onPress={() => setSelectedFilter(filter)}
-            >
-              <Text
+      {/* Filter Section - Only show when there's data */}
+      {filteredRequests.length > 0 && (
+        <View style={styles.filterSection}>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+            {filters.map((filter) => (
+              <TouchableOpacity
+                key={filter}
                 style={[
-                  styles.filterButtonText,
-                  selectedFilter === filter && styles.activeFilterButtonText,
+                  styles.filterButton,
+                  selectedFilter === filter && styles.activeFilterButton,
                 ]}
+                onPress={() => setSelectedFilter(filter)}
               >
-                {filter}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
+                <Text
+                  style={[
+                    styles.filterButtonText,
+                    selectedFilter === filter && styles.activeFilterButtonText,
+                  ]}
+                >
+                  {filter}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
 
-        {/* Menu Button */}
-        <TouchableOpacity
-          style={styles.menuButton}
-          onPress={() => setShowMenu(!showMenu)}
-        >
-          <Text style={styles.menuButtonText}>⋮</Text>
-        </TouchableOpacity>
-      </View>
+          {/* Menu Button */}
+          <TouchableOpacity
+            style={styles.menuButton}
+            onPress={() => setShowMenu(!showMenu)}
+          >
+            <Text style={styles.menuButtonText}>⋮</Text>
+          </TouchableOpacity>
+        </View>
+      )}
 
       {showMenu && (
         <View style={styles.menuOptions}>
@@ -531,7 +539,10 @@ const RequestsTab = ({ jobId, onCountUpdate, onDataChange }) => {
       )}
 
       {loading ? (
-        <ActivityIndicator size="large" style={{ marginTop: 20 }} />
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#007AFF" />
+          <Text style={styles.loadingText}>Loading requests...</Text>
+        </View>
       ) : (
         <FlatList
           data={filteredRequests}
@@ -539,13 +550,39 @@ const RequestsTab = ({ jobId, onCountUpdate, onDataChange }) => {
           keyExtractor={(item) => item._id}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.listContainer}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              colors={['#007AFF']}
+              tintColor="#007AFF"
+            />
+          }
           ListEmptyComponent={
-            <View style={{ alignItems: 'center', marginTop: 40 }}>
-              <Ionicons name="checkmark-circle-outline" size={64} color="#ccc" />
-              <Text style={{ textAlign: "center", marginTop: 16, fontSize: 16, color: '#666' }}>
+            <View style={{ alignItems: "center", marginTop: 40 }}>
+              <Ionicons
+                name="checkmark-circle-outline"
+                size={64}
+                color="#ccc"
+              />
+              <Text
+                style={{
+                  textAlign: "center",
+                  marginTop: 16,
+                  fontSize: 16,
+                  color: "#666",
+                }}
+              >
                 No pending requests
               </Text>
-              <Text style={{ textAlign: "center", marginTop: 8, fontSize: 14, color: '#999' }}>
+              <Text
+                style={{
+                  textAlign: "center",
+                  marginTop: 8,
+                  fontSize: 14,
+                  color: "#999",
+                }}
+              >
                 All applications have been processed
               </Text>
             </View>
@@ -577,25 +614,30 @@ const RequestsTab = ({ jobId, onCountUpdate, onDataChange }) => {
 const RequestsVerifyTab = ({ jobId, onCountUpdate }) => {
   const [acceptedUsers, setAcceptedUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [selectedUser, setSelectedUser] = useState<any>(null);
-  const [verificationCode, setVerificationCode] = useState('');
+  const [verificationCode, setVerificationCode] = useState("");
   const [verifying, setVerifying] = useState(false);
   const [verificationStatus, setVerificationStatus] = useState<any>(null);
   const [scheduling, setScheduling] = useState(false);
   const [jobInitiated, setJobInitiated] = useState(false);
   const [initiatingJob, setInitiatingJob] = useState(false);
 
-  const fetchAcceptedUsers = useCallback(async () => {
+  const fetchAcceptedUsers = useCallback(async (isRefresh = false) => {
     try {
-      setLoading(true);
-      
+      if (isRefresh) {
+        setRefreshing(true);
+      } else {
+        setLoading(true);
+      }
+
       // Fetch both applied users and verification status
       const [appliedResponse, verificationResponse] = await Promise.all([
         getAppliedUser(jobId),
-        getJobVerificationStatus(jobId).catch(err => {
+        getJobVerificationStatus(jobId).catch((err) => {
           console.log("No verification status available yet:", err.message);
           return { data: { data: { participants: [] } } };
-        })
+        }),
       ]);
 
       const accepted = Array.isArray(appliedResponse?.data)
@@ -603,10 +645,11 @@ const RequestsVerifyTab = ({ jobId, onCountUpdate }) => {
             .filter((item) => item.status === "accepted")
             .map((item) => {
               // Find verification status for this user
-              const verificationStatus = verificationResponse.data?.data?.participants?.find(
-                (participant: any) => participant.employeeId === item.user.id
-              );
-              
+              const verificationStatus =
+                verificationResponse.data?.data?.participants?.find(
+                  (participant: any) => participant.employeeId === item.user.id
+                );
+
               return {
                 _id: item._id,
                 appliedAt: item.appliedAt,
@@ -620,7 +663,8 @@ const RequestsVerifyTab = ({ jobId, onCountUpdate }) => {
                   avatar: item.user.profilePicture,
                   rating: item.user.rating ?? 0,
                   rate: item.user.rate ?? "$0/hr",
-                  description: item.user.description ?? "No description provided",
+                  description:
+                    item.user.description ?? "No description provided",
                   availability: item.user.availability ?? "Not specified",
                   phoneNumber: item.user.phoneNumber || item.user.phone,
                   email: item.user.email,
@@ -630,14 +674,14 @@ const RequestsVerifyTab = ({ jobId, onCountUpdate }) => {
         : [];
 
       setAcceptedUsers(accepted);
-      
+
       // Store verification status for display
       if (verificationResponse.data?.data) {
         setVerificationStatus(verificationResponse.data.data);
       }
-      
+
       // Update counts
-      const verified = accepted.filter(user => user.isVerified).length;
+      const verified = accepted.filter((user) => user.isVerified).length;
       if (onCountUpdate) {
         onCountUpdate(0, accepted.length, verified);
       }
@@ -649,8 +693,13 @@ const RequestsVerifyTab = ({ jobId, onCountUpdate }) => {
       }
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
   }, [jobId, onCountUpdate]);
+
+  const onRefresh = useCallback(() => {
+    fetchAcceptedUsers(true);
+  }, [fetchAcceptedUsers]);
 
   useEffect(() => {
     fetchAcceptedUsers();
@@ -658,45 +707,47 @@ const RequestsVerifyTab = ({ jobId, onCountUpdate }) => {
 
   const handleVerifyCode = async (code: string) => {
     if (!selectedUser) return;
-    
+
     try {
       setVerifying(true);
-      
+
       console.log("🔍 Testing verification for:", {
         jobId,
         employeeId: selectedUser.user.id,
         employeeName: selectedUser.user.name,
-        verificationCode: code
+        verificationCode: code,
       });
-      
+
       // Call the actual verification API
       const response = await verifyEmployee(jobId, selectedUser.user.id, code);
-      
+
       if (response.data.success) {
         console.log("✅ Verification successful:", response.data);
-        
+
         Toast.show({
           type: "success",
           text1: "Verification Successful",
           text2: `${selectedUser.user.name} has been verified.`,
         });
-        
+
         // Refresh the accepted users list to show updated verification status
         await fetchAcceptedUsers();
-        
+
         setSelectedUser(null);
-        setVerificationCode('');
+        setVerificationCode("");
       } else {
         console.log("❌ Verification failed:", response.data);
         Toast.show({
           type: "error",
           text1: "Verification Failed",
-          text2: response.data.message || "Invalid verification code. Please try again.",
+          text2:
+            response.data.message ||
+            "Invalid verification code. Please try again.",
         });
       }
     } catch (error) {
       console.error("❌ Error verifying code:", error);
-      
+
       // Handle specific error cases
       let errorMessage = "Invalid verification code. Please try again.";
       if (error.response?.data?.message) {
@@ -708,7 +759,7 @@ const RequestsVerifyTab = ({ jobId, onCountUpdate }) => {
       } else if (error.response?.status === 404) {
         errorMessage = "Employee or job not found.";
       }
-      
+
       Toast.show({
         type: "error",
         text1: "Verification Failed",
@@ -721,11 +772,14 @@ const RequestsVerifyTab = ({ jobId, onCountUpdate }) => {
 
   const handleResendCode = async () => {
     if (!selectedUser) return;
-    
+
     try {
       // Call the actual resend codes API
-      const response = await resendVerificationCodes(jobId, "Manual resend requested by employer");
-      
+      const response = await resendVerificationCodes(
+        jobId,
+        "Manual resend requested by employer"
+      );
+
       if (response.data.success) {
         Toast.show({
           type: "success",
@@ -736,24 +790,27 @@ const RequestsVerifyTab = ({ jobId, onCountUpdate }) => {
         Toast.show({
           type: "error",
           text1: "Error",
-          text2: response.data.message || "Failed to resend codes. Please try again.",
+          text2:
+            response.data.message ||
+            "Failed to resend codes. Please try again.",
         });
       }
     } catch (error) {
       console.error("Error resending code:", error);
-      
+
       // Handle specific error cases
       let errorMessage = "Failed to resend codes. Please try again.";
       if (error.response?.data?.message) {
         errorMessage = error.response.data.message;
       } else if (error.response?.status === 403) {
-        errorMessage = "You don't have permission to resend codes for this job.";
+        errorMessage =
+          "You don't have permission to resend codes for this job.";
       } else if (error.response?.status === 404) {
         errorMessage = "Job not found.";
       } else if (error.response?.status === 400) {
         errorMessage = "Cannot resend codes at this time.";
       }
-      
+
       Toast.show({
         type: "error",
         text1: "Error",
@@ -769,16 +826,19 @@ const RequestsVerifyTab = ({ jobId, onCountUpdate }) => {
   const handleScheduleVerification = async () => {
     try {
       setScheduling(true);
-      
+
       // First, try to sync accepted applications with job's assignedUsers
       if (acceptedUsers.length > 0) {
         console.log("Syncing accepted applications with job assignedUsers...");
-        const applicationIds = acceptedUsers.map(user => user._id);
-        
+        const applicationIds = acceptedUsers.map((user) => user._id);
+
         try {
-          const syncResponse = await syncAcceptedApplications(jobId, applicationIds);
+          const syncResponse = await syncAcceptedApplications(
+            jobId,
+            applicationIds
+          );
           console.log("Sync response:", syncResponse);
-          
+
           if (syncResponse.success) {
             Toast.show({
               type: "success",
@@ -787,15 +847,19 @@ const RequestsVerifyTab = ({ jobId, onCountUpdate }) => {
             });
           }
         } catch (syncError) {
-          console.log("Sync failed, continuing with verification scheduling:", syncError.message);
+          console.log(
+            "Sync failed, continuing with verification scheduling:",
+            syncError.message
+          );
           Toast.show({
             type: "warning",
             text1: "Sync Warning",
-            text2: "Could not sync applications, but continuing with verification...",
+            text2:
+              "Could not sync applications, but continuing with verification...",
           });
         }
       }
-      
+
       // For immediate code generation, try force generation first
       console.log("🔄 Attempting immediate code generation...");
       try {
@@ -804,54 +868,64 @@ const RequestsVerifyTab = ({ jobId, onCountUpdate }) => {
           Toast.show({
             type: "success",
             text1: "Codes Generated!",
-            text2: "Verification codes have been generated and sent to your phone.",
+            text2:
+              "Verification codes have been generated and sent to your phone.",
           });
-          
+
           // Refresh the data to show updated status
           await fetchAcceptedUsers();
           return; // Exit early on success
         }
       } catch (forceError) {
-        console.log("⚠️ Force generation failed, trying normal scheduling:", forceError.message);
+        console.log(
+          "⚠️ Force generation failed, trying normal scheduling:",
+          forceError.message
+        );
       }
-      
+
       const response = await scheduleVerification(jobId);
-      
+
       if (response.data.success) {
         Toast.show({
           type: "success",
           text1: "Verification Scheduled",
           text2: "Verification codes will be generated and sent to your phone.",
         });
-        
+
         // Refresh the data to show updated status
         await fetchAcceptedUsers();
       } else {
         Toast.show({
           type: "error",
           text1: "Scheduling Failed",
-          text2: response.data.message || "Failed to schedule verification. Please try again.",
+          text2:
+            response.data.message ||
+            "Failed to schedule verification. Please try again.",
         });
       }
     } catch (error) {
       console.error("Error scheduling verification:", error);
-      
+
       let errorMessage = "Failed to schedule verification. Please try again.";
       if (error.response?.data?.message) {
         errorMessage = error.response.data.message;
       } else if (error.response?.status === 403) {
-        errorMessage = "You don't have permission to schedule verification for this job.";
+        errorMessage =
+          "You don't have permission to schedule verification for this job.";
       } else if (error.response?.status === 404) {
         errorMessage = "Job not found.";
       } else if (error.response?.status === 400) {
         // Check if it's a scheduling issue (job is today or in the past)
-        if (error.response?.data?.message?.includes("schedule") || 
-            error.response?.data?.message?.includes("time") ||
-            error.response?.data?.message?.includes("date") ||
-            error.response?.data?.message?.includes("already passed")) {
-          
-          console.log("⚠️ Normal scheduling failed due to time issues, trying force generation...");
-          
+        if (
+          error.response?.data?.message?.includes("schedule") ||
+          error.response?.data?.message?.includes("time") ||
+          error.response?.data?.message?.includes("date") ||
+          error.response?.data?.message?.includes("already passed")
+        ) {
+          console.log(
+            "⚠️ Normal scheduling failed due to time issues, trying force generation..."
+          );
+
           // Automatically try force generation as fallback
           try {
             const forceResponse = await forceGenerateVerificationCodes(jobId);
@@ -859,9 +933,10 @@ const RequestsVerifyTab = ({ jobId, onCountUpdate }) => {
               Toast.show({
                 type: "success",
                 text1: "Codes Generated!",
-                text2: "Verification codes have been generated and sent to your phone.",
+                text2:
+                  "Verification codes have been generated and sent to your phone.",
               });
-              
+
               // Refresh the data to show updated status
               await fetchAcceptedUsers();
               return; // Exit early on success
@@ -869,13 +944,14 @@ const RequestsVerifyTab = ({ jobId, onCountUpdate }) => {
           } catch (forceError) {
             console.error("❌ Force generation also failed:", forceError);
           }
-          
-          errorMessage = "Cannot schedule verification for jobs today. Use 'Generate Codes Now (Test)' for immediate testing.";
+
+          errorMessage =
+            "Cannot schedule verification for jobs today. Use 'Generate Codes Now (Test)' for immediate testing.";
         } else {
           errorMessage = "Cannot schedule verification at this time.";
         }
       }
-      
+
       Toast.show({
         type: "error",
         text1: "Scheduling Error",
@@ -889,22 +965,23 @@ const RequestsVerifyTab = ({ jobId, onCountUpdate }) => {
   const handleManualCodeGeneration = async () => {
     try {
       setScheduling(true);
-      
+
       console.log("🔄 Attempting manual code generation...");
-      
+
       // First try the normal scheduling approach
       try {
         const response = await scheduleVerification(jobId);
-        
+
         if (response.data.success) {
           console.log("✅ Manual code generation successful:", response.data);
-          
+
           Toast.show({
             type: "success",
             text1: "Codes Generated",
-            text2: "Verification codes have been generated and sent to your phone.",
+            text2:
+              "Verification codes have been generated and sent to your phone.",
           });
-          
+
           // Wait a moment for codes to be processed, then refresh
           setTimeout(async () => {
             await fetchAcceptedUsers();
@@ -912,21 +989,28 @@ const RequestsVerifyTab = ({ jobId, onCountUpdate }) => {
           return;
         }
       } catch (scheduleError) {
-        console.log("⚠️ Normal scheduling failed, trying force generation:", scheduleError.response?.data);
-        
+        console.log(
+          "⚠️ Normal scheduling failed, trying force generation:",
+          scheduleError.response?.data
+        );
+
         // If normal scheduling fails (e.g., job is today), try force generation
         try {
           const forceResponse = await forceGenerateVerificationCodes(jobId);
-          
+
           if (forceResponse.data.success) {
-            console.log("✅ Force code generation successful:", forceResponse.data);
-            
+            console.log(
+              "✅ Force code generation successful:",
+              forceResponse.data
+            );
+
             Toast.show({
               type: "success",
               text1: "Codes Generated (Force)",
-              text2: "Verification codes have been generated immediately for testing.",
+              text2:
+                "Verification codes have been generated immediately for testing.",
             });
-            
+
             // Wait a moment for codes to be processed, then refresh
             setTimeout(async () => {
               await fetchAcceptedUsers();
@@ -934,28 +1018,30 @@ const RequestsVerifyTab = ({ jobId, onCountUpdate }) => {
             return;
           }
         } catch (forceError) {
-          console.log("❌ Force generation also failed:", forceError.response?.data);
+          console.log(
+            "❌ Force generation also failed:",
+            forceError.response?.data
+          );
           throw forceError;
         }
       }
-      
+
       // If we get here, both methods failed
       Toast.show({
         type: "error",
         text1: "Generation Failed",
         text2: "Could not generate codes. Please check backend logs.",
       });
-      
     } catch (error) {
       console.error("❌ Error generating codes manually:", error);
-      
+
       let errorMessage = "Failed to generate codes. Please try again.";
       if (error.response?.data?.message) {
         errorMessage = error.response.data.message;
       } else if (error.response?.data?.errors) {
         errorMessage = error.response.data.errors.join(", ");
       }
-      
+
       Toast.show({
         type: "error",
         text1: "Error",
@@ -969,39 +1055,38 @@ const RequestsVerifyTab = ({ jobId, onCountUpdate }) => {
   const handleStartJob = async () => {
     try {
       setInitiatingJob(true);
-      
+
       console.log("Starting job execution for job:", jobId);
-      
+
       const response = await initiateJobExecution(jobId);
-      
+
       if (response.data.success) {
         setJobInitiated(true);
-        
+
         Toast.show({
           type: "success",
           text1: "Job Started!",
           text2: `Job execution initiated. ${response.data.data.workersNotified} workers have been notified.`,
         });
-        
+
         // Refresh the verification status to show updated state
         await fetchAcceptedUsers();
-        
       } else {
         throw new Error(response.data.message || "Failed to start job");
       }
-      
     } catch (error) {
       console.error("Error starting job:", error);
-      
+
       let errorMessage = "Failed to start job. Please try again.";
       if (error.response?.data?.message) {
         errorMessage = error.response.data.message;
       } else if (error.response?.status === 404) {
         errorMessage = "Job not found.";
       } else if (error.response?.status === 400) {
-        errorMessage = "Cannot start job at this time. Check if all workers are verified.";
+        errorMessage =
+          "Cannot start job at this time. Check if all workers are verified.";
       }
-      
+
       Toast.show({
         type: "error",
         text1: "Start Job Error",
@@ -1013,8 +1098,8 @@ const RequestsVerifyTab = ({ jobId, onCountUpdate }) => {
   };
 
   const renderAcceptedUser = ({ item }) => (
-    <AcceptedUserCard 
-      data={item} 
+    <AcceptedUserCard
+      data={item}
       onSelect={handleUserSelect}
       isSelected={selectedUser?._id === item._id}
     />
@@ -1023,22 +1108,39 @@ const RequestsVerifyTab = ({ jobId, onCountUpdate }) => {
   if (loading) {
     return (
       <View style={styles.tabContainer}>
-        <ActivityIndicator size="large" style={{ marginTop: 20 }} />
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#007AFF" />
+          <Text style={styles.loadingText}>Loading accepted users...</Text>
+        </View>
       </View>
     );
   }
 
-  const verifiedCount = acceptedUsers.filter(user => user.isVerified).length;
+  const verifiedCount = acceptedUsers.filter((user) => user.isVerified).length;
 
   return (
     <View style={styles.tabContainer}>
       {acceptedUsers.length === 0 ? (
-        <View style={{ alignItems: 'center', marginTop: 40 }}>
+        <View style={{ alignItems: "center", marginTop: 40 }}>
           <Ionicons name="people-outline" size={64} color="#ccc" />
-          <Text style={{ textAlign: "center", marginTop: 16, fontSize: 16, color: '#666' }}>
+          <Text
+            style={{
+              textAlign: "center",
+              marginTop: 16,
+              fontSize: 16,
+              color: "#666",
+            }}
+          >
             No accepted applicants yet
           </Text>
-          <Text style={{ textAlign: "center", marginTop: 8, fontSize: 14, color: '#999' }}>
+          <Text
+            style={{
+              textAlign: "center",
+              marginTop: 8,
+              fontSize: 14,
+              color: "#999",
+            }}
+          >
             Accept some requests to see them here
           </Text>
         </View>
@@ -1049,28 +1151,36 @@ const RequestsVerifyTab = ({ jobId, onCountUpdate }) => {
             <View style={styles.verificationStatusHeader}>
               <View style={styles.verificationProgressContainer}>
                 <Text style={styles.verificationProgressText}>
-                  Verification Progress: {verificationStatus.verifiedCount || 0} / {verificationStatus.totalParticipants || 0}
+                  Verification Progress: {verificationStatus.verifiedCount || 0}{" "}
+                  / {verificationStatus.totalParticipants || 0}
                 </Text>
-                {verificationStatus.totalParticipants === 0 && acceptedUsers.length > 0 && (
-                  <Text style={styles.syncWarningText}>
-                    ⚠️ Accepted users need to be synced with the job. Click "Sync & Generate Codes" to fix this.
-                  </Text>
-                )}
+                {verificationStatus.totalParticipants === 0 &&
+                  acceptedUsers.length > 0 && (
+                    <Text style={styles.syncWarningText}>
+                      ⚠️ Accepted users need to be synced with the job. Click
+                      "Sync & Generate Codes" to fix this.
+                    </Text>
+                  )}
                 <View style={styles.progressBar}>
-                  <View 
+                  <View
                     style={[
-                      styles.progressFill, 
-                      { 
-                        width: `${verificationStatus.verificationProgress || 0}%` 
-                      }
-                    ]} 
+                      styles.progressFill,
+                      {
+                        width: `${
+                          verificationStatus.verificationProgress || 0
+                        }%`,
+                      },
+                    ]}
                   />
                 </View>
               </View>
-              
-              {verificationStatus.sessionStatus === 'pending' && (
+
+              {verificationStatus.sessionStatus === "pending" && (
                 <TouchableOpacity
-                  style={[styles.scheduleButton, scheduling && styles.scheduleButtonDisabled]}
+                  style={[
+                    styles.scheduleButton,
+                    scheduling && styles.scheduleButtonDisabled,
+                  ]}
                   onPress={handleScheduleVerification}
                   disabled={scheduling}
                 >
@@ -1078,62 +1188,84 @@ const RequestsVerifyTab = ({ jobId, onCountUpdate }) => {
                     <ActivityIndicator size="small" color="#fff" />
                   ) : (
                     <Text style={styles.scheduleButtonText}>
-                      {verificationStatus.totalParticipants === 0 ? 'Sync & Generate Codes' : 'Generate Codes'}
+                      {verificationStatus.totalParticipants === 0
+                        ? "Sync & Generate Codes"
+                        : "Generate Codes"}
                     </Text>
                   )}
                 </TouchableOpacity>
               )}
             </View>
           )}
-          
+
           {/* Start Job Button */}
-          {verificationStatus && 
-           verificationStatus.verifiedCount > 0 && 
-           verificationStatus.verifiedCount === verificationStatus.totalParticipants && 
-           !jobInitiated && (
-            <View style={styles.startJobContainer}>
-              <TouchableOpacity
-                style={[styles.startJobButton, initiatingJob && styles.startJobButtonDisabled]}
-                onPress={handleStartJob}
-                disabled={initiatingJob}
-              >
-                {initiatingJob ? (
-                  <ActivityIndicator size="small" color="#fff" />
-                ) : (
-                  <>
-                    <Ionicons name="play-circle" size={24} color="#fff" style={{ marginRight: 8 }} />
-                    <Text style={styles.startJobButtonText}>Start Job</Text>
-                  </>
-                )}
-              </TouchableOpacity>
-              <Text style={styles.startJobDescription}>
-                All workers have been verified. Click to start the job and begin time tracking.
-              </Text>
-            </View>
-          )}
-          
+          {verificationStatus &&
+            verificationStatus.verifiedCount > 0 &&
+            verificationStatus.verifiedCount ===
+              verificationStatus.totalParticipants &&
+            !jobInitiated && (
+              <View style={styles.startJobContainer}>
+                <TouchableOpacity
+                  style={[
+                    styles.startJobButton,
+                    initiatingJob && styles.startJobButtonDisabled,
+                  ]}
+                  onPress={handleStartJob}
+                  disabled={initiatingJob}
+                >
+                  {initiatingJob ? (
+                    <ActivityIndicator size="small" color="#fff" />
+                  ) : (
+                    <>
+                      <Ionicons
+                        name="play-circle"
+                        size={24}
+                        color="#fff"
+                        style={{ marginRight: 8 }}
+                      />
+                      <Text style={styles.startJobButtonText}>Start Job</Text>
+                    </>
+                  )}
+                </TouchableOpacity>
+                <Text style={styles.startJobDescription}>
+                  All workers have been verified. Click to start the job and
+                  begin time tracking.
+                </Text>
+              </View>
+            )}
+
           {/* Job Started Status */}
           {jobInitiated && (
             <View style={styles.jobStartedContainer}>
               <View style={styles.jobStartedHeader}>
                 <Ionicons name="checkmark-circle" size={24} color="#4CAF50" />
-                <Text style={styles.jobStartedTitle}>Job Started Successfully!</Text>
+                <Text style={styles.jobStartedTitle}>
+                  Job Started Successfully!
+                </Text>
               </View>
               <Text style={styles.jobStartedDescription}>
-                Workers have been notified and can now start their work sessions. 
-                You can monitor their progress in the dashboard.
+                Workers have been notified and can now start their work
+                sessions. You can monitor their progress in the dashboard.
               </Text>
             </View>
           )}
-          
+
           <FlatList
             data={acceptedUsers}
             renderItem={renderAcceptedUser}
             keyExtractor={(item) => item._id}
             showsVerticalScrollIndicator={false}
             contentContainerStyle={styles.listContainer}
+            refreshControl={
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={onRefresh}
+                colors={['#007AFF']}
+                tintColor="#007AFF"
+              />
+            }
           />
-          
+
           {/* Verification Code Section */}
           {selectedUser && (
             <VerificationCode
@@ -1160,35 +1292,43 @@ const RequestVerification = () => {
   const [acceptedCount, setAcceptedCount] = useState(0);
   const [verifiedCount, setVerifiedCount] = useState(0);
   const [initialDataLoaded, setInitialDataLoaded] = useState(false);
-  
+
   const [routes] = useState([
     { key: "requests", title: "Requests" },
     { key: "requestsVerify", title: "Accepted" },
   ]);
 
-  const handleCountUpdate = useCallback((pending: number, accepted: number, verified: number) => {
-    setPendingCount(pending);
-    setAcceptedCount(accepted);
-    setVerifiedCount(verified);
-  }, []);
+  const handleCountUpdate = useCallback(
+    (pending: number, accepted: number, verified: number) => {
+      setPendingCount(pending);
+      setAcceptedCount(accepted);
+      setVerifiedCount(verified);
+    },
+    []
+  );
 
   // Handle initial data load and smart tab switching
-  const handleDataChange = useCallback((data: { pending: number, accepted: number, total: number }) => {
-    if (!initialDataLoaded) {
-      setInitialDataLoaded(true);
-      
-      // Smart tab switching logic:
-      // - If there are pending requests, stay on Requests tab (index 0)
-      // - If no pending but there are accepted, switch to Accepted tab (index 1)
-      // - If no data at all, stay on Requests tab
-      if (data.pending === 0 && data.accepted > 0 && data.total > 0) {
-        // Only switch if there are no pending requests but there are accepted ones
-        console.log('Auto-switching to Accepted tab: no pending requests but accepted users exist');
-        onIndexChange(1);
+  const handleDataChange = useCallback(
+    (data: { pending: number; accepted: number; total: number }) => {
+      if (!initialDataLoaded) {
+        setInitialDataLoaded(true);
+
+        // Smart tab switching logic:
+        // - If there are pending requests, stay on Requests tab (index 0)
+        // - If no pending but there are accepted, switch to Accepted tab (index 1)
+        // - If no data at all, stay on Requests tab
+        if (data.pending === 0 && data.accepted > 0 && data.total > 0) {
+          // Only switch if there are no pending requests but there are accepted ones
+          console.log(
+            "Auto-switching to Accepted tab: no pending requests but accepted users exist"
+          );
+          onIndexChange(1);
+        }
+        // If there are pending requests or no data, stay on Requests tab (index 0)
       }
-      // If there are pending requests or no data, stay on Requests tab (index 0)
-    }
-  }, [initialDataLoaded]);
+    },
+    [initialDataLoaded]
+  );
 
   // Reset when navigating to this screen
   useFocusEffect(
@@ -1207,14 +1347,16 @@ const RequestVerification = () => {
     switch (route.key) {
       case "requests":
         return (
-          <RequestsTab 
-            jobId={jobId} 
+          <RequestsTab
+            jobId={jobId}
             onCountUpdate={handleCountUpdate}
             onDataChange={handleDataChange}
           />
         );
       case "requestsVerify":
-        return <RequestsVerifyTab jobId={jobId} onCountUpdate={handleCountUpdate} />;
+        return (
+          <RequestsVerifyTab jobId={jobId} onCountUpdate={handleCountUpdate} />
+        );
       default:
         return null;
     }
@@ -1246,11 +1388,14 @@ const RequestVerification = () => {
                 index === i ? styles.active : styles.inactive,
               ]}
             >
-              {route.title} {route.key === 'requests' ? `(${pendingCount})` : `(${acceptedCount})`}
+              {route.title}{" "}
+              {route.key === "requests"
+                ? `(${pendingCount})`
+                : `(${acceptedCount})`}
             </Text>
           </TouchableOpacity>
         ))}
-        
+
         {/* Verification Status Indicator */}
         {index === 1 && verifiedCount > 0 && acceptedCount > 0 && (
           <View style={styles.verificationStatus}>
@@ -1259,7 +1404,7 @@ const RequestVerification = () => {
             </Text>
           </View>
         )}
-        
+
         <Animated.View
           style={[
             styles.underline,

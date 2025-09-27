@@ -11,6 +11,7 @@ import {
   UIManager,
   Alert,
   ActivityIndicator,
+  RefreshControl,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import styles from "./styles";
@@ -35,6 +36,7 @@ if (
 const RequestProfile: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [isDropdownVisible, setIsDropdownVisible] = useState(false);
   const dropdownHeight = useRef(new Animated.Value(0)).current;
   const dropdownOpacity = useRef(new Animated.Value(0)).current;
@@ -56,31 +58,36 @@ const RequestProfile: React.FC = () => {
     },
   ];
 
-  useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        setIsLoading(true);
-        const response = await getUserProfile(userId); // 🔥 API call
-        setUser(response?.data || response); // adjust depending on backend response shape
-      } catch (error) {
-        console.error("Error fetching user profile:", error);
-        Alert.alert("Error", "Failed to load profile data");
-      } finally {
+  const fetchUser = async (isRefresh = false) => {
+    try {
+      if (!isRefresh) setIsLoading(true);
+      const response = await getUserProfile(userId); // 🔥 API call
+      setUser(response?.data || response); // adjust depending on backend response shape
+    } catch (error) {
+      console.error("Error fetching user profile:", error);
+      Alert.alert("Error", "Failed to load profile data");
+    } finally {
+      if (isRefresh) {
+        setRefreshing(false);
+      } else {
         setIsLoading(false);
       }
-    };
+    }
+  };
+
+  useEffect(() => {
     fetchUser();
   }, [userId]);
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    await fetchUser(true);
+  };
 
   // Refresh user data on focus
   useEffect(() => {
     const unsubscribe = navigation.addListener("focus", async () => {
-      try {
-        const response = await getUserProfile(userId);
-        setUser(response?.data || response);
-      } catch (error) {
-        console.error("Error refreshing profile:", error);
-      }
+      await fetchUser(true);
     });
     return unsubscribe;
   }, [navigation, userId]);
@@ -129,7 +136,14 @@ const RequestProfile: React.FC = () => {
   return (
     <View style={styles.container}>
       <Header title="Request Profile" showBackButton />
-      <ScrollView>
+      <ScrollView
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={handleRefresh}
+          />
+        }
+      >
         {/* Profile Card */}
         <View style={styles.profileCard}>
           <Image source={profileImageSrc} style={styles.profileImage} />
