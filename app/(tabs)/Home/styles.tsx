@@ -194,7 +194,8 @@ const styles = StyleSheet.create({
     fontFamily: "medium",
     color: Colors.black,
     marginBottom: 12 * DeviceDimensions.heightRatio,
-    width: 268 * DeviceDimensions.widthRatio,
+    flex: 1,              // take remaining space
+  marginRight: 8, 
   },
   jobDetailsContainer: {
     flexDirection: "row",
@@ -249,7 +250,7 @@ const styles = StyleSheet.create({
   statusContainer: {
     backgroundColor: Colors.tabGrey,
     paddingHorizontal: 12 * DeviceDimensions.widthRatio,
-    height: 22,
+    height:22,
     borderRadius: 20,
     justifyContent: "center",
     alignItems: "center",
