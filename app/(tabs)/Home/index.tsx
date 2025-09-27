@@ -441,6 +441,18 @@ const HomeScreen = () => {
     initializeApp();
   }, [dispatch]);
 
+  // Add navigation listener to refresh jobs when returning from JobTimer
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('focus', () => {
+      console.log('HomeScreen focused - refreshing jobs to check for status updates');
+      if (isInitialized) {
+        fetchJobs(true);
+      }
+    });
+
+    return unsubscribe;
+  }, [navigation, isInitialized]);
+
   useEffect(() => {
     const fetchLocationAndJobs = async () => {
       if (!isInitialized) return;
@@ -465,6 +477,8 @@ const HomeScreen = () => {
   const renderJobCard = ({ item }: { item: JobPost & { distance?: number | null } }) => {
     const isInProgress = item.jobStatus?.toLowerCase() === 'in_progress' || 
                         item.status?.toLowerCase() === 'in_progress';
+    const isCompleted = item.jobStatus?.toLowerCase() === 'completed' || 
+                       item.status?.toLowerCase() === 'completed';
     
     const handleJobPress = () => {
       if (isInProgress) {
@@ -522,13 +536,17 @@ const HomeScreen = () => {
           <Text style={styles.jobTitle}>{item.description}</Text>
           <View style={[
             styles.statusContainer,
-            isInProgress && { backgroundColor: '#FF9800' }
+            isInProgress && { backgroundColor: '#FF9800' },
+            isCompleted && { backgroundColor: '#4CAF50' }
           ]}>
             <Text style={[
               styles.statusText,
-              isInProgress && { color: '#fff' }
+              isInProgress && { color: '#fff' },
+              isCompleted && { color: '#fff' }
             ]}>
-              {isInProgress ? "In Progress" : (item.status || "Active")}
+              {isInProgress ? "In Progress" : 
+               isCompleted ? "Completed" : 
+               (item.status || "Active")}
             </Text>
           </View>
         </View>

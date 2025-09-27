@@ -8,7 +8,7 @@ import {
 } from "../utilities/secureStore";
 import { normalizeUser } from "../utilities/asyncStore";
 
-const API_BASE_URL = "http://192.168.0.112:8000/api"; //AJ ip address
+const API_BASE_URL = "http://192.168.1.3:8000/api"; //AJ ip address
 //const API_BASE_URL = 'http://192.168.1.5:8000/api';
 
 const api = axios.create({
