@@ -1,8 +1,9 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import {
   View,
   Text,
   TouchableOpacity,
+  TouchableWithoutFeedback,
   useWindowDimensions,
   Animated,
   FlatList,
@@ -50,15 +51,27 @@ type Route = {
 type State = NavigationState<Route>;
 
 /* -------------------- Request Card -------------------- */
-const RequestCard = ({ data, isSelected, onSelect, loading = false }) => {
+interface RequestCardProps {
+  data: any;
+  isSelected: boolean;
+  onSelect: (id: string) => void;
+  loading?: boolean;
+}
+
+const RequestCard = React.memo(({ data, isSelected, onSelect, loading = false }: RequestCardProps) => {
   const user = data.user || {};
   const navigation = useNavigation();
 
-  const handleProfilePress = (userId: string) => {
+  const handleProfilePress = useCallback((userId: string) => {
     (navigation as any).navigate("RequestProfile", { userId });
-  };
+  }, [navigation]);
 
-  const getStatusInfo = () => {
+  const handleSelect = useCallback(() => {
+    onSelect(data._id);
+  }, [data._id, onSelect]);
+
+  // Memoize status info to prevent recalculation
+  const statusInfo = useMemo(() => {
     switch (data.status) {
       case "accepted":
         return { isAccepted: true, isRejected: false };
@@ -67,16 +80,21 @@ const RequestCard = ({ data, isSelected, onSelect, loading = false }) => {
       default:
         return { isAccepted: false, isRejected: false };
     }
-  };
+  }, [data.status]);
 
-  const statusInfo = getStatusInfo();
+  // Memoize formatted date to prevent recalculation
+  const formattedDate = useMemo(() => {
+    return new Date(data.appliedAt).toLocaleDateString();
+  }, [data.appliedAt]);
+
+  const isDisabled = statusInfo.isAccepted || statusInfo.isRejected;
 
   return (
     <View style={[styles.requestCard, isSelected && styles.selectedCard]}>
       <TouchableOpacity
         style={styles.cardContent}
-        onPress={() => onSelect(data._id)}
-        disabled={statusInfo.isAccepted || statusInfo.isRejected}
+        onPress={handleSelect}
+        disabled={isDisabled}
       >
         <View style={styles.requestHeader}>
           <View style={styles.profileSection}>
@@ -100,9 +118,7 @@ const RequestCard = ({ data, isSelected, onSelect, loading = false }) => {
 
         <View style={styles.row}>
           <Text style={styles.available}>Applied On:</Text>
-          <Text style={styles.available}>
-            {new Date(data.appliedAt).toLocaleDateString()}
-          </Text>
+          <Text style={styles.available}>{formattedDate}</Text>
         </View>
 
         <Text style={styles.requestDescription}>{user.description}</Text>
@@ -112,7 +128,7 @@ const RequestCard = ({ data, isSelected, onSelect, loading = false }) => {
           <Text style={styles.detailValue}>{user.availability}</Text>
         </View>
 
-        {isSelected && !statusInfo.isAccepted && !statusInfo.isRejected && (
+        {isSelected && !isDisabled && (
           <View style={styles.checkboxContainer}>
             <View style={styles.checkbox}>
               <Text style={styles.checkboxText}>✓</Text>
@@ -122,7 +138,7 @@ const RequestCard = ({ data, isSelected, onSelect, loading = false }) => {
       </TouchableOpacity>
 
       {/* Status Display */}
-      {(statusInfo.isAccepted || statusInfo.isRejected) && (
+      {isDisabled && (
         <View style={styles.statusContainer}>
           <AcceptRejectButtons
             onAccept={() => {}}
@@ -134,10 +150,16 @@ const RequestCard = ({ data, isSelected, onSelect, loading = false }) => {
       )}
     </View>
   );
-};
+});
 
 /* -------------------- Accepted User Card -------------------- */
-const AcceptedUserCard = ({ data, onSelect, isSelected = false }) => {
+interface AcceptedUserCardProps {
+  data: any;
+  onSelect: (data: any) => void;
+  isSelected?: boolean;
+}
+
+const AcceptedUserCard = ({ data, onSelect, isSelected = false }: AcceptedUserCardProps) => {
   const user = data.user || {};
 
   const handleCall = (phoneNumber: string) => {
@@ -218,7 +240,16 @@ const AcceptedUserCard = ({ data, onSelect, isSelected = false }) => {
 };
 
 /* -------------------- Requests Tab -------------------- */
-const RequestsTab = ({ jobId, onCountUpdate, onDataChange }) => {
+interface RequestsTabProps {
+  jobId: string;
+  onCountUpdate: (pending: number, accepted: number, verified: number) => void;
+  onDataChange: (data: { pending: number; accepted: number; total: number }) => void;
+  onDataUpdate: (data: { pending: number; accepted: number; total: number }) => void;
+  refreshTrigger: number;
+  onTriggerRefresh: () => void;
+}
+
+const RequestsTab = ({ jobId, onCountUpdate, onDataChange, onDataUpdate, refreshTrigger, onTriggerRefresh }: RequestsTabProps) => {
   const [selectedFilter, setSelectedFilter] = useState("All");
   const [selectedRequests, setSelectedRequests] = useState<string[]>([]);
   const [showMenu, setShowMenu] = useState(false);
@@ -226,11 +257,13 @@ const RequestsTab = ({ jobId, onCountUpdate, onDataChange }) => {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [hasInitiallyLoaded, setHasInitiallyLoaded] = useState(false);
 
   const filters = ["All", "Highly rated", "Budget Friendly"];
 
   const fetchRequests = useCallback(async (isRefresh = false) => {
     try {
+      console.log("📡 Fetching applied users for jobId:", jobId, "isRefresh:", isRefresh);
       if (isRefresh) {
         setRefreshing(true);
       } else {
@@ -278,6 +311,9 @@ const RequestsTab = ({ jobId, onCountUpdate, onDataChange }) => {
       if (onDataChange) {
         onDataChange({ pending, accepted, total: appliedUsers.length });
       }
+      if (onDataUpdate) {
+        onDataUpdate({ pending, accepted, total: appliedUsers.length });
+      }
     } catch (error) {
       console.error("Error fetching applied users:", error);
       setRequests([]);
@@ -295,11 +331,23 @@ const RequestsTab = ({ jobId, onCountUpdate, onDataChange }) => {
 
   const onRefresh = useCallback(() => {
     fetchRequests(true);
-  }, [fetchRequests]);
+  }, []);
 
   useEffect(() => {
-    fetchRequests();
-  }, [fetchRequests]);
+    if (!hasInitiallyLoaded) {
+      console.log("🔄 RequestsTab: Initial load");
+      fetchRequests();
+      setHasInitiallyLoaded(true);
+    }
+  }, [hasInitiallyLoaded]); // Only run once on mount
+
+  // Watch for refreshTrigger changes to refresh data
+  useEffect(() => {
+    if (refreshTrigger > 0) {
+      console.log("🔄 RequestsTab: refreshTrigger changed, fetching data");
+      fetchRequests();
+    }
+  }, [refreshTrigger]); // Remove fetchRequests dependency to prevent loops
 
   const getFilteredRequests = () => {
     if (!Array.isArray(requests)) return [];
@@ -369,6 +417,9 @@ const RequestsTab = ({ jobId, onCountUpdate, onDataChange }) => {
         setSelectedRequests([]);
         // Refresh the requests list
         fetchRequests();
+        // Trigger refresh for the Accepted tab as well
+        console.log("🔄 Triggering refresh after accepting users");
+        onTriggerRefresh();
       }
     } catch (error) {
       console.error("Error selecting applicants:", error);
@@ -423,6 +474,9 @@ const RequestsTab = ({ jobId, onCountUpdate, onDataChange }) => {
           text2: "The applicant has been accepted successfully.",
         });
         fetchRequests();
+        // Trigger refresh for the Accepted tab as well
+        console.log("🔄 Triggering refresh after accepting individual user");
+        onTriggerRefresh();
       }
     } catch (error) {
       console.error("Error accepting applicant:", error);
@@ -611,7 +665,14 @@ const RequestsTab = ({ jobId, onCountUpdate, onDataChange }) => {
 };
 
 /* -------------------- Verify Tab (Accepted Users) -------------------- */
-const RequestsVerifyTab = ({ jobId, onCountUpdate }) => {
+interface RequestsVerifyTabProps {
+  jobId: string;
+  onCountUpdate: (pending: number, accepted: number, verified: number) => void;
+  refreshTrigger: number;
+  onDataUpdate?: (data: { pending: number; accepted: number; total: number }) => void;
+}
+
+const RequestsVerifyTab = ({ jobId, onCountUpdate, refreshTrigger, onDataUpdate }: RequestsVerifyTabProps) => {
   const [acceptedUsers, setAcceptedUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -622,9 +683,11 @@ const RequestsVerifyTab = ({ jobId, onCountUpdate }) => {
   const [scheduling, setScheduling] = useState(false);
   const [jobInitiated, setJobInitiated] = useState(false);
   const [initiatingJob, setInitiatingJob] = useState(false);
+  const [hasInitiallyLoaded, setHasInitiallyLoaded] = useState(false);
 
   const fetchAcceptedUsers = useCallback(async (isRefresh = false) => {
     try {
+      console.log("📡 Fetching accepted users for jobId:", jobId, "isRefresh:", isRefresh);
       if (isRefresh) {
         setRefreshing(true);
       } else {
@@ -685,6 +748,9 @@ const RequestsVerifyTab = ({ jobId, onCountUpdate }) => {
       if (onCountUpdate) {
         onCountUpdate(0, accepted.length, verified);
       }
+      if (onDataUpdate) {
+        onDataUpdate({ pending: 0, accepted: accepted.length, total: accepted.length });
+      }
     } catch (error) {
       console.error("Error fetching accepted users:", error);
       setAcceptedUsers([]);
@@ -699,11 +765,23 @@ const RequestsVerifyTab = ({ jobId, onCountUpdate }) => {
 
   const onRefresh = useCallback(() => {
     fetchAcceptedUsers(true);
-  }, [fetchAcceptedUsers]);
+  }, []);
 
   useEffect(() => {
-    fetchAcceptedUsers();
-  }, [fetchAcceptedUsers]);
+    if (!hasInitiallyLoaded) {
+      console.log("🔄 RequestsVerifyTab: Initial load");
+      fetchAcceptedUsers();
+      setHasInitiallyLoaded(true);
+    }
+  }, [hasInitiallyLoaded]); // Only run once on mount
+
+  // Watch for refreshTrigger changes to refresh data
+  useEffect(() => {
+    if (refreshTrigger > 0) {
+      console.log("🔄 RequestsVerifyTab: refreshTrigger changed, fetching data");
+      fetchAcceptedUsers();
+    }
+  }, [refreshTrigger]); // Remove fetchAcceptedUsers dependency to prevent loops
 
   const handleVerifyCode = async (code: string) => {
     if (!selectedUser) return;
@@ -1292,6 +1370,7 @@ const RequestVerification = () => {
   const [acceptedCount, setAcceptedCount] = useState(0);
   const [verifiedCount, setVerifiedCount] = useState(0);
   const [initialDataLoaded, setInitialDataLoaded] = useState(false);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   const [routes] = useState([
     { key: "requests", title: "Requests" },
@@ -1306,6 +1385,17 @@ const RequestVerification = () => {
     },
     []
   );
+
+  // Global refresh function that triggers data refresh in all tabs
+  const triggerRefresh = useCallback(() => {
+    console.log("🔄 Triggering data refresh for jobId:", jobId);
+    setRefreshTrigger(prev => prev + 1);
+  }, [jobId]);
+
+  // Expose refresh function for external calls (e.g., after data changes)
+  const refreshData = useCallback(() => {
+    triggerRefresh();
+  }, [triggerRefresh]);
 
   // Handle initial data load and smart tab switching
   const handleDataChange = useCallback(
@@ -1330,6 +1420,15 @@ const RequestVerification = () => {
     [initialDataLoaded]
   );
 
+  // Handle data changes after initial load (e.g., when users are accepted)
+  const handleDataUpdate = useCallback(
+    (data: { pending: number; accepted: number; total: number }) => {
+      console.log("📊 Data updated:", data);
+      // Just log the data update, no automatic tab switching
+    },
+    []
+  );
+
   // Reset when navigating to this screen
   useFocusEffect(
     useCallback(() => {
@@ -1340,7 +1439,8 @@ const RequestVerification = () => {
       setVerifiedCount(0);
       // Always start on Requests tab when first entering
       onIndexChange(0);
-    }, [])
+      console.log("🔄 Screen focused - resetting state");
+    }, []) // Remove automatic refresh to prevent double loading
   );
 
   const renderScene = ({ route }) => {
@@ -1351,11 +1451,19 @@ const RequestVerification = () => {
             jobId={jobId}
             onCountUpdate={handleCountUpdate}
             onDataChange={handleDataChange}
+            onDataUpdate={handleDataUpdate}
+            refreshTrigger={refreshTrigger}
+            onTriggerRefresh={triggerRefresh}
           />
         );
       case "requestsVerify":
         return (
-          <RequestsVerifyTab jobId={jobId} onCountUpdate={handleCountUpdate} />
+          <RequestsVerifyTab 
+            jobId={jobId} 
+            onCountUpdate={handleCountUpdate}
+            refreshTrigger={refreshTrigger}
+            onDataUpdate={handleDataUpdate}
+          />
         );
       default:
         return null;
@@ -1377,23 +1485,21 @@ const RequestVerification = () => {
     return (
       <View style={styles.tabbar}>
         {props.navigationState.routes.map((route, i) => (
-          <TouchableOpacity
+          <TouchableWithoutFeedback
             key={route.key}
             onPress={() => props.jumpTo(route.key)}
-            style={styles.tab}
           >
-            <Text
-              style={[
-                styles.label,
-                index === i ? styles.active : styles.inactive,
-              ]}
-            >
-              {route.title}{" "}
-              {route.key === "requests"
-                ? `(${pendingCount})`
-                : `(${acceptedCount})`}
-            </Text>
-          </TouchableOpacity>
+            <View style={styles.tab}>
+              <Text
+                style={[
+                  styles.label,
+                  index === i ? styles.active : styles.inactive,
+                ]}
+              >
+                {route.title}
+              </Text>
+            </View>
+          </TouchableWithoutFeedback>
         ))}
 
         {/* Verification Status Indicator */}
@@ -1409,7 +1515,7 @@ const RequestVerification = () => {
           style={[
             styles.underline,
             {
-              width: layout.width / 2,
+              width: layout.width / 2.68,
               transform: [{ translateX }],
             },
           ]}
