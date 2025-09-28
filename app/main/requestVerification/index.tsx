@@ -58,99 +58,106 @@ interface RequestCardProps {
   loading?: boolean;
 }
 
-const RequestCard = React.memo(({ data, isSelected, onSelect, loading = false }: RequestCardProps) => {
-  const user = data.user || {};
-  const navigation = useNavigation();
+const RequestCard = React.memo(
+  ({ data, isSelected, onSelect, loading = false }: RequestCardProps) => {
+    const user = data.user || {};
+    const navigation = useNavigation();
 
-  const handleProfilePress = useCallback((userId: string) => {
-    (navigation as any).navigate("RequestProfile", { userId });
-  }, [navigation]);
+    const handleProfilePress = useCallback(
+      (userId: string) => {
+        (navigation as any).navigate("RequestProfile", { userId });
+      },
+      [navigation]
+    );
 
-  const handleSelect = useCallback(() => {
-    onSelect(data._id);
-  }, [data._id, onSelect]);
+    const handleSelect = useCallback(() => {
+      onSelect(data._id);
+    }, [data._id, onSelect]);
 
-  // Memoize status info to prevent recalculation
-  const statusInfo = useMemo(() => {
-    switch (data.status) {
-      case "accepted":
-        return { isAccepted: true, isRejected: false };
-      case "rejected":
-        return { isAccepted: false, isRejected: true };
-      default:
-        return { isAccepted: false, isRejected: false };
-    }
-  }, [data.status]);
+    // Memoize status info to prevent recalculation
+    const statusInfo = useMemo(() => {
+      switch (data.status) {
+        case "accepted":
+          return { isAccepted: true, isRejected: false };
+        case "rejected":
+          return { isAccepted: false, isRejected: true };
+        default:
+          return { isAccepted: false, isRejected: false };
+      }
+    }, [data.status]);
 
-  // Memoize formatted date to prevent recalculation
-  const formattedDate = useMemo(() => {
-    return new Date(data.appliedAt).toLocaleDateString();
-  }, [data.appliedAt]);
+    // Memoize formatted date to prevent recalculation
+    const formattedDate = useMemo(() => {
+      return new Date(data.appliedAt).toLocaleDateString();
+    }, [data.appliedAt]);
 
-  const isDisabled = statusInfo.isAccepted || statusInfo.isRejected;
+    const isDisabled = statusInfo.isAccepted || statusInfo.isRejected;
 
-  return (
-    <View style={[styles.requestCard, isSelected && styles.selectedCard]}>
-      <TouchableOpacity
-        style={styles.cardContent}
-        onPress={handleSelect}
-        disabled={isDisabled}
-      >
-        <View style={styles.requestHeader}>
-          <View style={styles.profileSection}>
-            <Image
-              source={{ uri: user.avatar || "https://via.placeholder.com/40" }}
-              style={styles.profileImage}
-            />
-            <TouchableOpacity
-              style={styles.profileInfo}
-              onPress={() => handleProfilePress(user.id)}
-            >
-              <Text style={styles.profileName}>{user.name}</Text>
-              <View style={styles.ratingContainer}>
-                {ratingStars(user.rating)}
-                <Text style={styles.ratingText}>({user.rating})</Text>
-              </View>
-            </TouchableOpacity>
-          </View>
-          <Text style={styles.rate}>{user.rate}</Text>
-        </View>
-
-        <View style={styles.row}>
-          <Text style={styles.available}>Applied On:</Text>
-          <Text style={styles.available}>{formattedDate}</Text>
-        </View>
-
-        <Text style={styles.requestDescription}>{user.description}</Text>
-
-        <View style={styles.requestDetails}>
-          <Text style={styles.detailText}>Available</Text>
-          <Text style={styles.detailValue}>{user.availability}</Text>
-        </View>
-
-        {isSelected && !isDisabled && (
-          <View style={styles.checkboxContainer}>
-            <View style={styles.checkbox}>
-              <Text style={styles.checkboxText}>✓</Text>
+    return (
+      <View style={[styles.requestCard, isSelected && styles.selectedCard]}>
+        <TouchableOpacity
+          style={styles.cardContent}
+          onPress={handleSelect}
+          disabled={isDisabled}
+        >
+          <View style={styles.requestHeader}>
+            <View style={styles.profileSection}>
+              <Image
+                source={{
+                  uri: user.avatar || "https://via.placeholder.com/40",
+                }}
+                style={styles.profileImage}
+              />
+              <TouchableOpacity
+                style={styles.profileInfo}
+                onPress={() => handleProfilePress(user.id)}
+              >
+                <Text style={styles.profileName}>{user.name}</Text>
+                <View style={styles.ratingContainer}>
+                  {ratingStars(user.rating)}
+                  <Text style={styles.ratingText}>({user.rating})</Text>
+                </View>
+              </TouchableOpacity>
             </View>
+            <Text style={styles.rate}>{user.rate}</Text>
+          </View>
+
+          <View style={styles.row}>
+            <Text style={styles.available}>Applied On:</Text>
+            <Text style={styles.available}>{formattedDate}</Text>
+          </View>
+
+          <Text style={styles.requestDescription}>{user.description}</Text>
+
+          <View style={styles.requestDetails}>
+            <Text style={styles.detailText}>Available</Text>
+            <Text style={styles.detailValue}>{user.availability}</Text>
+          </View>
+
+          {isSelected && !isDisabled && (
+            <View style={styles.checkboxContainer}>
+              <View style={styles.checkbox}>
+                <Text style={styles.checkboxText}>✓</Text>
+              </View>
+            </View>
+          )}
+        </TouchableOpacity>
+
+        {/* Status Display */}
+        {isDisabled && (
+          <View style={styles.statusContainer}>
+            <AcceptRejectButtons
+              onAccept={() => {}}
+              onReject={() => {}}
+              isAccepted={statusInfo.isAccepted}
+              isRejected={statusInfo.isRejected}
+            />
           </View>
         )}
-      </TouchableOpacity>
-
-      {/* Status Display */}
-      {isDisabled && (
-        <View style={styles.statusContainer}>
-          <AcceptRejectButtons
-            onAccept={() => {}}
-            onReject={() => {}}
-            isAccepted={statusInfo.isAccepted}
-            isRejected={statusInfo.isRejected}
-          />
-        </View>
-      )}
-    </View>
-  );
-});
+      </View>
+    );
+  }
+);
 
 /* -------------------- Accepted User Card -------------------- */
 interface AcceptedUserCardProps {
@@ -159,7 +166,11 @@ interface AcceptedUserCardProps {
   isSelected?: boolean;
 }
 
-const AcceptedUserCard = ({ data, onSelect, isSelected = false }: AcceptedUserCardProps) => {
+const AcceptedUserCard = ({
+  data,
+  onSelect,
+  isSelected = false,
+}: AcceptedUserCardProps) => {
   const user = data.user || {};
 
   const handleCall = (phoneNumber: string) => {
@@ -243,13 +254,28 @@ const AcceptedUserCard = ({ data, onSelect, isSelected = false }: AcceptedUserCa
 interface RequestsTabProps {
   jobId: string;
   onCountUpdate: (pending: number, accepted: number, verified: number) => void;
-  onDataChange: (data: { pending: number; accepted: number; total: number }) => void;
-  onDataUpdate: (data: { pending: number; accepted: number; total: number }) => void;
+  onDataChange: (data: {
+    pending: number;
+    accepted: number;
+    total: number;
+  }) => void;
+  onDataUpdate: (data: {
+    pending: number;
+    accepted: number;
+    total: number;
+  }) => void;
   refreshTrigger: number;
   onTriggerRefresh: () => void;
 }
 
-const RequestsTab = ({ jobId, onCountUpdate, onDataChange, onDataUpdate, refreshTrigger, onTriggerRefresh }: RequestsTabProps) => {
+const RequestsTab = ({
+  jobId,
+  onCountUpdate,
+  onDataChange,
+  onDataUpdate,
+  refreshTrigger,
+  onTriggerRefresh,
+}: RequestsTabProps) => {
   const [selectedFilter, setSelectedFilter] = useState("All");
   const [selectedRequests, setSelectedRequests] = useState<string[]>([]);
   const [showMenu, setShowMenu] = useState(false);
@@ -261,73 +287,84 @@ const RequestsTab = ({ jobId, onCountUpdate, onDataChange, onDataUpdate, refresh
 
   const filters = ["All", "Highly rated", "Budget Friendly"];
 
-  const fetchRequests = useCallback(async (isRefresh = false) => {
-    try {
-      console.log("📡 Fetching applied users for jobId:", jobId, "isRefresh:", isRefresh);
-      if (isRefresh) {
-        setRefreshing(true);
-      } else {
-        setLoading(true);
-      }
-      const response = await getAppliedUser(jobId);
-      console.log("Response------------------>", response);
-      const appliedUsers = Array.isArray(response?.data)
-        ? response.data.map((item) => ({
-            _id: item._id,
-            appliedAt: item.appliedAt,
-            status: item.status,
-            acceptedAt: item.acceptedAt,
-            user: {
-              id: item.user.id,
-              name: `${item.user.firstName} ${item.user.lastName}`,
-              avatar: item.user.profilePicture,
-              rating: item.user.rating ?? 0,
-              rate: item.user.rate ?? "$0/hr",
-              description: item.user.description ?? "No description provided",
-              availability: item.user.availability ?? "Not specified",
-              phoneNumber: item.user.phoneNumber || item.user.phone,
-              email: item.user.email,
-            },
-          }))
-        : [];
+  const fetchRequests = useCallback(
+    async (isRefresh = false) => {
+      try {
+        console.log(
+          "📡 Fetching applied users for jobId:",
+          jobId,
+          "isRefresh:",
+          isRefresh
+        );
+        if (isRefresh) {
+          setRefreshing(true);
+        } else {
+          setLoading(true);
+        }
+        const response = await getAppliedUser(jobId);
+        console.log(
+          "Response------------------>",
+          JSON.stringify(response, null, 2)
+        );
+        const appliedUsers = Array.isArray(response?.data)
+          ? response.data.map((item) => ({
+              _id: item._id,
+              appliedAt: item.appliedAt,
+              status: item.status,
+              acceptedAt: item.acceptedAt,
+              user: {
+                id: item.user.id,
+                name: `${item.user.firstName} ${item.user.lastName}`,
+                avatar: item.user.profilePicture,
+                rating: item.user.rating ?? 0,
+                rate: item.user.rate ?? "$0/hr",
+                description: item.user.description ?? "No description provided",
+                availability: item.user.availability ?? "Not specified",
+                phoneNumber: item.user.phoneNumber || item.user.phone,
+                email: item.user.email,
+              },
+            }))
+          : [];
 
-      setRequests(appliedUsers);
+        setRequests(appliedUsers);
 
-      // Update counts
-      const pending = appliedUsers.filter(
-        (req) => req.status !== "accepted" && req.status !== "rejected"
-      ).length;
-      const accepted = appliedUsers.filter(
-        (req) => req.status === "accepted"
-      ).length;
-      const verified = appliedUsers.filter(
-        (req) => req.status === "accepted" && req.isVerified
-      ).length;
+        // Update counts
+        const pending = appliedUsers.filter(
+          (req) => req.status !== "accepted" && req.status !== "rejected"
+        ).length;
+        const accepted = appliedUsers.filter(
+          (req) => req.status === "accepted"
+        ).length;
+        const verified = appliedUsers.filter(
+          (req) => req.status === "accepted" && req.isVerified
+        ).length;
 
-      // Notify parent component about data changes
-      if (onCountUpdate) {
-        onCountUpdate(pending, accepted, verified);
+        // Notify parent component about data changes
+        if (onCountUpdate) {
+          onCountUpdate(pending, accepted, verified);
+        }
+        if (onDataChange) {
+          onDataChange({ pending, accepted, total: appliedUsers.length });
+        }
+        if (onDataUpdate) {
+          onDataUpdate({ pending, accepted, total: appliedUsers.length });
+        }
+      } catch (error) {
+        console.error("Error fetching applied users:", error);
+        setRequests([]);
+        if (onCountUpdate) {
+          onCountUpdate(0, 0, 0);
+        }
+        if (onDataChange) {
+          onDataChange({ pending: 0, accepted: 0, total: 0 });
+        }
+      } finally {
+        setLoading(false);
+        setRefreshing(false);
       }
-      if (onDataChange) {
-        onDataChange({ pending, accepted, total: appliedUsers.length });
-      }
-      if (onDataUpdate) {
-        onDataUpdate({ pending, accepted, total: appliedUsers.length });
-      }
-    } catch (error) {
-      console.error("Error fetching applied users:", error);
-      setRequests([]);
-      if (onCountUpdate) {
-        onCountUpdate(0, 0, 0);
-      }
-      if (onDataChange) {
-        onDataChange({ pending: 0, accepted: 0, total: 0 });
-      }
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  }, [jobId, onCountUpdate, onDataChange]);
+    },
+    [jobId, onCountUpdate, onDataChange]
+  );
 
   const onRefresh = useCallback(() => {
     fetchRequests(true);
@@ -463,56 +500,56 @@ const RequestsTab = ({ jobId, onCountUpdate, onDataChange, onDataUpdate, refresh
   };
 
   // Individual accept/reject handlers
-  const handleIndividualAccept = async (applicationId: string) => {
-    try {
-      setActionLoading(applicationId);
-      const response = await selectApplicants(jobId, [applicationId]);
-      if (response.success) {
-        Toast.show({
-          type: "success",
-          text1: "Applicant Accepted",
-          text2: "The applicant has been accepted successfully.",
-        });
-        fetchRequests();
-        // Trigger refresh for the Accepted tab as well
-        console.log("🔄 Triggering refresh after accepting individual user");
-        onTriggerRefresh();
-      }
-    } catch (error) {
-      console.error("Error accepting applicant:", error);
-      Toast.show({
-        type: "error",
-        text1: "Error",
-        text2: "Failed to accept applicant. Please try again.",
-      });
-    } finally {
-      setActionLoading(null);
-    }
-  };
+  // const handleIndividualAccept = async (applicationId: string) => {
+  //   try {
+  //     setActionLoading(applicationId);
+  //     const response = await selectApplicants(jobId, [applicationId]);
+  //     if (response.success) {
+  //       Toast.show({
+  //         type: "success",
+  //         text1: "Applicant Accepted",
+  //         text2: "The applicant has been accepted successfully.",
+  //       });
+  //       fetchRequests();
+  //       // Trigger refresh for the Accepted tab as well
+  //       console.log("🔄 Triggering refresh after accepting individual user");
+  //       onTriggerRefresh();
+  //     }
+  //   } catch (error) {
+  //     console.error("Error accepting applicant:", error);
+  //     Toast.show({
+  //       type: "error",
+  //       text1: "Error",
+  //       text2: "Failed to accept applicant. Please try again.",
+  //     });
+  //   } finally {
+  //     setActionLoading(null);
+  //   }
+  // };
 
-  const handleIndividualReject = async (applicationId: string) => {
-    try {
-      setActionLoading(applicationId);
-      const response = await rejectApplicants(jobId, [applicationId]);
-      if (response.success) {
-        Toast.show({
-          type: "success",
-          text1: "Applicant Rejected",
-          text2: "The applicant has been rejected successfully.",
-        });
-        fetchRequests();
-      }
-    } catch (error) {
-      console.error("Error rejecting applicant:", error);
-      Toast.show({
-        type: "error",
-        text1: "Error",
-        text2: "Failed to reject applicant. Please try again.",
-      });
-    } finally {
-      setActionLoading(null);
-    }
-  };
+  // const handleIndividualReject = async (applicationId: string) => {
+  //   try {
+  //     setActionLoading(applicationId);
+  //     const response = await rejectApplicants(jobId, [applicationId]);
+  //     if (response.success) {
+  //       Toast.show({
+  //         type: "success",
+  //         text1: "Applicant Rejected",
+  //         text2: "The applicant has been rejected successfully.",
+  //       });
+  //       fetchRequests();
+  //     }
+  //   } catch (error) {
+  //     console.error("Error rejecting applicant:", error);
+  //     Toast.show({
+  //       type: "error",
+  //       text1: "Error",
+  //       text2: "Failed to reject applicant. Please try again.",
+  //     });
+  //   } finally {
+  //     setActionLoading(null);
+  //   }
+  // };
 
   const renderRequest = ({ item }) => (
     <RequestCard
@@ -608,7 +645,7 @@ const RequestsTab = ({ jobId, onCountUpdate, onDataChange, onDataUpdate, refresh
             <RefreshControl
               refreshing={refreshing}
               onRefresh={onRefresh}
-              colors={['#007AFF']}
+              colors={["#007AFF"]}
               tintColor="#007AFF"
             />
           }
@@ -669,10 +706,19 @@ interface RequestsVerifyTabProps {
   jobId: string;
   onCountUpdate: (pending: number, accepted: number, verified: number) => void;
   refreshTrigger: number;
-  onDataUpdate?: (data: { pending: number; accepted: number; total: number }) => void;
+  onDataUpdate?: (data: {
+    pending: number;
+    accepted: number;
+    total: number;
+  }) => void;
 }
 
-const RequestsVerifyTab = ({ jobId, onCountUpdate, refreshTrigger, onDataUpdate }: RequestsVerifyTabProps) => {
+const RequestsVerifyTab = ({
+  jobId,
+  onCountUpdate,
+  refreshTrigger,
+  onDataUpdate,
+}: RequestsVerifyTabProps) => {
   const [acceptedUsers, setAcceptedUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -685,83 +731,96 @@ const RequestsVerifyTab = ({ jobId, onCountUpdate, refreshTrigger, onDataUpdate 
   const [initiatingJob, setInitiatingJob] = useState(false);
   const [hasInitiallyLoaded, setHasInitiallyLoaded] = useState(false);
 
-  const fetchAcceptedUsers = useCallback(async (isRefresh = false) => {
-    try {
-      console.log("📡 Fetching accepted users for jobId:", jobId, "isRefresh:", isRefresh);
-      if (isRefresh) {
-        setRefreshing(true);
-      } else {
-        setLoading(true);
+  const fetchAcceptedUsers = useCallback(
+    async (isRefresh = false) => {
+      try {
+        console.log(
+          "📡 Fetching accepted users for jobId:",
+          jobId,
+          "isRefresh:",
+          isRefresh
+        );
+        if (isRefresh) {
+          setRefreshing(true);
+        } else {
+          setLoading(true);
+        }
+
+        // Fetch both applied users and verification status
+        const [appliedResponse, verificationResponse] = await Promise.all([
+          getAppliedUser(jobId),
+          getJobVerificationStatus(jobId).catch((err) => {
+            console.log("No verification status available yet:", err.message);
+            return { data: { data: { participants: [] } } };
+          }),
+        ]);
+
+        const accepted = Array.isArray(appliedResponse?.data)
+          ? appliedResponse.data
+              .filter((item) => item.status === "accepted")
+              .map((item) => {
+                // Find verification status for this user
+                const verificationStatus =
+                  verificationResponse.data?.data?.participants?.find(
+                    (participant: any) =>
+                      participant.employeeId === item.user.id
+                  );
+
+                return {
+                  _id: item._id,
+                  appliedAt: item.appliedAt,
+                  acceptedAt: item.acceptedAt,
+                  status: item.status,
+                  isVerified: verificationStatus?.isVerified || false,
+                  verificationStatus: verificationStatus,
+                  user: {
+                    id: item.user.id,
+                    name: `${item.user.firstName} ${item.user.lastName}`,
+                    avatar: item.user.profilePicture,
+                    rating: item.user.rating ?? 0,
+                    rate: item.user.rate ?? "$0/hr",
+                    description:
+                      item.user.description ?? "No description provided",
+                    availability: item.user.availability ?? "Not specified",
+                    phoneNumber: item.user.phoneNumber || item.user.phone,
+                    email: item.user.email,
+                  },
+                };
+              })
+          : [];
+
+        setAcceptedUsers(accepted);
+
+        // Store verification status for display
+        if (verificationResponse.data?.data) {
+          setVerificationStatus(verificationResponse.data.data);
+        }
+
+        // Update counts
+        const verified = accepted.filter((user) => user.isVerified).length;
+        if (onCountUpdate) {
+          onCountUpdate(0, accepted.length, verified);
+        }
+        if (onDataUpdate) {
+          onDataUpdate({
+            pending: 0,
+            accepted: accepted.length,
+            total: accepted.length,
+          });
+        }
+      } catch (error) {
+        console.error("Error fetching accepted users:", error);
+        setAcceptedUsers([]);
+        if (onCountUpdate) {
+          onCountUpdate(0, 0, 0);
+        }
+      } finally {
+        setLoading(false);
+        setRefreshing(false);
       }
-
-      // Fetch both applied users and verification status
-      const [appliedResponse, verificationResponse] = await Promise.all([
-        getAppliedUser(jobId),
-        getJobVerificationStatus(jobId).catch((err) => {
-          console.log("No verification status available yet:", err.message);
-          return { data: { data: { participants: [] } } };
-        }),
-      ]);
-
-      const accepted = Array.isArray(appliedResponse?.data)
-        ? appliedResponse.data
-            .filter((item) => item.status === "accepted")
-            .map((item) => {
-              // Find verification status for this user
-              const verificationStatus =
-                verificationResponse.data?.data?.participants?.find(
-                  (participant: any) => participant.employeeId === item.user.id
-                );
-
-              return {
-                _id: item._id,
-                appliedAt: item.appliedAt,
-                acceptedAt: item.acceptedAt,
-                status: item.status,
-                isVerified: verificationStatus?.isVerified || false,
-                verificationStatus: verificationStatus,
-                user: {
-                  id: item.user.id,
-                  name: `${item.user.firstName} ${item.user.lastName}`,
-                  avatar: item.user.profilePicture,
-                  rating: item.user.rating ?? 0,
-                  rate: item.user.rate ?? "$0/hr",
-                  description:
-                    item.user.description ?? "No description provided",
-                  availability: item.user.availability ?? "Not specified",
-                  phoneNumber: item.user.phoneNumber || item.user.phone,
-                  email: item.user.email,
-                },
-              };
-            })
-        : [];
-
-      setAcceptedUsers(accepted);
-
-      // Store verification status for display
-      if (verificationResponse.data?.data) {
-        setVerificationStatus(verificationResponse.data.data);
-      }
-
-      // Update counts
-      const verified = accepted.filter((user) => user.isVerified).length;
-      if (onCountUpdate) {
-        onCountUpdate(0, accepted.length, verified);
-      }
-      if (onDataUpdate) {
-        onDataUpdate({ pending: 0, accepted: accepted.length, total: accepted.length });
-      }
-    } catch (error) {
-      console.error("Error fetching accepted users:", error);
-      setAcceptedUsers([]);
-      if (onCountUpdate) {
-        onCountUpdate(0, 0, 0);
-      }
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  }, [jobId, onCountUpdate]);
+    },
+    [jobId, onCountUpdate]
+  );
 
   const onRefresh = useCallback(() => {
     fetchAcceptedUsers(true);
@@ -778,7 +837,9 @@ const RequestsVerifyTab = ({ jobId, onCountUpdate, refreshTrigger, onDataUpdate 
   // Watch for refreshTrigger changes to refresh data
   useEffect(() => {
     if (refreshTrigger > 0) {
-      console.log("🔄 RequestsVerifyTab: refreshTrigger changed, fetching data");
+      console.log(
+        "🔄 RequestsVerifyTab: refreshTrigger changed, fetching data"
+      );
       fetchAcceptedUsers();
     }
   }, [refreshTrigger]); // Remove fetchAcceptedUsers dependency to prevent loops
@@ -1338,7 +1399,7 @@ const RequestsVerifyTab = ({ jobId, onCountUpdate, refreshTrigger, onDataUpdate 
               <RefreshControl
                 refreshing={refreshing}
                 onRefresh={onRefresh}
-                colors={['#007AFF']}
+                colors={["#007AFF"]}
                 tintColor="#007AFF"
               />
             }
@@ -1389,7 +1450,7 @@ const RequestVerification = () => {
   // Global refresh function that triggers data refresh in all tabs
   const triggerRefresh = useCallback(() => {
     console.log("🔄 Triggering data refresh for jobId:", jobId);
-    setRefreshTrigger(prev => prev + 1);
+    setRefreshTrigger((prev) => prev + 1);
   }, [jobId]);
 
   // Expose refresh function for external calls (e.g., after data changes)
@@ -1458,8 +1519,8 @@ const RequestVerification = () => {
         );
       case "requestsVerify":
         return (
-          <RequestsVerifyTab 
-            jobId={jobId} 
+          <RequestsVerifyTab
+            jobId={jobId}
             onCountUpdate={handleCountUpdate}
             refreshTrigger={refreshTrigger}
             onDataUpdate={handleDataUpdate}

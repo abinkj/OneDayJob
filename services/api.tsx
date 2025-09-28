@@ -442,36 +442,36 @@ export const getJobsByLocation = async (radius = 10, categoryId = null) => {
 export const getJobPostings = async (filters: any = {}) => {
   try {
     const params = new URLSearchParams();
-    
+
     // Add filters to query parameters - REMOVED pagination
-    if (filters.category) params.append('category', filters.category);
-    if (filters.priceSort) params.append('priceSort', filters.priceSort);
-    if (filters.distance) params.append('distance', filters.distance);
-    if (filters.search) params.append('search', filters.search);
-    
+    if (filters.category) params.append("category", filters.category);
+    if (filters.priceSort) params.append("priceSort", filters.priceSort);
+    if (filters.distance) params.append("distance", filters.distance);
+    if (filters.search) params.append("search", filters.search);
+
     // Add user location if available (for distance filtering)
     if (filters.userLocation) {
-      params.append('userLatitude', filters.userLocation.latitude.toString());
-      params.append('userLongitude', filters.userLocation.longitude.toString());
+      params.append("userLatitude", filters.userLocation.latitude.toString());
+      params.append("userLongitude", filters.userLocation.longitude.toString());
     }
 
     const queryString = params.toString();
-    const url = queryString ? `/jobs?${queryString}` : '/jobs';
-    
-    console.log('Fetching jobs with filters:', url, filters);
-    
+    const url = queryString ? `/jobs?${queryString}` : "/jobs";
+
+    console.log("Fetching jobs with filters:", url, filters);
+
     const response = await api.get(url);
-    
+
     // FIXED: Log the actual response structure for debugging
-    console.log('Backend response structure:', {
+    console.log("Backend response structure:", {
       hasData: !!response.data?.data,
       hasJobs: !!response.data?.jobs,
       isArray: Array.isArray(response.data),
       dataType: typeof response.data,
       keysInResponse: Object.keys(response.data || {}),
-      actualStructure: response.data
+      actualStructure: response.data,
     });
-    
+
     return response;
   } catch (error) {
     console.error("Error fetching jobs with filters:", error);
@@ -525,14 +525,24 @@ export const selectApplicants = async (
   return res.data;
 };
 
-// api/jobs.ts
-export const rejectApplicants = async (jobId: string, applicants: string[]) => {
-  console.log("Rejecting applicants for job ID:", jobId, applicants);
-  const res = await api.post(`applications/jobs/${jobId}/reject`, {
-    applicants, // backend expects this in body
+export const rejectApplicants = async (
+  jobId: string,
+  rejectedApplicationIds: string[] // Changed from selectedUserIds
+) => {
+  const res = await api.post(`/jobs/${jobId}/reject-applicants`, {
+    rejectedApplicationIds, // Changed from selectedUserIds
   });
   return res.data;
 };
+
+// api/jobs.ts
+// export const rejectApplicants = async (jobId: string, applicants: string[]) => {
+//   console.log("Rejecting applicants for job ID:", jobId, applicants);
+//   const res = await api.post(`applications/jobs/${jobId}/reject`, {
+//     applicants, // backend expects this in body
+//   });
+//   return res.data;
+// };
 
 // Get user profile by ID
 export const getUserProfile = async (userId: string) => {
@@ -620,10 +630,10 @@ export const updateProfile = (id, data) => api.put(`/users/${id}`, data);
 // Conversation API endpoints
 export const getConversations = async () => {
   try {
-    const response = await api.get('/conversations');
+    const response = await api.get("/conversations");
     return response.data;
   } catch (error) {
-    console.error('Error fetching conversations:', error);
+    console.error("Error fetching conversations:", error);
     throw error;
   }
 };
@@ -633,7 +643,7 @@ export const getConversation = async (conversationId: string) => {
     const response = await api.get(`/conversations/${conversationId}`);
     return response.data;
   } catch (error) {
-    console.error('Error fetching conversation:', error);
+    console.error("Error fetching conversation:", error);
     throw error;
   }
 };
@@ -643,35 +653,42 @@ export const getConversationMessages = async (conversationId: string) => {
     const response = await api.get(`/conversations/${conversationId}/messages`);
     return response.data;
   } catch (error) {
-    console.error('Error fetching conversation messages:', error);
+    console.error("Error fetching conversation messages:", error);
     throw error;
   }
 };
 
 export const createConversation = async (participantId: string) => {
   try {
-    const response = await api.post('/conversations', {
+    const response = await api.post("/conversations", {
       participants: [participantId],
-      type: 'individual',
+      type: "individual",
     });
     return response.data;
   } catch (error) {
-    console.error('Error creating conversation:', error);
+    console.error("Error creating conversation:", error);
     throw error;
   }
 };
 
-export const sendMessage = async (conversationId: string, text: string, type: string = 'text') => {
+export const sendMessage = async (
+  conversationId: string,
+  text: string,
+  type: string = "text"
+) => {
   try {
-    const response = await api.post(`/conversations/${conversationId}/messages`, {
-      content: {
-        text: text,
-      },
-      messageType: type,
-    });
+    const response = await api.post(
+      `/conversations/${conversationId}/messages`,
+      {
+        content: {
+          text: text,
+        },
+        messageType: type,
+      }
+    );
     return response.data;
   } catch (error) {
-    console.error('Error sending message:', error);
+    console.error("Error sending message:", error);
     throw error;
   }
 };
@@ -681,7 +698,7 @@ export const markMessagesAsRead = async (conversationId: string) => {
     const response = await api.put(`/conversations/${conversationId}/read`);
     return response.data;
   } catch (error) {
-    console.error('Error marking messages as read:', error);
+    console.error("Error marking messages as read:", error);
     throw error;
   }
 };
@@ -692,15 +709,19 @@ export const markMessagesAsRead = async (conversationId: string) => {
  * Verify an employee using their verification code
  * POST /api/jobs/:jobId/verify-employee
  */
-export const verifyEmployee = async (jobId: string, employeeId: string, verificationCode: string) => {
+export const verifyEmployee = async (
+  jobId: string,
+  employeeId: string,
+  verificationCode: string
+) => {
   try {
     console.log("Verifying employee:", { jobId, employeeId, verificationCode });
-    
+
     const response = await api.post(`/jobs/${jobId}/verify-employee`, {
       employeeId,
-      verificationCode
+      verificationCode,
     });
-    
+
     console.log("Employee verification response:", response.data);
     return response;
   } catch (error) {
@@ -716,9 +737,9 @@ export const verifyEmployee = async (jobId: string, employeeId: string, verifica
 export const getJobVerificationStatus = async (jobId: string) => {
   try {
     console.log("Getting verification status for job:", jobId);
-    
+
     const response = await api.get(`/jobs/${jobId}/verification-status`);
-    
+
     console.log("Verification status response:", response.data);
     return response;
   } catch (error) {
@@ -731,14 +752,22 @@ export const getJobVerificationStatus = async (jobId: string) => {
  * Resend verification codes for a job
  * POST /api/jobs/:jobId/resend-codes
  */
-export const resendVerificationCodes = async (jobId: string, reason?: string) => {
+export const resendVerificationCodes = async (
+  jobId: string,
+  reason?: string
+) => {
   try {
-    console.log("Resending verification codes for job:", jobId, "Reason:", reason);
-    
+    console.log(
+      "Resending verification codes for job:",
+      jobId,
+      "Reason:",
+      reason
+    );
+
     const response = await api.post(`/jobs/${jobId}/resend-codes`, {
-      reason: reason || "Manual resend requested"
+      reason: reason || "Manual resend requested",
     });
-    
+
     console.log("Resend codes response:", response.data);
     return response;
   } catch (error) {
@@ -754,31 +783,13 @@ export const resendVerificationCodes = async (jobId: string, reason?: string) =>
 export const getEmployeeVerificationStatus = async (jobId: string) => {
   try {
     console.log("Getting employee verification status for job:", jobId);
-    
+
     const response = await api.get(`/jobs/${jobId}/my-verification-status`);
-    
+
     console.log("Employee verification status response:", response.data);
     return response;
   } catch (error) {
     console.error("Error getting employee verification status:", error);
-    throw error;
-  }
-};
-
-/**
- * Get employee's verification code for a job
- * GET /api/jobs/:jobId/my-verification-code
- */
-export const getEmployeeVerificationCode = async (jobId: string) => {
-  try {
-    console.log("Getting employee verification code for job:", jobId);
-    
-    const response = await api.get(`/jobs/${jobId}/my-verification-code`);
-    
-    console.log("Employee verification code response:", response.data);
-    return response;
-  } catch (error) {
-    console.error("Error getting employee verification code:", error);
     throw error;
   }
 };
@@ -790,9 +801,9 @@ export const getEmployeeVerificationCode = async (jobId: string) => {
 export const scheduleVerification = async (jobId: string) => {
   try {
     console.log("Scheduling verification for job:", jobId);
-    
+
     const response = await api.post(`/verification/schedule/${jobId}`);
-    
+
     console.log("Schedule verification response:", response.data);
     return response;
   } catch (error) {
@@ -808,12 +819,12 @@ export const scheduleVerification = async (jobId: string) => {
 export const forceGenerateVerificationCodes = async (jobId: string) => {
   try {
     console.log("Force generating verification codes for job:", jobId);
-    
+
     // Use the resend codes endpoint which generates codes immediately
     const response = await api.post(`/jobs/${jobId}/resend-codes`, {
-      reason: "Force generation for immediate testing"
+      reason: "Force generation for immediate testing",
     });
-    
+
     console.log("Force generate codes response:", response.data);
     return response;
   } catch (error) {
@@ -829,9 +840,9 @@ export const forceGenerateVerificationCodes = async (jobId: string) => {
 export const cancelVerification = async (jobId: string) => {
   try {
     console.log("Cancelling verification for job:", jobId);
-    
+
     const response = await api.post(`/verification/cancel/${jobId}`);
-    
+
     console.log("Cancel verification response:", response.data);
     return response;
   } catch (error) {
@@ -844,12 +855,20 @@ export const cancelVerification = async (jobId: string) => {
  * Sync accepted applications with job's assignedUsers field
  * This is a helper function to fix the mismatch between accepted applications and job assignments
  */
-export const syncAcceptedApplications = async (jobId: string, applicationIds: string[]) => {
+export const syncAcceptedApplications = async (
+  jobId: string,
+  applicationIds: string[]
+) => {
   try {
-    console.log("Syncing accepted applications for job:", jobId, "Applications:", applicationIds);
-    
+    console.log(
+      "Syncing accepted applications for job:",
+      jobId,
+      "Applications:",
+      applicationIds
+    );
+
     const response = await selectApplicants(jobId, applicationIds);
-    
+
     console.log("Sync applications response:", response);
     return response;
   } catch (error) {
@@ -869,9 +888,9 @@ export const syncAcceptedApplications = async (jobId: string, applicationIds: st
 export const initiateJobExecution = async (jobId: string) => {
   try {
     console.log("Initiating job execution for job:", jobId);
-    
+
     const response = await api.post(`/job-timer/jobs/${jobId}/initiate`);
-    
+
     console.log("Job execution initiated:", response.data);
     return response;
   } catch (error) {
@@ -887,10 +906,10 @@ export const initiateJobExecution = async (jobId: string) => {
 export const getJobDashboard = async (jobId: string, refresh = false) => {
   try {
     console.log("Getting dashboard for job:", jobId, "Refresh:", refresh);
-    
+
     const url = `/job-timer/jobs/${jobId}/dashboard?refresh=${refresh}`;
     const response = await api.get(url);
-    
+
     console.log("Dashboard data retrieved:", response.data);
     return response;
   } catch (error) {
@@ -906,9 +925,9 @@ export const getJobDashboard = async (jobId: string, refresh = false) => {
 export const startWorkerSession = async (jobId: string) => {
   try {
     console.log("Starting worker session for job:", jobId);
-    
+
     const response = await api.post(`/job-timer/jobs/${jobId}/sessions/start`);
-    
+
     console.log("Worker session started:", response.data);
     return response;
   } catch (error) {
@@ -921,13 +940,21 @@ export const startWorkerSession = async (jobId: string) => {
  * Get worker session details
  * GET /api/job-timer/jobs/:jobId/sessions/worker
  */
-export const getWorkerSession = async (jobId: string, includeHistory = false) => {
+export const getWorkerSession = async (
+  jobId: string,
+  includeHistory = false
+) => {
   try {
-    console.log("Getting worker session for job:", jobId, "Include history:", includeHistory);
-    
+    console.log(
+      "Getting worker session for job:",
+      jobId,
+      "Include history:",
+      includeHistory
+    );
+
     const url = `/job-timer/jobs/${jobId}/sessions/worker?includeHistory=${includeHistory}`;
     const response = await api.get(url);
-    
+
     console.log("Worker session data retrieved:", response.data);
     return response;
   } catch (error) {
@@ -943,9 +970,9 @@ export const getWorkerSession = async (jobId: string, includeHistory = false) =>
 export const pauseWorkerSession = async (sessionId: string) => {
   try {
     console.log("Pausing worker session:", sessionId);
-    
+
     const response = await api.put(`/job-timer/sessions/${sessionId}/pause`);
-    
+
     console.log("Worker session paused:", response.data);
     return response;
   } catch (error) {
@@ -961,9 +988,9 @@ export const pauseWorkerSession = async (sessionId: string) => {
 export const resumeWorkerSession = async (sessionId: string) => {
   try {
     console.log("Resuming worker session:", sessionId);
-    
+
     const response = await api.put(`/job-timer/sessions/${sessionId}/resume`);
-    
+
     console.log("Worker session resumed:", response.data);
     return response;
   } catch (error) {
@@ -976,14 +1003,17 @@ export const resumeWorkerSession = async (sessionId: string) => {
  * Complete worker session
  * PUT /api/job-timer/sessions/:sessionId/complete
  */
-export const completeWorkerSession = async (sessionId: string, notes = '') => {
+export const completeWorkerSession = async (sessionId: string, notes = "") => {
   try {
     console.log("Completing worker session:", sessionId, "Notes:", notes);
-    
-    const response = await api.put(`/job-timer/sessions/${sessionId}/complete`, {
-      notes
-    });
-    
+
+    const response = await api.put(
+      `/job-timer/sessions/${sessionId}/complete`,
+      {
+        notes,
+      }
+    );
+
     console.log("Worker session completed:", response.data);
     return response;
   } catch (error) {
@@ -996,16 +1026,28 @@ export const completeWorkerSession = async (sessionId: string, notes = '') => {
  * Sync time for worker session
  * PUT /api/job-timer/sessions/:sessionId/sync
  */
-export const syncWorkerTime = async (sessionId: string, additionalSeconds: number, currentStatus: string, heartbeat = false) => {
+export const syncWorkerTime = async (
+  sessionId: string,
+  additionalSeconds: number,
+  currentStatus: string,
+  heartbeat = false
+) => {
   try {
-    console.log("Syncing worker time:", sessionId, "Additional seconds:", additionalSeconds, "Status:", currentStatus);
-    
+    console.log(
+      "Syncing worker time:",
+      sessionId,
+      "Additional seconds:",
+      additionalSeconds,
+      "Status:",
+      currentStatus
+    );
+
     const response = await api.put(`/job-timer/sessions/${sessionId}/sync`, {
       additionalSeconds,
       currentStatus,
-      heartbeat
+      heartbeat,
     });
-    
+
     console.log("Worker time synced:", response.data);
     return response;
   } catch (error) {
@@ -1025,11 +1067,13 @@ export const formatTime = (seconds: number): string => {
   const hours = Math.floor(seconds / 3600);
   const minutes = Math.floor((seconds % 3600) / 60);
   const secs = seconds % 60;
-  
+
   if (hours > 0) {
-    return `${hours}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    return `${hours}:${minutes.toString().padStart(2, "0")}:${secs
+      .toString()
+      .padStart(2, "0")}`;
   }
-  return `${minutes}:${secs.toString().padStart(2, '0')}`;
+  return `${minutes}:${secs.toString().padStart(2, "0")}`;
 };
 
 /**
@@ -1038,7 +1082,7 @@ export const formatTime = (seconds: number): string => {
 export const formatDuration = (seconds: number): string => {
   const hours = Math.floor(seconds / 3600);
   const minutes = Math.floor((seconds % 3600) / 60);
-  
+
   if (hours > 0) {
     return `${hours}h ${minutes}m`;
   }
@@ -1048,12 +1092,13 @@ export const formatDuration = (seconds: number): string => {
 /**
  * Calculate completion percentage
  */
-export const calculateCompletion = (workedSeconds: number, targetHours: number): number => {
+export const calculateCompletion = (
+  workedSeconds: number,
+  targetHours: number
+): number => {
   if (!targetHours) return 0;
   const targetSeconds = targetHours * 3600;
   return Math.min((workedSeconds / targetSeconds) * 100, 100);
 };
 
 export default api;
-
-
