@@ -41,11 +41,33 @@ const styles = StyleSheet.create({
     position: "absolute",
     bottom: 0,
     height: 3,
-    backgroundColor: Colors.whiteBack,
+    backgroundColor: Colors.blue,
     borderBottomEndRadius: 10,
     borderBottomStartRadius: 10,
     left: 28 * DeviceDimensions.widthRatio, // Adjusted for device width ratio
     right: 28 * DeviceDimensions.widthRatio, // Adjusted for device width ratio
+  },
+  // Enhanced status styles
+  statusContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+  statusInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  statusText: {
+    fontSize: 12,
+    fontWeight: '600',
+    marginLeft: 4,
+  },
+  statusDescription: {
+    fontSize: 10,
+    color: Colors.subGrey,
+    fontStyle: 'italic',
+    marginTop: 2,
   },
 });
 export default styles;

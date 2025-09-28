@@ -3,6 +3,8 @@ import { View, Text, StyleSheet, Image, TouchableOpacity } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { Colors } from "../../constants/Colors";
 import { JobCardData } from "../../types";
+import StatusBadge from "../statusBadge";
+import { getJobStatusInfo, getApplicationStatusInfo, getDisplayStatus } from "../../utilities/statusUtils";
 
 const JobCard = ({
   data,
@@ -10,12 +12,16 @@ const JobCard = ({
   onWithdraw,
   onDelete,
   withdraw = false,
+  isEmployer = false,
+  applicationStatus,
 }: {
   data: JobCardData;
   onPress: Function;
   onWithdraw?: Function;
   onDelete?: Function;
   withdraw?: boolean;
+  isEmployer?: boolean;
+  applicationStatus?: string;
 }) => {
   const {
     name,
@@ -32,8 +38,16 @@ const JobCard = ({
     timePreference,
   } = data || {};
 
-  const isApplied = status?.toLowerCase() === "applied";
-  const isInProgress = status?.toLowerCase() === "in_progress" || status?.toLowerCase() === "in progress";
+  // Get the appropriate status for display
+  const displayStatus = getDisplayStatus(status, applicationStatus, isEmployer);
+  
+  // Get status info based on context
+  const statusInfo = isEmployer 
+    ? getJobStatusInfo(displayStatus)
+    : getApplicationStatusInfo(displayStatus);
+
+  const isApplied = displayStatus?.toLowerCase() === "applied" || displayStatus?.toLowerCase() === "accepted";
+  const isInProgress = displayStatus?.toLowerCase() === "in_progress" || displayStatus?.toLowerCase() === "in progress";
 
   const formattedLocation = location?.address
     ? `${location.address}${location.city ? ", " + location.city : ""}${
@@ -66,23 +80,11 @@ const JobCard = ({
           </Text>
         </View>
 
-        <View
-          style={[
-            styles.statusTag,
-            isApplied && { backgroundColor: "#28a745" }, // green background if applied
-            isInProgress && { backgroundColor: "#FF9800" }, // orange background if in progress
-          ]}
-        >
-          <Text
-            style={[
-              styles.statusText,
-              isApplied && { color: "#fff" }, // white text if applied
-              isInProgress && { color: "#fff" }, // white text if in progress
-            ]}
-          >
-            {isApplied ? "Applied" : isInProgress ? "In Progress" : status}
-          </Text>
-        </View>
+        <StatusBadge 
+          statusInfo={statusInfo}
+          size="medium"
+          showIcon={true}
+        />
       </View>
 
       {/* Job Title */}

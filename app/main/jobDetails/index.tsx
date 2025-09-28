@@ -18,7 +18,9 @@ import {
   createConversation,
   getCurrentUser,
   getEmployeeVerificationStatus,
+  getEmployeeVerificationCode,
 } from "../../../services/api";
+import socketService from "../../../services/socketService";
 import SuccessAnimation from "../../../components/successAnimation";
 import Toast from "react-native-toast-message";
 
@@ -33,6 +35,8 @@ const JobDetails = () => {
   const [applied, setApplied] = useState(false);
   const [verificationStatus, setVerificationStatus] = useState<any>(null);
   const [checkingVerification, setCheckingVerification] = useState(false);
+  const [verificationCode, setVerificationCode] = useState<any>(null);
+  const [loadingCode, setLoadingCode] = useState(false);
 
   useEffect(() => {
     if (jobData) {
@@ -42,6 +46,7 @@ const JobDetails = () => {
       // Check verification status if job requires verification
       if (jobData.requiresVerification && jobId) {
         checkVerificationStatus();
+        fetchVerificationCode();
       }
     } else if (jobId) {
       // If only jobId is passed, show error (fallback)
@@ -50,6 +55,63 @@ const JobDetails = () => {
       setError("No job information provided");
     }
   }, [jobId, jobData]);
+
+  // Socket event handlers for verification codes
+  useEffect(() => {
+    if (!jobId || !job?.requiresVerification) return;
+
+    const initializeSocket = async () => {
+      try {
+        // Ensure socket is connected
+        if (!socketService.isSocketConnected()) {
+          console.log("Initializing socket connection...");
+          await socketService.connect();
+        }
+      } catch (error) {
+        console.error("Error initializing socket:", error);
+      }
+    };
+
+    const handleVerificationCodeReceived = (data: any) => {
+      console.log("🔑 Verification code received via Socket.IO:", data);
+      if (data.jobId === jobId) {
+        setVerificationCode({
+          jobId: data.jobId,
+          jobName: data.jobName,
+          code: data.code,
+          timestamp: data.timestamp
+        });
+        Toast.show({
+          type: "success",
+          text1: "Verification Code Received",
+          text2: `Your code for "${data.jobName}" is: ${data.code}`,
+        });
+        // Refresh verification status
+        checkVerificationStatus();
+      }
+    };
+
+    const handleVerificationStatusUpdated = (data: any) => {
+      console.log("📊 Verification status updated via Socket.IO:", data);
+      if (data.jobId === jobId) {
+        // Refresh verification status
+        checkVerificationStatus();
+      }
+    };
+
+    // Initialize socket and set up event listeners
+    initializeSocket().then(() => {
+      // Set up socket event listeners
+      socketService.on('verification-code-received', handleVerificationCodeReceived);
+      socketService.on('verification-status-updated', handleVerificationStatusUpdated);
+    });
+
+    return () => {
+      // Clean up socket listeners
+      socketService.off('verification-code-received', handleVerificationCodeReceived);
+      socketService.off('verification-status-updated', handleVerificationStatusUpdated);
+    };
+  }, [jobId, job?.requiresVerification]);
 
   const checkVerificationStatus = async () => {
     if (!jobId) return;
@@ -70,6 +132,35 @@ const JobDetails = () => {
       // This is expected for users who haven't applied or been accepted
     } finally {
       setCheckingVerification(false);
+    }
+  };
+
+  const fetchVerificationCode = async () => {
+    if (!jobId) return;
+
+    try {
+      setLoadingCode(true);
+      const response = await getEmployeeVerificationCode(jobId);
+
+      if (response.data.success) {
+        setVerificationCode(response.data.data);
+        console.log("Verification code:", response.data.data);
+      }
+    } catch (error) {
+      console.log(
+        "No verification code available:",
+        error.response?.status === 404 ? "Codes not generated yet" : error.message
+      );
+      // Don't show error for 404 (codes not generated yet)
+      if (error.response?.status !== 404) {
+        Toast.show({
+          type: "error",
+          text1: "Error",
+          text2: "Failed to fetch verification code",
+        });
+      }
+    } finally {
+      setLoadingCode(false);
     }
   };
 
@@ -377,31 +468,64 @@ const JobDetails = () => {
                 </View>
 
                 {/* Verification Code Display */}
-                {verificationStatus.verificationCode &&
-                  !verificationStatus.isVerified && (
-                    <View style={styles.verificationCodeContainer}>
+                {verificationCode && !verificationStatus?.isVerified && (
+                  <View style={styles.verificationCodeContainer}>
+                    <View style={styles.verificationCodeHeader}>
                       <Text style={styles.verificationCodeLabel}>
-                        Your Verification Code:
+                        🔑 Your Verification Code:
                       </Text>
-                      <View style={styles.verificationCodeBox}>
-                        <Text style={styles.verificationCodeText}>
-                          {verificationStatus.verificationCode}
-                        </Text>
-                      </View>
-                      <Text style={styles.verificationCodeInstructions}>
-                        📱 Show this code to your employer when you arrive at
-                        the job location
-                      </Text>
-                      {verificationStatus.expiresAt && (
-                        <Text style={styles.verificationCodeExpiry}>
-                          ⏰ Code expires:{" "}
-                          {new Date(
-                            verificationStatus.expiresAt
-                          ).toLocaleString()}
-                        </Text>
-                      )}
+                      <TouchableOpacity
+                        style={styles.refreshCodeButton}
+                        onPress={fetchVerificationCode}
+                        disabled={loadingCode}
+                      >
+                        {loadingCode ? (
+                          <ActivityIndicator size="small" color={Colors.primary} />
+                        ) : (
+                          <Ionicons name="refresh" size={20} color={Colors.primary} />
+                        )}
+                      </TouchableOpacity>
                     </View>
-                  )}
+                    <View style={styles.verificationCodeBox}>
+                      <Text style={styles.verificationCodeText}>
+                        {verificationCode.code}
+                      </Text>
+                    </View>
+                    <Text style={styles.verificationCodeInstructions}>
+                      📱 Show this code to your employer when you arrive at
+                      the job location
+                    </Text>
+                    {verificationCode.expiresAt && (
+                      <Text style={styles.verificationCodeExpiry}>
+                        ⏰ Code expires:{" "}
+                        {new Date(verificationCode.expiresAt).toLocaleString()}
+                      </Text>
+                    )}
+                    {verificationCode.failedAttempts > 0 && (
+                      <Text style={styles.verificationCodeFailedAttempts}>
+                        ⚠️ {verificationCode.failedAttempts} failed verification attempts
+                      </Text>
+                    )}
+                  </View>
+                )}
+
+                {/* No Code Available Message */}
+                {!verificationCode && !loadingCode && verificationStatus && !verificationStatus.isVerified && (
+                  <View style={styles.noCodeContainer}>
+                    <Text style={styles.noCodeText}>
+                      📋 Verification codes have not been generated yet
+                    </Text>
+                    <TouchableOpacity
+                      style={styles.refreshCodeButtonLarge}
+                      onPress={fetchVerificationCode}
+                      disabled={loadingCode}
+                    >
+                      <Text style={styles.refreshCodeButtonText}>
+                        Check for Code
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                )}
 
                 {verificationStatus.isVerified && (
                   <View style={styles.verificationSuccessContainer}>
