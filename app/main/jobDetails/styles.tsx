@@ -389,6 +389,52 @@ const styles = StyleSheet.create({
     textAlign: "center",
     fontStyle: "italic",
   },
+
+  // Enhanced Verification Code Styles
+  verificationCodeHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 12,
+  },
+  refreshCodeButton: {
+    padding: 8,
+    borderRadius: 6,
+    backgroundColor: "#fff",
+    borderWidth: 1,
+    borderColor: Colors.primary,
+  },
+  noCodeContainer: {
+    backgroundColor: "#f8f9fa",
+    padding: 16,
+    borderRadius: 8,
+    marginTop: 16,
+    alignItems: "center",
+  },
+  noCodeText: {
+    fontSize: 14,
+    color: "#666",
+    textAlign: "center",
+    marginBottom: 12,
+  },
+  refreshCodeButtonLarge: {
+    backgroundColor: Colors.primary,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 6,
+  },
+  refreshCodeButtonText: {
+    color: "#fff",
+    fontSize: 14,
+    fontWeight: "500",
+  },
+  verificationCodeFailedAttempts: {
+    fontSize: 12,
+    color: "#FF5722",
+    textAlign: "center",
+    marginTop: 8,
+    fontStyle: "italic",
+  },
 });
 
 export default styles;

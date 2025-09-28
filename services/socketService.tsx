@@ -3,7 +3,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getAccessToken } from '../utilities/secureStore';
 
 // Socket.IO configuration
-const SOCKET_URL = 'http://192.168.1.9:8000'; // Same as your API base URL
+const SOCKET_URL = 'http://192.168.1.3:8000'; // Same as your API base URL
 let socket: Socket | null = null;
 
 // Socket event types
@@ -41,6 +41,19 @@ export interface SocketEvents {
   
   // Presence events
   'user-status-changed': (data: { userId: string; status: string }) => void;
+  
+  // Verification events
+  'verification-code-received': (data: { 
+    jobId: string; 
+    jobName: string;
+    code: string;
+    timestamp: string;
+  }) => void;
+  'verification-status-updated': (data: { 
+    jobId: string; 
+    status: any;
+    timestamp: string;
+  }) => void;
 }
 
 // Socket service class

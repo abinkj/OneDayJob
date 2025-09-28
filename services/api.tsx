@@ -766,6 +766,24 @@ export const getEmployeeVerificationStatus = async (jobId: string) => {
 };
 
 /**
+ * Get employee's verification code for a job
+ * GET /api/jobs/:jobId/my-verification-code
+ */
+export const getEmployeeVerificationCode = async (jobId: string) => {
+  try {
+    console.log("Getting employee verification code for job:", jobId);
+    
+    const response = await api.get(`/jobs/${jobId}/my-verification-code`);
+    
+    console.log("Employee verification code response:", response.data);
+    return response;
+  } catch (error) {
+    console.error("Error getting employee verification code:", error);
+    throw error;
+  }
+};
+
+/**
  * Schedule verification for a job (manual trigger)
  * POST /api/verification/schedule/:jobId
  */
