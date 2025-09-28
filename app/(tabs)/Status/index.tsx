@@ -19,6 +19,7 @@ import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import { Colors } from "../../../constants/Colors";
 import JobCard from "../../../components/jobCard";
+import StatusFilter from "../../../components/statusFilter";
 import {
   deleteJobPosting,
   getAppliedJobsByUserId,
@@ -27,6 +28,7 @@ import {
 } from "../../../services/api";
 import { getUserData } from "../../../utilities/asyncStore";
 import { JobPost } from "../../../types";
+import { getJobStatusInfo, getApplicationStatusInfo, JOB_STATUSES, APPLICATION_STATUSES } from "../../../utilities/statusUtils";
 import styles from "./styles";
 import Toast from "react-native-toast-message";
 
@@ -40,8 +42,10 @@ type State = NavigationState<Route>;
 const MyPostTab = () => {
   const navigation = useNavigation<any>();
   const [posts, setPosts] = useState<JobPost[]>([]);
+  const [filteredPosts, setFilteredPosts] = useState<JobPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = React.useState(false);
+  const [selectedStatus, setSelectedStatus] = useState<string | null>(null);
 
   const handleNext = (jobId: string) => {
     navigation.navigate("RequestVerification", { jobId: jobId });
@@ -49,7 +53,7 @@ const MyPostTab = () => {
 
   const handleDelete = async (jobId: string) => {
     try {
-      const res = await deleteJobPosting(jobId); // make sure you're importing the frontend API fn
+      const res = await deleteJobPosting(jobId);
 
       if (res?.data.success) {
         fetchPosts();
@@ -80,7 +84,9 @@ const MyPostTab = () => {
         return;
       }
       const res = await getJobPostingsByUserId(user.id);
-      setPosts(res.data || []);
+      const postsData = res.data || [];
+      setPosts(postsData);
+      setFilteredPosts(postsData);
     } catch (error) {
       console.error("Error fetching job postings", error);
       setPosts([]);
@@ -92,6 +98,19 @@ const MyPostTab = () => {
       }
     }
   };
+
+  // Filter posts based on selected status
+  React.useEffect(() => {
+    if (selectedStatus === null) {
+      setFilteredPosts(posts);
+    } else {
+      const filtered = posts.filter(post => {
+        const statusInfo = getJobStatusInfo(post.jobStatus || 'posted');
+        return statusInfo.label === selectedStatus;
+      });
+      setFilteredPosts(filtered);
+    }
+  }, [selectedStatus, posts]);
 
   useFocusEffect(
     React.useCallback(() => {
@@ -107,37 +126,14 @@ const MyPostTab = () => {
     );
   }
 
-  if (posts.length === 0) {
-    return (
-      <ScrollView
-        style={styles.scrollContainer}
-        contentContainerStyle={styles.contentContainer}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={() => {
-              setRefreshing(true);
-              fetchPosts(true);
-            }}
-          />
-        }
-      >
-        <View
-          style={{
-            justifyContent: "center",
-            alignItems: "center",
-            flex: 1,
-            padding: 20,
-          }}
-        >
-          <Ionicons name="document-outline" size={64} color={Colors.grey} />
-          <Text style={{ fontSize: 18, color: Colors.grey, marginTop: 16 }}>
-            No job posts yet
-          </Text>
-        </View>
-      </ScrollView>
-    );
-  }
+  // Get available statuses for filtering
+  const availableStatuses = [
+    getJobStatusInfo(JOB_STATUSES.POSTED),
+    getJobStatusInfo(JOB_STATUSES.FILLED),
+    getJobStatusInfo(JOB_STATUSES.IN_PROGRESS),
+    getJobStatusInfo(JOB_STATUSES.COMPLETED),
+    getJobStatusInfo(JOB_STATUSES.CANCELLED),
+  ];
 
   return (
     <ScrollView
@@ -153,14 +149,42 @@ const MyPostTab = () => {
         />
       }
     >
-      {posts.map((post) => (
-        <JobCard
-          key={post._id}
-          data={post}
-          onPress={() => handleNext(post._id)}
-          onDelete={() => handleDelete(post._id)}
+      {/* Always show status filter, even when there are no posts */}
+      {posts.length > 0 && (
+        <StatusFilter
+          statuses={availableStatuses}
+          selectedStatus={selectedStatus}
+          onStatusSelect={setSelectedStatus}
+          showAll={true}
         />
-      ))}
+      )}
+      
+      {filteredPosts.length === 0 ? (
+        <View
+          style={{
+            justifyContent: "center",
+            alignItems: "center",
+            flex: 1,
+            padding: 20,
+            minHeight: 400, // Add minimum height to ensure proper centering
+          }}
+        >
+          <Ionicons name="document-outline" size={64} color={Colors.grey} />
+          <Text style={{ fontSize: 18, color: Colors.grey, marginTop: 16 }}>
+            {selectedStatus ? `No ${selectedStatus.toLowerCase()} jobs` : 'No job posts yet'}
+          </Text>
+        </View>
+      ) : (
+        filteredPosts.map((post) => (
+          <JobCard
+            key={post._id}
+            data={post}
+            onPress={() => handleNext(post._id)}
+            onDelete={() => handleDelete(post._id)}
+            isEmployer={true}
+          />
+        ))
+      )}
     </ScrollView>
   );
 };
@@ -168,8 +192,10 @@ const MyPostTab = () => {
 const AppliedTab = () => {
   const navigation = useNavigation<any>();
   const [appliedJobs, setAppliedJobs] = React.useState<any[]>([]);
+  const [filteredJobs, setFilteredJobs] = React.useState<any[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [refreshing, setRefreshing] = React.useState(false);
+  const [selectedStatus, setSelectedStatus] = React.useState<string | null>(null);
 
   const handleNext = (job: any) => {
     if (job && job._id) {
@@ -250,6 +276,7 @@ const AppliedTab = () => {
       console.log("Valid applications after filtering:", validApplications.length);
       console.log("Filtered out withdrawn applications:", allApplications.length - validApplications.length);
       setAppliedJobs(validApplications);
+      setFilteredJobs(validApplications);
     } catch (error) {
       console.error("Error fetching applied jobs", error);
       setAppliedJobs([]);
@@ -261,6 +288,19 @@ const AppliedTab = () => {
       }
     }
   };
+
+  // Filter applied jobs based on selected status
+  React.useEffect(() => {
+    if (selectedStatus === null) {
+      setFilteredJobs(appliedJobs);
+    } else {
+      const filtered = appliedJobs.filter(application => {
+        const statusInfo = getApplicationStatusInfo(application.status);
+        return statusInfo.label === selectedStatus;
+      });
+      setFilteredJobs(filtered);
+    }
+  }, [selectedStatus, appliedJobs]);
 
   useFocusEffect(
     React.useCallback(() => {
@@ -276,37 +316,13 @@ const AppliedTab = () => {
     );
   }
 
-  if (appliedJobs.length === 0) {
-    return (
-      <ScrollView
-        style={styles.scrollContainer}
-        contentContainerStyle={styles.contentContainer}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={() => {
-              setRefreshing(true);
-              fetchAppliedJobs(true);
-            }}
-          />
-        }
-      >
-        <View
-          style={{
-            justifyContent: "center",
-            alignItems: "center",
-            flex: 1,
-            padding: 20,
-          }}
-        >
-          <Ionicons name="document-outline" size={64} color={Colors.grey} />
-          <Text style={{ fontSize: 18, color: Colors.grey, marginTop: 16 }}>
-            No applied jobs yet
-          </Text>
-        </View>
-      </ScrollView>
-    );
-  }
+  // Get available application statuses for filtering
+  const availableStatuses = [
+    getApplicationStatusInfo(APPLICATION_STATUSES.PENDING),
+    getApplicationStatusInfo(APPLICATION_STATUSES.ACCEPTED),
+    getApplicationStatusInfo(APPLICATION_STATUSES.IN_PROGRESS),
+    getApplicationStatusInfo(APPLICATION_STATUSES.COMPLETED),
+  ];
 
   return (
     <ScrollView
@@ -322,27 +338,56 @@ const AppliedTab = () => {
         />
       }
     >
-      {appliedJobs.map((application) => {
-        // Additional safety check
-        if (!application || !application.job || !application.applicationId) {
-          return null;
-        }
+      {/* Always show status filter, even when there are no applied jobs */}
+      {appliedJobs.length > 0 && (
+        <StatusFilter
+          statuses={availableStatuses}
+          selectedStatus={selectedStatus}
+          onStatusSelect={setSelectedStatus}
+          showAll={true}
+        />
+      )}
+      
+      {filteredJobs.length === 0 ? (
+        <View
+          style={{
+            justifyContent: "center",
+            alignItems: "center",
+            flex: 1,
+            padding: 20,
+            minHeight: 400, // Add minimum height to ensure proper centering
+          }}
+        >
+          <Ionicons name="document-outline" size={64} color={Colors.grey} />
+          <Text style={{ fontSize: 18, color: Colors.grey, marginTop: 16 }}>
+            {selectedStatus ? `No ${selectedStatus.toLowerCase()} applications` : 'No applied jobs yet'}
+          </Text>
+        </View>
+      ) : (
+        filteredJobs.map((application) => {
+          // Additional safety check
+          if (!application || !application.job || !application.applicationId) {
+            return null;
+          }
 
-        return (
-          <JobCard
-            key={application.applicationId}
-            data={{
-              ...application.job,
-              status:  "applied"
-            }}
-            onPress={() => handleNext(application.job)}
-            withdraw={true}
-            onWithdraw={() => 
-              handleWithdraw(application.applicationId, application.job._id)
-            }
-          />
-        );
-      })}
+          return (
+            <JobCard
+              key={application.applicationId}
+              data={{
+                ...application.job,
+                status: application.job.jobStatus || "posted"
+              }}
+              onPress={() => handleNext(application.job)}
+              withdraw={true}
+              onWithdraw={() => 
+                handleWithdraw(application.applicationId, application.job._id)
+              }
+              isEmployer={false}
+              applicationStatus={application.status}
+            />
+          );
+        })
+      )}
     </ScrollView>
   );
 };
