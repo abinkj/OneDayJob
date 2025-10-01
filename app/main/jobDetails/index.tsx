@@ -23,6 +23,7 @@ import {
 import socketService from "../../../services/socketService";
 import SuccessAnimation from "../../../components/successAnimation";
 import Toast from "react-native-toast-message";
+import { useNotifications } from "../../../contexts/NotificationContext";
 
 const JobDetails = () => {
   const navigation = useNavigation<any>();
@@ -37,6 +38,9 @@ const JobDetails = () => {
   const [checkingVerification, setCheckingVerification] = useState(false);
   const [verificationCode, setVerificationCode] = useState<any>(null);
   const [loadingCode, setLoadingCode] = useState(false);
+  
+  // Notification context
+  const { sendVerificationCodeNotification } = useNotifications();
 
   useEffect(() => {
     if (jobData) {
@@ -81,6 +85,10 @@ const JobDetails = () => {
           code: data.code,
           timestamp: data.timestamp
         });
+        
+        // Send notification
+        sendVerificationCodeNotification(data.jobId, data.jobName, data.code);
+        
         Toast.show({
           type: "success",
           text1: "Verification Code Received",

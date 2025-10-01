@@ -9,12 +9,15 @@ import { store } from "../redux/store";
 import { Stack } from "expo-router";
 import Toast from "react-native-toast-message";
 import toastConfig from "../components/customToast";
+import { NotificationProvider } from "../contexts/NotificationContext";
 
 export default function RootLayout() {
   return (
     <Provider store={store}>
-      <Stack screenOptions={{ headerShown: false }} />
-      <Toast config={toastConfig} />
+      <NotificationProvider>
+        <Stack screenOptions={{ headerShown: false }} />
+        <Toast config={toastConfig} />
+      </NotificationProvider>
     </Provider>
   );
 }
