@@ -35,7 +35,14 @@ import {
 import { restoreSession } from "../../../utilities/authentication";
 import { JobPost } from "../../../types";
 
+
 const HomeScreen = () => {
+  const { sendVerificationCodeNotification } = useNotifications();
+   
+  const testNotification = () => {
+    sendVerificationCodeNotification('test-job-123', 'Test Job', '123456');
+  };
+  
   const [searchQuery, setSearchQuery] = useState("");
   const [location, setLocation] = useState(null);
   const [locationAddress, setLocationAddress] = useState("Loading location...");
@@ -855,6 +862,9 @@ const HomeScreen = () => {
             </View>
           </ImageBackground>
         </View>
+        <TouchableOpacity onPress={testNotification} style={{backgroundColor:'green'}}>
+      <Text>Test Notification</Text>
+    </TouchableOpacity>
 
         {/* Filter Row (normal position) */}
         {!isFilterSticky && renderFilterRow()}
