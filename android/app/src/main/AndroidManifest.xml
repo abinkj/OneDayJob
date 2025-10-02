@@ -34,7 +34,7 @@
         <category android:name="android.intent.category.DEFAULT"/>
         <category android:name="android.intent.category.BROWSABLE"/>
         <data android:scheme="com.anonymous.oneday"/>
-        <data android:scheme="exp+one-day"/>
+        <data android:scheme="exp+oneday"/>
       </intent-filter>
     </activity>
   </application>

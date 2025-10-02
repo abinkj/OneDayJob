@@ -255,3 +255,4 @@ export const useNotifications = (): NotificationContextType => {
 };
 
 export default NotificationContext;
+

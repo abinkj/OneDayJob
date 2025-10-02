@@ -121,3 +121,5 @@ If you encounter issues:
 2. Verify all dependencies are installed
 3. Ensure you're testing on a physical device
 4. Check notification permissions in device settings
+
+
