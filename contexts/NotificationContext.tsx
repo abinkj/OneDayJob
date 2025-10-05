@@ -2,6 +2,7 @@ import React, { createContext, useContext, useEffect, useState, ReactNode } from
 import { AppState, AppStateStatus } from 'react-native';
 import notificationService, { NotificationData, NotificationPermission } from '../services/notificationService';
 import { getUserData } from '../utilities/asyncStore';
+import socketService from '../services/socketService';
 
 interface NotificationContextType {
   // Permission state
@@ -73,6 +74,79 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
 
     const subscription = AppState.addEventListener('change', handleAppStateChange);
     return () => subscription?.remove();
+  }, [isInitialized]);
+
+  // Set up socket event listeners for real-time notifications
+  useEffect(() => {
+    if (!isInitialized) return;
+
+    console.log('🎧 Setting up socket event listeners for notifications...');
+
+    // Handle new application notifications (for employers)
+    const handleNewApplication = (data: any) => {
+      console.log('📋 New application notification received:', data);
+      const notification: NotificationData = {
+        type: 'application_status',
+        title: '📋 New Application Received',
+        body: `${data.applicantName} has applied for "${data.jobName}"`,
+        jobId: data.jobId,
+        timestamp: new Date().toISOString(),
+        data: data,
+      };
+      
+      setNotifications(prev => [notification, ...prev]);
+      setUnreadCount(prev => prev + 1);
+    };
+
+    // Handle application status updates (for employees)
+    const handleApplicationStatus = (data: any) => {
+      console.log('📊 Application status notification received:', data);
+      const statusText = data.status === 'accepted' ? 'accepted' : 'rejected';
+      const notification: NotificationData = {
+        type: 'application_status',
+        title: '📋 Application Update',
+        body: `Your application for "${data.jobName}" has been ${statusText}`,
+        jobId: data.jobId,
+        timestamp: new Date().toISOString(),
+        data: data,
+      };
+      
+      setNotifications(prev => [notification, ...prev]);
+      setUnreadCount(prev => prev + 1);
+    };
+
+    // Handle verification code notifications (for employees)
+    const handleVerificationCode = (data: any) => {
+      console.log('🔑 Verification code notification received:', data);
+      const notification: NotificationData = {
+        type: 'verification_code',
+        title: '🔑 Verification Code Received',
+        body: `Your verification code for "${data.jobName}" is: ${data.code}`,
+        jobId: data.jobId,
+        timestamp: new Date().toISOString(),
+        data: data,
+      };
+      
+      setNotifications(prev => [notification, ...prev]);
+      setUnreadCount(prev => prev + 1);
+    };
+
+    // Set up socket event listeners
+    socketService.on('new_application', handleNewApplication);
+    socketService.on('application_status_update', handleApplicationStatus);
+    socketService.on('verification-codes-generated', handleVerificationCode);
+    socketService.on('verification-code-received', handleVerificationCode);
+    socketService.on('verification-status-updated', handleApplicationStatus);
+
+    // Cleanup event listeners
+    return () => {
+      console.log('🧹 Cleaning up socket event listeners...');
+      socketService.off('new_application', handleNewApplication);
+      socketService.off('application_status_update', handleApplicationStatus);
+      socketService.off('verification-codes-generated', handleVerificationCode);
+      socketService.off('verification-code-received', handleVerificationCode);
+      socketService.off('verification-status-updated', handleApplicationStatus);
+    };
   }, [isInitialized]);
 
   // Request notification permissions

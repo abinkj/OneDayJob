@@ -8,8 +8,7 @@ import {
 } from "../utilities/secureStore";
 import { normalizeUser } from "../utilities/asyncStore";
 
-const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL; //AJ ip address
-//const API_BASE_URL = 'http://192.168.1.5:8000/api';
+const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'http://192.168.1.5:8000/api'; // Uses your .env EXPO_PUBLIC_API_URL
 
 const api = axios.create({
   baseURL: API_BASE_URL,

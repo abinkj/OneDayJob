@@ -3,7 +3,9 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getAccessToken } from '../utilities/secureStore';
 
 // Socket.IO configuration
-const SOCKET_URL = process.env.EXPO_PUBLIC_API_URL; // Same as your API base URL
+const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://192.168.1.5:8000/api';
+// Remove /api from the URL for socket connection
+const SOCKET_URL = API_URL.replace('/api', '');
 let socket: Socket | null = null;
 
 // Socket event types
@@ -78,12 +80,17 @@ class SocketService {
         return null;
       }
 
-      console.log('Connecting to Socket.IO server...');
+      console.log('🔌 Socket Configuration:', {
+        API_URL,
+        SOCKET_URL,
+        hasToken: !!token
+      });
       
+      // Connect to default namespace (no namespace specified)
       this.socket = io(SOCKET_URL, {
         auth: { token },
-        transports: ['polling', 'websocket'], // Prefer polling first for better stability
-        timeout: 60000, // Match server timeout
+        transports: ['polling', 'websocket'],
+        timeout: 60000,
         forceNew: true,
         reconnection: true,
         reconnectionAttempts: 5,
