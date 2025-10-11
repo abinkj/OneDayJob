@@ -495,21 +495,18 @@ const styles = StyleSheet.create({
   tabbar: {
     flexDirection: "row",
     justifyContent: "space-around",
-    paddingBottom: 6 * DeviceDimensions.heightRatio,
+    paddingTop: 12,
+    paddingBottom: 8,
     position: "relative",
     backgroundColor: Colors.white,
-    borderBottomWidth: 1,
-    borderBottomColor: "#E5E5E5",
   },
   tab: {
     flex: 1,
     alignItems: "center",
-    paddingVertical: 8,
   },
   label: {
     fontSize: 16,
     fontWeight: "500",
-    textAlign: "center",
   },
   active: {
     color: "#000",
@@ -521,9 +518,11 @@ const styles = StyleSheet.create({
     position: "absolute",
     bottom: 0,
     height: 3,
-    backgroundColor: Colors.whiteBack || "#000",
+    backgroundColor: Colors.blue,
     borderBottomEndRadius: 10,
     borderBottomStartRadius: 10,
+    left: 28 * DeviceDimensions.widthRatio,
+    right: 28 * DeviceDimensions.widthRatio,
   },
 
   // New styles for enhanced functionality
@@ -552,18 +551,6 @@ const styles = StyleSheet.create({
   },
   acceptedRightSection: {
     alignItems: 'flex-end',
-  },
-  verifiedBadge: {
-    backgroundColor: '#4CAF50',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
-    marginTop: 4,
-  },
-  verifiedBadgeText: {
-    color: '#FFF',
-    fontSize: 12,
-    fontWeight: '600',
   },
   verificationStatus: {
     position: 'absolute',
