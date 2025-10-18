@@ -11,17 +11,21 @@ const JobCard = ({
   onPress,
   onWithdraw,
   onDelete,
+  onPayment,
   withdraw = false,
   isEmployer = false,
   applicationStatus,
+  showPaymentButton = false,
 }: {
   data: JobCardData;
   onPress: Function;
   onWithdraw?: Function;
   onDelete?: Function;
+  onPayment?: Function;
   withdraw?: boolean;
   isEmployer?: boolean;
   applicationStatus?: string;
+  showPaymentButton?: boolean;
 }) => {
   const {
     name,
@@ -48,6 +52,19 @@ const JobCard = ({
 
   const isApplied = displayStatus?.toLowerCase() === "applied" || displayStatus?.toLowerCase() === "accepted";
   const isInProgress = displayStatus?.toLowerCase() === "in_progress" || displayStatus?.toLowerCase() === "in progress";
+  const isCompleted = displayStatus?.toLowerCase() === "completed";
+
+  // Debug logging for payment button
+  console.log('🔍 JobCard Debug:', {
+    jobId: data?._id,
+    jobName: data?.name,
+    status: data?.status,
+    displayStatus,
+    isCompleted,
+    isEmployer,
+    showPaymentButton,
+    shouldShowPayment: showPaymentButton && isCompleted && isEmployer
+  });
 
   const formattedLocation = location?.address
     ? `${location.address}${location.city ? ", " + location.city : ""}${
@@ -202,6 +219,23 @@ const JobCard = ({
                 Withdraw
               </Text>
             </TouchableOpacity>
+          ) : showPaymentButton && isCompleted && isEmployer ? (
+            <TouchableOpacity
+              style={[
+                styles.button,
+                { backgroundColor: "#4CAF50", marginLeft: 12 },
+              ]}
+              onPress={() => {
+                if (onPayment) onPayment();
+              }}
+            >
+              <View style={styles.paymentButtonContent}>
+                <Ionicons name="wallet-outline" size={14} color={Colors.white} />
+                <Text style={[styles.buttonText, { color: Colors.white, marginLeft: 4 }]}>
+                  Pay Now
+                </Text>
+              </View>
+            </TouchableOpacity>
           ) : (
             <TouchableOpacity
               style={[
@@ -349,6 +383,10 @@ const styles = StyleSheet.create({
   buttonText: {
     fontSize: 12,
     fontWeight: "400",
+  },
+  paymentButtonContent: {
+    flexDirection: "row",
+    alignItems: "center",
   },
 });
 

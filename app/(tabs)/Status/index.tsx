@@ -20,6 +20,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { Colors } from "../../../constants/Colors";
 import JobCard from "../../../components/jobCard";
 import StatusFilter from "../../../components/statusFilter";
+import PaymentModal from "../../../components/paymentModal";
 import {
   deleteJobPosting,
   getAppliedJobsByUserId,
@@ -46,9 +47,27 @@ const MyPostTab = () => {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = React.useState(false);
   const [selectedStatus, setSelectedStatus] = useState<string | null>(null);
+  const [paymentModalVisible, setPaymentModalVisible] = useState(false);
+  const [selectedJobForPayment, setSelectedJobForPayment] = useState<JobPost | null>(null);
 
   const handleNext = (jobId: string) => {
     navigation.navigate("RequestVerification", { jobId: jobId });
+  };
+
+  const handlePayment = (job: JobPost) => {
+    console.log("Opening payment modal for job:", job._id);
+    setSelectedJobForPayment(job);
+    setPaymentModalVisible(true);
+  };
+
+  const handlePaymentSuccess = () => {
+    // Refresh the posts list after successful payment
+    fetchPosts();
+    Toast.show({
+      type: "success",
+      text1: "Payment Successful",
+      text2: "The payment has been processed successfully",
+    });
   };
 
   const handleDelete = async (jobId: string) => {
@@ -175,15 +194,29 @@ const MyPostTab = () => {
           </Text>
         </View>
       ) : (
-        filteredPosts.map((post) => (
-          <JobCard
-            key={post._id}
-            data={post}
-            onPress={() => handleNext(post._id)}
-            onDelete={() => handleDelete(post._id)}
-            isEmployer={true}
-          />
-        ))
+        <>
+          {filteredPosts.map((post) => (
+            <JobCard
+              key={post._id}
+              data={post}
+              onPress={() => handleNext(post._id)}
+              onDelete={() => handleDelete(post._id)}
+              onPayment={() => handlePayment(post)}
+              isEmployer={true}
+              showPaymentButton={true}
+            />
+          ))}
+          {/* Payment Modal */}
+          {selectedJobForPayment && (
+            <PaymentModal
+              visible={paymentModalVisible}
+              onClose={() => setPaymentModalVisible(false)}
+              jobId={selectedJobForPayment._id}
+              jobName={selectedJobForPayment.name}
+              onPaymentSuccess={handlePaymentSuccess}
+            />
+          )}
+        </>
       )}
     </ScrollView>
   );
