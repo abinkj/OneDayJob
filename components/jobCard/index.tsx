@@ -52,6 +52,7 @@ const JobCard = ({
 
   const isApplied = displayStatus?.toLowerCase() === "applied" || displayStatus?.toLowerCase() === "accepted";
   const isInProgress = displayStatus?.toLowerCase() === "in_progress" || displayStatus?.toLowerCase() === "in progress";
+  const isActive = displayStatus?.toLowerCase() === "active";
   const isCompleted = displayStatus?.toLowerCase() === "completed";
 
   // Debug logging for payment button
@@ -61,9 +62,10 @@ const JobCard = ({
     status: data?.status,
     displayStatus,
     isCompleted,
+    isActive,
     isEmployer,
     showPaymentButton,
-    shouldShowPayment: showPaymentButton && isCompleted && isEmployer
+    shouldShowPayment: showPaymentButton && (isCompleted || isActive) && isEmployer
   });
 
   const formattedLocation = location?.address
@@ -219,7 +221,7 @@ const JobCard = ({
                 Withdraw
               </Text>
             </TouchableOpacity>
-          ) : showPaymentButton && isCompleted && isEmployer ? (
+          ) : showPaymentButton && (isCompleted || isActive) && isEmployer ? (
             <TouchableOpacity
               style={[
                 styles.button,

@@ -148,6 +148,7 @@ const MyPostTab = () => {
   // Get available statuses for filtering
   const availableStatuses = [
     getJobStatusInfo(JOB_STATUSES.POSTED),
+    getJobStatusInfo(JOB_STATUSES.ACTIVE),
     getJobStatusInfo(JOB_STATUSES.FILLED),
     getJobStatusInfo(JOB_STATUSES.IN_PROGRESS),
     getJobStatusInfo(JOB_STATUSES.COMPLETED),
