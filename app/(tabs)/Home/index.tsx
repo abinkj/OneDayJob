@@ -21,6 +21,8 @@ import { getCurrentLocation as getLocationWithAddress, searchPlacesFallback } fr
 import { useDispatch, useSelector } from "react-redux";
 import Toast from "react-native-toast-message";
 import { useNavigation } from "@react-navigation/native";
+import { useNotifications } from "../../../contexts/NotificationContext";
+import NotificationBadge from "../../../components/notificationBadge";
 import { 
   getJobsByLocation, 
   getJobPostings, 
@@ -33,7 +35,14 @@ import {
 import { restoreSession } from "../../../utilities/authentication";
 import { JobPost } from "../../../types";
 
+
 const HomeScreen = () => {
+  const { sendVerificationCodeNotification } = useNotifications();
+   
+  const testNotification = () => {
+    sendVerificationCodeNotification('test-job-123', 'Test Job', '123456');
+  };
+  
   const [searchQuery, setSearchQuery] = useState("");
   const [location, setLocation] = useState(null);
   const [locationAddress, setLocationAddress] = useState("Loading location...");
@@ -58,6 +67,9 @@ const HomeScreen = () => {
   const navigation = useNavigation<any>();
   const userData = useSelector((state: any) => state.authentication.userData);
   const dispatch = useDispatch();
+  
+  // Notification context
+  const { unreadCount } = useNotifications();
   const scrollY = useRef(new Animated.Value(0)).current;
   const filterRowRef = useRef(null);
   const [filterRowHeight, setFilterRowHeight] = useState(0);
@@ -797,12 +809,13 @@ const HomeScreen = () => {
               <Ionicons name="refresh" size={20} color={Colors.primary} />
             </TouchableOpacity>
           </View>
-          <TouchableOpacity onPress={handleNotificationPress}>
+          <TouchableOpacity onPress={handleNotificationPress} style={{ position: 'relative' }}>
             <Ionicons
               name="notifications-outline"
               size={24}
               color={Colors.black}
             />
+            <NotificationBadge />
           </TouchableOpacity>
         </View>
 
@@ -849,6 +862,9 @@ const HomeScreen = () => {
             </View>
           </ImageBackground>
         </View>
+        <TouchableOpacity onPress={testNotification} style={{backgroundColor:'green'}}>
+      <Text>Test Notification</Text>
+    </TouchableOpacity>
 
         {/* Filter Row (normal position) */}
         {!isFilterSticky && renderFilterRow()}

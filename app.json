@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "one-day",
-    "slug": "one-day",
+    "name": "oneday",
+    "slug": "oneday",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -10,7 +10,7 @@
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#294678"
     },
     "ios": {
       "supportsTablet": true
@@ -18,9 +18,17 @@
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
+        "backgroundColor": "#294678"
       },
-      "package": "com.anonymous.oneday"
+      "package": "com.anonymous.oneday",
+      "googleServicesFile":"./google-services.json",
+      "permissions": [
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.INTERNET",
+        "android.permission.WAKE_LOCK",
+        "android.permission.VIBRATE"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -35,12 +43,43 @@
         }
       ],
       [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#294678",
+          "image": "./assets/splash-icon.png",
+          "imageWidth": 200
+        }
+      ],
+      [
         "expo-secure-store",
         {
           "configureAndroidBackup": true,
           "faceIDPermission": "Allow $(PRODUCT_NAME) to access your Face ID biometric data."
         }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/icon.png",
+          "color": "#ffffff",
+          "defaultChannel": "default"
+        }
       ]
-    ]
+    ],
+    "notification": {
+      "icon": "./assets/notification-icon.png",
+      "color": "#ffffff",
+      "androidMode": "default",
+      "androidCollapsedTitle": "#{unread_notifications} new interactions"
+    },
+    "extra": {
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "projectId": "819389f1-6170-4df9-b735-9831e39f5b21"
+      }
+    },
+    "owner": "zoopol"
   }
 }

@@ -12,6 +12,7 @@ export interface StatusInfo {
 export const JOB_STATUSES = {
   DRAFT: 'draft',
   POSTED: 'posted', 
+  ACTIVE: 'active',
   FILLED: 'filled',
   IN_PROGRESS: 'in_progress',
   COMPLETED: 'completed',
@@ -48,6 +49,15 @@ export const getJobStatusInfo = (status: string): StatusInfo => {
         backgroundColor: Colors.blue + '20',
         icon: 'eye-outline',
         description: 'Accepting applications'
+      };
+    
+    case JOB_STATUSES.ACTIVE:
+      return {
+        label: 'Active',
+        color: '#2196F3',
+        backgroundColor: '#2196F320',
+        icon: 'play-circle-outline',
+        description: 'Job is active and running'
       };
     
     case JOB_STATUSES.FILLED:
@@ -169,7 +179,7 @@ export const getApplicationStatusInfo = (status: string): StatusInfo => {
 // Helper function to determine if a job is active (can receive applications)
 export const isJobActive = (status: string): boolean => {
   const normalizedStatus = status?.toLowerCase() || '';
-  return normalizedStatus === JOB_STATUSES.POSTED;
+  return normalizedStatus === JOB_STATUSES.POSTED || normalizedStatus === JOB_STATUSES.ACTIVE;
 };
 
 // Helper function to determine if an application is active (not withdrawn/rejected)

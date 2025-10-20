@@ -8,8 +8,7 @@ import {
 } from "../utilities/secureStore";
 import { normalizeUser } from "../utilities/asyncStore";
 
-const API_BASE_URL = "http://192.168.62.252:8000/api"; //AJ ip address
-//const API_BASE_URL = 'http://192.168.1.5:8000/api';
+const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'http://192.168.1.5:8000/api'; // Uses your .env EXPO_PUBLIC_API_URL
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -795,6 +794,24 @@ export const getEmployeeVerificationStatus = async (jobId: string) => {
 };
 
 /**
+ * Get employee's verification code for a job
+ * GET /api/jobs/:jobId/my-verification-code
+ */
+export const getEmployeeVerificationCode = async (jobId: string) => {
+  try {
+    console.log("Getting employee verification code for job:", jobId);
+
+    const response = await api.get(`/jobs/${jobId}/my-verification-code`);
+
+    console.log("Employee verification code response:", response.data);
+    return response;
+  } catch (error) {
+    console.error("Error getting employee verification code:", error);
+    throw error;
+  }
+};
+
+/**
  * Schedule verification for a job (manual trigger)
  * POST /api/verification/schedule/:jobId
  */
@@ -1099,6 +1116,154 @@ export const calculateCompletion = (
   if (!targetHours) return 0;
   const targetSeconds = targetHours * 3600;
   return Math.min((workedSeconds / targetSeconds) * 100, 100);
+};
+
+// ============================================================================
+// PAYMENT API FUNCTIONS
+// ============================================================================
+
+/**
+ * Create payment order for a completed job (Employer)
+ * POST /api/payments/create-order
+ */
+export const createPaymentOrder = async (jobId: string) => {
+  try {
+    console.log("Creating payment order for job:", jobId);
+
+    const response = await api.post(`/payments/create-order`, {
+      jobId,
+    });
+
+    console.log("Payment order created:", response.data);
+    return response;
+  } catch (error) {
+    console.error("Error creating payment order:", error);
+    throw error;
+  }
+};
+
+/**
+ * Verify payment after successful transaction
+ * POST /api/payments/verify
+ */
+export const verifyPayment = async (
+  orderId: string,
+  paymentId: string,
+  signature: string
+) => {
+  try {
+    console.log("Verifying payment:", { orderId, paymentId });
+
+    const response = await api.post(`/payments/verify`, {
+      orderId,
+      paymentId,
+      signature,
+    });
+
+    console.log("Payment verified:", response.data);
+    return response;
+  } catch (error) {
+    console.error("Error verifying payment:", error);
+    throw error;
+  }
+};
+
+/**
+ * Get payment status for a job
+ * GET /api/payments/status/:jobId
+ */
+export const getPaymentStatus = async (jobId: string) => {
+  try {
+    console.log("Getting payment status for job:", jobId);
+
+    const response = await api.get(`/payments/status/${jobId}`);
+
+    console.log("Payment status:", response.data);
+    return response;
+  } catch (error) {
+    console.error("Error getting payment status:", error);
+    throw error;
+  }
+};
+
+/**
+ * Get all payments for a job
+ * GET /api/payments/job/:jobId
+ */
+export const getJobPayments = async (jobId: string) => {
+  try {
+    console.log("Getting job payments for job:", jobId);
+
+    const response = await api.get(`/payments/job/${jobId}`);
+
+    console.log("Job payments:", response.data);
+    return response;
+  } catch (error) {
+    console.error("Error getting job payments:", error);
+    throw error;
+  }
+};
+
+/**
+ * Add bank account details for worker payouts
+ * POST /api/users/bank-account
+ */
+export const addBankAccount = async (bankDetails: {
+  accountHolderName: string;
+  accountNumber: string;
+  ifscCode: string;
+  bankName: string;
+  accountType: "savings" | "current";
+}) => {
+  try {
+    console.log("Adding bank account");
+
+    const response = await api.post(`/users/bank-account`, bankDetails);
+
+    console.log("Bank account added:", response.data);
+    return response;
+  } catch (error) {
+    console.error("Error adding bank account:", error);
+    throw error;
+  }
+};
+
+/**
+ * Add UPI details for worker payouts
+ * POST /api/users/upi-details
+ */
+export const addUpiDetails = async (upiId: string) => {
+  try {
+    console.log("Adding UPI details");
+
+    const response = await api.post(`/users/upi-details`, {
+      upiId,
+    });
+
+    console.log("UPI details added:", response.data);
+    return response;
+  } catch (error) {
+    console.error("Error adding UPI details:", error);
+    throw error;
+  }
+};
+
+/**
+ * Get worker's payout status
+ * GET /api/payouts/status/:workerId
+ */
+export const getWorkerPayouts = async (workerId: string) => {
+  try {
+    console.log("Getting worker payouts for worker:", workerId);
+
+    const response = await api.get(`/payouts/status/${workerId}`);
+
+    console.log("Worker payouts:", response.data);
+    return response;
+  } catch (error) {
+    console.error("Error getting worker payouts:", error);
+    throw error;
+  }
 };
 
 export default api;

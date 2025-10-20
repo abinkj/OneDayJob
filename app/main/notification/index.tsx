@@ -1,10 +1,12 @@
-import React, { useState } from "react";
-import { View, Text, StyleSheet, FlatList } from "react-native";
+import React, { useState, useEffect } from "react";
+import { View, Text, StyleSheet, FlatList, RefreshControl } from "react-native";
 import { Swipeable, TouchableOpacity } from "react-native-gesture-handler";
 import { MaterialIcons } from "@expo/vector-icons";
 import { Header } from "../../../components/header";
 import SegmentedControl from "@react-native-segmented-control/segmented-control";
 import NotificationCard from "../../../components/notificationCard";
+import { useNotifications } from "../../../contexts/NotificationContext";
+import { NotificationData } from "../../../services/notificationService";
 
 const initialNotifications = [
   {
@@ -24,13 +26,28 @@ const initialNotifications = [
 ];
 
 const Notification = () => {
-  const [notifications, setNotifications] = useState(initialNotifications);
+  const { 
+    notifications, 
+    unreadCount, 
+    clearAllNotifications, 
+    markAsRead, 
+    refreshNotifications 
+  } = useNotifications();
+  
   const [selectedIndex, setSelectedIndex] = useState(0);
+  const [refreshing, setRefreshing] = useState(false);
 
-  const segmentValues = ["All", "Promotions", "Reminders"];
+  const segmentValues = ["All", "Job Updates", "Messages", "System"];
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    await refreshNotifications();
+    setRefreshing(false);
+  };
 
   const handleDelete = (id) => {
-    setNotifications((prev) => prev.filter((item) => item.id !== id));
+    // This would typically call an API to delete the notification
+    console.log('Delete notification:', id);
   };
 
   const renderRightActions = (id) => (
@@ -39,24 +56,44 @@ const Notification = () => {
     </TouchableOpacity>
   );
 
-  const renderItem = ({ item }) => (
+  const renderItem = ({ item }: { item: NotificationData }) => (
     <Swipeable
-      renderRightActions={() => renderRightActions(item.id)}
+      renderRightActions={() => renderRightActions(item.jobId || item.timestamp)}
       overshootRight={false}
     >
       <NotificationCard
         title={item.title}
-        subtitle={item.message}
-        time={item.time}
-        count={item.unreadCount || 0}
+        subtitle={item.body}
+        time={item.timestamp ? new Date(item.timestamp).toLocaleString() : 'Now'}
+        count={item.read ? 0 : 1}
+        onPress={() => {
+          if (item.jobId) {
+            markAsRead(item.jobId);
+          }
+        }}
       />
     </Swipeable>
   );
 
-  const filteredNotifications =
-    segmentValues[selectedIndex] === "All"
-      ? notifications
-      : notifications.filter((n) => n.type === segmentValues[selectedIndex]);
+  const filteredNotifications = (() => {
+    if (segmentValues[selectedIndex] === "All") {
+      return notifications;
+    }
+    
+    const filterType = segmentValues[selectedIndex].toLowerCase();
+    return notifications.filter((n) => {
+      switch (filterType) {
+        case 'job updates':
+          return n.type === 'job_update' || n.type === 'application_status';
+        case 'messages':
+          return n.type === 'message';
+        case 'system':
+          return n.type === 'system';
+        default:
+          return true;
+      }
+    });
+  })();
 
   return (
     <View style={styles.container}>
@@ -74,12 +111,26 @@ const Notification = () => {
 
       <FlatList
         data={filteredNotifications}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item, index) => item.jobId || item.timestamp || index.toString()}
         renderItem={renderItem}
         contentContainerStyle={{ paddingBottom: 20, paddingTop: 10 }}
         ItemSeparatorComponent={() => <View style={styles.separator} />}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={handleRefresh}
+            colors={['#007AFF']}
+            tintColor="#007AFF"
+          />
+        }
         ListEmptyComponent={
-          <Text style={styles.empty}>No notifications found.</Text>
+          <View style={styles.emptyContainer}>
+            <MaterialIcons name="notifications-none" size={64} color="#ccc" />
+            <Text style={styles.empty}>No notifications found.</Text>
+            <Text style={styles.emptySubtitle}>
+              You'll receive notifications about job updates, applications, and messages here.
+            </Text>
+          </View>
         }
       />
     </View>
@@ -121,10 +172,24 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     marginVertical: 4,
   },
+  emptyContainer: {
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 40,
+    paddingHorizontal: 20,
+  },
   empty: {
     textAlign: "center",
-    fontSize: 16,
+    fontSize: 18,
     color: "#999",
-    marginTop: 40,
+    marginTop: 16,
+    fontWeight: "600",
+  },
+  emptySubtitle: {
+    textAlign: "center",
+    fontSize: 14,
+    color: "#ccc",
+    marginTop: 8,
+    lineHeight: 20,
   },
 });

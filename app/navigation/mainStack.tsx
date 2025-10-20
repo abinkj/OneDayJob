@@ -8,6 +8,8 @@ import JobTimer from "@/main/jobTimer";
 
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import RequestProfile from "@/main/requestProfile";
+import BankAccountScreen from "@/main/bankAccount";
+import PaymentHistoryScreen from "@/main/paymentHistory";
 
 const Stack = createNativeStackNavigator();
 
@@ -33,6 +35,8 @@ const MainStack = () => {
       <Stack.Screen name="JobDetails" component={JobDetails} />
       <Stack.Screen name="JobTimer" component={JobTimer} />
       {/* <Stack.Screen name="RequestDetails" component={RequestDetails} /> */}
+      <Stack.Screen name="BankAccount" component={BankAccountScreen} />
+      <Stack.Screen name="PaymentHistory" component={PaymentHistoryScreen} />
     </Stack.Navigator>
   );
 };
