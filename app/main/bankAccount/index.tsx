@@ -20,7 +20,7 @@ import {
 } from "../../../services/api";
 import Toast from "react-native-toast-message";
 
-const BankAccountScreen = () => {
+const BankAccount = () => {
   const navigation = useNavigation<any>();
   const [loading, setLoading] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<"bank" | "upi">("bank");
@@ -579,6 +579,6 @@ const styles = StyleSheet.create({
   },
 });
 
-export default BankAccountScreen;
+export default BankAccount;
 
 

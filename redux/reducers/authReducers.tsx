@@ -3,6 +3,7 @@ import { createSlice } from "@reduxjs/toolkit";
 
 const initialState = {
   isLoggedIn: false,
+  isKycCompleted: false,
   userData: null,
 };
 const authSlice = createSlice({
@@ -16,6 +17,9 @@ const authSlice = createSlice({
     logout(state) {
       state.isLoggedIn = false;
       state.userData = null;
+    },
+    kycCompleted(state) {
+      state.isKycCompleted = true;
     },
   },
 });

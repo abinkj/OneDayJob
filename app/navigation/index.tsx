@@ -1,23 +1,26 @@
 import React, { useEffect, useState } from "react";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { useDispatch, useSelector } from "react-redux";
-import { ActivityIndicator } from "react-native";
+import { ActivityIndicator, View } from "react-native";
 
 import MainStack from "./mainStack";
 import OnBoardingStack from "./onBoardingStack";
+import KycStack from "./kycStack";
 import { restoreSession } from "../../utilities/authentication";
 
 const RootStack = createNativeStackNavigator();
 
 const RootStackLayout = () => {
   const dispatch = useDispatch();
-  const isLoggedIn = useSelector((state) => state.authentication.isLoggedIn);
+  const { isLoggedIn, isKycCompleted } = useSelector(
+    (state) => state.authentication
+  );
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const checkLogin = async () => {
       try {
-        await dispatch(restoreSession()); // This should set isLoggedIn in Redux
+        await dispatch(restoreSession());
       } catch (error) {
         console.error("Error restoring session:", error);
       } finally {
@@ -28,7 +31,11 @@ const RootStackLayout = () => {
   }, [dispatch]);
 
   if (isLoading) {
-    return <ActivityIndicator size="large" style={{ flex: 1 }} />;
+    return (
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+        <ActivityIndicator size="large" color="#000" />
+      </View>
+    );
   }
 
   return (
@@ -39,9 +46,13 @@ const RootStackLayout = () => {
       }}
     >
       {isLoggedIn ? (
-        <RootStack.Screen name="MainStack" component={MainStack} />
+        !isKycCompleted ? (
+          <RootStack.Screen name="MainStack" component={MainStack} />
+        ) : (
+          <RootStack.Screen name="KycStack" component={KycStack} />
+        )
       ) : (
-        <RootStack.Screen name="OnboardingStack" component={OnBoardingStack} />
+        <RootStack.Screen name="OnBoardingStack" component={OnBoardingStack} />
       )}
     </RootStack.Navigator>
   );
