@@ -8,6 +8,7 @@ import {
   ActivityIndicator,
   Animated,
   RefreshControl,
+  AppState,
 } from "react-native";
 import {
   TabView,
@@ -137,6 +138,27 @@ const MyPostTab = () => {
     }, [])
   );
 
+  // Add refresh on app state change (when app comes to foreground)
+  React.useEffect(() => {
+    const handleAppStateChange = (nextAppState: string) => {
+      if (nextAppState === 'active') {
+        fetchPosts(true); // Refresh when app becomes active
+      }
+    };
+
+    const subscription = AppState.addEventListener('change', handleAppStateChange);
+    return () => subscription?.remove();
+  }, []);
+
+  // Add periodic refresh every 30 seconds when component is focused
+  React.useEffect(() => {
+    const interval = setInterval(() => {
+      fetchPosts(true); // Silent refresh every 30 seconds
+    }, 30000);
+
+    return () => clearInterval(interval);
+  }, []);
+
   if (loading) {
     return (
       <View style={{ justifyContent: "center", alignItems: "center", flex: 1 }}>
@@ -148,9 +170,9 @@ const MyPostTab = () => {
   // Get available statuses for filtering
   const availableStatuses = [
     getJobStatusInfo(JOB_STATUSES.POSTED),
-    getJobStatusInfo(JOB_STATUSES.ACTIVE),
     getJobStatusInfo(JOB_STATUSES.FILLED),
     getJobStatusInfo(JOB_STATUSES.IN_PROGRESS),
+    getJobStatusInfo(JOB_STATUSES.WORK_COMPLETED),
     getJobStatusInfo(JOB_STATUSES.COMPLETED),
     getJobStatusInfo(JOB_STATUSES.CANCELLED),
   ];
@@ -342,6 +364,27 @@ const AppliedTab = () => {
     }, [])
   );
 
+  // Add refresh on app state change (when app comes to foreground)
+  React.useEffect(() => {
+    const handleAppStateChange = (nextAppState: string) => {
+      if (nextAppState === 'active') {
+        fetchAppliedJobs(true); // Refresh when app becomes active
+      }
+    };
+
+    const subscription = AppState.addEventListener('change', handleAppStateChange);
+    return () => subscription?.remove();
+  }, []);
+
+  // Add periodic refresh every 30 seconds when component is focused
+  React.useEffect(() => {
+    const interval = setInterval(() => {
+      fetchAppliedJobs(true); // Silent refresh every 30 seconds
+    }, 30000);
+
+    return () => clearInterval(interval);
+  }, []);
+
   if (loading) {
     return (
       <View style={{ justifyContent: "center", alignItems: "center", flex: 1 }}>
@@ -352,10 +395,10 @@ const AppliedTab = () => {
 
   // Get available application statuses for filtering
   const availableStatuses = [
-    getApplicationStatusInfo(APPLICATION_STATUSES.PENDING),
+    getApplicationStatusInfo(APPLICATION_STATUSES.APPLIED),
     getApplicationStatusInfo(APPLICATION_STATUSES.ACCEPTED),
-    getApplicationStatusInfo(APPLICATION_STATUSES.IN_PROGRESS),
-    getApplicationStatusInfo(APPLICATION_STATUSES.COMPLETED),
+    getApplicationStatusInfo(APPLICATION_STATUSES.REJECTED),
+    getApplicationStatusInfo(APPLICATION_STATUSES.WITHDRAWN),
   ];
 
   return (

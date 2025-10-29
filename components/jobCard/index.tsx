@@ -4,7 +4,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { Colors } from "../../constants/Colors";
 import { JobCardData } from "../../types";
 import StatusBadge from "../statusBadge";
-import { getJobStatusInfo, getApplicationStatusInfo, getDisplayStatus } from "../../utilities/statusUtils";
+import { getJobStatusInfo, getApplicationStatusInfo, getDisplayStatus, isWorkCompleted, getEmployerDisplayStatus } from "../../utilities/statusUtils";
 
 const JobCard = ({
   data,
@@ -43,7 +43,12 @@ const JobCard = ({
   } = data || {};
 
   // Get the appropriate status for display
-  const displayStatus = getDisplayStatus(status, applicationStatus, isEmployer);
+  let displayStatus = getDisplayStatus(status, applicationStatus, isEmployer);
+  
+  // For employers, use the corrected display status that handles payment state
+  if (isEmployer) {
+    displayStatus = getEmployerDisplayStatus(status, data?.isPaymentDone);
+  }
   
   // Get status info based on context
   const statusInfo = isEmployer 
@@ -52,8 +57,15 @@ const JobCard = ({
 
   const isApplied = displayStatus?.toLowerCase() === "applied" || displayStatus?.toLowerCase() === "accepted";
   const isInProgress = displayStatus?.toLowerCase() === "in_progress" || displayStatus?.toLowerCase() === "in progress";
-  const isActive = displayStatus?.toLowerCase() === "active";
   const isCompleted = displayStatus?.toLowerCase() === "completed";
+  const isWorkCompletedStatus = displayStatus?.toLowerCase() === "work_completed";
+  
+  // Check if work is completed based on status or backend flags
+  const isWorkFinished = isWorkCompleted(
+    displayStatus, 
+    data?.isCompletedByWorker, 
+    data?.isVerifiedByEmployer
+  );
 
   // Debug logging for payment button
   console.log('🔍 JobCard Debug:', {
@@ -62,10 +74,13 @@ const JobCard = ({
     status: data?.status,
     displayStatus,
     isCompleted,
-    isActive,
+    isWorkCompletedStatus,
+    isWorkFinished,
+    isCompletedByWorker: data?.isCompletedByWorker,
+    isVerifiedByEmployer: data?.isVerifiedByEmployer,
     isEmployer,
     showPaymentButton,
-    shouldShowPayment: showPaymentButton && (isCompleted || isActive) && isEmployer
+    shouldShowPayment: showPaymentButton && isWorkFinished && isEmployer
   });
 
   const formattedLocation = location?.address
@@ -221,7 +236,7 @@ const JobCard = ({
                 Withdraw
               </Text>
             </TouchableOpacity>
-          ) : showPaymentButton && (isCompleted || isActive) && isEmployer ? (
+          ) : showPaymentButton && isWorkFinished && isEmployer ? (
             <TouchableOpacity
               style={[
                 styles.button,

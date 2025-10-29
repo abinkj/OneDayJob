@@ -8,25 +8,23 @@ export interface StatusInfo {
   description: string;
 }
 
-// Job statuses for My Posts (employer view)
+// Job statuses for My Posts (employer view) - aligned with backend
 export const JOB_STATUSES = {
   DRAFT: 'draft',
   POSTED: 'posted', 
-  ACTIVE: 'active',
   FILLED: 'filled',
   IN_PROGRESS: 'in_progress',
-  COMPLETED: 'completed',
+  WORK_COMPLETED: 'work_completed', // Work done by employees, payment pending
+  COMPLETED: 'completed', // Payment completed
   CANCELLED: 'cancelled'
 } as const;
 
-// Application statuses for Applied section (employee view)
+// Application statuses for Applied section (employee view) - aligned with backend
 export const APPLICATION_STATUSES = {
-  PENDING: 'pending',
+  APPLIED: 'applied',
   ACCEPTED: 'accepted', 
   REJECTED: 'rejected',
-  WITHDRAWN: 'withdrawn',
-  IN_PROGRESS: 'in_progress',
-  COMPLETED: 'completed'
+  WITHDRAWN: 'withdrawn'
 } as const;
 
 export const getJobStatusInfo = (status: string): StatusInfo => {
@@ -51,14 +49,6 @@ export const getJobStatusInfo = (status: string): StatusInfo => {
         description: 'Accepting applications'
       };
     
-    case JOB_STATUSES.ACTIVE:
-      return {
-        label: 'Active',
-        color: '#2196F3',
-        backgroundColor: '#2196F320',
-        icon: 'play-circle-outline',
-        description: 'Job is active and running'
-      };
     
     case JOB_STATUSES.FILLED:
       return {
@@ -76,6 +66,15 @@ export const getJobStatusInfo = (status: string): StatusInfo => {
         backgroundColor: '#FF980020',
         icon: 'play-circle-outline',
         description: 'Work has started'
+      };
+    
+    case JOB_STATUSES.WORK_COMPLETED:
+      return {
+        label: 'Work Completed',
+        color: '#4CAF50',
+        backgroundColor: '#4CAF5020',
+        icon: 'checkmark-circle-outline',
+        description: 'Work finished, payment pending'
       };
     
     case JOB_STATUSES.COMPLETED:
@@ -111,9 +110,9 @@ export const getApplicationStatusInfo = (status: string): StatusInfo => {
   const normalizedStatus = status?.toLowerCase() || '';
   
   switch (normalizedStatus) {
-    case APPLICATION_STATUSES.PENDING:
+    case APPLICATION_STATUSES.APPLIED:
       return {
-        label: 'Pending',
+        label: 'Applied',
         color: '#FF9800',
         backgroundColor: '#FF980020',
         icon: 'time-outline',
@@ -147,23 +146,6 @@ export const getApplicationStatusInfo = (status: string): StatusInfo => {
         description: 'You withdrew your application'
       };
     
-    case APPLICATION_STATUSES.IN_PROGRESS:
-      return {
-        label: 'In Progress',
-        color: '#2196F3',
-        backgroundColor: '#2196F320',
-        icon: 'play-circle-outline',
-        description: 'Work is in progress'
-      };
-    
-    case APPLICATION_STATUSES.COMPLETED:
-      return {
-        label: 'Completed',
-        color: '#4CAF50',
-        backgroundColor: '#4CAF5020',
-        icon: 'checkmark-done-outline',
-        description: 'Work completed successfully'
-      };
     
     default:
       return {
@@ -179,7 +161,7 @@ export const getApplicationStatusInfo = (status: string): StatusInfo => {
 // Helper function to determine if a job is active (can receive applications)
 export const isJobActive = (status: string): boolean => {
   const normalizedStatus = status?.toLowerCase() || '';
-  return normalizedStatus === JOB_STATUSES.POSTED || normalizedStatus === JOB_STATUSES.ACTIVE;
+  return normalizedStatus === JOB_STATUSES.POSTED;
 };
 
 // Helper function to determine if an application is active (not withdrawn/rejected)
@@ -197,6 +179,36 @@ export const getDisplayStatus = (jobStatus: string, applicationStatus?: string, 
   // For employees, show application status if available, otherwise job status
   if (applicationStatus) {
     return applicationStatus;
+  }
+  
+  return jobStatus;
+};
+
+// Helper function to determine if work is completed based on status and flags
+export const isWorkCompleted = (jobStatus: string, isCompletedByWorker?: boolean, isVerifiedByEmployer?: boolean): boolean => {
+  const normalizedStatus = jobStatus?.toLowerCase() || '';
+  
+  // Check if status indicates work completion
+  if (normalizedStatus === 'completed' || normalizedStatus === 'work_completed') {
+    return true;
+  }
+  
+  // Check backend flags
+  if (isCompletedByWorker === true || isVerifiedByEmployer === true) {
+    return true;
+  }
+  
+  return false;
+};
+
+// Helper function to get the correct display status for employer view
+// Maps backend "completed" to "work_completed" when payment is not done
+export const getEmployerDisplayStatus = (jobStatus: string, isPaymentDone?: boolean): string => {
+  const normalizedStatus = jobStatus?.toLowerCase() || '';
+  
+  // If backend says completed but payment is not done, show as work_completed
+  if (normalizedStatus === 'completed' && isPaymentDone !== true) {
+    return 'work_completed';
   }
   
   return jobStatus;
