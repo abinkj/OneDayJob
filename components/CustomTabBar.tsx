@@ -1,5 +1,11 @@
-import React from "react";
-import { View, Text, TouchableOpacity, StyleSheet, Image } from "react-native";
+import React, { useRef, useEffect } from "react";
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  Animated,
+} from "react-native";
 import DeviceDimensions from "../constants/DeviceDimenions";
 import { Colors } from "../constants/Colors";
 import { getFocusedRouteNameFromRoute } from "@react-navigation/native";
@@ -11,98 +17,67 @@ const CustomTabBar = ({ state, descriptors, navigation }) => {
   const routeName =
     getFocusedRouteNameFromRoute(currentRoute) || currentRoute.name;
 
-  // List of screens where tab bar should be hidden
-  const hiddenTabBarScreens = ["PostJob"]; // Add others as needed
-
-  if (hiddenTabBarScreens.includes(routeName)) {
-    return null; // Don't render the tab bar
-  }
-
-  if (focusedOptions.tabBarVisible === false) {
+  const hiddenTabBarScreens = ["PostJob"];
+  if (
+    hiddenTabBarScreens.includes(routeName) ||
+    focusedOptions.tabBarVisible === false
+  ) {
     return null;
   }
-  if (["PostJob"].includes(routeName)) {
-    return null;
-  }
+
+  // Animated values for each tab
+  const scales = state.routes.map(
+    (_, i) => useRef(new Animated.Value(i === state.index ? 1.1 : 0.8)).current
+  );
+
+  useEffect(() => {
+    scales.forEach((scale, i) => {
+      Animated.spring(scale, {
+        toValue: i === state.index ? 1 : 0.9,
+        useNativeDriver: true,
+        speed: 5,
+        bounciness: 10,
+        
+      }).start();
+    });
+  }, [state.index]);
+
+  const renderTab = (index, route, iconName, label) => (
+    <TouchableOpacity
+      key={route.key}
+      style={styles.tabItem}
+      onPress={() => navigation.navigate(route.name)}
+      activeOpacity={0.7}
+    >
+      <Animated.View style={{ transform: [{ scale: scales[index] }] }}>
+        <SvgImage
+          icon={state.index === index ? iconName + "Active" : iconName}
+          width={24}
+          height={24}
+        />
+      </Animated.View>
+      <Text
+        style={[
+          styles.tabText,
+          { color: state.index === index ? Colors.tabBlue : Colors.tabGrey },
+        ]}
+      >
+        {label}
+      </Text>
+    </TouchableOpacity>
+  );
 
   return (
     <View style={styles.container}>
       <View style={styles.tabBar}>
-        {/* Home Tab */}
-        <TouchableOpacity
-          style={styles.tabItem}
-          onPress={() => navigation.navigate("Home")}
-        >
-          <View style={styles.tabIconContainer}>
-            {/* <Image
-              source={
-                state.index === 0
-                  ? require("../assets/icons/homeO.png")
-                  : require("../assets/icons/home.png")
-              }
-              style={styles.icon}
-            /> */}
-            {state.index === 0 && <View style={styles.activeTabLine} />}
-            <SvgImage
-              icon={state.index === 0 ? "homeActive" : "home"}
-              width={24}
-              height={24}
-            />
-          </View>
-          <Text
-            style={[
-              styles.tabText,
-              { color: state.index === 0 ? Colors.tabBlue : Colors.tabGrey },
-            ]}
-          >
-            Home
-          </Text>
-        </TouchableOpacity>
+        {renderTab(0, state.routes[0], "home", "Home")}
+        {renderTab(1, state.routes[1], "status", "Status")}
 
-        {/* Status Tab */}
-        <TouchableOpacity
-          style={styles.tabItem}
-          onPress={() => navigation.navigate("Status")}
-        >
-          <View style={styles.tabIconContainer}>
-            {/* <Image
-              source={
-                state.index === 1
-                  ? require("../assets/icons/statusO.png")
-                  : require("../assets/icons/status.png")
-              }
-              style={styles.icon}
-            /> */}
-            <SvgImage
-              icon={state.index === 1 ? "statusActive" : "status"}
-              width={24}
-              height={24}
-            />
-
-            {state.index === 1 && <View style={styles.activeTabLine} />}
-          </View>
-          <Text
-            style={[
-              styles.tabText,
-              { color: state.index === 1 ? Colors.tabBlue : Colors.tabGrey },
-            ]}
-          >
-            Status
-          </Text>
-        </TouchableOpacity>
-
-        {/* Center Button for Post Job */}
         <View style={styles.centerButtonContainer}>
           <TouchableOpacity
             style={styles.centerButton}
             onPress={() => navigation.navigate("PostJob")}
           >
-            {/* <View style={styles.centerButtonOutline}>
-              <Image
-                source={require("../assets/icons/plus.png")}
-                style={styles.addIcon}
-              />
-            </View> */}
             <SvgImage icon={"postJob"} width={72} height={72} />
           </TouchableOpacity>
           <Text
@@ -115,69 +90,8 @@ const CustomTabBar = ({ state, descriptors, navigation }) => {
           </Text>
         </View>
 
-        {/* Chat Tab */}
-        <TouchableOpacity
-          style={styles.tabItem}
-          onPress={() => navigation.navigate("Chat")}
-        >
-          <View style={styles.tabIconContainer}>
-            {/* <Image
-              source={
-                state.index === 3
-                  ? require("../assets/icons/chatO.png")
-                  : require("../assets/icons/chat.png")
-              }
-              style={styles.icon}
-            /> */}
-            <SvgImage
-              icon={state.index === 3 ? "messageActive" : "message"}
-              width={24}
-              height={24}
-            />
-
-            {state.index === 3 && <View style={styles.activeTabLine} />}
-          </View>
-          <Text
-            style={[
-              styles.tabText,
-              { color: state.index === 3 ? Colors.tabBlue : Colors.tabGrey },
-            ]}
-          >
-            Chat
-          </Text>
-        </TouchableOpacity>
-
-        {/* Profile Tab */}
-        <TouchableOpacity
-          style={styles.tabItem}
-          onPress={() => navigation.navigate("Profile")}
-        >
-          <View style={styles.tabIconContainer}>
-            {/* <Image
-              source={
-                state.index === 4
-                  ? require("../assets/icons/profileO.png")
-                  : require("../assets/icons/profile.png")
-              }
-              style={styles.icon}
-            /> */}
-            <SvgImage
-              icon={state.index === 4 ? "profileActive" : "profile"}
-              width={24}
-              height={24}
-            />
-
-            {state.index === 4 && <View style={styles.activeTabLine} />}
-          </View>
-          <Text
-            style={[
-              styles.tabText,
-              { color: state.index === 4 ? Colors.tabBlue : Colors.tabGrey },
-            ]}
-          >
-            Profile
-          </Text>
-        </TouchableOpacity>
+        {renderTab(3, state.routes[3], "message", "Chat")}
+        {renderTab(4, state.routes[4], "profile", "Profile")}
       </View>
     </View>
   );
@@ -188,13 +102,13 @@ const styles = StyleSheet.create({
     position: "absolute",
     bottom: 0,
     width: DeviceDimensions.screenWidth,
-    backgroundColor: "transparent",
     alignItems: "center",
     shadowColor: "#000",
     shadowOffset: { width: 0, height: -2 },
     shadowOpacity: 0.8,
     shadowRadius: 3.84,
     elevation: 5,
+    backgroundColor: "transparent",
   },
   tabBar: {
     flexDirection: "row",
@@ -204,66 +118,15 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-around",
   },
-  tabItem: {
-    alignItems: "center",
-    justifyContent: "center",
-    flex: 1,
-  },
-  tabIconContainer: {
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  activeTabLine: {
-    position: "absolute",
-    top: -10, // Adjust this value to position the line above the icon
-    width: 24, // Match the width of the icon
-    height: 2,
-    backgroundColor: Colors.tabBlue,
-  },
-  tabText: {
-    fontSize: 12,
-    fontFamily: "regular",
-    marginTop: 5,
-  },
-  JobPostText: {
-    fontSize: 12,
-    fontFamily: "regular",
-    marginTop: 5,
-  },
+  tabItem: { alignItems: "center", justifyContent: "center", flex: 1 },
+  tabText: { fontSize: 12, fontFamily: "regular", marginTop: 5 },
+  JobPostText: { fontSize: 12, fontFamily: "regular", marginTop: 5 },
   centerButtonContainer: {
     alignItems: "center",
     justifyContent: "center",
     marginBottom: 20 * DeviceDimensions.heightRatio,
   },
-  centerButton: {
-    alignItems: "center",
-    justifyContent: "center",
-    // width: 55 * DeviceDimensions.widthRatio,
-    // height: 55 * DeviceDimensions.widthRatio,
-    // borderRadius: 27.5 * DeviceDimensions.widthRatio,
-    // backgroundColor: Colors.blue,
-    // borderWidth: 5, // Adjust border width
-    // borderColor: Colors.white,
-  },
-  centerButtonOutline: {
-    backgroundColor: "transparent",
-    borderWidth: 1.5,
-    borderColor: Colors.white,
-    height: 35 * DeviceDimensions.heightRatio,
-    width: 35 * DeviceDimensions.widthRatio,
-    borderRadius: 17.5,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  icon: {
-    width: 24,
-    height: 24,
-  },
-  addIcon: {
-    width: 16,
-    height: 16,
-    tintColor: Colors.white,
-  },
+  centerButton: { alignItems: "center", justifyContent: "center" },
 });
 
 export default CustomTabBar;

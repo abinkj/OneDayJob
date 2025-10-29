@@ -24,6 +24,7 @@ import socketService from "../../../services/socketService";
 import SuccessAnimation from "../../../components/successAnimation";
 import Toast from "react-native-toast-message";
 import { useNotifications } from "../../../contexts/NotificationContext";
+import { get } from "react-native/Libraries/TurboModule/TurboModuleRegistry";
 
 const JobDetails = () => {
   const navigation = useNavigation<any>();
@@ -83,7 +84,7 @@ const JobDetails = () => {
           jobId: data.jobId,
           jobName: data.jobName,
           code: data.code,
-          timestamp: data.timestamp
+          timestamp: data.timestamp,
         });
         
         // Send notification
@@ -110,14 +111,26 @@ const JobDetails = () => {
     // Initialize socket and set up event listeners
     initializeSocket().then(() => {
       // Set up socket event listeners
-      socketService.on('verification-code-received', handleVerificationCodeReceived);
-      socketService.on('verification-status-updated', handleVerificationStatusUpdated);
+      socketService.on(
+        "verification-code-received",
+        handleVerificationCodeReceived
+      );
+      socketService.on(
+        "verification-status-updated",
+        handleVerificationStatusUpdated
+      );
     });
 
     return () => {
       // Clean up socket listeners
-      socketService.off('verification-code-received', handleVerificationCodeReceived);
-      socketService.off('verification-status-updated', handleVerificationStatusUpdated);
+      socketService.off(
+        "verification-code-received",
+        handleVerificationCodeReceived
+      );
+      socketService.off(
+        "verification-status-updated",
+        handleVerificationStatusUpdated
+      );
     };
   }, [jobId, job?.requiresVerification]);
 
@@ -157,7 +170,9 @@ const JobDetails = () => {
     } catch (error) {
       console.log(
         "No verification code available:",
-        error.response?.status === 404 ? "Codes not generated yet" : error.message
+        error.response?.status === 404
+          ? "Codes not generated yet"
+          : error.message
       );
       // Don't show error for 404 (codes not generated yet)
       if (error.response?.status !== 404) {
@@ -488,9 +503,16 @@ const JobDetails = () => {
                         disabled={loadingCode}
                       >
                         {loadingCode ? (
-                          <ActivityIndicator size="small" color={Colors.primary} />
+                          <ActivityIndicator
+                            size="small"
+                            color={Colors.primary}
+                          />
                         ) : (
-                          <Ionicons name="refresh" size={20} color={Colors.primary} />
+                          <Ionicons
+                            name="refresh"
+                            size={20}
+                            color={Colors.primary}
+                          />
                         )}
                       </TouchableOpacity>
                     </View>
@@ -500,8 +522,8 @@ const JobDetails = () => {
                       </Text>
                     </View>
                     <Text style={styles.verificationCodeInstructions}>
-                      📱 Show this code to your employer when you arrive at
-                      the job location
+                      📱 Show this code to your employer when you arrive at the
+                      job location
                     </Text>
                     {verificationCode.expiresAt && (
                       <Text style={styles.verificationCodeExpiry}>
@@ -511,29 +533,33 @@ const JobDetails = () => {
                     )}
                     {verificationCode.failedAttempts > 0 && (
                       <Text style={styles.verificationCodeFailedAttempts}>
-                        ⚠️ {verificationCode.failedAttempts} failed verification attempts
+                        ⚠️ {verificationCode.failedAttempts} failed verification
+                        attempts
                       </Text>
                     )}
                   </View>
                 )}
 
                 {/* No Code Available Message */}
-                {!verificationCode && !loadingCode && verificationStatus && !verificationStatus.isVerified && (
-                  <View style={styles.noCodeContainer}>
-                    <Text style={styles.noCodeText}>
-                      📋 Verification codes have not been generated yet
-                    </Text>
-                    <TouchableOpacity
-                      style={styles.refreshCodeButtonLarge}
-                      onPress={fetchVerificationCode}
-                      disabled={loadingCode}
-                    >
-                      <Text style={styles.refreshCodeButtonText}>
-                        Check for Code
+                {!verificationCode &&
+                  !loadingCode &&
+                  verificationStatus &&
+                  !verificationStatus.isVerified && (
+                    <View style={styles.noCodeContainer}>
+                      <Text style={styles.noCodeText}>
+                        📋 Verification codes have not been generated yet
                       </Text>
-                    </TouchableOpacity>
-                  </View>
-                )}
+                      <TouchableOpacity
+                        style={styles.refreshCodeButtonLarge}
+                        onPress={fetchVerificationCode}
+                        disabled={loadingCode}
+                      >
+                        <Text style={styles.refreshCodeButtonText}>
+                          Check for Code
+                        </Text>
+                      </TouchableOpacity>
+                    </View>
+                  )}
 
                 {verificationStatus.isVerified && (
                   <View style={styles.verificationSuccessContainer}>
@@ -604,13 +630,20 @@ const JobDetails = () => {
 
       {/* Action Buttons */}
       <View style={styles.actionContainer}>
-        <TouchableOpacity style={styles.applyButton} onPress={handleApply}>
-          <Text style={styles.applyButtonText}>Apply</Text>
-        </TouchableOpacity>
-        {/* <TouchableOpacity style={styles.saveButton}>
-          <Ionicons name="bookmark-outline" size={20} color={Colors.primary} />
-          <Text style={styles.saveButtonText}>Save</Text>
-        </TouchableOpacity> */}
+        {jobData.jobStatus === "completed" ? (
+          <TouchableOpacity
+            style={[styles.applyButton, { backgroundColor: "#ccc" }]} // gray out the button
+            disabled={true}
+          >
+            <Text style={[styles.applyButtonText, { color: "#666" }]}>
+              Job Completed
+            </Text>
+          </TouchableOpacity>
+        ) : (
+          <TouchableOpacity style={styles.applyButton} onPress={handleApply}>
+            <Text style={styles.applyButtonText}>Apply</Text>
+          </TouchableOpacity>
+        )}
       </View>
     </View>
   );
