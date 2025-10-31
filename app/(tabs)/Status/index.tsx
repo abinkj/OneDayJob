@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import {
   View,
   Text,
-  ScrollView,
+  FlatList,
   TouchableWithoutFeedback,
   Dimensions,
   ActivityIndicator,
@@ -47,6 +47,9 @@ const MyPostTab = () => {
   const [filteredPosts, setFilteredPosts] = useState<JobPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = React.useState(false);
+  const [loadingMore, setLoadingMore] = React.useState(false);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
   const [selectedStatus, setSelectedStatus] = useState<string | null>(null);
   const [paymentModalVisible, setPaymentModalVisible] = useState(false);
   const [selectedJobForPayment, setSelectedJobForPayment] = useState<JobPost | null>(null);
@@ -94,28 +97,56 @@ const MyPostTab = () => {
     }
   };
 
-  const fetchPosts = async (isRefresh = false) => {
+  const fetchPosts = async (isRefresh = false, loadMore = false) => {
     try {
-      if (!isRefresh) setLoading(true);
+      if (!isRefresh && !loadMore) setLoading(true);
+      if (loadMore) setLoadingMore(true);
+      
       const user = await getUserData();
       if (!user?.id) {
         console.error("No user ID found");
         setPosts([]);
         return;
       }
-      const res = await getJobPostingsByUserId(user.id);
+      
+      const currentPage = isRefresh ? 1 : (loadMore ? page : 1);
+      const res = await getJobPostingsByUserId(user.id, currentPage, 10);
       const postsData = res.data || [];
-      setPosts(postsData);
-      setFilteredPosts(postsData);
+      const hasMoreData = res.hasMore || false;
+      
+      if (isRefresh) {
+        setPosts(postsData);
+        setFilteredPosts(postsData);
+        setPage(2);
+        setHasMore(hasMoreData);
+      } else if (loadMore) {
+        setPosts(prev => [...prev, ...postsData]);
+        setFilteredPosts(prev => [...prev, ...postsData]);
+        setPage(prev => prev + 1);
+        setHasMore(hasMoreData);
+      } else {
+        setPosts(postsData);
+        setFilteredPosts(postsData);
+        setPage(2);
+        setHasMore(hasMoreData);
+      }
     } catch (error) {
       console.error("Error fetching job postings", error);
-      setPosts([]);
+      if (!loadMore) setPosts([]);
     } finally {
       if (isRefresh) {
         setRefreshing(false);
+      } else if (loadMore) {
+        setLoadingMore(false);
       } else {
         setLoading(false);
       }
+    }
+  };
+  
+  const handleLoadMore = () => {
+    if (!loadingMore && hasMore) {
+      fetchPosts(false, true);
     }
   };
 
@@ -134,6 +165,8 @@ const MyPostTab = () => {
 
   useFocusEffect(
     React.useCallback(() => {
+      setPage(1);
+      setHasMore(true);
       fetchPosts();
     }, [])
   );
@@ -158,6 +191,12 @@ const MyPostTab = () => {
 
     return () => clearInterval(interval);
   }, []);
+  
+  // Reset pagination when status filter changes
+  React.useEffect(() => {
+    setPage(1);
+    setHasMore(true);
+  }, [selectedStatus]);
 
   if (loading) {
     return (
@@ -177,21 +216,46 @@ const MyPostTab = () => {
     getJobStatusInfo(JOB_STATUSES.CANCELLED),
   ];
 
-  return (
-    <ScrollView
-      style={styles.scrollContainer}
-      showsVerticalScrollIndicator={false}
-      refreshControl={
-        <RefreshControl
-          refreshing={refreshing}
-          onRefresh={() => {
-            setRefreshing(true);
-            fetchPosts(true);
-          }}
-        />
-      }
+  const renderItem = ({ item }: { item: JobPost }) => (
+    <JobCard
+      key={item._id}
+      data={item}
+      onPress={() => handleNext(item._id)}
+      onDelete={() => handleDelete(item._id)}
+      onPayment={() => handlePayment(item)}
+      isEmployer={true}
+      showPaymentButton={true}
+    />
+  );
+
+  const renderFooter = () => {
+    if (!loadingMore) return null;
+    return (
+      <View style={{ padding: 20, alignItems: 'center' }}>
+        <ActivityIndicator size="small" color={Colors.grey} />
+      </View>
+    );
+  };
+
+  const renderEmpty = () => (
+    <View
+      style={{
+        justifyContent: "center",
+        alignItems: "center",
+        flex: 1,
+        padding: 20,
+        minHeight: 400,
+      }}
     >
-      {/* Always show status filter, even when there are no posts */}
+      <Ionicons name="document-outline" size={64} color={Colors.grey} />
+      <Text style={{ fontSize: 18, color: Colors.grey, marginTop: 16 }}>
+        {selectedStatus ? `No ${selectedStatus.toLowerCase()} jobs` : 'No job posts yet'}
+      </Text>
+    </View>
+  );
+
+  return (
+    <View style={{ flex: 1 }}>
       {posts.length > 0 && (
         <StatusFilter
           statuses={availableStatuses}
@@ -200,48 +264,37 @@ const MyPostTab = () => {
           showAll={true}
         />
       )}
-      
-      {filteredPosts.length === 0 ? (
-        <View
-          style={{
-            justifyContent: "center",
-            alignItems: "center",
-            flex: 1,
-            padding: 20,
-            minHeight: 400, // Add minimum height to ensure proper centering
-          }}
-        >
-          <Ionicons name="document-outline" size={64} color={Colors.grey} />
-          <Text style={{ fontSize: 18, color: Colors.grey, marginTop: 16 }}>
-            {selectedStatus ? `No ${selectedStatus.toLowerCase()} jobs` : 'No job posts yet'}
-          </Text>
-        </View>
-      ) : (
-        <>
-          {filteredPosts.map((post) => (
-            <JobCard
-              key={post._id}
-              data={post}
-              onPress={() => handleNext(post._id)}
-              onDelete={() => handleDelete(post._id)}
-              onPayment={() => handlePayment(post)}
-              isEmployer={true}
-              showPaymentButton={true}
-            />
-          ))}
-          {/* Payment Modal */}
-          {selectedJobForPayment && (
-            <PaymentModal
-              visible={paymentModalVisible}
-              onClose={() => setPaymentModalVisible(false)}
-              jobId={selectedJobForPayment._id}
-              jobName={selectedJobForPayment.name}
-              onPaymentSuccess={handlePaymentSuccess}
-            />
-          )}
-        </>
+      <FlatList
+        data={filteredPosts}
+        renderItem={renderItem}
+        keyExtractor={(item) => item._id}
+        style={styles.scrollContainer}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={() => {
+              setRefreshing(true);
+              fetchPosts(true);
+            }}
+          />
+        }
+        onEndReached={handleLoadMore}
+        onEndReachedThreshold={0.5}
+        ListEmptyComponent={renderEmpty}
+        ListFooterComponent={renderFooter}
+        contentContainerStyle={filteredPosts.length === 0 ? { flexGrow: 1 } : undefined}
+      />
+      {selectedJobForPayment && (
+        <PaymentModal
+          visible={paymentModalVisible}
+          onClose={() => setPaymentModalVisible(false)}
+          jobId={selectedJobForPayment._id}
+          jobName={selectedJobForPayment.name}
+          onPaymentSuccess={handlePaymentSuccess}
+        />
       )}
-    </ScrollView>
+    </View>
   );
 };
 
@@ -251,6 +304,9 @@ const AppliedTab = () => {
   const [filteredJobs, setFilteredJobs] = React.useState<any[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [refreshing, setRefreshing] = React.useState(false);
+  const [loadingMore, setLoadingMore] = React.useState(false);
+  const [page, setPage] = React.useState(1);
+  const [hasMore, setHasMore] = React.useState(true);
   const [selectedStatus, setSelectedStatus] = React.useState<string | null>(null);
 
   const handleNext = (job: any) => {
@@ -292,32 +348,23 @@ const AppliedTab = () => {
     }
   };
 
-  const fetchAppliedJobs = async (isRefresh = false) => {
+  const fetchAppliedJobs = async (isRefresh = false, loadMore = false) => {
     try {
-      if (!isRefresh) setLoading(true);
+      if (!isRefresh && !loadMore) setLoading(true);
+      if (loadMore) setLoadingMore(true);
+      
       const user = await getUserData();
       if (!user?.id) {
         console.error("No user ID found");
         setAppliedJobs([]);
         return;
       }
-      const res = await getAppliedJobsByUserId(user.id);
-      console.log("Applied jobs response:", JSON.stringify(res, null, 2));
       
-      // Debug: Log all application statuses
+      const currentPage = isRefresh ? 1 : (loadMore ? page : 1);
+      const res = await getAppliedJobsByUserId(user.id, currentPage, 10);
+      const hasMoreData = res.hasMore || false;
+      
       const allApplications = res.data || [];
-      console.log("All application statuses:", allApplications.map(app => ({ 
-        id: app.applicationId, 
-        status: app.status,
-        jobName: app.job?.name,
-        appliedAt: app.appliedAt
-      })));
-      
-      // Check if there are any withdrawn applications
-      const withdrawnApps = allApplications.filter(app => app.status === 'withdrawn');
-      if (withdrawnApps.length > 0) {
-        console.log("Found withdrawn applications:", withdrawnApps);
-      }
       
       // Filter out applications with null or incomplete job data and withdrawn applications
       const validApplications = allApplications.filter(
@@ -326,22 +373,42 @@ const AppliedTab = () => {
           application.job && 
           application.job._id && 
           application.applicationId &&
-          application.status !== 'withdrawn' // Filter out withdrawn applications
+          application.status !== 'withdrawn'
       );
       
-      console.log("Valid applications after filtering:", validApplications.length);
-      console.log("Filtered out withdrawn applications:", allApplications.length - validApplications.length);
-      setAppliedJobs(validApplications);
-      setFilteredJobs(validApplications);
+      if (isRefresh) {
+        setAppliedJobs(validApplications);
+        setFilteredJobs(validApplications);
+        setPage(2);
+        setHasMore(hasMoreData);
+      } else if (loadMore) {
+        setAppliedJobs(prev => [...prev, ...validApplications]);
+        setFilteredJobs(prev => [...prev, ...validApplications]);
+        setPage(prev => prev + 1);
+        setHasMore(hasMoreData);
+      } else {
+        setAppliedJobs(validApplications);
+        setFilteredJobs(validApplications);
+        setPage(2);
+        setHasMore(hasMoreData);
+      }
     } catch (error) {
       console.error("Error fetching applied jobs", error);
-      setAppliedJobs([]);
+      if (!loadMore) setAppliedJobs([]);
     } finally {
       if (isRefresh) {
         setRefreshing(false);
+      } else if (loadMore) {
+        setLoadingMore(false);
       } else {
         setLoading(false);
       }
+    }
+  };
+  
+  const handleLoadMore = () => {
+    if (!loadingMore && hasMore) {
+      fetchAppliedJobs(false, true);
     }
   };
 
@@ -360,6 +427,8 @@ const AppliedTab = () => {
 
   useFocusEffect(
     React.useCallback(() => {
+      setPage(1);
+      setHasMore(true);
       fetchAppliedJobs();
     }, [])
   );
@@ -384,6 +453,12 @@ const AppliedTab = () => {
 
     return () => clearInterval(interval);
   }, []);
+  
+  // Reset pagination when status filter changes
+  React.useEffect(() => {
+    setPage(1);
+    setHasMore(true);
+  }, [selectedStatus]);
 
   if (loading) {
     return (
@@ -401,21 +476,57 @@ const AppliedTab = () => {
     getApplicationStatusInfo(APPLICATION_STATUSES.WITHDRAWN),
   ];
 
-  return (
-    <ScrollView
-      style={styles.scrollContainer}
-      showsVerticalScrollIndicator={false}
-      refreshControl={
-        <RefreshControl
-          refreshing={refreshing}
-          onRefresh={() => {
-            setRefreshing(true);
-            fetchAppliedJobs(true);
-          }}
-        />
-      }
+  const renderItem = ({ item }: { item: any }) => {
+    if (!item || !item.job || !item.applicationId) {
+      return null;
+    }
+
+    return (
+      <JobCard
+        key={item.applicationId}
+        data={{
+          ...item.job,
+          status: item.job.jobStatus || "posted"
+        }}
+        onPress={() => handleNext(item.job)}
+        withdraw={true}
+        onWithdraw={() => 
+          handleWithdraw(item.applicationId, item.job._id)
+        }
+        isEmployer={false}
+        applicationStatus={item.status}
+      />
+    );
+  };
+
+  const renderFooter = () => {
+    if (!loadingMore) return null;
+    return (
+      <View style={{ padding: 20, alignItems: 'center' }}>
+        <ActivityIndicator size="small" color={Colors.grey} />
+      </View>
+    );
+  };
+
+  const renderEmpty = () => (
+    <View
+      style={{
+        justifyContent: "center",
+        alignItems: "center",
+        flex: 1,
+        padding: 20,
+        minHeight: 400,
+      }}
     >
-      {/* Always show status filter, even when there are no applied jobs */}
+      <Ionicons name="document-outline" size={64} color={Colors.grey} />
+      <Text style={{ fontSize: 18, color: Colors.grey, marginTop: 16 }}>
+        {selectedStatus ? `No ${selectedStatus.toLowerCase()} applications` : 'No applied jobs yet'}
+      </Text>
+    </View>
+  );
+
+  return (
+    <View style={{ flex: 1 }}>
       {appliedJobs.length > 0 && (
         <StatusFilter
           statuses={availableStatuses}
@@ -424,48 +535,28 @@ const AppliedTab = () => {
           showAll={true}
         />
       )}
-      
-      {filteredJobs.length === 0 ? (
-        <View
-          style={{
-            justifyContent: "center",
-            alignItems: "center",
-            flex: 1,
-            padding: 20,
-            minHeight: 400, // Add minimum height to ensure proper centering
-          }}
-        >
-          <Ionicons name="document-outline" size={64} color={Colors.grey} />
-          <Text style={{ fontSize: 18, color: Colors.grey, marginTop: 16 }}>
-            {selectedStatus ? `No ${selectedStatus.toLowerCase()} applications` : 'No applied jobs yet'}
-          </Text>
-        </View>
-      ) : (
-        filteredJobs.map((application) => {
-          // Additional safety check
-          if (!application || !application.job || !application.applicationId) {
-            return null;
-          }
-
-          return (
-            <JobCard
-              key={application.applicationId}
-              data={{
-                ...application.job,
-                status: application.job.jobStatus || "posted"
-              }}
-              onPress={() => handleNext(application.job)}
-              withdraw={true}
-              onWithdraw={() => 
-                handleWithdraw(application.applicationId, application.job._id)
-              }
-              isEmployer={false}
-              applicationStatus={application.status}
-            />
-          );
-        })
-      )}
-    </ScrollView>
+      <FlatList
+        data={filteredJobs}
+        renderItem={renderItem}
+        keyExtractor={(item) => item.applicationId}
+        style={styles.scrollContainer}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={() => {
+              setRefreshing(true);
+              fetchAppliedJobs(true);
+            }}
+          />
+        }
+        onEndReached={handleLoadMore}
+        onEndReachedThreshold={0.5}
+        ListEmptyComponent={renderEmpty}
+        ListFooterComponent={renderFooter}
+        contentContainerStyle={filteredJobs.length === 0 ? { flexGrow: 1 } : undefined}
+      />
+    </View>
   );
 };
 

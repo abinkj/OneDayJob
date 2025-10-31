@@ -488,13 +488,13 @@ export const getCategoriesForFilter = async () => {
 };
 
 // services/jobService.ts
-export const getJobPostingsByUserId = async (userId: string) => {
-  const res = await api.get(`jobs/user-posts/${userId}`);
+export const getJobPostingsByUserId = async (userId: string, page: number = 1, limit: number = 10) => {
+  const res = await api.get(`jobs/user-posts/${userId}?page=${page}&limit=${limit}`);
   return res.data;
 };
 
-export const getAppliedJobsByUserId = async (userId: string) => {
-  const res = await api.get(`applications/user/${userId}/applied-jobs`);
+export const getAppliedJobsByUserId = async (userId: string, page: number = 1, limit: number = 10) => {
+  const res = await api.get(`applications/user/${userId}/applied-jobs?page=${page}&limit=${limit}`);
   return res.data;
 };
 
