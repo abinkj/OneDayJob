@@ -34,6 +34,7 @@ const JobCard = ({
     location,
     createdAt,
     status = "active",
+    jobStatus, // Backend job status
     category,
     description,
     isRemote,
@@ -42,12 +43,15 @@ const JobCard = ({
     timePreference,
   } = data || {};
 
+  // Use jobStatus if available, otherwise fall back to status
+  const actualStatus = jobStatus || status;
+
   // Get the appropriate status for display
-  let displayStatus = getDisplayStatus(status, applicationStatus, isEmployer);
+  let displayStatus = getDisplayStatus(actualStatus, applicationStatus, isEmployer);
   
   // For employers, use the corrected display status that handles payment state
   if (isEmployer) {
-    displayStatus = getEmployerDisplayStatus(status, data?.isPaymentDone);
+    displayStatus = getEmployerDisplayStatus(actualStatus, data?.isPaymentDone);
   }
   
   // Get status info based on context
@@ -61,8 +65,9 @@ const JobCard = ({
   const isWorkCompletedStatus = displayStatus?.toLowerCase() === "work_completed";
   
   // Check if work is completed based on status or backend flags
+  // Use actualStatus instead of displayStatus to check the real backend status
   const isWorkFinished = isWorkCompleted(
-    displayStatus, 
+    actualStatus, 
     data?.isCompletedByWorker, 
     data?.isVerifiedByEmployer
   );
@@ -72,12 +77,15 @@ const JobCard = ({
     jobId: data?._id,
     jobName: data?.name,
     status: data?.status,
+    jobStatus: data?.jobStatus,
+    actualStatus,
     displayStatus,
     isCompleted,
     isWorkCompletedStatus,
     isWorkFinished,
     isCompletedByWorker: data?.isCompletedByWorker,
     isVerifiedByEmployer: data?.isVerifiedByEmployer,
+    isPaymentDone: data?.isPaymentDone,
     isEmployer,
     showPaymentButton,
     shouldShowPayment: showPaymentButton && isWorkFinished && isEmployer
@@ -236,7 +244,7 @@ const JobCard = ({
                 Withdraw
               </Text>
             </TouchableOpacity>
-          ) : showPaymentButton && isWorkFinished && isEmployer ? (
+          ) : showPaymentButton && isWorkFinished && isEmployer && !data?.isPaymentDone ? (
             <TouchableOpacity
               style={[
                 styles.button,

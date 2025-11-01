@@ -141,6 +141,7 @@ export interface JobCardData {
   location: JobLocation;
   createdAt: string;
   status: string;
+  jobStatus?: string; // Backend job status
   category: JobCategory;
   description: string;
   isRemote: boolean;
@@ -150,4 +151,7 @@ export interface JobCardData {
   fromTime?: string; // HH:MM format for non-flexible jobs
   toTime?: string; // HH:MM format for non-flexible jobs
   userId: JobUser;
+  isCompletedByWorker?: boolean; // Backend flag for worker completion
+  isVerifiedByEmployer?: boolean; // Backend flag for employer verification
+  isPaymentDone?: boolean; // Backend flag for payment completion
 } 
