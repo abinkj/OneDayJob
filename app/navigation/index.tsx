@@ -12,9 +12,10 @@ const RootStack = createNativeStackNavigator();
 
 const RootStackLayout = () => {
   const dispatch = useDispatch();
-  const { isLoggedIn, isKycCompleted } = useSelector(
+  const { isLoggedIn, kycStatus } = useSelector(
     (state) => state.authentication
   );
+  console.log('Kyc stats',kycStatus);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -46,7 +47,7 @@ const RootStackLayout = () => {
       }}
     >
       {isLoggedIn ? (
-        !isKycCompleted ? (
+        kycStatus === "completed" || kycStatus === "skipped" ? (
           <RootStack.Screen name="MainStack" component={MainStack} />
         ) : (
           <RootStack.Screen name="KycStack" component={KycStack} />

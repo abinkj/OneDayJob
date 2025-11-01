@@ -1,6 +1,7 @@
-import { login, logout } from "../redux/reducers/authReducers";
-import { saveUserData, clearUserData, getUserData } from "./asyncStore";
+import { login, logout, setKycStatus } from "../redux/reducers/authReducers";
+import { saveUserData, clearUserData, getUserData, saveKycStatus, getKycStatus, clearKycStatus } from "./asyncStore";
 import { saveToken, clearTokens } from "./secureStore";
+import type { KycStatus } from "../redux/reducers/authReducers";
 
 // ✅ Log user in and update Redux + secure storage
 export const loginUser =
@@ -17,9 +18,9 @@ export const loginUser =
 // ✅ Clear storage + Redux state
 export const logoutUser = () => async (dispatch) => {
   try {
-    console.log("Logging out user...");
     await clearTokens();
     await clearUserData();
+    await clearKycStatus();
     dispatch(logout());
   } catch (error) {
     console.error("Logout error:", error);
@@ -31,12 +32,18 @@ export const restoreSession = () => async (dispatch) => {
   try {
     const user = await getUserData();
     if (user) {
-      console.log("Restoring session for user:", {
-        id: user.id || user._id,
-        phone: user.phoneNumber || user.phone,
-        role: user.role,
-      });
+      // console.log("Restoring session for user:", {
+      //   id: user.id || user._id,
+      //   phone: user.phoneNumber || user.phone,
+      //   role: user.role,
+      // });
       dispatch(login(user));
+      
+      const savedKycStatus = await getKycStatus();
+      if (savedKycStatus) {
+        dispatch(setKycStatus(savedKycStatus as KycStatus));
+      }
+      
       return user;
     } else {
       console.log("No user data found, session not restored.");

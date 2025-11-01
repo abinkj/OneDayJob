@@ -73,3 +73,32 @@ export const clearUserData = async () => {
     console.error('Failed to clear user data:', error);
   }
 };
+
+const KYC_STATUS_KEY = 'kycStatus';
+
+export const saveKycStatus = async (status: string): Promise<void> => {
+  try {
+    await AsyncStorage.setItem(KYC_STATUS_KEY, status);
+  } catch (error) {
+    console.error('Failed to save KYC status:', error);
+    throw error;
+  }
+};
+
+export const getKycStatus = async (): Promise<string | null> => {
+  try {
+    const status = await AsyncStorage.getItem(KYC_STATUS_KEY);
+    return status;
+  } catch (error) {
+    console.error('Failed to load KYC status:', error);
+    return null;
+  }
+};
+
+export const clearKycStatus = async (): Promise<void> => {
+  try {
+    await AsyncStorage.removeItem(KYC_STATUS_KEY);
+  } catch (error) {
+    console.error('Failed to clear KYC status:', error);
+  }
+};

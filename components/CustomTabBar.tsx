@@ -6,16 +6,19 @@ import {
   StyleSheet,
   Animated,
 } from "react-native";
+import { useSelector } from "react-redux";
 import DeviceDimensions from "../constants/DeviceDimenions";
 import { Colors } from "../constants/Colors";
 import { getFocusedRouteNameFromRoute } from "@react-navigation/native";
 import SvgImage from "../utilities/svg";
+import Toast from "react-native-toast-message";
 
 const CustomTabBar = ({ state, descriptors, navigation }) => {
   const focusedOptions = descriptors[state.routes[state.index].key].options;
   const currentRoute = state.routes[state.index];
   const routeName =
     getFocusedRouteNameFromRoute(currentRoute) || currentRoute.name;
+  const { kycStatus } = useSelector((state) => state.authentication);
 
   const hiddenTabBarScreens = ["PostJob"];
   if (
@@ -24,6 +27,19 @@ const CustomTabBar = ({ state, descriptors, navigation }) => {
   ) {
     return null;
   }
+
+  const handlePostJobPress = () => {
+    if (kycStatus === 'completed') {
+      navigation.navigate("PostJob");
+    } else {
+      Toast.show({
+        type: "info",
+        text1: "KYC Required",
+        text2: "Please complete your KYC to post jobs",
+      });
+      navigation.navigate("BankAccount");
+    }
+  };
 
   // Animated values for each tab
   const scales = state.routes.map(
@@ -76,7 +92,7 @@ const CustomTabBar = ({ state, descriptors, navigation }) => {
         <View style={styles.centerButtonContainer}>
           <TouchableOpacity
             style={styles.centerButton}
-            onPress={() => navigation.navigate("PostJob")}
+            onPress={handlePostJobPress}
           >
             <SvgImage icon={"postJob"} width={72} height={72} />
           </TouchableOpacity>

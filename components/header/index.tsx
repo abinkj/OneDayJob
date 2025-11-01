@@ -11,6 +11,8 @@ interface HeaderProps {
   onEditPress?: () => void;
   showChatButton?: boolean;
   onChatPress?: () => void;
+  showSkipButton?: boolean;
+  onSkipPress?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -20,6 +22,8 @@ export const Header: React.FC<HeaderProps> = ({
   onEditPress,
   showChatButton = false,
   onChatPress,
+  showSkipButton = false,
+  onSkipPress,
 }) => {
   const router = useRouter();
 
@@ -36,6 +40,12 @@ export const Header: React.FC<HeaderProps> = ({
       )}
 
       <Text style={styles.title}>{title}</Text>
+
+      {showSkipButton && (
+        <TouchableOpacity style={styles.skipIcon} onPress={onSkipPress}>
+          <Text style={styles.skipText}>Skip</Text>
+        </TouchableOpacity>
+      )}
 
       {showEditButton && (
         <TouchableOpacity style={styles.editIcon} onPress={onEditPress}>
@@ -85,6 +95,19 @@ const styles = StyleSheet.create({
     zIndex: 1,
     padding: 20,
     margin: -20,
+  },
+  skipIcon: {
+    position: "absolute",
+    right: 16,
+    top: 16,
+    zIndex: 1,
+    padding: 20,
+    margin: -20,
+  },
+  skipText: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#666",
   },
   title: {
     fontSize: 20,

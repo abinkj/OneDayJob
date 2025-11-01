@@ -9,6 +9,7 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation, useRoute } from "@react-navigation/native";
+import { useSelector } from "react-redux";
 import { Colors } from "../../../constants/Colors";
 import styles from "./styles";
 import { JobPost } from "../../../types";
@@ -29,6 +30,7 @@ import { get } from "react-native/Libraries/TurboModule/TurboModuleRegistry";
 const JobDetails = () => {
   const navigation = useNavigation<any>();
   const route = useRoute<any>();
+  const { kycStatus } = useSelector((state) => state.authentication);
   const { jobId, jobData } = route.params || {};
 
   const [job, setJob] = useState<JobPost | null>(null);
@@ -199,6 +201,16 @@ const JobDetails = () => {
   // };
 
   const handleApply = async () => {
+    if (kycStatus !== 'completed') {
+      Toast.show({
+        type: 'info',
+        text1: 'KYC Required',
+        text2: 'Please complete your KYC to apply for jobs',
+      });
+      navigation.navigate('BankAccount');
+      return;
+    }
+
     setLoading(true);
     try {
       const res = await applyJob(jobId);

@@ -10,6 +10,7 @@ import {
   Alert,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
+import { useDispatch, useSelector } from "react-redux";
 import { Ionicons } from "@expo/vector-icons";
 import { Colors } from "../../../constants/Colors";
 import { Header } from "../../../components/header";
@@ -19,20 +20,36 @@ import {
   getCurrentUser,
 } from "../../../services/api";
 import Toast from "react-native-toast-message";
+import { skipKyc, completeKyc } from "../../../redux/reducers/authReducers";
+import { saveKycStatus } from "../../../utilities/asyncStore";
 
 const BankAccount = () => {
   const navigation = useNavigation<any>();
+  const dispatch = useDispatch();
+  const { kycStatus } = useSelector((state) => state.authentication);
+
   const [loading, setLoading] = useState(false);
+  const [currentStep, setCurrentStep] = useState(1); // 1: Pancard, 2: Aadhar, 3: Bank details
+
+  // Pancard fields
+  const [panNumber, setPanNumber] = useState("");
+
+  // Aadhar fields
+  const [aadharNumber, setAadharNumber] = useState("");
+
+  // Payment method
   const [paymentMethod, setPaymentMethod] = useState<"bank" | "upi">("bank");
-  
+
   // Bank account fields
   const [accountHolderName, setAccountHolderName] = useState("");
   const [accountNumber, setAccountNumber] = useState("");
   const [confirmAccountNumber, setConfirmAccountNumber] = useState("");
   const [ifscCode, setIfscCode] = useState("");
   const [bankName, setBankName] = useState("");
-  const [accountType, setAccountType] = useState<"savings" | "current">("savings");
-  
+  const [accountType, setAccountType] = useState<"savings" | "current">(
+    "savings"
+  );
+
   // UPI field
   const [upiId, setUpiId] = useState("");
 
@@ -46,7 +63,15 @@ const BankAccount = () => {
     try {
       const user = await getCurrentUser();
       setCurrentUser(user);
-      
+
+      // Pre-fill pancard and aadhar if available
+      if (user?.panNumber) {
+        setPanNumber(user.panNumber);
+      }
+      if (user?.aadharNumber) {
+        setAadharNumber(user.aadharNumber);
+      }
+
       // Pre-fill if user has existing bank details
       if (user?.bankAccount) {
         setPaymentMethod("bank");
@@ -62,6 +87,70 @@ const BankAccount = () => {
       }
     } catch (error) {
       console.error("Error loading user data:", error);
+    }
+  };
+
+  const validatePanNumber = () => {
+    if (!panNumber.trim()) {
+      Toast.show({
+        type: "error",
+        text1: "Validation Error",
+        text2: "Please enter PAN number",
+      });
+      return false;
+    }
+
+    const panRegex = /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/;
+    if (!panRegex.test(panNumber.toUpperCase())) {
+      Toast.show({
+        type: "error",
+        text1: "Validation Error",
+        text2: "Please enter a valid PAN number (e.g., ABCDE1234F)",
+      });
+      return false;
+    }
+
+    return true;
+  };
+
+  const validateAadharNumber = () => {
+    if (!aadharNumber.trim()) {
+      Toast.show({
+        type: "error",
+        text1: "Validation Error",
+        text2: "Please enter Aadhar number",
+      });
+      return false;
+    }
+
+    const aadharRegex = /^[0-9]{12}$/;
+    if (!aadharRegex.test(aadharNumber)) {
+      Toast.show({
+        type: "error",
+        text1: "Validation Error",
+        text2: "Please enter a valid 12-digit Aadhar number",
+      });
+      return false;
+    }
+
+    return true;
+  };
+
+  const handleNext = () => {
+    if (currentStep === 1) {
+      if (validatePanNumber()) {
+        setCurrentStep(2);
+      }
+    } else if (currentStep === 2) {
+      if (validateAadharNumber()) {
+        setCurrentStep(3);
+      }
+    }
+  };
+
+  const handleBack = () => {
+    if (currentStep > 1) {
+      setCurrentStep(currentStep - 1);
     }
   };
 
@@ -155,6 +244,8 @@ const BankAccount = () => {
       const response = await addBankAccount(bankDetails);
 
       if (response.data.success) {
+        await saveKycStatus("completed");
+        dispatch(completeKyc());
         Toast.show({
           type: "success",
           text1: "Success",
@@ -185,6 +276,8 @@ const BankAccount = () => {
       const response = await addUpiDetails(upiId.toLowerCase());
 
       if (response.data.success) {
+        await saveKycStatus("completed");
+        dispatch(completeKyc());
         Toast.show({
           type: "success",
           text1: "Success",
@@ -197,8 +290,7 @@ const BankAccount = () => {
       Toast.show({
         type: "error",
         text1: "Error",
-        text2:
-          error.response?.data?.message || "Failed to save UPI details",
+        text2: error.response?.data?.message || "Failed to save UPI details",
       });
     } finally {
       setLoading(false);
@@ -213,223 +305,475 @@ const BankAccount = () => {
     }
   };
 
+  const handleSkip = async () => {
+    Alert.alert(
+      "Skip KYC Setup",
+      "You can skip this for now, but you'll need to complete KYC to post jobs and apply for jobs. You can complete it later from your profile.",
+      [
+        {
+          text: "Cancel",
+          style: "cancel",
+        },
+        {
+          text: "Skip",
+          style: "default",
+          onPress: async () => {
+            try {
+              await saveKycStatus("skipped");
+              dispatch(skipKyc());
+              navigation.replace("MainStack");
+            } catch (error) {
+              console.error("Error skipping KYC:", error);
+              Toast.show({
+                type: "error",
+                text1: "Error",
+                text2: "Failed to skip KYC",
+              });
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  const getStepTitle = () => {
+    switch (currentStep) {
+      case 1:
+        return "PAN Card Details";
+      case 2:
+        return "Aadhar Card Details";
+      case 3:
+        return "Payment Details";
+      default:
+        return "KYC Setup";
+    }
+  };
+
   return (
     <View style={styles.container}>
-      <Header title="Payment Details" showBackButton />
-      
-      <ScrollView 
-        style={styles.content}
-        showsVerticalScrollIndicator={false}
-      >
-        {/* Info Card */}
-        <View style={styles.infoCard}>
-          <Ionicons name="information-circle-outline" size={24} color={Colors.primary} />
-          <Text style={styles.infoText}>
-            Add your bank account or UPI details to receive payments for completed jobs
+      <Header
+        title={getStepTitle()}
+        showBackButton={kycStatus !== "not_started"}
+        showSkipButton={currentStep === 1}
+        onSkipPress={handleSkip}
+      />
+
+      {/* Step Indicator */}
+      <View style={styles.stepIndicator}>
+        <View style={[styles.step, currentStep >= 1 && styles.stepActive]}>
+          <View
+            style={[
+              styles.stepCircle,
+              currentStep >= 1 && styles.stepCircleActive,
+            ]}
+          >
+            {currentStep > 1 ? (
+              <Ionicons name="checkmark" size={16} color={Colors.white} />
+            ) : (
+              <Text
+                style={[
+                  styles.stepNumber,
+                  currentStep >= 1 && styles.stepNumberActive,
+                ]}
+              >
+                1
+              </Text>
+            )}
+          </View>
+          <Text
+            style={[
+              styles.stepLabel,
+              currentStep >= 1 && styles.stepLabelActive,
+            ]}
+          >
+            PAN
           </Text>
         </View>
-
-        {/* Payment Method Selection */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Payment Method</Text>
-          <View style={styles.methodSelector}>
-            <TouchableOpacity
-              style={[
-                styles.methodButton,
-                paymentMethod === "bank" && styles.methodButtonActive,
-              ]}
-              onPress={() => setPaymentMethod("bank")}
-            >
-              <Ionicons
-                name="card-outline"
-                size={24}
-                color={paymentMethod === "bank" ? Colors.primary : Colors.grey}
-              />
+        <View
+          style={[styles.stepLine, currentStep >= 2 && styles.stepLineActive]}
+        />
+        <View style={[styles.step, currentStep >= 2 && styles.stepActive]}>
+          <View
+            style={[
+              styles.stepCircle,
+              currentStep >= 2 && styles.stepCircleActive,
+            ]}
+          >
+            {currentStep > 2 ? (
+              <Ionicons name="checkmark" size={16} color={Colors.white} />
+            ) : (
               <Text
                 style={[
-                  styles.methodButtonText,
-                  paymentMethod === "bank" && styles.methodButtonTextActive,
+                  styles.stepNumber,
+                  currentStep >= 2 && styles.stepNumberActive,
                 ]}
               >
-                Bank Account
+                2
               </Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[
-                styles.methodButton,
-                paymentMethod === "upi" && styles.methodButtonActive,
-              ]}
-              onPress={() => setPaymentMethod("upi")}
-            >
-              <Ionicons
-                name="phone-portrait-outline"
-                size={24}
-                color={paymentMethod === "upi" ? Colors.primary : Colors.grey}
-              />
-              <Text
-                style={[
-                  styles.methodButtonText,
-                  paymentMethod === "upi" && styles.methodButtonTextActive,
-                ]}
-              >
-                UPI
-              </Text>
-            </TouchableOpacity>
+            )}
           </View>
+          <Text
+            style={[
+              styles.stepLabel,
+              currentStep >= 2 && styles.stepLabelActive,
+            ]}
+          >
+            Aadhar
+          </Text>
         </View>
+        <View
+          style={[styles.stepLine, currentStep >= 3 && styles.stepLineActive]}
+        />
+        <View style={[styles.step, currentStep >= 3 && styles.stepActive]}>
+          <View
+            style={[
+              styles.stepCircle,
+              currentStep >= 3 && styles.stepCircleActive,
+            ]}
+          >
+            <Text
+              style={[
+                styles.stepNumber,
+                currentStep >= 3 && styles.stepNumberActive,
+              ]}
+            >
+              3
+            </Text>
+          </View>
+          <Text
+            style={[
+              styles.stepLabel,
+              currentStep >= 3 && styles.stepLabelActive,
+            ]}
+          >
+            Bank
+          </Text>
+        </View>
+      </View>
 
-        {/* Bank Account Form */}
-        {paymentMethod === "bank" && (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Bank Account Details</Text>
-
-            <View style={styles.inputGroup}>
-              <Text style={styles.label}>Account Holder Name</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Enter full name as per bank"
-                value={accountHolderName}
-                onChangeText={setAccountHolderName}
-                autoCapitalize="words"
+      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+        {/* Step 1: PAN Card Details */}
+        {currentStep === 1 && (
+          <>
+            <View style={styles.infoCard}>
+              <Ionicons
+                name="information-circle-outline"
+                size={24}
+                color={Colors.primary}
               />
+              <Text style={styles.infoText}>
+                Enter your PAN card number. This is required for KYC
+                verification and tax purposes.
+              </Text>
             </View>
 
-            <View style={styles.inputGroup}>
-              <Text style={styles.label}>Account Number</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Enter account number"
-                value={accountNumber}
-                onChangeText={setAccountNumber}
-                keyboardType="number-pad"
-                maxLength={20}
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>PAN Card Number</Text>
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>PAN Number</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Enter PAN number (e.g., ABCDE1234F)"
+                  value={panNumber}
+                  onChangeText={(text) => setPanNumber(text.toUpperCase())}
+                  autoCapitalize="characters"
+                  maxLength={10}
+                />
+                <Text style={styles.helperText}>
+                  Format: 5 letters, 4 numbers, 1 letter (e.g., ABCDE1234F)
+                </Text>
+              </View>
+            </View>
+          </>
+        )}
+
+        {/* Step 2: Aadhar Card Details */}
+        {currentStep === 2 && (
+          <>
+            <View style={styles.infoCard}>
+              <Ionicons
+                name="information-circle-outline"
+                size={24}
+                color={Colors.primary}
               />
+              <Text style={styles.infoText}>
+                Enter your Aadhar card number. This is required for identity
+                verification.
+              </Text>
             </View>
 
-            <View style={styles.inputGroup}>
-              <Text style={styles.label}>Confirm Account Number</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Re-enter account number"
-                value={confirmAccountNumber}
-                onChangeText={setConfirmAccountNumber}
-                keyboardType="number-pad"
-                maxLength={20}
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Aadhar Card Number</Text>
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>Aadhar Number</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Enter 12-digit Aadhar number"
+                  value={aadharNumber}
+                  onChangeText={(text) => {
+                    const numbers = text.replace(/[^0-9]/g, "");
+                    setAadharNumber(numbers);
+                  }}
+                  keyboardType="number-pad"
+                  maxLength={12}
+                />
+                <Text style={styles.helperText}>
+                  Enter your 12-digit Aadhar number (numbers only)
+                </Text>
+              </View>
+            </View>
+          </>
+        )}
+
+        {/* Step 3: Bank Details */}
+        {currentStep === 3 && (
+          <>
+            {/* Info Card */}
+            <View style={styles.infoCard}>
+              <Ionicons
+                name="information-circle-outline"
+                size={24}
+                color={Colors.primary}
               />
+              <Text style={styles.infoText}>
+                Add your bank account or UPI details to receive payments for
+                completed jobs
+              </Text>
             </View>
 
-            <View style={styles.inputGroup}>
-              <Text style={styles.label}>IFSC Code</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Enter IFSC code (e.g., SBIN0001234)"
-                value={ifscCode}
-                onChangeText={(text) => setIfscCode(text.toUpperCase())}
-                autoCapitalize="characters"
-                maxLength={11}
-              />
-            </View>
-
-            <View style={styles.inputGroup}>
-              <Text style={styles.label}>Bank Name</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Enter bank name"
-                value={bankName}
-                onChangeText={setBankName}
-                autoCapitalize="words"
-              />
-            </View>
-
-            <View style={styles.inputGroup}>
-              <Text style={styles.label}>Account Type</Text>
-              <View style={styles.accountTypeSelector}>
+            {/* Payment Method Selection */}
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Payment Method</Text>
+              <View style={styles.methodSelector}>
                 <TouchableOpacity
                   style={[
-                    styles.accountTypeButton,
-                    accountType === "savings" && styles.accountTypeButtonActive,
+                    styles.methodButton,
+                    paymentMethod === "bank" && styles.methodButtonActive,
                   ]}
-                  onPress={() => setAccountType("savings")}
+                  onPress={() => setPaymentMethod("bank")}
                 >
+                  <Ionicons
+                    name="card-outline"
+                    size={24}
+                    color={
+                      paymentMethod === "bank" ? Colors.primary : Colors.grey
+                    }
+                  />
                   <Text
                     style={[
-                      styles.accountTypeText,
-                      accountType === "savings" && styles.accountTypeTextActive,
+                      styles.methodButtonText,
+                      paymentMethod === "bank" && styles.methodButtonTextActive,
                     ]}
                   >
-                    Savings
+                    Bank Account
                   </Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity
                   style={[
-                    styles.accountTypeButton,
-                    accountType === "current" && styles.accountTypeButtonActive,
+                    styles.methodButton,
+                    paymentMethod === "upi" && styles.methodButtonActive,
                   ]}
-                  onPress={() => setAccountType("current")}
+                  onPress={() => setPaymentMethod("upi")}
                 >
+                  <Ionicons
+                    name="phone-portrait-outline"
+                    size={24}
+                    color={
+                      paymentMethod === "upi" ? Colors.primary : Colors.grey
+                    }
+                  />
                   <Text
                     style={[
-                      styles.accountTypeText,
-                      accountType === "current" && styles.accountTypeTextActive,
+                      styles.methodButtonText,
+                      paymentMethod === "upi" && styles.methodButtonTextActive,
                     ]}
                   >
-                    Current
+                    UPI
                   </Text>
                 </TouchableOpacity>
               </View>
             </View>
-          </View>
-        )}
 
-        {/* UPI Form */}
-        {paymentMethod === "upi" && (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>UPI Details</Text>
+            {/* Bank Account Form */}
+            {paymentMethod === "bank" && (
+              <View style={styles.section}>
+                <Text style={styles.sectionTitle}>Bank Account Details</Text>
 
-            <View style={styles.inputGroup}>
-              <Text style={styles.label}>UPI ID</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Enter UPI ID (e.g., user@paytm)"
-                value={upiId}
-                onChangeText={(text) => setUpiId(text.toLowerCase())}
-                autoCapitalize="none"
-                keyboardType="email-address"
+                <View style={styles.inputGroup}>
+                  <Text style={styles.label}>Account Holder Name</Text>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Enter full name as per bank"
+                    value={accountHolderName}
+                    onChangeText={setAccountHolderName}
+                    autoCapitalize="words"
+                  />
+                </View>
+
+                <View style={styles.inputGroup}>
+                  <Text style={styles.label}>Account Number</Text>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Enter account number"
+                    value={accountNumber}
+                    onChangeText={setAccountNumber}
+                    keyboardType="number-pad"
+                    maxLength={20}
+                  />
+                </View>
+
+                <View style={styles.inputGroup}>
+                  <Text style={styles.label}>Confirm Account Number</Text>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Re-enter account number"
+                    value={confirmAccountNumber}
+                    onChangeText={setConfirmAccountNumber}
+                    keyboardType="number-pad"
+                    maxLength={20}
+                  />
+                </View>
+
+                <View style={styles.inputGroup}>
+                  <Text style={styles.label}>IFSC Code</Text>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Enter IFSC code (e.g., SBIN0001234)"
+                    value={ifscCode}
+                    onChangeText={(text) => setIfscCode(text.toUpperCase())}
+                    autoCapitalize="characters"
+                    maxLength={11}
+                  />
+                </View>
+
+                <View style={styles.inputGroup}>
+                  <Text style={styles.label}>Bank Name</Text>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Enter bank name"
+                    value={bankName}
+                    onChangeText={setBankName}
+                    autoCapitalize="words"
+                  />
+                </View>
+
+                <View style={styles.inputGroup}>
+                  <Text style={styles.label}>Account Type</Text>
+                  <View style={styles.accountTypeSelector}>
+                    <TouchableOpacity
+                      style={[
+                        styles.accountTypeButton,
+                        accountType === "savings" &&
+                          styles.accountTypeButtonActive,
+                      ]}
+                      onPress={() => setAccountType("savings")}
+                    >
+                      <Text
+                        style={[
+                          styles.accountTypeText,
+                          accountType === "savings" &&
+                            styles.accountTypeTextActive,
+                        ]}
+                      >
+                        Savings
+                      </Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                      style={[
+                        styles.accountTypeButton,
+                        accountType === "current" &&
+                          styles.accountTypeButtonActive,
+                      ]}
+                      onPress={() => setAccountType("current")}
+                    >
+                      <Text
+                        style={[
+                          styles.accountTypeText,
+                          accountType === "current" &&
+                            styles.accountTypeTextActive,
+                        ]}
+                      >
+                        Current
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              </View>
+            )}
+
+            {/* UPI Form */}
+            {paymentMethod === "upi" && (
+              <View style={styles.section}>
+                <Text style={styles.sectionTitle}>UPI Details</Text>
+
+                <View style={styles.inputGroup}>
+                  <Text style={styles.label}>UPI ID</Text>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Enter UPI ID (e.g., user@paytm)"
+                    value={upiId}
+                    onChangeText={(text) => setUpiId(text.toLowerCase())}
+                    autoCapitalize="none"
+                    keyboardType="email-address"
+                  />
+                  <Text style={styles.helperText}>
+                    This is your UPI address (e.g., 9876543210@paytm,
+                    user@oksbi)
+                  </Text>
+                </View>
+              </View>
+            )}
+
+            {/* Security Note */}
+            <View style={styles.securityNote}>
+              <Ionicons
+                name="shield-checkmark-outline"
+                size={20}
+                color="#4CAF50"
               />
-              <Text style={styles.helperText}>
-                This is your UPI address (e.g., 9876543210@paytm, user@oksbi)
+              <Text style={styles.securityText}>
+                Your payment details are encrypted and secure
               </Text>
             </View>
-          </View>
+          </>
         )}
-
-        {/* Security Note */}
-        <View style={styles.securityNote}>
-          <Ionicons name="shield-checkmark-outline" size={20} color="#4CAF50" />
-          <Text style={styles.securityText}>
-            Your payment details are encrypted and secure
-          </Text>
-        </View>
       </ScrollView>
 
-      {/* Save Button */}
+      {/* Navigation Buttons */}
       <View style={styles.footer}>
-        <TouchableOpacity
-          style={[styles.saveButton, loading && styles.saveButtonDisabled]}
-          onPress={handleSave}
-          disabled={loading}
-        >
-          {loading ? (
-            <ActivityIndicator size="small" color={Colors.white} />
-          ) : (
-            <>
-              <Ionicons name="checkmark-circle-outline" size={20} color={Colors.white} />
-              <Text style={styles.saveButtonText}>Save Details</Text>
-            </>
-          )}
-        </TouchableOpacity>
+        {currentStep === 1 || currentStep === 2 ? (
+          <TouchableOpacity style={styles.nextButton} onPress={handleNext}>
+            <Text style={styles.nextButtonText}>Next</Text>
+            <Ionicons name="arrow-forward" size={20} color={Colors.white} />
+          </TouchableOpacity>
+        ) : (
+          <View style={styles.buttonRow}>
+            <TouchableOpacity style={styles.backButton} onPress={handleBack}>
+              <Ionicons name="arrow-back" size={20} color={Colors.primary} />
+              <Text style={styles.backButtonText}>Back</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.saveButton, loading && styles.saveButtonDisabled]}
+              onPress={handleSave}
+              disabled={loading}
+            >
+              {loading ? (
+                <ActivityIndicator size="small" color={Colors.white} />
+              ) : (
+                <>
+                  <Ionicons
+                    name="checkmark-circle-outline"
+                    size={20}
+                    color={Colors.white}
+                  />
+                  <Text style={styles.saveButtonText}>Save Details</Text>
+                </>
+              )}
+            </TouchableOpacity>
+          </View>
+        )}
       </View>
     </View>
   );
@@ -560,6 +904,92 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: "#E0E0E0",
   },
+  stepIndicator: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 20,
+    paddingHorizontal: 20,
+    backgroundColor: Colors.white,
+  },
+  step: {
+    alignItems: "center",
+  },
+  stepCircle: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: "#E0E0E0",
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 8,
+  },
+  stepCircleActive: {
+    backgroundColor: Colors.primary,
+  },
+  stepNumber: {
+    fontSize: 14,
+    fontWeight: "bold",
+    color: Colors.grey,
+  },
+  stepNumberActive: {
+    color: Colors.white,
+  },
+  stepLabel: {
+    fontSize: 12,
+    color: Colors.grey,
+    fontWeight: "500",
+  },
+  stepLabelActive: {
+    color: Colors.primary,
+    fontWeight: "600",
+  },
+  stepLine: {
+    flex: 1,
+    height: 2,
+    backgroundColor: "#E0E0E0",
+    marginHorizontal: 8,
+    marginBottom: 26,
+  },
+  stepLineActive: {
+    backgroundColor: Colors.primary,
+  },
+  buttonRow: {
+    flexDirection: "row",
+    gap: 12,
+  },
+  backButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: Colors.primary,
+    backgroundColor: Colors.white,
+    gap: 8,
+    flex: 1,
+  },
+  backButtonText: {
+    color: Colors.primary,
+    fontSize: 16,
+    fontWeight: "bold",
+  },
+  nextButton: {
+    flexDirection: "row",
+    backgroundColor: Colors.primary,
+    paddingVertical: 16,
+    borderRadius: 12,
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+  },
+  nextButtonText: {
+    color: Colors.white,
+    fontSize: 16,
+    fontWeight: "bold",
+  },
   saveButton: {
     flexDirection: "row",
     backgroundColor: Colors.primary,
@@ -568,6 +998,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     gap: 8,
+    flex: 2,
   },
   saveButtonDisabled: {
     opacity: 0.6,
@@ -580,5 +1011,3 @@ const styles = StyleSheet.create({
 });
 
 export default BankAccount;
-
-

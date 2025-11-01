@@ -1,9 +1,11 @@
 //Authentication Reducers
 import { createSlice } from "@reduxjs/toolkit";
 
+export type KycStatus = 'not_started' | 'skipped' | 'completed';
+
 const initialState = {
   isLoggedIn: false,
-  isKycCompleted: false,
+  kycStatus: 'not_started' as KycStatus,
   userData: null,
 };
 const authSlice = createSlice({
@@ -17,12 +19,19 @@ const authSlice = createSlice({
     logout(state) {
       state.isLoggedIn = false;
       state.userData = null;
+      state.kycStatus = 'not_started';
     },
-    kycCompleted(state) {
-      state.isKycCompleted = true;
+    setKycStatus(state, action) {
+      state.kycStatus = action.payload;
+    },
+    completeKyc(state) {
+      state.kycStatus = 'completed';
+    },
+    skipKyc(state) {
+      state.kycStatus = 'skipped';
     },
   },
 });
-export const { login, logout } = authSlice.actions;
+export const { login, logout, setKycStatus, completeKyc, skipKyc } = authSlice.actions;
 export default authSlice.reducer;
 // This file defines the authentication reducers using Redux Toolkit.

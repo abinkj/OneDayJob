@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, Image, StyleSheet, ScrollView, FlatList, Modal, Switch, Alert } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import { useSelector } from 'react-redux';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import DeviceDimensions from '../../../constants/DeviceDimenions';
@@ -22,6 +24,7 @@ import {
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { LocationData } from '../../../services/locationService';
 import { testLocationService } from '../../../services/locationService';
+import Toast from 'react-native-toast-message';
 
 // Default Job Categories (fallback if API fails)
 const defaultJobCategories = [
@@ -45,7 +48,10 @@ const timeSlots = [
   { id: 'evening', name: 'Evening', time: 'After 6PM', true: require('../../../assets/images/evening.png'), false: require('../../../assets/images/eveningU.png') },
 ];
 
-const PostJobScreen = ({ navigation }) => {
+const PostJobScreen = ({ navigation: navProp }) => {
+  const navigation = useNavigation();
+  const { kycStatus } = useSelector((state) => state.authentication);
+  
   // State variables
   const [currentStep, setCurrentStep] = useState(1);
   const [jobCategories, setJobCategories] = useState(defaultJobCategories);
@@ -544,6 +550,16 @@ const resetAllFields = () => {
   // Handle job posting
 // Debug handlePost function
 const handlePost = async () => {
+  if (kycStatus !== 'completed') {
+    Toast.show({
+      type: 'info',
+      text1: 'KYC Required',
+      text2: 'Please complete your KYC to post jobs',
+    });
+    navigation.navigate('BankAccount');
+    return;
+  }
+
   if (!validateJobData()) {
     return;
   }
