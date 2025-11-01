@@ -381,7 +381,7 @@ const BankAccount = () => {
       <Header
         title={getStepTitle()}
         showBackButton={kycStatus !== "not_started"}
-        showSkipButton={false}
+        showSkipButton={kycStatus !== "not_started"}
         onSkipPress={handleSkip}
       />
 
@@ -573,6 +573,7 @@ const BankAccount = () => {
               <Text style={styles.sectionTitle}>Payment Method</Text>
               <View style={styles.methodSelector}>
                 <TouchableOpacity
+                  disabled={true}
                   style={[
                     styles.methodButton,
                     paymentMethod === "bank" && styles.methodButtonActive,
@@ -596,7 +597,7 @@ const BankAccount = () => {
                   </Text>
                 </TouchableOpacity>
 
-                <TouchableOpacity
+                {/* <TouchableOpacity
                   style={[
                     styles.methodButton,
                     paymentMethod === "upi" && styles.methodButtonActive,
@@ -618,7 +619,7 @@ const BankAccount = () => {
                   >
                     UPI
                   </Text>
-                </TouchableOpacity>
+                </TouchableOpacity> */}
               </View>
             </View>
 
@@ -779,10 +780,10 @@ const BankAccount = () => {
         ) : ( */}
         {true && (
           <View style={styles.buttonRow}>
-            <TouchableOpacity style={styles.backButton} onPress={handleBack}>
+            {/* <TouchableOpacity style={styles.backButton} onPress={handleBack}>
               <Ionicons name="arrow-back" size={20} color={Colors.primary} />
               <Text style={styles.backButtonText}>Back</Text>
-            </TouchableOpacity>
+            </TouchableOpacity> */}
             <TouchableOpacity
               style={[styles.saveButton, loading && styles.saveButtonDisabled]}
               onPress={handleSave}
