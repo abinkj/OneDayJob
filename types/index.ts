@@ -49,6 +49,15 @@ export interface User {
     locationBasedSearch?: boolean;
     searchRadius?: number;
   };
+
+  // Bank account details
+  bankAccount?: {
+    accountHolderName?: string;
+    accountNumber?: string;
+    ifscCode?: string;
+    bankName?: string;
+    accountType?: "savings" | "current";
+  };
 }
 
 export interface EditProfileParams {

@@ -58,13 +58,21 @@ const Profile: React.FC = () => {
     const fetchUser = async () => {
       try {
         setIsLoading(true);
+        const currentUser = await getCurrentUser();
+        if (currentUser) {
+          setUser(currentUser);
+        } else {
+          const userData = await getUserData();
+          if (userData) {
+            setUser(userData);
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching user data:", error);
         const userData = await getUserData();
         if (userData) {
           setUser(userData);
         }
-      } catch (error) {
-        console.error("Error fetching user data:", error);
-        Alert.alert("Error", "Failed to load profile data");
       } finally {
         setIsLoading(false);
       }
@@ -76,8 +84,18 @@ const Profile: React.FC = () => {
   // Refresh user data when returning from edit profile
   useEffect(() => {
     const unsubscribe = navigation.addListener("focus", async () => {
-      const userData = await getUserData();
-      if (userData) setUser(userData);
+      try {
+        const currentUser = await getCurrentUser();
+        if (currentUser) {
+          setUser(currentUser);
+        } else {
+          const userData = await getUserData();
+          if (userData) setUser(userData);
+        }
+      } catch (error) {
+        const userData = await getUserData();
+        if (userData) setUser(userData);
+      }
     });
 
     return unsubscribe;
@@ -225,6 +243,81 @@ const Profile: React.FC = () => {
             </View>
           </View>
         </View>
+
+        {/* Bank Details Section */}
+        {user?.bankAccount && (
+          <View style={styles.bankDetailsCard}>
+            <View style={styles.bankDetailsHeader}>
+              <Ionicons name="card-outline" size={24} color={Colors.blue} />
+              <Text style={styles.bankDetailsTitle}>Bank Account Details</Text>
+            </View>
+            
+            <View style={styles.bankDetailsRow}>
+              <Text style={styles.bankDetailsLabel}>Account Holder</Text>
+              <Text style={styles.bankDetailsValue}>
+                {user.bankAccount.accountHolderName || "N/A"}
+              </Text>
+            </View>
+
+            <View style={styles.bankDetailsRow}>
+              <Text style={styles.bankDetailsLabel}>Account Number</Text>
+              <Text style={styles.bankDetailsValue}>
+                {user.bankAccount.accountNumber
+                  ? `****${user.bankAccount.accountNumber.slice(-4)}`
+                  : "N/A"}
+              </Text>
+            </View>
+
+            <View style={styles.bankDetailsRow}>
+              <Text style={styles.bankDetailsLabel}>IFSC Code</Text>
+              <Text style={styles.bankDetailsValue}>
+                {user.bankAccount.ifscCode || "N/A"}
+              </Text>
+            </View>
+
+            <View style={styles.bankDetailsRow}>
+              <Text style={styles.bankDetailsLabel}>Bank Name</Text>
+              <Text style={styles.bankDetailsValue}>
+                {user.bankAccount.bankName || "N/A"}
+              </Text>
+            </View>
+
+            <View style={styles.bankDetailsRow}>
+              <Text style={styles.bankDetailsLabel}>Account Type</Text>
+              <Text style={styles.bankDetailsValue}>
+                {user.bankAccount.accountType
+                  ? user.bankAccount.accountType.charAt(0).toUpperCase() +
+                    user.bankAccount.accountType.slice(1)
+                  : "N/A"}
+              </Text>
+            </View>
+
+            <TouchableOpacity
+              style={styles.editBankButton}
+              onPress={() => navigation.navigate("BankAccount")}
+            >
+              <Ionicons name="create-outline" size={18} color={Colors.blue} />
+              <Text style={styles.editBankButtonText}>Edit Bank Details</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
+        {/* Add Bank Details CTA */}
+        {!user?.bankAccount && (
+          <View style={styles.addBankCard}>
+            <Ionicons name="card-outline" size={32} color={Colors.grey} />
+            <Text style={styles.addBankTitle}>No Bank Account Added</Text>
+            <Text style={styles.addBankText}>
+              Add your bank account details to receive payments
+            </Text>
+            <TouchableOpacity
+              style={styles.addBankButton}
+              onPress={() => navigation.navigate("BankAccount")}
+            >
+              <Text style={styles.addBankButtonText}>Add Bank Account</Text>
+            </TouchableOpacity>
+          </View>
+        )}
 
         {/* Experience/Skills Dropdown */}
         {/* <View style={styles.experienceContainer}>

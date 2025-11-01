@@ -21,7 +21,7 @@ import {
 } from "../../../services/api";
 import Toast from "react-native-toast-message";
 import { skipKyc, completeKyc } from "../../../redux/reducers/authReducers";
-import { saveKycStatus } from "../../../utilities/asyncStore";
+import { saveKycStatus, saveUserData } from "../../../utilities/asyncStore";
 
 const BankAccount = () => {
   const navigation = useNavigation<any>();
@@ -29,13 +29,13 @@ const BankAccount = () => {
   const { kycStatus } = useSelector((state) => state.authentication);
 
   const [loading, setLoading] = useState(false);
-  const [currentStep, setCurrentStep] = useState(1); // 1: Pancard, 2: Aadhar, 3: Bank details
+  const [currentStep, setCurrentStep] = useState(3); // 1: Pancard, 2: Aadhar, 3: Bank details
 
-  // Pancard fields
-  const [panNumber, setPanNumber] = useState("");
+  // Pancard fields - Temporarily commented out
+  // const [panNumber, setPanNumber] = useState("");
 
-  // Aadhar fields
-  const [aadharNumber, setAadharNumber] = useState("");
+  // Aadhar fields - Temporarily commented out
+  // const [aadharNumber, setAadharNumber] = useState("");
 
   // Payment method
   const [paymentMethod, setPaymentMethod] = useState<"bank" | "upi">("bank");
@@ -64,13 +64,13 @@ const BankAccount = () => {
       const user = await getCurrentUser();
       setCurrentUser(user);
 
-      // Pre-fill pancard and aadhar if available
-      if (user?.panNumber) {
-        setPanNumber(user.panNumber);
-      }
-      if (user?.aadharNumber) {
-        setAadharNumber(user.aadharNumber);
-      }
+      // Pre-fill pancard and aadhar if available - Temporarily commented out
+      // if (user?.panNumber) {
+      //   setPanNumber(user.panNumber);
+      // }
+      // if (user?.aadharNumber) {
+      //   setAadharNumber(user.aadharNumber);
+      // }
 
       // Pre-fill if user has existing bank details
       if (user?.bankAccount) {
@@ -90,67 +90,72 @@ const BankAccount = () => {
     }
   };
 
-  const validatePanNumber = () => {
-    if (!panNumber.trim()) {
-      Toast.show({
-        type: "error",
-        text1: "Validation Error",
-        text2: "Please enter PAN number",
-      });
-      return false;
-    }
+  // Temporarily commented out - PAN validation
+  // const validatePanNumber = () => {
+  //   if (!panNumber.trim()) {
+  //     Toast.show({
+  //       type: "error",
+  //       text1: "Validation Error",
+  //       text2: "Please enter PAN number",
+  //     });
+  //     return false;
+  //   }
 
-    const panRegex = /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/;
-    if (!panRegex.test(panNumber.toUpperCase())) {
-      Toast.show({
-        type: "error",
-        text1: "Validation Error",
-        text2: "Please enter a valid PAN number (e.g., ABCDE1234F)",
-      });
-      return false;
-    }
+  //   const panRegex = /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/;
+  //   if (!panRegex.test(panNumber.toUpperCase())) {
+  //     Toast.show({
+  //       type: "error",
+  //       text1: "Validation Error",
+  //       text2: "Please enter a valid PAN number (e.g., ABCDE1234F)",
+  //     });
+  //     return false;
+  //   }
 
-    return true;
-  };
+  //   return true;
+  // };
 
-  const validateAadharNumber = () => {
-    if (!aadharNumber.trim()) {
-      Toast.show({
-        type: "error",
-        text1: "Validation Error",
-        text2: "Please enter Aadhar number",
-      });
-      return false;
-    }
+  // Temporarily commented out - Aadhar validation
+  // const validateAadharNumber = () => {
+  //   if (!aadharNumber.trim()) {
+  //     Toast.show({
+  //       type: "error",
+  //       text1: "Validation Error",
+  //       text2: "Please enter Aadhar number",
+  //     });
+  //     return false;
+  //   }
 
-    const aadharRegex = /^[0-9]{12}$/;
-    if (!aadharRegex.test(aadharNumber)) {
-      Toast.show({
-        type: "error",
-        text1: "Validation Error",
-        text2: "Please enter a valid 12-digit Aadhar number",
-      });
-      return false;
-    }
+  //   const aadharRegex = /^[0-9]{12}$/;
+  //   if (!aadharRegex.test(aadharNumber)) {
+  //     Toast.show({
+  //       type: "error",
+  //       text1: "Validation Error",
+  //       text2: "Please enter a valid 12-digit Aadhar number",
+  //     });
+  //     return false;
+  //   }
 
-    return true;
-  };
+  //   return true;
+  // };
 
-  const handleNext = () => {
-    if (currentStep === 1) {
-      if (validatePanNumber()) {
-        setCurrentStep(2);
-      }
-    } else if (currentStep === 2) {
-      if (validateAadharNumber()) {
-        setCurrentStep(3);
-      }
-    }
-  };
+  // Temporarily commented out - handleNext navigation
+  // const handleNext = () => {
+  //   if (currentStep === 1) {
+  //     if (validatePanNumber()) {
+  //       setCurrentStep(2);
+  //     }
+  //   } else if (currentStep === 2) {
+  //     if (validateAadharNumber()) {
+  //       setCurrentStep(3);
+  //     }
+  //   }
+  // };
 
   const handleBack = () => {
     if (currentStep > 1) {
       setCurrentStep(currentStep - 1);
+    } else {
+      navigation.goBack();
     }
   };
 
@@ -244,6 +249,28 @@ const BankAccount = () => {
       const response = await addBankAccount(bankDetails);
 
       if (response.data.success) {
+        // Update local user data with bank details from API response
+        if (response.data.data) {
+          // API response contains updated user object
+          await saveUserData(response.data.data);
+        } else {
+          // Fallback: Merge bank details into existing local user data
+          const currentUser = await getCurrentUser();
+          if (currentUser) {
+            const userWithBankDetails = {
+              ...currentUser,
+              bankAccount: {
+                accountHolderName,
+                accountNumber,
+                ifscCode: ifscCode.toUpperCase(),
+                bankName,
+                accountType,
+              },
+            };
+            await saveUserData(userWithBankDetails);
+          }
+        }
+
         await saveKycStatus("completed");
         dispatch(completeKyc());
         Toast.show({
@@ -338,14 +365,14 @@ const BankAccount = () => {
 
   const getStepTitle = () => {
     switch (currentStep) {
-      case 1:
-        return "PAN Card Details";
-      case 2:
-        return "Aadhar Card Details";
+      // case 1:
+      //   return "PAN Card Details";
+      // case 2:
+      //   return "Aadhar Card Details";
       case 3:
-        return "Payment Details";
+        return "Bank Details";
       default:
-        return "KYC Setup";
+        return "Bank Details";
     }
   };
 
@@ -354,12 +381,12 @@ const BankAccount = () => {
       <Header
         title={getStepTitle()}
         showBackButton={kycStatus !== "not_started"}
-        showSkipButton={currentStep === 1}
+        showSkipButton={false}
         onSkipPress={handleSkip}
       />
 
-      {/* Step Indicator */}
-      <View style={styles.stepIndicator}>
+      {/* Step Indicator - Temporarily commented out for PAN and Aadhar */}
+      {/* <View style={styles.stepIndicator}>
         <View style={[styles.step, currentStep >= 1 && styles.stepActive]}>
           <View
             style={[
@@ -449,11 +476,11 @@ const BankAccount = () => {
             Bank
           </Text>
         </View>
-      </View>
+      </View> */}
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        {/* Step 1: PAN Card Details */}
-        {currentStep === 1 && (
+        {/* Step 1: PAN Card Details - Temporarily commented out */}
+        {/* {currentStep === 1 && (
           <>
             <View style={styles.infoCard}>
               <Ionicons
@@ -485,10 +512,10 @@ const BankAccount = () => {
               </View>
             </View>
           </>
-        )}
+        )} */}
 
-        {/* Step 2: Aadhar Card Details */}
-        {currentStep === 2 && (
+        {/* Step 2: Aadhar Card Details - Temporarily commented out */}
+        {/* {currentStep === 2 && (
           <>
             <View style={styles.infoCard}>
               <Ionicons
@@ -523,10 +550,10 @@ const BankAccount = () => {
               </View>
             </View>
           </>
-        )}
+        )} */}
 
         {/* Step 3: Bank Details */}
-        {currentStep === 3 && (
+        {(currentStep === 3 || true) && (
           <>
             {/* Info Card */}
             <View style={styles.infoCard}>
@@ -743,12 +770,14 @@ const BankAccount = () => {
 
       {/* Navigation Buttons */}
       <View style={styles.footer}>
-        {currentStep === 1 || currentStep === 2 ? (
+        {/* Temporarily commented out - Next button for PAN/Aadhar steps */}
+        {/* {currentStep === 1 || currentStep === 2 ? (
           <TouchableOpacity style={styles.nextButton} onPress={handleNext}>
             <Text style={styles.nextButtonText}>Next</Text>
             <Ionicons name="arrow-forward" size={20} color={Colors.white} />
           </TouchableOpacity>
-        ) : (
+        ) : ( */}
+        {true && (
           <View style={styles.buttonRow}>
             <TouchableOpacity style={styles.backButton} onPress={handleBack}>
               <Ionicons name="arrow-back" size={20} color={Colors.primary} />

@@ -51,6 +51,7 @@ const Otp = () => {
         setIsOtpSuccess(true);
 
         setTimeout(() => {
+          console.log(userData);
           dispatch(loginUser(userData, accessToken, refreshToken) as any);
         }, 2000);
       } else {

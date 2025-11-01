@@ -11,38 +11,40 @@ import {
   RefreshControl,
   ScrollView,
   Animated,
-  Modal
+  Modal,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { Colors } from "../../../constants/Colors";
 import styles from "./styles";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { getCurrentLocation as getLocationWithAddress, searchPlacesFallback } from "../../../services/locationService";
+import {
+  getCurrentLocation as getLocationWithAddress,
+  searchPlacesFallback,
+} from "../../../services/locationService";
 import { useDispatch, useSelector } from "react-redux";
 import Toast from "react-native-toast-message";
 import { useNavigation } from "@react-navigation/native";
 import { useNotifications } from "../../../contexts/NotificationContext";
 import NotificationBadge from "../../../components/notificationBadge";
-import { 
-  getJobsByLocation, 
-  getJobPostings, 
-  getCurrentUser, 
-  updateUserLocation, 
-  updateUserLocationWithRetry, 
+import {
+  getJobsByLocation,
+  getJobPostings,
+  getCurrentUser,
+  updateUserLocation,
+  updateUserLocationWithRetry,
   isAuthenticated,
-  getCategoriesForFilter 
+  getCategoriesForFilter,
 } from "../../../services/api";
 import { restoreSession } from "../../../utilities/authentication";
 import { JobPost } from "../../../types";
 
-
 const HomeScreen = () => {
   const { sendVerificationCodeNotification } = useNotifications();
-   
+
   const testNotification = () => {
-    sendVerificationCodeNotification('test-job-123', 'Test Job', '123456');
+    sendVerificationCodeNotification("test-job-123", "Test Job", "123456");
   };
-  
+
   const [searchQuery, setSearchQuery] = useState("");
   const [location, setLocation] = useState(null);
   const [locationAddress, setLocationAddress] = useState("Loading location...");
@@ -57,7 +59,7 @@ const HomeScreen = () => {
   const [authStatus, setAuthStatus] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
   const [isFilterSticky, setIsFilterSticky] = useState(false);
-  
+
   // Filter modal states
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [showPriceModal, setShowPriceModal] = useState(false);
@@ -67,7 +69,7 @@ const HomeScreen = () => {
   const navigation = useNavigation<any>();
   const userData = useSelector((state: any) => state.authentication.userData);
   const dispatch = useDispatch();
-  
+
   // Notification context
   const { unreadCount } = useNotifications();
   const scrollY = useRef(new Animated.Value(0)).current;
@@ -98,14 +100,21 @@ const HomeScreen = () => {
   };
 
   // Helper function to calculate distance between two coordinates
-  const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
+  const calculateDistance = (
+    lat1: number,
+    lon1: number,
+    lat2: number,
+    lon2: number
+  ): number => {
     const R = 6371;
-    const dLat = (lat2 - lat1) * Math.PI / 180;
-    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const dLat = ((lat2 - lat1) * Math.PI) / 180;
+    const dLon = ((lon2 - lon1) * Math.PI) / 180;
     const a =
       Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-      Math.sin(dLon / 2) * Math.sin(dLon / 2);
+      Math.cos((lat1 * Math.PI) / 180) *
+        Math.cos((lat2 * Math.PI) / 180) *
+        Math.sin(dLon / 2) *
+        Math.sin(dLon / 2);
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     const distance = R * c;
     return Math.round(distance * 10) / 10;
@@ -118,8 +127,12 @@ const HomeScreen = () => {
 
     const jobsWithDistance = [];
 
-    jobs.forEach(job => {
-      if (job.location?.coordinates?.coordinates || (job.location?.coordinates?.latitude && job.location?.coordinates?.longitude)) {
+    jobs.forEach((job) => {
+      if (
+        job.location?.coordinates?.coordinates ||
+        (job.location?.coordinates?.latitude &&
+          job.location?.coordinates?.longitude)
+      ) {
         let jobLat, jobLng;
 
         // Handle both GeoJSON format and lat/lng format
@@ -176,13 +189,15 @@ const HomeScreen = () => {
       const user = await getCurrentUser();
       const authValid = await Promise.race([
         isAuthenticated(),
-        new Promise((resolve) => setTimeout(() => resolve(false), 5000))
+        new Promise((resolve) => setTimeout(() => resolve(false), 5000)),
       ]);
 
       console.log("Auth status check:", {
         authValid,
         hasUser: !!user,
-        userDetails: user ? { id: user.id, phone: user.phoneNumber || user.phone } : null
+        userDetails: user
+          ? { id: user.id, phone: user.phoneNumber || user.phone }
+          : null,
       });
 
       setAuthStatus(!!authValid);
@@ -209,7 +224,11 @@ const HomeScreen = () => {
       }
 
       setLocation(locationData.coordinates);
-      const address = [locationData.city, locationData.state, locationData.country]
+      const address = [
+        locationData.city,
+        locationData.state,
+        locationData.country,
+      ]
         .filter(Boolean)
         .join(", ");
       setLocationAddress(address || "Current Location");
@@ -221,13 +240,13 @@ const HomeScreen = () => {
           await updateUserLocationWithRetry({
             coordinates: {
               latitude: locationData.coordinates.latitude,
-              longitude: locationData.coordinates.longitude
+              longitude: locationData.coordinates.longitude,
             },
             address: locationData.address,
             city: locationData.city,
             state: locationData.state,
             country: locationData.country,
-            zipCode: locationData.zipCode
+            zipCode: locationData.zipCode,
           });
           console.log("Backend location updated successfully");
         } catch (updateError) {
@@ -238,9 +257,9 @@ const HomeScreen = () => {
       console.error("Error fetching location:", error);
       setLocationAddress("Location unavailable");
       Toast.show({
-        type: 'error',
-        text1: 'Location Error',
-        text2: 'Could not get current location',
+        type: "error",
+        text1: "Location Error",
+        text2: "Could not get current location",
       });
     }
   };
@@ -284,14 +303,14 @@ const HomeScreen = () => {
         filters.distance = selectedDistance;
         filters.userLocation = {
           latitude: location.latitude,
-          longitude: location.longitude
+          longitude: location.longitude,
         };
       }
 
       console.log("Sending filters to backend:", filters);
 
       const response = await getJobPostings(filters);
-      
+
       // FIXED: Handle response structure properly
       let jobs = [];
       if (response.data?.data) {
@@ -311,7 +330,9 @@ const HomeScreen = () => {
       console.log(`Jobs received from backend: ${jobs.length} jobs`);
 
       // Add distance to jobs for display if location is available
-      const jobsWithDistance = location ? categorizeJobsByDistance(jobs, location) : jobs;
+      const jobsWithDistance = location
+        ? categorizeJobsByDistance(jobs, location)
+        : jobs;
 
       setJobSections([{ title: "Jobs", data: jobsWithDistance }]);
 
@@ -319,24 +340,23 @@ const HomeScreen = () => {
 
       if (jobs.length > 0) {
         Toast.show({
-          type: 'success',
-          text1: 'Jobs loaded',
+          type: "success",
+          text1: "Jobs loaded",
           text2: `${jobs.length} jobs found`,
         });
       } else {
         Toast.show({
-          type: 'info',
-          text1: 'No jobs found',
-          text2: 'Try adjusting your filters',
+          type: "info",
+          text1: "No jobs found",
+          text2: "Try adjusting your filters",
         });
       }
-
     } catch (error) {
       console.error("Job fetch error:", error);
       Toast.show({
-        type: 'error',
-        text1: 'Error',
-        text2: 'Failed to load jobs',
+        type: "error",
+        text1: "Error",
+        text2: "Failed to load jobs",
       });
       setJobSections([]);
     } finally {
@@ -363,13 +383,18 @@ const HomeScreen = () => {
         if (authStatus && currentUser) {
           try {
             await updateUserLocationWithRetry(selectedLocation);
-            console.log("User location updated in backend with searched location");
+            console.log(
+              "User location updated in backend with searched location"
+            );
           } catch (updateError) {
-            console.error("Failed to update user location in backend:", updateError);
+            console.error(
+              "Failed to update user location in backend:",
+              updateError
+            );
           }
         }
       }
-      
+
       // Then search for jobs with the query
       await fetchJobs(true);
     } catch (error) {
@@ -390,9 +415,9 @@ const HomeScreen = () => {
     } catch (error) {
       console.error("Error during refresh:", error);
       Toast.show({
-        type: 'error',
-        text1: 'Refresh Failed',
-        text2: 'Please try again',
+        type: "error",
+        text1: "Refresh Failed",
+        text2: "Please try again",
       });
     } finally {
       setRefreshing(false);
@@ -425,12 +450,12 @@ const HomeScreen = () => {
   // Handle scroll to determine when filter row should be sticky
   const handleScroll = Animated.event(
     [{ nativeEvent: { contentOffset: { y: scrollY } } }],
-    { 
+    {
       useNativeDriver: false,
       listener: (event) => {
         const offsetY = event.nativeEvent.contentOffset.y;
         setIsFilterSticky(offsetY >= STICKY_OFFSET);
-      }
+      },
     }
   );
 
@@ -455,8 +480,10 @@ const HomeScreen = () => {
 
   // Add navigation listener to refresh jobs when returning from JobTimer
   useEffect(() => {
-    const unsubscribe = navigation.addListener('focus', () => {
-      console.log('HomeScreen focused - refreshing jobs to check for status updates');
+    const unsubscribe = navigation.addListener("focus", () => {
+      console.log(
+        "HomeScreen focused - refreshing jobs to check for status updates"
+      );
       if (isInitialized) {
         fetchJobs(true);
       }
@@ -484,24 +511,43 @@ const HomeScreen = () => {
       console.log("Filters changed, fetching jobs...");
       fetchJobs(true);
     }
-  }, [selectedCategory, selectedPriceSort, selectedDistance, searchQuery, isInitialized]);
+  }, [
+    selectedCategory,
+    selectedPriceSort,
+    selectedDistance,
+    searchQuery,
+    isInitialized,
+  ]);
 
-  const renderJobCard = ({ item }: { item: JobPost & { distance?: number | null } }) => {
-    const isInProgress = item.jobStatus?.toLowerCase() === 'in_progress' || 
-                        item.status?.toLowerCase() === 'in_progress';
-    const isCompleted = item.jobStatus?.toLowerCase() === 'completed' || 
-                       item.status?.toLowerCase() === 'completed';
-    
+  const renderJobCard = ({
+    item,
+  }: {
+    item: JobPost & { distance?: number | null };
+  }) => {
+    const isInProgress =
+      item.jobStatus?.toLowerCase() === "in_progress" ||
+      item.status?.toLowerCase() === "in_progress";
+    const isCompleted =
+      item.jobStatus?.toLowerCase() === "completed" ||
+      item.status?.toLowerCase() === "completed";
+
     const handleJobPress = () => {
       if (isInProgress) {
         // Debug: Log the full job item to see available fields
         console.log("Full job item data:", JSON.stringify(item, null, 2));
-        
+
         // Check if user is the job poster (employer) or an applicant (worker)
         // The backend populates userId with user data, so we need to check both _id and id
-        const jobOwnerId = item.userId?._id || item.userId?.id || item.postedBy?._id || item.postedBy?.id || item.createdBy || item.ownerId;
-        const isEmployer = userData?.id === jobOwnerId || userData?._id === jobOwnerId;
-        
+        const jobOwnerId =
+          item.userId?._id ||
+          item.userId?.id ||
+          item.postedBy?._id ||
+          item.postedBy?.id ||
+          item.createdBy ||
+          item.ownerId;
+        const isEmployer =
+          userData?.id === jobOwnerId || userData?._id === jobOwnerId;
+
         console.log("Job ownership check:", {
           userDataId: userData?.id,
           userData_id: userData?._id,
@@ -510,13 +556,13 @@ const HomeScreen = () => {
           jobPostedBy: item.postedBy,
           jobCreatedBy: item.createdBy,
           isEmployer: isEmployer,
-          jobName: item.name
-        });
-        
-        navigation.navigate("JobTimer", { 
-          jobId: item._id, 
           jobName: item.name,
-          isEmployer: isEmployer 
+        });
+
+        navigation.navigate("JobTimer", {
+          jobId: item._id,
+          jobName: item.name,
+          isEmployer: isEmployer,
         });
       } else {
         navigation.navigate("JobDetails", { jobId: item._id, jobData: item });
@@ -524,19 +570,18 @@ const HomeScreen = () => {
     };
 
     return (
-      <TouchableOpacity
-        style={styles.jobCard}
-        onPress={handleJobPress}
-      >
+      <TouchableOpacity style={styles.jobCard} onPress={handleJobPress}>
         <View style={styles.jobCardHeader}>
           <View style={styles.categoryContainer}>
             <Image
               style={styles.avatarContainer}
               source={require("../../../assets/images/paint.png")}
             />
-            <Text style={styles.categoryText}>{item.category?.name || "GENERAL"}</Text>
+            <Text style={styles.categoryText}>
+              {item.category?.name || "GENERAL"}
+            </Text>
           </View>
-          <View style={{ alignItems: 'flex-end' }}>
+          <View style={{ alignItems: "flex-end" }}>
             <Text style={styles.priceText}>₹{item.budget || 0}</Text>
             {item.distance !== null && item.distance !== undefined && (
               <Text style={styles.distanceText}>{item.distance}km away</Text>
@@ -546,19 +591,25 @@ const HomeScreen = () => {
 
         <View style={styles.titleContainer}>
           <Text style={styles.jobTitle}>{item.description}</Text>
-          <View style={[
-            styles.statusContainer,
-            isInProgress && { backgroundColor: '#FF9800' },
-            isCompleted && { backgroundColor: '#4CAF50' }
-          ]}>
-            <Text style={[
-              styles.statusText,
-              isInProgress && { color: '#fff' },
-              isCompleted && { color: '#fff' }
-            ]}>
-              {isInProgress ? "In Progress" : 
-               isCompleted ? "Completed" : 
-               (item.status || "Active")}
+          <View
+            style={[
+              styles.statusContainer,
+              isInProgress && { backgroundColor: "#FF9800" },
+              isCompleted && { backgroundColor: "#4CAF50" },
+            ]}
+          >
+            <Text
+              style={[
+                styles.statusText,
+                isInProgress && { color: "#fff" },
+                isCompleted && { color: "#fff" },
+              ]}
+            >
+              {isInProgress
+                ? "In Progress"
+                : isCompleted
+                ? "Completed"
+                : item.status || "Active"}
             </Text>
           </View>
         </View>
@@ -567,9 +618,12 @@ const HomeScreen = () => {
           <View style={styles.locationContainer}>
             <Ionicons name="location-outline" size={16} color={Colors.grey} />
             <Text style={styles.locationText}>
-              {item.isRemote ? "Remote Work" :
-                item.location?.address || item.location?.city || item.location?.state || "Location not specified"
-              }
+              {item.isRemote
+                ? "Remote Work"
+                : item.location?.address ||
+                  item.location?.city ||
+                  item.location?.state ||
+                  "Location not specified"}
             </Text>
           </View>
         </View>
@@ -582,7 +636,9 @@ const HomeScreen = () => {
             <Ionicons name="people" size={16} color={Colors.primary} />
           </View>
           <Text style={styles.timeAgoText}>
-            {item.createdAt ? new Date(item.createdAt).toLocaleDateString() : "Recently"}
+            {item.createdAt
+              ? new Date(item.createdAt).toLocaleDateString()
+              : "Recently"}
           </Text>
         </View>
       </TouchableOpacity>
@@ -592,38 +648,43 @@ const HomeScreen = () => {
   const renderFilterRow = () => {
     const getFilterButtonStyle = (isSelected) => [
       styles.filterButton,
-      isSelected && { backgroundColor: Colors.primary }
+      isSelected && { backgroundColor: Colors.primary },
     ];
 
     const getFilterTextStyle = (isSelected) => [
       styles.filterText,
-      isSelected && { color: 'white' }
+      isSelected && { color: "white" },
     ];
 
     const getSelectedCategoryName = () => {
       if (!selectedCategory) return "Category";
-      const category = categories.find(cat => cat._id === selectedCategory);
+      const category = categories.find((cat) => cat._id === selectedCategory);
       return category ? category.name : "Category";
     };
 
     const getSelectedPriceName = () => {
       if (!selectedPriceSort) return "Price";
-      const priceOption = priceOptions.find(opt => opt.id === selectedPriceSort);
+      const priceOption = priceOptions.find(
+        (opt) => opt.id === selectedPriceSort
+      );
       return priceOption ? priceOption.name : "Price";
     };
 
     const getSelectedDistanceName = () => {
       if (!selectedDistance) return "Distance";
-      const distanceOption = distanceOptions.find(opt => opt.id === selectedDistance);
+      const distanceOption = distanceOptions.find(
+        (opt) => opt.id === selectedDistance
+      );
       return distanceOption ? distanceOption.name : "Distance";
     };
 
     return (
-      <View 
+      <View
         ref={filterRowRef}
         style={[
-          
-          isFilterSticky?styles.stickyFilterContainer:styles.filtersScrollContainer
+          isFilterSticky
+            ? styles.stickyFilterContainer
+            : styles.filtersScrollContainer,
         ]}
         onLayout={(event) => {
           const { height } = event.nativeEvent.layout;
@@ -634,9 +695,21 @@ const HomeScreen = () => {
           horizontal
           showsHorizontalScrollIndicator={false}
           data={[
-            { id: "category", name: getSelectedCategoryName(), isSelected: !!selectedCategory },
-            { id: "price", name: getSelectedPriceName(), isSelected: !!selectedPriceSort },
-            { id: "distance", name: getSelectedDistanceName(), isSelected: !!selectedDistance },
+            {
+              id: "category",
+              name: getSelectedCategoryName(),
+              isSelected: !!selectedCategory,
+            },
+            {
+              id: "price",
+              name: getSelectedPriceName(),
+              isSelected: !!selectedPriceSort,
+            },
+            {
+              id: "distance",
+              name: getSelectedDistanceName(),
+              isSelected: !!selectedDistance,
+            },
             { id: "clear", name: "Clear", isSelected: false },
           ]}
           keyExtractor={(item) => item.id}
@@ -650,12 +723,14 @@ const HomeScreen = () => {
                 else if (item.id === "clear") clearAllFilters();
               }}
             >
-              <Text style={getFilterTextStyle(item.isSelected)}>{item.name}</Text>
+              <Text style={getFilterTextStyle(item.isSelected)}>
+                {item.name}
+              </Text>
               {item.id !== "clear" && (
-                <Ionicons 
-                  name="chevron-down" 
-                  size={16} 
-                  color={item.isSelected ? 'white' : Colors.black} 
+                <Ionicons
+                  name="chevron-down"
+                  size={16}
+                  color={item.isSelected ? "white" : Colors.black}
                 />
               )}
             </TouchableOpacity>
@@ -665,7 +740,14 @@ const HomeScreen = () => {
     );
   };
 
-  const renderFilterModal = (visible, setVisible, title, options, selectedValue, onSelect) => (
+  const renderFilterModal = (
+    visible,
+    setVisible,
+    title,
+    options,
+    selectedValue,
+    onSelect
+  ) => (
     <Modal
       visible={visible}
       transparent
@@ -687,14 +769,18 @@ const HomeScreen = () => {
               <TouchableOpacity
                 style={[
                   styles.modalOption,
-                  selectedValue === (item.id || item._id) && styles.selectedOption
+                  selectedValue === (item.id || item._id) &&
+                    styles.selectedOption,
                 ]}
                 onPress={() => onSelect(item.id || item._id)}
               >
-                <Text style={[
-                  styles.modalOptionText,
-                  selectedValue === (item.id || item._id) && styles.selectedOptionText
-                ]}>
+                <Text
+                  style={[
+                    styles.modalOptionText,
+                    selectedValue === (item.id || item._id) &&
+                      styles.selectedOptionText,
+                  ]}
+                >
                   {item.name}
                 </Text>
                 {selectedValue === (item.id || item._id) && (
@@ -709,20 +795,49 @@ const HomeScreen = () => {
   );
 
   const renderEmptyState = () => (
-    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20, minHeight: 300 }}>
+    <View
+      style={{
+        flex: 1,
+        justifyContent: "center",
+        alignItems: "center",
+        padding: 20,
+        minHeight: 300,
+      }}
+    >
       <Ionicons name="search-outline" size={64} color={Colors.grey} />
-      <Text style={{ fontSize: 18, color: Colors.grey, marginTop: 16, textAlign: 'center' }}>
-        {loading ? 'Loading jobs...' : 'No jobs found'}
+      <Text
+        style={{
+          fontSize: 18,
+          color: Colors.grey,
+          marginTop: 16,
+          textAlign: "center",
+        }}
+      >
+        {loading ? "Loading jobs..." : "No jobs found"}
       </Text>
-      <Text style={{ fontSize: 14, color: Colors.grey, marginTop: 8, textAlign: 'center' }}>
-        {!authStatus ? 'Login to see location-based jobs' : 'Try adjusting your search filters'}
+      <Text
+        style={{
+          fontSize: 14,
+          color: Colors.grey,
+          marginTop: 8,
+          textAlign: "center",
+        }}
+      >
+        {!authStatus
+          ? "Login to see location-based jobs"
+          : "Try adjusting your search filters"}
       </Text>
       {!loading && (
         <TouchableOpacity
-          style={{ marginTop: 16, padding: 12, backgroundColor: Colors.primary, borderRadius: 8 }}
+          style={{
+            marginTop: 16,
+            padding: 12,
+            backgroundColor: Colors.primary,
+            borderRadius: 8,
+          }}
           onPress={onRefresh}
         >
-          <Text style={{ color: 'white' }}>Refresh</Text>
+          <Text style={{ color: "white" }}>Refresh</Text>
         </TouchableOpacity>
       )}
     </View>
@@ -730,9 +845,16 @@ const HomeScreen = () => {
 
   if (!isInitialized) {
     return (
-      <SafeAreaView style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+      <SafeAreaView
+        style={[
+          styles.container,
+          { justifyContent: "center", alignItems: "center" },
+        ]}
+      >
         <ActivityIndicator size="large" color={Colors.primary} />
-        <Text style={{ marginTop: 16, color: Colors.grey }}>Initializing...</Text>
+        <Text style={{ marginTop: 16, color: Colors.grey }}>
+          Initializing...
+        </Text>
       </SafeAreaView>
     );
   }
@@ -750,7 +872,7 @@ const HomeScreen = () => {
         selectedCategory,
         handleCategoryFilter
       )}
-      
+
       {renderFilterModal(
         showPriceModal,
         setShowPriceModal,
@@ -759,7 +881,7 @@ const HomeScreen = () => {
         selectedPriceSort,
         handlePriceFilter
       )}
-      
+
       {renderFilterModal(
         showDistanceModal,
         setShowDistanceModal,
@@ -771,14 +893,22 @@ const HomeScreen = () => {
 
       {/* Sticky Filter Row - positioned absolutely when sticky */}
       {isFilterSticky && (
-        <View style={[styles.stickyFilterContainer, { position: 'absolute', top: 0, left: 0, right: 0, zIndex: 1000 }]}>
+        <View
+          style={[
+            styles.stickyFilterContainer,
+            { position: "absolute", top: 0, left: 0, right: 0, zIndex: 1000 },
+          ]}
+        >
           {renderFilterRow()}
         </View>
       )}
 
       {/* Main Scrollable Content */}
       <Animated.ScrollView
-        style={[styles.scrollContainer, isFilterSticky && { paddingTop: filterRowHeight }]}
+        style={[
+          styles.scrollContainer,
+          isFilterSticky && { paddingTop: filterRowHeight },
+        ]}
         showsVerticalScrollIndicator={false}
         onScroll={handleScroll}
         scrollEventThrottle={16}
@@ -792,13 +922,15 @@ const HomeScreen = () => {
             <Ionicons name="location" size={24} color={Colors.primary} />
             <View>
               <TouchableOpacity style={styles.locationSelector}>
-                <Text style={styles.locationTitle}>
-                  {locationAddress}
-                </Text>
+                <Text style={styles.locationTitle}>{locationAddress}</Text>
                 <Ionicons name="chevron-down" size={16} color={Colors.black} />
               </TouchableOpacity>
               <Text style={styles.locationSubtitle}>
-                {location ? `${location.latitude.toFixed(4)}, ${location.longitude.toFixed(4)}` : "Getting location..."}
+                {location
+                  ? `${location.latitude.toFixed(
+                      4
+                    )}, ${location.longitude.toFixed(4)}`
+                  : "Getting location..."}
                 {authStatus ? " • Authenticated" : " • Not logged in"}
               </Text>
             </View>
@@ -809,7 +941,10 @@ const HomeScreen = () => {
               <Ionicons name="refresh" size={20} color={Colors.primary} />
             </TouchableOpacity>
           </View>
-          <TouchableOpacity onPress={handleNotificationPress} style={{ position: 'relative' }}>
+          <TouchableOpacity
+            onPress={handleNotificationPress}
+            style={{ position: "relative" }}
+          >
             <Ionicons
               name="notifications-outline"
               size={24}
@@ -862,9 +997,12 @@ const HomeScreen = () => {
             </View>
           </ImageBackground>
         </View>
-        <TouchableOpacity onPress={testNotification} style={{backgroundColor:'green'}}>
-      <Text>Test Notification</Text>
-    </TouchableOpacity>
+        <TouchableOpacity
+          onPress={testNotification}
+          style={{ backgroundColor: "green" }}
+        >
+          <Text>Test Notification</Text>
+        </TouchableOpacity>
 
         {/* Filter Row (normal position) */}
         {!isFilterSticky && renderFilterRow()}
@@ -872,24 +1010,20 @@ const HomeScreen = () => {
         {/* Job Results Summary */}
         {!loading && allJobs.length > 0 && (
           <View style={styles.resultsContainer}>
-            <Text style={styles.resultsText}>
-              {allJobs.length} jobs found
-            </Text>
+            <Text style={styles.resultsText}>{allJobs.length} jobs found</Text>
           </View>
         )}
 
         {/* Job Cards */}
         <View style={{ paddingBottom: 20 }}>
           {loading ? (
-            <View style={{ padding: 20, alignItems: 'center' }}>
+            <View style={{ padding: 20, alignItems: "center" }}>
               <ActivityIndicator size="large" color={Colors.primary} />
             </View>
           ) : allJobs.length > 0 ? (
             <>
               {allJobs.map((item, index) => (
-                <View key={item._id || index}>
-                  {renderJobCard({ item })}
-                </View>
+                <View key={item._id || index}>{renderJobCard({ item })}</View>
               ))}
             </>
           ) : (

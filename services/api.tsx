@@ -1206,7 +1206,7 @@ export const getJobPayments = async (jobId: string) => {
 
 /**
  * Add bank account details for worker payouts
- * POST /api/users/bank-account
+ * POST /api/users/bank-details
  */
 export const addBankAccount = async (bankDetails: {
   accountHolderName: string;
@@ -1218,7 +1218,7 @@ export const addBankAccount = async (bankDetails: {
   try {
     console.log("Adding bank account");
 
-    const response = await api.post(`/users/bank-account`, bankDetails);
+    const response = await api.post(`/users/bank-details`, bankDetails);
 
     console.log("Bank account added:", response.data);
     return response;

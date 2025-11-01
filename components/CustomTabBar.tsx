@@ -20,28 +20,7 @@ const CustomTabBar = ({ state, descriptors, navigation }) => {
     getFocusedRouteNameFromRoute(currentRoute) || currentRoute.name;
   const { kycStatus } = useSelector((state) => state.authentication);
 
-  const hiddenTabBarScreens = ["PostJob"];
-  if (
-    hiddenTabBarScreens.includes(routeName) ||
-    focusedOptions.tabBarVisible === false
-  ) {
-    return null;
-  }
-
-  const handlePostJobPress = () => {
-    if (kycStatus === 'completed') {
-      navigation.navigate("PostJob");
-    } else {
-      Toast.show({
-        type: "info",
-        text1: "KYC Required",
-        text2: "Please complete your KYC to post jobs",
-      });
-      navigation.navigate("BankAccount");
-    }
-  };
-
-  // Animated values for each tab
+  // Animated values for each tab - hooks must be called before any early returns
   const scales = state.routes.map(
     (_, i) => useRef(new Animated.Value(i === state.index ? 1.1 : 0.8)).current
   );
@@ -56,7 +35,29 @@ const CustomTabBar = ({ state, descriptors, navigation }) => {
         
       }).start();
     });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.index]);
+
+  const handlePostJobPress = () => {
+    if (kycStatus === 'completed') {
+      navigation.navigate("PostJob");
+    } else {
+      Toast.show({
+        type: "info",
+        text1: "KYC Required",
+        text2: "Please complete your KYC to post jobs",
+      });
+      navigation.navigate("BankAccount");
+    }
+  };
+
+  const hiddenTabBarScreens = ["PostJob"];
+  if (
+    hiddenTabBarScreens.includes(routeName) ||
+    focusedOptions.tabBarVisible === false
+  ) {
+    return null;
+  }
 
   const renderTab = (index, route, iconName, label) => (
     <TouchableOpacity
