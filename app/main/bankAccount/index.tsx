@@ -381,7 +381,7 @@ const BankAccount = () => {
       <Header
         title={getStepTitle()}
         showBackButton={kycStatus !== "not_started"}
-        showSkipButton={kycStatus !== "not_started"}
+        showSkipButton={true}
         onSkipPress={handleSkip}
       />
 

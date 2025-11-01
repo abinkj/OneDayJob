@@ -7,7 +7,9 @@ import LottieView from "lottie-react-native";
 import { useRoute } from "@react-navigation/native";
 import { useDispatch } from "react-redux";
 import { loginUser } from "../../../utilities/authentication";
-import styles  from "./styles";
+import styles from "./styles";
+import { saveKycStatus } from "../../../utilities/asyncStore";
+import { completeKyc } from "../../../redux/reducers/authReducers";
 
 interface RouteParams {
   phoneNumber: string;
@@ -42,7 +44,10 @@ const Otp = () => {
         const accessToken = response.data.data.tokens.accessToken;
         const refreshToken = response.data.data.tokens.refreshToken;
         const userData = response.data.data.user;
-        console.log("User Data on OTP-------------------> ", userData);
+        console.log(
+          "resonse data-------------------> ",
+          JSON.stringify(response.data.data)
+        );
         //console.log("User data from OTP verification:", userData);
 
         console.log("Tokens and user data received successfully");
@@ -50,8 +55,13 @@ const Otp = () => {
         // ✅ Show success image first
         setIsOtpSuccess(true);
 
-        setTimeout(() => {
-          console.log(userData);
+        setTimeout(async () => {
+          console.log("User data:", userData);
+          console.log("Bank account details:", userData?.bankAccount);
+          if (userData?.bankAccount) {
+            await saveKycStatus("completed");
+            dispatch(completeKyc());
+          }
           dispatch(loginUser(userData, accessToken, refreshToken) as any);
         }, 2000);
       } else {

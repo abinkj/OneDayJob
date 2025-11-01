@@ -50,6 +50,15 @@ export interface User {
     searchRadius?: number;
   };
 
+  // Notification settings
+  notificationSettings?: {
+    verificationCodes?: boolean;
+    jobUpdates?: boolean;
+    applicationStatus?: boolean;
+    messages?: boolean;
+    systemUpdates?: boolean;
+  };
+
   // Bank account details
   bankAccount?: {
     accountHolderName?: string;
@@ -57,6 +66,8 @@ export interface User {
     ifscCode?: string;
     bankName?: string;
     accountType?: "savings" | "current";
+    isVerified?: boolean;
+    verifiedAt?: string | null;
   };
 }
 
