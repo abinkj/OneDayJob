@@ -217,13 +217,24 @@ const styles = StyleSheet.create({
   bankDetailsHeader: {
     flexDirection: "row",
     alignItems: "center",
+    justifyContent: "space-between",
     marginBottom: 16,
+  },
+  bankDetailsHeaderLeft: {
+    flexDirection: "row",
+    alignItems: "center",
     gap: 8,
+    flex: 1,
   },
   bankDetailsTitle: {
     fontSize: 18,
     fontWeight: "600",
     color: Colors.black,
+  },
+  editIconButton: {
+    padding: 8,
+    borderRadius: 8,
+    backgroundColor: Colors.blue + "10",
   },
   bankDetailsRow: {
     flexDirection: "row",

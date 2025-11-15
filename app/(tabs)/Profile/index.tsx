@@ -248,8 +248,17 @@ const Profile: React.FC = () => {
         {user?.bankAccount && (
           <View style={styles.bankDetailsCard}>
             <View style={styles.bankDetailsHeader}>
-              <Ionicons name="card-outline" size={24} color={Colors.blue} />
-              <Text style={styles.bankDetailsTitle}>Bank Account Details</Text>
+              <View style={styles.bankDetailsHeaderLeft}>
+                <Ionicons name="card-outline" size={24} color={Colors.blue} />
+                <Text style={styles.bankDetailsTitle}>Bank Account Details</Text>
+              </View>
+              <TouchableOpacity
+                style={styles.editIconButton}
+                onPress={() => navigation.navigate("BankAccount")}
+                activeOpacity={0.7}
+              >
+                <Ionicons name="create-outline" size={20} color={Colors.blue} />
+              </TouchableOpacity>
             </View>
             
             <View style={styles.bankDetailsRow}>
