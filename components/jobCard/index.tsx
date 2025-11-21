@@ -244,6 +244,23 @@ const JobCard = ({
                 Withdraw
               </Text>
             </TouchableOpacity>
+          ) : showPaymentButton && isEmployer && data?.isPaymentDone ? (
+            <TouchableOpacity
+              style={[
+                styles.button,
+                { backgroundColor: Colors.blue, marginLeft: 12 },
+              ]}
+              onPress={() => {
+                if (onPayment) onPayment();
+              }}
+            >
+              <View style={styles.paymentButtonContent}>
+                <Ionicons name="receipt-outline" size={14} color={Colors.white} />
+                <Text style={[styles.buttonText, { color: Colors.white, marginLeft: 4 }]}>
+                  View Receipt
+                </Text>
+              </View>
+            </TouchableOpacity>
           ) : showPaymentButton && isWorkFinished && isEmployer && !data?.isPaymentDone ? (
             <TouchableOpacity
               style={[
