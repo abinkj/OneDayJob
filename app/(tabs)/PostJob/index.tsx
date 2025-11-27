@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity, Image, StyleSheet, ScrollView, FlatList, Modal, Switch, Alert } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, Image, StyleSheet, ScrollView, FlatList, Modal, Switch, Alert, Platform } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useSelector } from 'react-redux';
 import { Ionicons } from '@expo/vector-icons';
@@ -95,6 +95,7 @@ const PostJobScreen = ({ navigation: navProp }) => {
   const [uploadedPhotoUrls, setUploadedPhotoUrls] = useState([]);
   const [user, setUser] = useState(null);
   const [categoryMapping, setCategoryMapping] = useState({});
+  const [showCategoryPicker, setShowCategoryPicker] = useState(false);
 
 
 
@@ -912,27 +913,76 @@ const PostJobScreen = ({ navigation: navProp }) => {
     <View style={styles.stepContainer}>
       <Text style={styles.sectionTitle}>Category</Text>
       <View style={styles.dropContainer}>
-        <Picker
-          selectedValue={selectedValue}
-          onValueChange={(itemValue, itemIndex) => {
-            setSelectedValue(itemValue);
-            const category = jobCategories.find(cat => cat.name === itemValue);
-            if (category) {
-              setSelectedCategory(category.id);
-            }
-          }}
-          style={styles.picker}
-          dropdownIconColor={Colors.border}
-          mode="dropdown"
-        >
-          {jobCategories.map((option) => (
-            <Picker.Item
-              key={option.id}
-              label={option.name}
-              value={option.name}
-            />
-          ))}
-        </Picker>
+        {Platform.OS === 'ios' ? (
+          <>
+            <TouchableOpacity
+              style={{ paddingVertical: 12 }}
+              onPress={() => setShowCategoryPicker(true)}
+            >
+              <Text style={{ fontSize: 16, color: Colors.black }}>
+                {selectedValue || "Select Category"}
+              </Text>
+            </TouchableOpacity>
+
+            <Modal
+              visible={showCategoryPicker}
+              transparent={true}
+              animationType="slide"
+              onRequestClose={() => setShowCategoryPicker(false)}
+            >
+              <View style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.5)' }}>
+                <View style={{ backgroundColor: 'white', borderTopLeftRadius: 20, borderTopRightRadius: 20 }}>
+                  <View style={{ flexDirection: 'row', justifyContent: 'flex-end', padding: 16, borderBottomWidth: 1, borderBottomColor: '#eee' }}>
+                    <TouchableOpacity onPress={() => setShowCategoryPicker(false)}>
+                      <Text style={{ color: Colors.primary, fontSize: 16, fontWeight: '600' }}>Done</Text>
+                    </TouchableOpacity>
+                  </View>
+                  <Picker
+                    selectedValue={selectedValue}
+                    onValueChange={(itemValue, itemIndex) => {
+                      setSelectedValue(itemValue);
+                      const category = jobCategories.find(cat => cat.name === itemValue);
+                      if (category) {
+                        setSelectedCategory(category.id);
+                      }
+                    }}
+                    style={{ width: '100%', height: 200 }}
+                  >
+                    {jobCategories.map((option) => (
+                      <Picker.Item
+                        key={option.id}
+                        label={option.name}
+                        value={option.name}
+                      />
+                    ))}
+                  </Picker>
+                </View>
+              </View>
+            </Modal>
+          </>
+        ) : (
+          <Picker
+            selectedValue={selectedValue}
+            onValueChange={(itemValue, itemIndex) => {
+              setSelectedValue(itemValue);
+              const category = jobCategories.find(cat => cat.name === itemValue);
+              if (category) {
+                setSelectedCategory(category.id);
+              }
+            }}
+            style={styles.picker}
+            dropdownIconColor={Colors.border}
+            mode="dropdown"
+          >
+            {jobCategories.map((option) => (
+              <Picker.Item
+                key={option.id}
+                label={option.name}
+                value={option.name}
+              />
+            ))}
+          </Picker>
+        )}
       </View>
 
       <View style={styles.row}>
