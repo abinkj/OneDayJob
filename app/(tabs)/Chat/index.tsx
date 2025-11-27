@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { View, FlatList, ActivityIndicator, Text, RefreshControl } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import ChatItem from "../../../components/chatItem";
 import { Header } from "../../../components/header";
-import  styles  from "./styles";
+import styles from "./styles";
 import { router } from "expo-router";
 import { useNavigation } from "@react-navigation/native";
 import { getConversations } from "../../../services/api";
@@ -19,13 +20,13 @@ export default function Chat() {
     try {
       const response = await getConversations();
       console.log('Conversations fetched:', response);
-      
+
       // Transform the response to match ChatItem expected format
       const conversations = response.data?.conversations || [];
       const transformedConversations = conversations.map((conv: any) => {
         // Find the other participant (not the current user)
         const otherParticipant = conv.participants?.find((p: any) => p.id !== conv.createdBy);
-        
+
         return {
           id: conv._id,
           name: otherParticipant ? `${otherParticipant.firstName} ${otherParticipant.lastName}` : 'Unknown User',
@@ -36,7 +37,7 @@ export default function Chat() {
           participant: otherParticipant,
         };
       });
-      
+
       setConversations(transformedConversations);
     } catch (error) {
       console.error('Error fetching conversations:', error);
@@ -81,7 +82,7 @@ export default function Chat() {
   }
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <Header title="Chats" />
       <View style={styles.chatHeader} />
       <FlatList
@@ -110,6 +111,6 @@ export default function Chat() {
           </View>
         }
       />
-    </View>
+    </SafeAreaView>
   );
 }

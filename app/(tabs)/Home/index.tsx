@@ -112,9 +112,9 @@ const HomeScreen = () => {
     const a =
       Math.sin(dLat / 2) * Math.sin(dLat / 2) +
       Math.cos((lat1 * Math.PI) / 180) *
-        Math.cos((lat2 * Math.PI) / 180) *
-        Math.sin(dLon / 2) *
-        Math.sin(dLon / 2);
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     const distance = R * c;
     return Math.round(distance * 10) / 10;
@@ -608,8 +608,8 @@ const HomeScreen = () => {
               {isInProgress
                 ? "In Progress"
                 : isCompleted
-                ? "Completed"
-                : item.status || "Active"}
+                  ? "Completed"
+                  : item.status || "Active"}
             </Text>
           </View>
         </View>
@@ -621,9 +621,9 @@ const HomeScreen = () => {
               {item.isRemote
                 ? "Remote Work"
                 : item.location?.address ||
-                  item.location?.city ||
-                  item.location?.state ||
-                  "Location not specified"}
+                item.location?.city ||
+                item.location?.state ||
+                "Location not specified"}
             </Text>
           </View>
         </View>
@@ -770,7 +770,7 @@ const HomeScreen = () => {
                 style={[
                   styles.modalOption,
                   selectedValue === (item.id || item._id) &&
-                    styles.selectedOption,
+                  styles.selectedOption,
                 ]}
                 onPress={() => onSelect(item.id || item._id)}
               >
@@ -778,7 +778,7 @@ const HomeScreen = () => {
                   style={[
                     styles.modalOptionText,
                     selectedValue === (item.id || item._id) &&
-                      styles.selectedOptionText,
+                    styles.selectedOptionText,
                   ]}
                 >
                   {item.name}
@@ -928,8 +928,8 @@ const HomeScreen = () => {
               <Text style={styles.locationSubtitle}>
                 {location
                   ? `${location.latitude.toFixed(
-                      4
-                    )}, ${location.longitude.toFixed(4)}`
+                    4
+                  )}, ${location.longitude.toFixed(4)}`
                   : "Getting location..."}
                 {authStatus ? " • Authenticated" : " • Not logged in"}
               </Text>

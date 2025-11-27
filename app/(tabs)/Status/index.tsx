@@ -10,6 +10,7 @@ import {
   RefreshControl,
   AppState,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import {
   TabView,
   SceneMap,
@@ -101,19 +102,19 @@ const MyPostTab = () => {
     try {
       if (!isRefresh && !loadMore) setLoading(true);
       if (loadMore) setLoadingMore(true);
-      
+
       const user = await getUserData();
       if (!user?.id) {
         console.error("No user ID found");
         setPosts([]);
         return;
       }
-      
+
       const currentPage = isRefresh ? 1 : (loadMore ? page : 1);
       const res = await getJobPostingsByUserId(user.id, currentPage, 10);
       const postsData = res.data || [];
       const hasMoreData = res.hasMore || false;
-      
+
       if (isRefresh) {
         setPosts(postsData);
         setFilteredPosts(postsData);
@@ -143,7 +144,7 @@ const MyPostTab = () => {
       }
     }
   };
-  
+
   const handleLoadMore = () => {
     if (!loadingMore && hasMore) {
       fetchPosts(false, true);
@@ -191,7 +192,7 @@ const MyPostTab = () => {
 
     return () => clearInterval(interval);
   }, []);
-  
+
   // Reset pagination when status filter changes
   React.useEffect(() => {
     setPage(1);
@@ -318,16 +319,16 @@ const AppliedTab = () => {
   const handleWithdraw = async (applicationId: string, jobId: string) => {
     try {
       console.log("Withdrawing application - jobId:", jobId, "applicationId:", applicationId);
-      
+
       // Immediately remove from UI for better UX
       setAppliedJobs(prev => prev.filter(app => app.applicationId !== applicationId));
-      
+
       // Use jobId for withdrawal, not applicationId
       await withdrawApplication(jobId);
-      
+
       // Refresh the list to ensure consistency
       await fetchAppliedJobs(true);
-      
+
       Toast.show({
         type: "success",
         text1: "Withdrawn",
@@ -336,10 +337,10 @@ const AppliedTab = () => {
     } catch (error) {
       console.error("Error withdrawing application:", error);
       console.error("Error details:", error.response?.data);
-      
+
       // If withdrawal failed, refresh the list to restore the card
       await fetchAppliedJobs(true);
-      
+
       Toast.show({
         type: "error",
         text1: "Error",
@@ -352,30 +353,30 @@ const AppliedTab = () => {
     try {
       if (!isRefresh && !loadMore) setLoading(true);
       if (loadMore) setLoadingMore(true);
-      
+
       const user = await getUserData();
       if (!user?.id) {
         console.error("No user ID found");
         setAppliedJobs([]);
         return;
       }
-      
+
       const currentPage = isRefresh ? 1 : (loadMore ? page : 1);
       const res = await getAppliedJobsByUserId(user.id, currentPage, 10);
       const hasMoreData = res.hasMore || false;
-      
+
       const allApplications = res.data || [];
-      
+
       // Filter out applications with null or incomplete job data and withdrawn applications
       const validApplications = allApplications.filter(
-        (application: any) => 
-          application && 
-          application.job && 
-          application.job._id && 
+        (application: any) =>
+          application &&
+          application.job &&
+          application.job._id &&
           application.applicationId &&
           application.status !== 'withdrawn'
       );
-      
+
       if (isRefresh) {
         setAppliedJobs(validApplications);
         setFilteredJobs(validApplications);
@@ -405,7 +406,7 @@ const AppliedTab = () => {
       }
     }
   };
-  
+
   const handleLoadMore = () => {
     if (!loadingMore && hasMore) {
       fetchAppliedJobs(false, true);
@@ -453,7 +454,7 @@ const AppliedTab = () => {
 
     return () => clearInterval(interval);
   }, []);
-  
+
   // Reset pagination when status filter changes
   React.useEffect(() => {
     setPage(1);
@@ -490,7 +491,7 @@ const AppliedTab = () => {
         }}
         onPress={() => handleNext(item.job)}
         withdraw={true}
-        onWithdraw={() => 
+        onWithdraw={() =>
           handleWithdraw(item.applicationId, item.job._id)
         }
         isEmployer={false}
@@ -618,13 +619,15 @@ const Status = () => {
   };
 
   return (
-    <TabView
-      navigationState={{ index, routes }}
-      renderScene={renderScene}
-      renderTabBar={renderTabBar}
-      onIndexChange={onIndexChange}
-      initialLayout={{ width: layout.width }}
-    />
+    <SafeAreaView style={{ flex: 1, backgroundColor: Colors.background }}>
+      <TabView
+        navigationState={{ index, routes }}
+        renderScene={renderScene}
+        renderTabBar={renderTabBar}
+        onIndexChange={onIndexChange}
+        initialLayout={{ width: layout.width }}
+      />
+    </SafeAreaView>
   );
 };
 

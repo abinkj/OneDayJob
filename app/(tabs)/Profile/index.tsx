@@ -12,6 +12,7 @@ import {
   Alert,
   ActivityIndicator,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import styles from "./styles";
 import { Header } from "../../../components/header";
@@ -189,7 +190,7 @@ const Profile: React.FC = () => {
       : user?.profilePicture || Images.profile.profileImage;
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <Header
         title="Profile"
         showEditButton
@@ -260,7 +261,7 @@ const Profile: React.FC = () => {
                 <Ionicons name="create-outline" size={20} color={Colors.blue} />
               </TouchableOpacity>
             </View>
-            
+
             <View style={styles.bankDetailsRow}>
               <Text style={styles.bankDetailsLabel}>Account Holder</Text>
               <Text style={styles.bankDetailsValue}>
@@ -296,7 +297,7 @@ const Profile: React.FC = () => {
               <Text style={styles.bankDetailsValue}>
                 {user.bankAccount.accountType
                   ? user.bankAccount.accountType.charAt(0).toUpperCase() +
-                    user.bankAccount.accountType.slice(1)
+                  user.bankAccount.accountType.slice(1)
                   : "N/A"}
               </Text>
             </View>
@@ -413,7 +414,7 @@ const Profile: React.FC = () => {
           />
         </View>
       )} */}
-    </View>
+    </SafeAreaView>
   );
 };
 
