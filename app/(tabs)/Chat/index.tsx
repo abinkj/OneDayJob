@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import { View, FlatList, ActivityIndicator, Text, RefreshControl } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
 import ChatItem from "../../../components/chatItem";
 import { Header } from "../../../components/header";
 import styles from "./styles";
@@ -82,7 +81,7 @@ export default function Chat() {
   }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
       <Header title="Chats" />
       <View style={styles.chatHeader} />
       <FlatList
@@ -111,6 +110,6 @@ export default function Chat() {
           </View>
         }
       />
-    </SafeAreaView>
+    </View>
   );
 }

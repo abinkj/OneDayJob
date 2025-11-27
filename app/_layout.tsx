@@ -11,6 +11,8 @@ import Toast from "react-native-toast-message";
 import toastConfig from "../components/customToast";
 import { NotificationProvider } from "../contexts/NotificationContext";
 import socketService from "../services/socketService";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { Colors } from "../constants/Colors";
 
 export default function RootLayout() {
   useEffect(() => {
@@ -37,7 +39,9 @@ export default function RootLayout() {
   return (
     <Provider store={store}>
       <NotificationProvider>
-        <Stack screenOptions={{ headerShown: false }} />
+        <SafeAreaView style={{ flex: 1, backgroundColor: Colors.background }} edges={['top', 'left', 'right']}>
+          <Stack screenOptions={{ headerShown: false }} />
+        </SafeAreaView>
         <Toast config={toastConfig} />
       </NotificationProvider>
     </Provider>

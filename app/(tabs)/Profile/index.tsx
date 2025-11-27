@@ -12,7 +12,6 @@ import {
   Alert,
   ActivityIndicator,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import styles from "./styles";
 import { Header } from "../../../components/header";
@@ -190,7 +189,7 @@ const Profile: React.FC = () => {
       : user?.profilePicture || Images.profile.profileImage;
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
       <Header
         title="Profile"
         showEditButton
@@ -414,7 +413,7 @@ const Profile: React.FC = () => {
           />
         </View>
       )} */}
-    </SafeAreaView>
+    </View>
   );
 };
 

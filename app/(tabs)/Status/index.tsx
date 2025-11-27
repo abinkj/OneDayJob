@@ -10,7 +10,6 @@ import {
   RefreshControl,
   AppState,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
 import {
   TabView,
   SceneMap,
@@ -619,15 +618,13 @@ const Status = () => {
   };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: Colors.background }}>
-      <TabView
-        navigationState={{ index, routes }}
-        renderScene={renderScene}
-        renderTabBar={renderTabBar}
-        onIndexChange={onIndexChange}
-        initialLayout={{ width: layout.width }}
-      />
-    </SafeAreaView>
+    <TabView
+      navigationState={{ index, routes }}
+      renderScene={renderScene}
+      renderTabBar={renderTabBar}
+      onIndexChange={onIndexChange}
+      initialLayout={{ width: layout.width }}
+    />
   );
 };
 

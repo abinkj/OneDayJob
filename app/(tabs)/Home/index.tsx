@@ -13,10 +13,10 @@ import {
   Animated,
   Modal,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { Colors } from "../../../constants/Colors";
 import styles from "./styles";
-import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import {
   getCurrentLocation as getLocationWithAddress,
   searchPlacesFallback,
@@ -39,7 +39,6 @@ import { restoreSession } from "../../../utilities/authentication";
 import { JobPost } from "../../../types";
 
 const HomeScreen = () => {
-  const insets = useSafeAreaInsets();
   const { sendVerificationCodeNotification } = useNotifications();
 
   const testNotification = () => {
@@ -863,7 +862,7 @@ const HomeScreen = () => {
   const allJobs = jobSections.length > 0 ? jobSections[0].data || [] : [];
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
       {/* Filter Modals */}
       {renderFilterModal(
         showCategoryModal,
@@ -897,7 +896,7 @@ const HomeScreen = () => {
         <View
           style={[
             styles.stickyFilterContainer,
-            { position: "absolute", top: insets.top, left: 0, right: 0, zIndex: 1000 },
+            { position: "absolute", top: 0, left: 0, right: 0, zIndex: 1000 },
           ]}
         >
           {renderFilterRow()}
@@ -1032,7 +1031,7 @@ const HomeScreen = () => {
           )}
         </View>
       </Animated.ScrollView>
-    </SafeAreaView>
+    </View>
   );
 };
 

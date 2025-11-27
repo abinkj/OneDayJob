@@ -3,21 +3,20 @@ import { View, Text, TextInput, TouchableOpacity, Image, StyleSheet, ScrollView,
 import { useNavigation } from '@react-navigation/native';
 import { useSelector } from 'react-redux';
 import { Ionicons } from '@expo/vector-icons';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import DeviceDimensions from '../../../constants/DeviceDimenions';
 import { Colors } from '../../../constants/Colors';
 import CustomButton from '../../../components/CustomButton';
 import { Picker } from '@react-native-picker/picker';
 import * as ImagePicker from 'expo-image-picker';
 import { Calendar } from 'react-native-calendars';
-import  styles  from './styles';
+import styles from './styles';
 import CustomSwitch from '../../../components/CustomSwich';
 import JobDescriptionSection from '../../../components/JobDescription';
 import LocationSearch from '../../../components/LocationSearch';
 import {
   createJobPosting,
   getCategories,
-   getCurrentUser, // Add this import
+  getCurrentUser, // Add this import
   isAuthenticated,
   // uploadJobPhotos 
 } from '../../../services/api'; // Adjust the path according to your project structure
@@ -51,7 +50,7 @@ const timeSlots = [
 const PostJobScreen = ({ navigation: navProp }) => {
   const navigation = useNavigation();
   const { kycStatus } = useSelector((state) => state.authentication);
-  
+
   // State variables
   const [currentStep, setCurrentStep] = useState(1);
   const [jobCategories, setJobCategories] = useState(defaultJobCategories);
@@ -108,93 +107,103 @@ const PostJobScreen = ({ navigation: navProp }) => {
       console.log("Location service test result:", result);
     });
   }, []);
-useEffect(() => {
-  const fetchUser = async () => {
-    try {
-      // Use the same getCurrentUser function as HomeScreen
-      const userData = await getCurrentUser();
-      
-      if (userData) {
-        setUser(userData);
-        console.log("Loaded user data in PostJob:", userData);
-      } else {
-        Alert.alert(
-          "Authentication Required", 
-          "Please log in to post a job.",
-          [
-            {
-              text: 'OK',
-              onPress: () => {
-                navigation.navigate('Login'); // Adjust route name as needed
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        // Use the same getCurrentUser function as HomeScreen
+        const userData = await getCurrentUser();
+
+        if (userData) {
+          setUser(userData);
+          console.log("Loaded user data in PostJob:", userData);
+        } else {
+          Alert.alert(
+            "Authentication Required",
+            "Please log in to post a job.",
+            [
+              {
+                text: 'OK',
+                onPress: () => {
+                  navigation.navigate('Login'); // Adjust route name as needed
+                }
               }
-            }
-          ]
+            ]
+          );
+        }
+      } catch (error) {
+        console.error("Error fetching user data in PostJob:", error);
+        Alert.alert(
+          "Error",
+          "Unable to load user data. Please try logging in again."
         );
       }
+    };
+
+    fetchUser();
+  }, []);
+
+  // Fixed loadCategories function
+  const loadCategories = async () => {
+    try {
+      const response = await getCategories();
+      console.log('Raw API response:', response);
+
+      if (response.data && Array.isArray(response.data.data) && response.data.data.length > 0) {
+        // Create mapping from frontend IDs to database IDs
+        const mapping = {};
+
+        // Map API categories to match your existing structure
+        const apiCategories = response.data.data.map(category => {
+          console.log('Processing API category:', category);
+
+          // Find matching default category by name (case insensitive)
+          const matchingDefault = defaultJobCategories.find(
+            def => def.name.toLowerCase() === category.name.toLowerCase()
+          );
+
+          if (matchingDefault) {
+            // Store the mapping: frontend ID -> backend ID
+            mapping[matchingDefault.id] = category._id;
+            console.log(`Mapped ${matchingDefault.id} -> ${category._id}`);
+
+            // Use the frontend ID but store backend ID in mapping
+            return {
+              id: matchingDefault.id, // Keep frontend ID for UI consistency
+              backendId: category._id, // Store backend ID separately
+              name: category.name,
+              icon: matchingDefault.icon // Use frontend icon
+            };
+          } else {
+            // Handle categories that don't exist in defaults
+            console.log(`No matching default found for: ${category.name}`);
+            mapping[category._id] = category._id;
+            return {
+              id: category._id,
+              backendId: category._id,
+              name: category.name,
+              icon: require('../../../assets/images/custom.png')
+            };
+          }
+        }).filter(Boolean); // Remove any null entries
+
+        console.log('Final category mapping:', mapping);
+        console.log('Final API categories:', apiCategories);
+
+        setCategoryMapping(mapping);
+        setJobCategories(apiCategories);
+      } else {
+        console.log('No API categories found, using defaults');
+        // If no API categories, use defaults but create identity mapping
+        const identityMapping = {};
+        defaultJobCategories.forEach(cat => {
+          identityMapping[cat.id] = cat.id;
+        });
+        setCategoryMapping(identityMapping);
+        setJobCategories(defaultJobCategories);
+      }
     } catch (error) {
-      console.error("Error fetching user data in PostJob:", error);
-      Alert.alert(
-        "Error", 
-        "Unable to load user data. Please try logging in again."
-      );
-    }
-  };
-
-  fetchUser();
-}, []);
-
-// Fixed loadCategories function
-const loadCategories = async () => {
-  try {
-    const response = await getCategories();
-    console.log('Raw API response:', response);
-    
-if (response.data && Array.isArray(response.data.data) && response.data.data.length > 0){
-      // Create mapping from frontend IDs to database IDs
-      const mapping = {};
-      
-      // Map API categories to match your existing structure
-      const apiCategories = response.data.data.map(category => {
-        console.log('Processing API category:', category);
-        
-        // Find matching default category by name (case insensitive)
-        const matchingDefault = defaultJobCategories.find(
-          def => def.name.toLowerCase() === category.name.toLowerCase()
-        );
-        
-        if (matchingDefault) {
-          // Store the mapping: frontend ID -> backend ID
-          mapping[matchingDefault.id] = category._id;
-          console.log(`Mapped ${matchingDefault.id} -> ${category._id}`);
-          
-          // Use the frontend ID but store backend ID in mapping
-          return {
-            id: matchingDefault.id, // Keep frontend ID for UI consistency
-            backendId: category._id, // Store backend ID separately
-            name: category.name,
-            icon: matchingDefault.icon // Use frontend icon
-          };
-        } else {
-          // Handle categories that don't exist in defaults
-          console.log(`No matching default found for: ${category.name}`);
-          mapping[category._id] = category._id;
-          return {
-            id: category._id,
-            backendId: category._id,
-            name: category.name,
-            icon: require('../../../assets/images/custom.png')
-          };
-        }
-      }).filter(Boolean); // Remove any null entries
-
-      console.log('Final category mapping:', mapping);
-      console.log('Final API categories:', apiCategories);
-      
-      setCategoryMapping(mapping);
-      setJobCategories(apiCategories);
-    } else {
-      console.log('No API categories found, using defaults');
-      // If no API categories, use defaults but create identity mapping
+      console.error('Error loading categories:', error);
+      // Create identity mapping for defaults
       const identityMapping = {};
       defaultJobCategories.forEach(cat => {
         identityMapping[cat.id] = cat.id;
@@ -202,17 +211,7 @@ if (response.data && Array.isArray(response.data.data) && response.data.data.len
       setCategoryMapping(identityMapping);
       setJobCategories(defaultJobCategories);
     }
-  } catch (error) {
-    console.error('Error loading categories:', error);
-    // Create identity mapping for defaults
-    const identityMapping = {};
-    defaultJobCategories.forEach(cat => {
-      identityMapping[cat.id] = cat.id;
-    });
-    setCategoryMapping(identityMapping);
-    setJobCategories(defaultJobCategories);
-  }
-};
+  };
 
 
   // Format time to HH:MM format for backend
@@ -228,7 +227,7 @@ if (response.data && Array.isArray(response.data.data) && response.data.data.len
     // 12 AM to 11:59 PM is valid (00:00 to 23:59 in 24-hour format)
     const hour24 = parseInt(hour);
     const minute24 = parseInt(minute);
-    
+
     if (amPm === 'AM') {
       // AM: 12 AM (00:00) to 11:59 AM (11:59)
       return (hour24 === 12 && minute24 >= 0) || (hour24 >= 1 && hour24 <= 11);
@@ -344,12 +343,12 @@ if (response.data && Array.isArray(response.data.data) && response.data.data.len
       if (!toHour || !toMinute || !toAmPm) {
         errors.push('Please set the end time for the job');
       }
-      
+
       // Validate that end time is after start time
       if (fromHour && fromMinute && fromAmPm && toHour && toMinute && toAmPm) {
         const fromTime24 = get24HourTime(fromHour, fromMinute, fromAmPm);
         const toTime24 = get24HourTime(toHour, toMinute, toAmPm);
-        
+
         if (fromTime24 >= toTime24) {
           errors.push('End time must be after start time');
         }
@@ -363,274 +362,274 @@ if (response.data && Array.isArray(response.data.data) && response.data.data.len
 
     return true;
   };
-const checkAuthStatus = async () => {
-  try {
-    // Use the same authentication check as HomeScreen
-    const authValid = await isAuthenticated();
-    
-    console.log('PostJob Auth check result:', authValid);
-    
-    if (!authValid) {
-      Alert.alert(
-        'Authentication Required', 
-        'Please log in to post a job.',
-        [
-          {
-            text: 'OK',
-            onPress: () => {
-              // Navigate to login screen
-              navigation.navigate('Login'); // Adjust route name as needed
+  const checkAuthStatus = async () => {
+    try {
+      // Use the same authentication check as HomeScreen
+      const authValid = await isAuthenticated();
+
+      console.log('PostJob Auth check result:', authValid);
+
+      if (!authValid) {
+        Alert.alert(
+          'Authentication Required',
+          'Please log in to post a job.',
+          [
+            {
+              text: 'OK',
+              onPress: () => {
+                // Navigate to login screen
+                navigation.navigate('Login'); // Adjust route name as needed
+              }
             }
-          }
-        ]
+          ]
+        );
+        return false;
+      }
+
+      return true;
+    } catch (error) {
+      console.error('Error checking auth status in PostJob:', error);
+      Alert.alert(
+        'Authentication Error',
+        'Unable to verify authentication. Please try logging in again.'
       );
       return false;
     }
-
-    return true;
-  } catch (error) {
-    console.error('Error checking auth status in PostJob:', error);
-    Alert.alert(
-      'Authentication Error', 
-      'Unable to verify authentication. Please try logging in again.'
-    );
-    return false;
-  }
-};
+  };
 
 
   const currentDate = new Date();
 
 
-// Helper function to combine date and time properly (IST → UTC)
-const combineDateAndTime = (dateString: string, hour: string, minute: string, amPm: "AM" | "PM") => {
-  // Parse the date string (format: "YYYY-MM-DD")
-  const [year, month, day] = dateString.split('-').map(Number);
+  // Helper function to combine date and time properly (IST → UTC)
+  const combineDateAndTime = (dateString: string, hour: string, minute: string, amPm: "AM" | "PM") => {
+    // Parse the date string (format: "YYYY-MM-DD")
+    const [year, month, day] = dateString.split('-').map(Number);
 
-  // Convert time to 24-hour format
-  let hour24 = parseInt(hour, 10);
-  if (amPm === "PM" && hour24 !== 12) {
-    hour24 += 12;
-  } else if (amPm === "AM" && hour24 === 12) {
-    hour24 = 0;
-  }
+    // Convert time to 24-hour format
+    let hour24 = parseInt(hour, 10);
+    if (amPm === "PM" && hour24 !== 12) {
+      hour24 += 12;
+    } else if (amPm === "AM" && hour24 === 12) {
+      hour24 = 0;
+    }
 
-  // Create date in local timezone (IST)
-  const localDate = new Date(year, month - 1, day, hour24, parseInt(minute, 10), 0, 0);
+    // Create date in local timezone (IST)
+    const localDate = new Date(year, month - 1, day, hour24, parseInt(minute, 10), 0, 0);
 
-  // Convert automatically to UTC string
-  const utcString = localDate.toISOString();
+    // Convert automatically to UTC string
+    const utcString = localDate.toISOString();
 
-  console.log(`🕐 Input: ${dateString} ${hour}:${minute} ${amPm} (IST assumed)`);
-  console.log(`   Local time (IST): ${localDate.toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })}`);
-  console.log(`   UTC time: ${utcString}`);
+    console.log(`🕐 Input: ${dateString} ${hour}:${minute} ${amPm} (IST assumed)`);
+    console.log(`   Local time (IST): ${localDate.toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })}`);
+    console.log(`   UTC time: ${utcString}`);
 
-  return utcString;
-};
-
-
-// Fixed formatJobData function
-const formatJobData = (photoUrls = []) => {
-  if (!user || !user.id) {
-    throw new Error('User data is not available');
-  }
-
-  // Get the backend category ID from the mapping
-  const backendCategoryId = categoryMapping[selectedCategory];
-  
-  if (!backendCategoryId) {
-    console.error('Category mapping not found for:', selectedCategory);
-    console.error('Available mappings:', categoryMapping);
-    throw new Error('Invalid category selection');
-  }
-
-  console.log("Selected category:", selectedCategory);
-  console.log("Backend category ID from mapping:", backendCategoryId);
-
-  const jobData: any = {
-    userId: user.id,
-    category: backendCategoryId, // Use the mapped backend ID
-    name: jobName,
-    description: jobDescription,
-    isMultiVacancy: isMultipleVacancy,
-    participantsNumber: isMultipleVacancy ? vacancyCount : 1,
-    isRemote: canBeDoneRemotely,
-    address: canBeDoneRemotely ? '' : (selectedLocation?.address || taskAddress),
-    requirements: requirements,
-    photos: photoUrls,
-    timePreference: selectedTimePreferences, // Send as array
-    budget: parseFloat(budget),
-    isOpen: true,
-    createdAt: currentDate,
-    updatedAt: currentDate
+    return utcString;
   };
 
-  // Add location data if available and not remote
-  if (!canBeDoneRemotely && selectedLocation) {
-    console.log("Adding location to job data:", JSON.stringify(selectedLocation, null, 2));
-    jobData.location = selectedLocation;
-  } else {
-    console.log("No location data added - remote:", canBeDoneRemotely, "selectedLocation:", !!selectedLocation);
-  }
 
-  // Handle date/time based on mode
-  if (dateMode === 'onDate' && onDate) {
-    // Combine date and time properly
-    const dateTime = combineDateAndTime(onDate, fromHour, fromMinute, fromAmPm as "AM" | "PM");
-    jobData.onDate = dateTime;
-    jobData.isFlexible = false;
-  } else if (dateMode === 'beforeDate' && beforeDate) {
-    jobData.beforeDate = new Date(beforeDate);
-    jobData.isFlexible = false;
-  } else {
-    jobData.isFlexible = true;
-  }
+  // Fixed formatJobData function
+  const formatJobData = (photoUrls = []) => {
+    if (!user || !user.id) {
+      throw new Error('User data is not available');
+    }
 
-  // Add time fields for non-flexible jobs
-  if (!isFlexible) {
-    jobData.fromTime = get24HourTime(fromHour, fromMinute, fromAmPm);
-    jobData.toTime = get24HourTime(toHour, toMinute, toAmPm);
-  }
-  
-  return jobData;
-};
+    // Get the backend category ID from the mapping
+    const backendCategoryId = categoryMapping[selectedCategory];
+
+    if (!backendCategoryId) {
+      console.error('Category mapping not found for:', selectedCategory);
+      console.error('Available mappings:', categoryMapping);
+      throw new Error('Invalid category selection');
+    }
+
+    console.log("Selected category:", selectedCategory);
+    console.log("Backend category ID from mapping:", backendCategoryId);
+
+    const jobData: any = {
+      userId: user.id,
+      category: backendCategoryId, // Use the mapped backend ID
+      name: jobName,
+      description: jobDescription,
+      isMultiVacancy: isMultipleVacancy,
+      participantsNumber: isMultipleVacancy ? vacancyCount : 1,
+      isRemote: canBeDoneRemotely,
+      address: canBeDoneRemotely ? '' : (selectedLocation?.address || taskAddress),
+      requirements: requirements,
+      photos: photoUrls,
+      timePreference: selectedTimePreferences, // Send as array
+      budget: parseFloat(budget),
+      isOpen: true,
+      createdAt: currentDate,
+      updatedAt: currentDate
+    };
+
+    // Add location data if available and not remote
+    if (!canBeDoneRemotely && selectedLocation) {
+      console.log("Adding location to job data:", JSON.stringify(selectedLocation, null, 2));
+      jobData.location = selectedLocation;
+    } else {
+      console.log("No location data added - remote:", canBeDoneRemotely, "selectedLocation:", !!selectedLocation);
+    }
+
+    // Handle date/time based on mode
+    if (dateMode === 'onDate' && onDate) {
+      // Combine date and time properly
+      const dateTime = combineDateAndTime(onDate, fromHour, fromMinute, fromAmPm as "AM" | "PM");
+      jobData.onDate = dateTime;
+      jobData.isFlexible = false;
+    } else if (dateMode === 'beforeDate' && beforeDate) {
+      jobData.beforeDate = new Date(beforeDate);
+      jobData.isFlexible = false;
+    } else {
+      jobData.isFlexible = true;
+    }
+
+    // Add time fields for non-flexible jobs
+    if (!isFlexible) {
+      jobData.fromTime = get24HourTime(fromHour, fromMinute, fromAmPm);
+      jobData.toTime = get24HourTime(toHour, toMinute, toAmPm);
+    }
+
+    return jobData;
+  };
 
 
-const resetAllFields = () => {
-  // Reset step
-  setCurrentStep(1);
-  
-  // Reset category
-  setSelectedCategory(null);
-  setSelectedValue("mail");
-  
-  // Reset job details
-  setJobName('');
-  setJobDescription('');
-  setIsMultipleVacancy(false);
-  setVacancyCount(1);
-  setCanBeDoneRemotely(false);
-  setTaskAddress('');
-  setSelectedLocation(null);
-  
-  // Reset time preferences
-  setSelectedTimePreferences([]);
-  setDateMode('flexible');
-  setOnDate(null);
-  setBeforeDate(null);
-  setIsFlexible(true);
-  setFromHour('00');
-  setFromMinute('00');
-  setFromAmPm('AM');
-  setToHour('00');
-  setToMinute('00');
-  setToAmPm('AM');
-  setSelectedDate(null);
-  
-  // Reset budget
-  setBudget('200');
-  
-  // Reset requirements and photos
-  setRequirements([]);
-  setPhotos([]);
-  setUploadedPhotoUrls([]);
-  
-  // Reset modals and UI states
-  setShowRequirementsModal(false);
-  setShowRequirementsList(false);
-  setShowPhotosList(false);
-  setEditingRequirements(false);
-  setCalendarVisible(false);
-  setShowMenu(false);
-  setNewRequirement('');
-  
-  console.log('All form fields have been reset');
-};
+  const resetAllFields = () => {
+    // Reset step
+    setCurrentStep(1);
+
+    // Reset category
+    setSelectedCategory(null);
+    setSelectedValue("mail");
+
+    // Reset job details
+    setJobName('');
+    setJobDescription('');
+    setIsMultipleVacancy(false);
+    setVacancyCount(1);
+    setCanBeDoneRemotely(false);
+    setTaskAddress('');
+    setSelectedLocation(null);
+
+    // Reset time preferences
+    setSelectedTimePreferences([]);
+    setDateMode('flexible');
+    setOnDate(null);
+    setBeforeDate(null);
+    setIsFlexible(true);
+    setFromHour('00');
+    setFromMinute('00');
+    setFromAmPm('AM');
+    setToHour('00');
+    setToMinute('00');
+    setToAmPm('AM');
+    setSelectedDate(null);
+
+    // Reset budget
+    setBudget('200');
+
+    // Reset requirements and photos
+    setRequirements([]);
+    setPhotos([]);
+    setUploadedPhotoUrls([]);
+
+    // Reset modals and UI states
+    setShowRequirementsModal(false);
+    setShowRequirementsList(false);
+    setShowPhotosList(false);
+    setEditingRequirements(false);
+    setCalendarVisible(false);
+    setShowMenu(false);
+    setNewRequirement('');
+
+    console.log('All form fields have been reset');
+  };
 
   // Handle job posting
-// Debug handlePost function
-const handlePost = async () => {
-  if (kycStatus !== 'completed') {
-    Toast.show({
-      type: 'info',
-      text1: 'KYC Required',
-      text2: 'Please complete your KYC to post jobs',
-    });
-    navigation.navigate('BankAccount');
-    return;
-  }
+  // Debug handlePost function
+  const handlePost = async () => {
+    if (kycStatus !== 'completed') {
+      Toast.show({
+        type: 'info',
+        text1: 'KYC Required',
+        text2: 'Please complete your KYC to post jobs',
+      });
+      navigation.navigate('BankAccount');
+      return;
+    }
 
-  if (!validateJobData()) {
-    return;
-  }
-  
-  const isAuth = await checkAuthStatus();
-  if (!isAuth) {
-    return;
-  }
+    if (!validateJobData()) {
+      return;
+    }
 
-  // Double-check user data is available
-  if (!user || !user.id) {
-    Alert.alert(
-      'User Error', 
-      'User information is not available. Please try logging in again.'
-    );
-    return;
-  }
+    const isAuth = await checkAuthStatus();
+    if (!isAuth) {
+      return;
+    }
 
-
-  console.log('Selected category before posting:', selectedCategory);
-  console.log('Category mapping:', categoryMapping);
-  console.log('Backend category ID:', categoryMapping[selectedCategory]);
-
-  setIsLoading(true);
-
-  try {
-    // Create job posting
-    const jobData = formatJobData();
-    console.log('Final job data being sent:', JSON.stringify(jobData, null, 2));
-    
-    const response = await createJobPosting(jobData);
-
-    if (response.data) {
+    // Double-check user data is available
+    if (!user || !user.id) {
       Alert.alert(
-        'Success!',
-        'Your job has been posted successfully!',
-        [
-          {
-            text: 'OK',
-            onPress: () => {
-              resetAllFields();
-              // Navigate back or to job list
-              navigation.goBack();
-            }
-          }
-        ]
+        'User Error',
+        'User information is not available. Please try logging in again.'
       );
-    }
-  } catch (error) {
-    console.error('Error posting job:', error);
-    console.error('Error response data:', error.response?.data);
-
-    let errorMessage = 'Failed to post job. Please try again.';
-
-    // Handle specific authentication errors
-    if (error.response?.status === 401 || error.response?.status === 403) {
-      errorMessage = 'Authentication expired. Please log in again.';
-      // Optionally navigate to login
-      // navigation.navigate('Login');
-    } else if (error.response?.data?.message) {
-      errorMessage = error.response.data.message;
-    } else if (error.response?.data?.errors) {
-      const errors = Object.values(error.response.data.errors).flat();
-      errorMessage = errors.join('\n');
+      return;
     }
 
-    Alert.alert('Error', errorMessage);
-  } finally {
-    setIsLoading(false);
-  }
-};
+
+    console.log('Selected category before posting:', selectedCategory);
+    console.log('Category mapping:', categoryMapping);
+    console.log('Backend category ID:', categoryMapping[selectedCategory]);
+
+    setIsLoading(true);
+
+    try {
+      // Create job posting
+      const jobData = formatJobData();
+      console.log('Final job data being sent:', JSON.stringify(jobData, null, 2));
+
+      const response = await createJobPosting(jobData);
+
+      if (response.data) {
+        Alert.alert(
+          'Success!',
+          'Your job has been posted successfully!',
+          [
+            {
+              text: 'OK',
+              onPress: () => {
+                resetAllFields();
+                // Navigate back or to job list
+                navigation.goBack();
+              }
+            }
+          ]
+        );
+      }
+    } catch (error) {
+      console.error('Error posting job:', error);
+      console.error('Error response data:', error.response?.data);
+
+      let errorMessage = 'Failed to post job. Please try again.';
+
+      // Handle specific authentication errors
+      if (error.response?.status === 401 || error.response?.status === 403) {
+        errorMessage = 'Authentication expired. Please log in again.';
+        // Optionally navigate to login
+        // navigation.navigate('Login');
+      } else if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.response?.data?.errors) {
+        const errors = Object.values(error.response.data.errors).flat();
+        errorMessage = errors.join('\n');
+      }
+
+      Alert.alert('Error', errorMessage);
+    } finally {
+      setIsLoading(false);
+    }
+  };
   // Handle date mode selection
   const handleDateModeChange = (mode) => {
     setDateMode(mode);
@@ -703,7 +702,7 @@ const handlePost = async () => {
         Alert.alert('Required', 'Please provide a location for onsite jobs');
         return;
       }
-      
+
       // Debug logging
       console.log('Step 2 validation:', {
         canBeDoneRemotely,
@@ -718,7 +717,7 @@ const handlePost = async () => {
         Alert.alert('Time Preference Required', 'Please select a time preference for your job');
         return;
       }
-      
+
       // Validate time fields for non-flexible jobs
       if (!isFlexible) {
         if (!fromHour || !fromMinute || !fromAmPm) {
@@ -729,41 +728,41 @@ const handlePost = async () => {
           Alert.alert('Required', 'Please set the end time for the job');
           return;
         }
-        
+
         // Validate that end time is after start time
         const fromTime24 = get24HourTime(fromHour, fromMinute, fromAmPm);
         const toTime24 = get24HourTime(toHour, toMinute, toAmPm);
-        
+
         if (fromTime24 >= toTime24) {
           Alert.alert('Invalid Time', 'End time must be after start time');
           return;
         }
       }
-      
+
       // Validate time selection when time preference is selected
       if (selectedTimePreferences.length > 0) {
         // Check if time is still at initial values (00:00 AM)
-        if (fromHour === '00' && fromMinute === '00' && fromAmPm === 'AM' && 
-            toHour === '00' && toMinute === '00' && toAmPm === 'AM') {
+        if (fromHour === '00' && fromMinute === '00' && fromAmPm === 'AM' &&
+          toHour === '00' && toMinute === '00' && toAmPm === 'AM') {
           Alert.alert('Time Selection Required', 'Please select the time range for your job');
           return;
         }
-        
+
         // Validate that end time is after start time for time preferences
         const fromTime24 = get24HourTime(fromHour, fromMinute, fromAmPm);
         const toTime24 = get24HourTime(toHour, toMinute, toAmPm);
-        
+
         if (fromTime24 >= toTime24) {
           Alert.alert('Invalid Time', 'End time must be after start time');
           return;
         }
-        
+
         // Validate time is within 12 AM to 11:59 PM range
         if (!isValidTimeRange(fromHour, fromMinute, fromAmPm)) {
           Alert.alert('Invalid Time', 'Start time must be between 12 AM and 11:59 PM');
           return;
         }
-        
+
         if (!isValidTimeRange(toHour, toMinute, toAmPm)) {
           Alert.alert('Invalid Time', 'End time must be between 12 AM and 11:59 PM');
           return;
@@ -1193,7 +1192,7 @@ const handlePost = async () => {
       {!isFlexible && (
         <View style={styles.timeRangeContainer}>
           <Text style={styles.sectionTitle}>Set time range (Required)</Text>
-          
+
           {/* From Time */}
           <View style={styles.timeRangeSection}>
             <Text style={styles.timeRangeLabel}>From:</Text>
@@ -1317,7 +1316,7 @@ const handlePost = async () => {
     // Get time preference names
     const getFormattedDateTime = () => {
       if (isFlexible) return 'Flexible';
-      
+
       if (selectedDate) {
         let result = selectedDate;
         if (!isFlexible && fromHour && toHour) {
@@ -1332,7 +1331,7 @@ const handlePost = async () => {
         }
         return result;
       }
-      
+
       return 'Flexible';
     };
     const toggleMenu = () => {
@@ -1480,7 +1479,7 @@ const handlePost = async () => {
           <View style={styles.detailRow}>
             <Text style={styles.detailLabel}>LOCATION</Text>
             <Text style={styles.detailValue}>
-              {selectedLocation 
+              {selectedLocation
                 ? (selectedLocation.address || `${selectedLocation.city}, ${selectedLocation.state}`)
                 : (taskAddress || 'Remote')
               }
@@ -1566,7 +1565,7 @@ const handlePost = async () => {
 
   // Main render function
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity onPress={handleBack}>
           <Ionicons name="chevron-back" size={24} color={Colors.black} />
@@ -1670,7 +1669,7 @@ const handlePost = async () => {
           </View>
         </View>
       </Modal>
-    </SafeAreaView>
+    </View>
   );
 };
 
