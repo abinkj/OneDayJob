@@ -23,12 +23,12 @@ import JobCard from "../../../components/jobCard";
 import StatusFilter from "../../../components/statusFilter";
 import PaymentModal from "../../../components/paymentModal";
 import {
-  deleteJobPosting,
-  getAppliedJobsByUserId,
-  getJobPostingsByUserId,
-  withdrawApplication,
-} from "../../../services/api";
-import { getUserData } from "../../../utilities/asyncStore";
+  useUserJobPostings,
+  useUserAppliedJobs,
+  useDeleteJob,
+  useWithdrawApplication,
+} from "../../../hooks/useJobs";
+import { useSelector } from "react-redux";
 import { JobPost } from "../../../types";
 import { getJobStatusInfo, getApplicationStatusInfo, JOB_STATUSES, APPLICATION_STATUSES } from "../../../utilities/statusUtils";
 import styles from "./styles";
@@ -43,16 +43,31 @@ type State = NavigationState<Route>;
 
 const MyPostTab = () => {
   const navigation = useNavigation<any>();
-  const [posts, setPosts] = useState<JobPost[]>([]);
-  const [filteredPosts, setFilteredPosts] = useState<JobPost[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = React.useState(false);
-  const [loadingMore, setLoadingMore] = React.useState(false);
-  const [page, setPage] = useState(1);
-  const [hasMore, setHasMore] = useState(true);
+  const userData = useSelector((state: any) => state.authentication.userData);
+  const userId = userData?.id || userData?._id;
+
+  const {
+    data,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isLoading,
+    refetch,
+    isRefetching,
+  } = useUserJobPostings(userId);
+
+  const deleteJobMutation = useDeleteJob();
+
   const [selectedStatus, setSelectedStatus] = useState<string | null>(null);
   const [paymentModalVisible, setPaymentModalVisible] = useState(false);
   const [selectedJobForPayment, setSelectedJobForPayment] = useState<JobPost | null>(null);
+
+  // Flatten data
+  const posts = React.useMemo(() => {
+    return data?.pages.flatMap((page) => page.data) || [];
+  }, [data]);
+
+  const [filteredPosts, setFilteredPosts] = useState<JobPost[]>([]);
 
   const handleNext = (jobId: string) => {
     navigation.navigate("RequestVerification", { jobId: jobId });
@@ -66,7 +81,7 @@ const MyPostTab = () => {
 
   const handlePaymentSuccess = () => {
     // Refresh the posts list after successful payment
-    fetchPosts();
+    refetch();
     Toast.show({
       type: "success",
       text1: "Payment Successful",
@@ -76,17 +91,12 @@ const MyPostTab = () => {
 
   const handleDelete = async (jobId: string) => {
     try {
-      const res = await deleteJobPosting(jobId);
-
-      if (res?.data.success) {
-        fetchPosts();
-
-        Toast.show({
-          type: "success",
-          text1: "Deleted",
-          text2: "Job post deleted successfully",
-        });
-      }
+      await deleteJobMutation.mutateAsync(jobId);
+      Toast.show({
+        type: "success",
+        text1: "Deleted",
+        text2: "Job post deleted successfully",
+      });
     } catch (error: any) {
       console.error("Delete failed:", error);
       Toast.show({
@@ -97,56 +107,9 @@ const MyPostTab = () => {
     }
   };
 
-  const fetchPosts = async (isRefresh = false, loadMore = false) => {
-    try {
-      if (!isRefresh && !loadMore) setLoading(true);
-      if (loadMore) setLoadingMore(true);
-
-      const user = await getUserData();
-      if (!user?.id) {
-        console.error("No user ID found");
-        setPosts([]);
-        return;
-      }
-
-      const currentPage = isRefresh ? 1 : (loadMore ? page : 1);
-      const res = await getJobPostingsByUserId(user.id, currentPage, 10);
-      const postsData = res.data || [];
-      const hasMoreData = res.hasMore || false;
-
-      if (isRefresh) {
-        setPosts(postsData);
-        setFilteredPosts(postsData);
-        setPage(2);
-        setHasMore(hasMoreData);
-      } else if (loadMore) {
-        setPosts(prev => [...prev, ...postsData]);
-        setFilteredPosts(prev => [...prev, ...postsData]);
-        setPage(prev => prev + 1);
-        setHasMore(hasMoreData);
-      } else {
-        setPosts(postsData);
-        setFilteredPosts(postsData);
-        setPage(2);
-        setHasMore(hasMoreData);
-      }
-    } catch (error) {
-      console.error("Error fetching job postings", error);
-      if (!loadMore) setPosts([]);
-    } finally {
-      if (isRefresh) {
-        setRefreshing(false);
-      } else if (loadMore) {
-        setLoadingMore(false);
-      } else {
-        setLoading(false);
-      }
-    }
-  };
-
   const handleLoadMore = () => {
-    if (!loadingMore && hasMore) {
-      fetchPosts(false, true);
+    if (hasNextPage && !isFetchingNextPage) {
+      fetchNextPage();
     }
   };
 
@@ -163,42 +126,31 @@ const MyPostTab = () => {
     }
   }, [selectedStatus, posts]);
 
-  useFocusEffect(
-    React.useCallback(() => {
-      setPage(1);
-      setHasMore(true);
-      fetchPosts();
-    }, [])
-  );
-
   // Add refresh on app state change (when app comes to foreground)
   React.useEffect(() => {
     const handleAppStateChange = (nextAppState: string) => {
       if (nextAppState === 'active') {
-        fetchPosts(true); // Refresh when app becomes active
+        refetch(); // Refresh when app becomes active
       }
     };
 
     const subscription = AppState.addEventListener('change', handleAppStateChange);
     return () => subscription?.remove();
-  }, []);
+  }, [refetch]);
 
   // Add periodic refresh every 30 seconds when component is focused
   React.useEffect(() => {
     const interval = setInterval(() => {
-      fetchPosts(true); // Silent refresh every 30 seconds
+      // Only refetch if not already fetching to avoid conflicts
+      if (!isLoading && !isRefetching && !isFetchingNextPage) {
+        refetch(); 
+      }
     }, 30000);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [isLoading, isRefetching, isFetchingNextPage, refetch]);
 
-  // Reset pagination when status filter changes
-  React.useEffect(() => {
-    setPage(1);
-    setHasMore(true);
-  }, [selectedStatus]);
-
-  if (loading) {
+  if (isLoading && !isRefetching && posts.length === 0) {
     return (
       <View style={{ justifyContent: "center", alignItems: "center", flex: 1 }}>
         <ActivityIndicator size="large" color={Colors.grey} />
@@ -272,11 +224,8 @@ const MyPostTab = () => {
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl
-            refreshing={refreshing}
-            onRefresh={() => {
-              setRefreshing(true);
-              fetchPosts(true);
-            }}
+            refreshing={isRefetching}
+            onRefresh={() => refetch()}
           />
         }
         onEndReached={handleLoadMore}
@@ -300,14 +249,37 @@ const MyPostTab = () => {
 
 const AppliedTab = () => {
   const navigation = useNavigation<any>();
-  const [appliedJobs, setAppliedJobs] = React.useState<any[]>([]);
-  const [filteredJobs, setFilteredJobs] = React.useState<any[]>([]);
-  const [loading, setLoading] = React.useState(true);
-  const [refreshing, setRefreshing] = React.useState(false);
-  const [loadingMore, setLoadingMore] = React.useState(false);
-  const [page, setPage] = React.useState(1);
-  const [hasMore, setHasMore] = React.useState(true);
+  const userData = useSelector((state: any) => state.authentication.userData);
+  const userId = userData?.id || userData?._id;
+
+  const {
+    data,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isLoading,
+    refetch,
+    isRefetching,
+  } = useUserAppliedJobs(userId);
+
+  const withdrawMutation = useWithdrawApplication();
+
   const [selectedStatus, setSelectedStatus] = React.useState<string | null>(null);
+
+  // Flatten data and filter valid applications
+  const appliedJobs = React.useMemo(() => {
+    const allApps = data?.pages.flatMap((page) => page.data) || [];
+    return allApps.filter(
+      (application: any) =>
+        application &&
+        application.job &&
+        application.job._id &&
+        application.applicationId &&
+        application.status !== 'withdrawn'
+    );
+  }, [data]);
+
+  const [filteredJobs, setFilteredJobs] = React.useState<any[]>([]);
 
   const handleNext = (job: any) => {
     if (job && job._id) {
@@ -319,26 +291,16 @@ const AppliedTab = () => {
     try {
       console.log("Withdrawing application - jobId:", jobId, "applicationId:", applicationId);
 
-      // Immediately remove from UI for better UX
-      setAppliedJobs(prev => prev.filter(app => app.applicationId !== applicationId));
-
-      // Use jobId for withdrawal, not applicationId
-      await withdrawApplication(jobId);
-
-      // Refresh the list to ensure consistency
-      await fetchAppliedJobs(true);
+      await withdrawMutation.mutateAsync(jobId);
 
       Toast.show({
         type: "success",
         text1: "Withdrawn",
         text2: "You have withdrawn your application successfully",
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error withdrawing application:", error);
       console.error("Error details:", error.response?.data);
-
-      // If withdrawal failed, refresh the list to restore the card
-      await fetchAppliedJobs(true);
 
       Toast.show({
         type: "error",
@@ -348,67 +310,9 @@ const AppliedTab = () => {
     }
   };
 
-  const fetchAppliedJobs = async (isRefresh = false, loadMore = false) => {
-    try {
-      if (!isRefresh && !loadMore) setLoading(true);
-      if (loadMore) setLoadingMore(true);
-
-      const user = await getUserData();
-      if (!user?.id) {
-        console.error("No user ID found");
-        setAppliedJobs([]);
-        return;
-      }
-
-      const currentPage = isRefresh ? 1 : (loadMore ? page : 1);
-      const res = await getAppliedJobsByUserId(user.id, currentPage, 10);
-      const hasMoreData = res.hasMore || false;
-
-      const allApplications = res.data || [];
-
-      // Filter out applications with null or incomplete job data and withdrawn applications
-      const validApplications = allApplications.filter(
-        (application: any) =>
-          application &&
-          application.job &&
-          application.job._id &&
-          application.applicationId &&
-          application.status !== 'withdrawn'
-      );
-
-      if (isRefresh) {
-        setAppliedJobs(validApplications);
-        setFilteredJobs(validApplications);
-        setPage(2);
-        setHasMore(hasMoreData);
-      } else if (loadMore) {
-        setAppliedJobs(prev => [...prev, ...validApplications]);
-        setFilteredJobs(prev => [...prev, ...validApplications]);
-        setPage(prev => prev + 1);
-        setHasMore(hasMoreData);
-      } else {
-        setAppliedJobs(validApplications);
-        setFilteredJobs(validApplications);
-        setPage(2);
-        setHasMore(hasMoreData);
-      }
-    } catch (error) {
-      console.error("Error fetching applied jobs", error);
-      if (!loadMore) setAppliedJobs([]);
-    } finally {
-      if (isRefresh) {
-        setRefreshing(false);
-      } else if (loadMore) {
-        setLoadingMore(false);
-      } else {
-        setLoading(false);
-      }
-    }
-  };
-
   const handleLoadMore = () => {
-    if (!loadingMore && hasMore) {
-      fetchAppliedJobs(false, true);
+    if (hasNextPage && !isFetchingNextPage) {
+      fetchNextPage();
     }
   };
 
@@ -425,42 +329,30 @@ const AppliedTab = () => {
     }
   }, [selectedStatus, appliedJobs]);
 
-  useFocusEffect(
-    React.useCallback(() => {
-      setPage(1);
-      setHasMore(true);
-      fetchAppliedJobs();
-    }, [])
-  );
-
   // Add refresh on app state change (when app comes to foreground)
   React.useEffect(() => {
     const handleAppStateChange = (nextAppState: string) => {
       if (nextAppState === 'active') {
-        fetchAppliedJobs(true); // Refresh when app becomes active
+        refetch(); // Refresh when app becomes active
       }
     };
 
     const subscription = AppState.addEventListener('change', handleAppStateChange);
     return () => subscription?.remove();
-  }, []);
+  }, [refetch]);
 
   // Add periodic refresh every 30 seconds when component is focused
   React.useEffect(() => {
     const interval = setInterval(() => {
-      fetchAppliedJobs(true); // Silent refresh every 30 seconds
+      if (!isLoading && !isRefetching && !isFetchingNextPage) {
+        refetch();
+      }
     }, 30000);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [isLoading, isRefetching, isFetchingNextPage, refetch]);
 
-  // Reset pagination when status filter changes
-  React.useEffect(() => {
-    setPage(1);
-    setHasMore(true);
-  }, [selectedStatus]);
-
-  if (loading) {
+  if (isLoading && !isRefetching && appliedJobs.length === 0) {
     return (
       <View style={{ justifyContent: "center", alignItems: "center", flex: 1 }}>
         <ActivityIndicator size="large" color={Colors.grey} />
@@ -543,11 +435,8 @@ const AppliedTab = () => {
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl
-            refreshing={refreshing}
-            onRefresh={() => {
-              setRefreshing(true);
-              fetchAppliedJobs(true);
-            }}
+            refreshing={isRefetching}
+            onRefresh={() => refetch()}
           />
         }
         onEndReached={handleLoadMore}

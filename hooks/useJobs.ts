@@ -1,5 +1,11 @@
-import { useQuery } from '@tanstack/react-query';
-import { getJobPostings, getJobsByLocation } from '../services/api';
+import { useQuery, useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { 
+  getJobPostings, 
+  getJobPostingsByUserId, 
+  getAppliedJobsByUserId, 
+  deleteJobPosting, 
+  withdrawApplication 
+} from '../services/api';
 import { JobPost } from '../types';
 
 interface JobFilters {
@@ -32,5 +38,58 @@ export const useJobPostings = (filters: JobFilters) => {
       return jobs;
     },
     staleTime: 1000 * 60 * 5, // 5 minutes
+  });
+};
+
+export const useUserJobPostings = (userId: string | undefined) => {
+  return useInfiniteQuery({
+    queryKey: ['userJobs', userId],
+    queryFn: async ({ pageParam = 1 }) => {
+      if (!userId) return { data: [], hasMore: false };
+      const response = await getJobPostingsByUserId(userId, pageParam, 10);
+      return response;
+    },
+    initialPageParam: 1,
+    getNextPageParam: (lastPage, allPages) => {
+      return lastPage.hasMore ? allPages.length + 1 : undefined;
+    },
+    enabled: !!userId,
+  });
+};
+
+export const useUserAppliedJobs = (userId: string | undefined) => {
+  return useInfiniteQuery({
+    queryKey: ['userAppliedJobs', userId],
+    queryFn: async ({ pageParam = 1 }) => {
+      if (!userId) return { data: [], hasMore: false };
+      const response = await getAppliedJobsByUserId(userId, pageParam, 10);
+      return response;
+    },
+    initialPageParam: 1,
+    getNextPageParam: (lastPage, allPages) => {
+      return lastPage.hasMore ? allPages.length + 1 : undefined;
+    },
+    enabled: !!userId,
+  });
+};
+
+export const useDeleteJob = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (jobId: string) => deleteJobPosting(jobId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['userJobs'] });
+      queryClient.invalidateQueries({ queryKey: ['jobs'] });
+    },
+  });
+};
+
+export const useWithdrawApplication = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (jobId: string) => withdrawApplication(jobId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['userAppliedJobs'] });
+    },
   });
 };
