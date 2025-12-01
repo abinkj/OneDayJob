@@ -447,6 +447,9 @@ const HomeScreen = () => {
     setSearchQuery("");
   };
 
+  const lastFetchTime = useRef(0);
+  const debounceTimer = useRef<NodeJS.Timeout | null>(null);
+
   // Handle scroll to determine when filter row should be sticky
   const handleScroll = Animated.event(
     [{ nativeEvent: { contentOffset: { y: scrollY } } }],
@@ -479,13 +482,23 @@ const HomeScreen = () => {
   }, [dispatch]);
 
   // Add navigation listener to refresh jobs when returning from JobTimer
+  // OPTIMIZED: Throttle refetches to avoid 429 errors
   useEffect(() => {
     const unsubscribe = navigation.addListener("focus", () => {
+      const now = Date.now();
+      const timeSinceLastFetch = now - lastFetchTime.current;
+      const THROTTLE_TIME = 60000; // 60 seconds
+
       console.log(
-        "HomeScreen focused - refreshing jobs to check for status updates"
+        `HomeScreen focused. Time since last fetch: ${timeSinceLastFetch}ms`
       );
-      if (isInitialized) {
+
+      if (isInitialized && timeSinceLastFetch > THROTTLE_TIME) {
+        console.log("Throttling check passed - refreshing jobs");
         fetchJobs(true);
+        lastFetchTime.current = now;
+      } else {
+        console.log("Skipping refresh due to throttling");
       }
     });
 
@@ -505,12 +518,25 @@ const HomeScreen = () => {
     fetchLocationAndJobs();
   }, [isInitialized, authStatus, currentUser]);
 
-  // FIXED: Updated useEffect to trigger on filter changes without pagination
+  // OPTIMIZED: Debounce filter changes to avoid excessive API calls
   useEffect(() => {
     if (isInitialized) {
-      console.log("Filters changed, fetching jobs...");
-      fetchJobs(true);
+      if (debounceTimer.current) {
+        clearTimeout(debounceTimer.current);
+      }
+
+      debounceTimer.current = setTimeout(() => {
+        console.log("Filters changed (debounced), fetching jobs...");
+        fetchJobs(true);
+        lastFetchTime.current = Date.now();
+      }, 500); // 500ms debounce
     }
+
+    return () => {
+      if (debounceTimer.current) {
+        clearTimeout(debounceTimer.current);
+      }
+    };
   }, [
     selectedCategory,
     selectedPriceSort,

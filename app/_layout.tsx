@@ -3,6 +3,7 @@
 // export default function RootLayout() {
 //   return <Stack screenOptions={{ headerShown: false }} />;
 // }
+import { StatusBar } from "expo-status-bar";
 import React, { useEffect } from "react";
 import { Provider } from "react-redux";
 import { store } from "../redux/store";
@@ -39,6 +40,7 @@ export default function RootLayout() {
   return (
     <Provider store={store}>
       <NotificationProvider>
+        <StatusBar style="dark" backgroundColor={Colors.background} />
         <SafeAreaView style={{ flex: 1, backgroundColor: Colors.background }} edges={['top', 'left', 'right']}>
           <Stack screenOptions={{ headerShown: false }} />
         </SafeAreaView>

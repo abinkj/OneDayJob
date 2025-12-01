@@ -18,8 +18,8 @@ const StatusFilter: React.FC<StatusFilterProps> = ({
   showAll = true
 }) => {
   return (
-    <ScrollView 
-      horizontal 
+    <ScrollView
+      horizontal
       showsHorizontalScrollIndicator={false}
       style={styles.container}
       contentContainerStyle={styles.contentContainer}
@@ -40,7 +40,7 @@ const StatusFilter: React.FC<StatusFilterProps> = ({
           </Text>
         </TouchableOpacity>
       )}
-      
+
       {statuses.map((status, index) => (
         <TouchableOpacity
           key={index}
@@ -72,6 +72,7 @@ const StatusFilter: React.FC<StatusFilterProps> = ({
 const styles = StyleSheet.create({
   container: {
     marginVertical: 8,
+    backgroundColor: Colors.background
   },
   contentContainer: {
     paddingHorizontal: 16,

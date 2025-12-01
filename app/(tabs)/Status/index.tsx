@@ -255,7 +255,7 @@ const MyPostTab = () => {
   );
 
   return (
-    <View style={{ flex: 1 }}>
+    <View style={{ flex: 1, backgroundColor: Colors.background }}>
       {posts.length > 0 && (
         <StatusFilter
           statuses={availableStatuses}

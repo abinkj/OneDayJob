@@ -32,7 +32,7 @@ const CustomTabBar = ({ state, descriptors, navigation }) => {
         useNativeDriver: true,
         speed: 5,
         bounciness: 10,
-        
+
       }).start();
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps

@@ -35,3 +35,17 @@ yarn-error.*
 # typescript
 *.tsbuildinfo
 google-services.json
+
+ios/Pods/
+ios/build/
+ios/DerivedData/
+ios/*.xcuserstate
+ios/*/*.xcuserstate
+ios/*.xccheckout
+ios/*.xcworkspace/xcuserdata/
+ios/oneday.xcworkspace/xcuserdata/
+ios/oneday.xcodeproj/project.xcworkspace/xcuserdata/
+
+
+
+
