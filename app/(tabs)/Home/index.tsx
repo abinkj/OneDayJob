@@ -37,6 +37,7 @@ import {
 } from "../../../services/api";
 import { restoreSession } from "../../../utilities/authentication";
 import { JobPost } from "../../../types";
+import { useJobPostings } from "../../../hooks/useJobs";
 
 const HomeScreen = () => {
   const { sendVerificationCodeNotification } = useNotifications();
@@ -128,22 +129,23 @@ const HomeScreen = () => {
     const jobsWithDistance = [];
 
     jobs.forEach((job) => {
+      const loc = job.location as any;
       if (
-        job.location?.coordinates?.coordinates ||
-        (job.location?.coordinates?.latitude &&
-          job.location?.coordinates?.longitude)
+        loc?.coordinates?.coordinates ||
+        (loc?.coordinates?.latitude &&
+          loc?.coordinates?.longitude)
       ) {
         let jobLat, jobLng;
 
         // Handle both GeoJSON format and lat/lng format
-        if (job.location.coordinates.coordinates) {
+        if (loc.coordinates.coordinates) {
           // GeoJSON format [lng, lat]
-          jobLng = job.location.coordinates.coordinates[0];
-          jobLat = job.location.coordinates.coordinates[1];
+          jobLng = loc.coordinates.coordinates[0];
+          jobLat = loc.coordinates.coordinates[1];
         } else {
           // Regular lat/lng format
-          jobLat = job.location.coordinates.latitude;
-          jobLng = job.location.coordinates.longitude;
+          jobLat = loc.coordinates.latitude;
+          jobLng = loc.coordinates.longitude;
         }
 
         const distance = calculateDistance(
@@ -264,110 +266,51 @@ const HomeScreen = () => {
     }
   };
 
-  // FIXED: Simplified fetchJobs function without pagination
-  const fetchJobs = async (resetJobs = true) => {
-    try {
-      if (resetJobs) {
-        setLoading(true);
-      }
+  // Construct filters object
+  const filters = {
+    search: searchQuery.trim() || undefined,
+    category: selectedCategory || undefined,
+    priceSort: selectedPriceSort || undefined,
+    distance: selectedDistance && location ? selectedDistance : undefined,
+    userLocation: selectedDistance && location ? {
+      latitude: location.latitude,
+      longitude: location.longitude,
+    } : undefined,
+  };
 
-      console.log("Fetch strategy with filters:", {
-        authStatus,
-        hasLocation: !!location,
-        selectedCategory,
-        selectedPriceSort,
-        selectedDistance,
-        searchQuery,
-      });
+  // Use TanStack Query hook
+  const { 
+    data: jobs = [], 
+    isLoading: isJobsLoading, 
+    isError: isJobsError, 
+    refetch: refetchJobs,
+    isRefetching: isJobsRefetching
+  } = useJobPostings(filters);
 
-      // Build filters object for backend
-      const filters = {};
+  // Sync loading state
+  useEffect(() => {
+    setLoading(isJobsLoading);
+  }, [isJobsLoading]);
 
-      // Add search filter
-      if (searchQuery.trim()) {
-        filters.search = searchQuery.trim();
-      }
-
-      // Add category filter
-      if (selectedCategory) {
-        filters.category = selectedCategory;
-      }
-
-      // Add price sort filter
-      if (selectedPriceSort) {
-        filters.priceSort = selectedPriceSort;
-      }
-
-      // Add distance filter (only if user has location)
-      if (selectedDistance && location) {
-        filters.distance = selectedDistance;
-        filters.userLocation = {
-          latitude: location.latitude,
-          longitude: location.longitude,
-        };
-      }
-
-      console.log("Sending filters to backend:", filters);
-
-      const response = await getJobPostings(filters);
-
-      // FIXED: Handle response structure properly
-      let jobs = [];
-      if (response.data?.data) {
-        // Handle nested data structure
-        jobs = Array.isArray(response.data.data) ? response.data.data : [];
-      } else if (response.data?.jobs) {
-        // Handle paginated response structure
-        jobs = Array.isArray(response.data.jobs) ? response.data.jobs : [];
-      } else if (Array.isArray(response.data)) {
-        // Handle direct array response
-        jobs = response.data;
-      } else {
-        console.warn("Unexpected response structure:", response.data);
-        jobs = [];
-      }
-
-      console.log(`Jobs received from backend: ${jobs.length} jobs`);
-
+  // Update jobSections when jobs data changes
+  useEffect(() => {
+    if (jobs) {
       // Add distance to jobs for display if location is available
       const jobsWithDistance = location
         ? categorizeJobsByDistance(jobs, location)
         : jobs;
-
+      
       setJobSections([{ title: "Jobs", data: jobsWithDistance }]);
-
-      console.log(`Jobs loaded: ${jobs.length} jobs`);
-
-      if (jobs.length > 0) {
-        Toast.show({
-          type: "success",
-          text1: "Jobs loaded",
-          text2: `${jobs.length} jobs found`,
-        });
-      } else {
-        Toast.show({
-          type: "info",
-          text1: "No jobs found",
-          text2: "Try adjusting your filters",
-        });
-      }
-    } catch (error) {
-      console.error("Job fetch error:", error);
-      Toast.show({
-        type: "error",
-        text1: "Error",
-        text2: "Failed to load jobs",
-      });
-      setJobSections([]);
-    } finally {
-      setLoading(false);
+      
+      // Only show toast on initial load or explicit refresh, not every time data updates from background
+      // This prevents toast spam
     }
-  };
+  }, [jobs, location]);
 
   // Handle search
   const handleSearch = async () => {
     if (!searchQuery.trim()) {
-      fetchJobs(true);
+      // The hook will automatically refetch when searchQuery changes
       return;
     }
 
@@ -394,13 +337,9 @@ const HomeScreen = () => {
           }
         }
       }
-
-      // Then search for jobs with the query
-      await fetchJobs(true);
+      // The hook will automatically refetch when searchQuery or location changes
     } catch (error) {
       console.error("Error searching:", error);
-      // If location search fails, still try to search jobs
-      await fetchJobs(true);
     } finally {
       setLoading(false);
     }
@@ -411,7 +350,7 @@ const HomeScreen = () => {
     try {
       await checkAuthStatus();
       await fetchCurrentLocation();
-      await fetchJobs(true);
+      await refetchJobs();
     } catch (error) {
       console.error("Error during refresh:", error);
       Toast.show({
@@ -455,7 +394,7 @@ const HomeScreen = () => {
     [{ nativeEvent: { contentOffset: { y: scrollY } } }],
     {
       useNativeDriver: false,
-      listener: (event) => {
+      listener: (event: any) => {
         const offsetY = event.nativeEvent.contentOffset.y;
         setIsFilterSticky(offsetY >= STICKY_OFFSET);
       },
@@ -495,7 +434,7 @@ const HomeScreen = () => {
 
       if (isInitialized && timeSinceLastFetch > THROTTLE_TIME) {
         console.log("Throttling check passed - refreshing jobs");
-        fetchJobs(true);
+        refetchJobs();
         lastFetchTime.current = now;
       } else {
         console.log("Skipping refresh due to throttling");
@@ -503,7 +442,7 @@ const HomeScreen = () => {
     });
 
     return unsubscribe;
-  }, [navigation, isInitialized]);
+  }, [navigation, isInitialized, refetchJobs]);
 
   useEffect(() => {
     const fetchLocationAndJobs = async () => {
@@ -519,31 +458,8 @@ const HomeScreen = () => {
   }, [isInitialized, authStatus, currentUser]);
 
   // OPTIMIZED: Debounce filter changes to avoid excessive API calls
-  useEffect(() => {
-    if (isInitialized) {
-      if (debounceTimer.current) {
-        clearTimeout(debounceTimer.current);
-      }
-
-      debounceTimer.current = setTimeout(() => {
-        console.log("Filters changed (debounced), fetching jobs...");
-        fetchJobs(true);
-        lastFetchTime.current = Date.now();
-      }, 500); // 500ms debounce
-    }
-
-    return () => {
-      if (debounceTimer.current) {
-        clearTimeout(debounceTimer.current);
-      }
-    };
-  }, [
-    selectedCategory,
-    selectedPriceSort,
-    selectedDistance,
-    searchQuery,
-    isInitialized,
-  ]);
+  // Note: TanStack Query handles caching and deduping, but we can keep a small debounce if needed for the search input specifically.
+  // For now, we rely on the state changes triggering the hook.
 
   const renderJobCard = ({
     item,
@@ -564,13 +480,14 @@ const HomeScreen = () => {
 
         // Check if user is the job poster (employer) or an applicant (worker)
         // The backend populates userId with user data, so we need to check both _id and id
+        const jobItem = item as any;
         const jobOwnerId =
-          item.userId?._id ||
-          item.userId?.id ||
-          item.postedBy?._id ||
-          item.postedBy?.id ||
-          item.createdBy ||
-          item.ownerId;
+          jobItem.userId?._id ||
+          jobItem.userId?.id ||
+          jobItem.postedBy?._id ||
+          jobItem.postedBy?.id ||
+          jobItem.createdBy ||
+          jobItem.ownerId;
         const isEmployer =
           userData?.id === jobOwnerId || userData?._id === jobOwnerId;
 
@@ -579,8 +496,8 @@ const HomeScreen = () => {
           userData_id: userData?._id,
           jobOwnerId: jobOwnerId,
           jobUserId: item.userId,
-          jobPostedBy: item.postedBy,
-          jobCreatedBy: item.createdBy,
+          jobPostedBy: jobItem.postedBy,
+          jobCreatedBy: jobItem.createdBy,
           isEmployer: isEmployer,
           jobName: item.name,
         });
@@ -777,7 +694,8 @@ const HomeScreen = () => {
     <Modal
       visible={visible}
       transparent
-      animationType="slide"
+      animationType="fade"
+      presentationStyle="formSheet"
       onRequestClose={() => setVisible(false)}
     >
       <View style={styles.modalOverlay}>

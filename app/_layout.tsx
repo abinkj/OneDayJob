@@ -14,6 +14,8 @@ import { NotificationProvider } from "../contexts/NotificationContext";
 import socketService from "../services/socketService";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Colors } from "../constants/Colors";
+import { QueryClientProvider } from "@tanstack/react-query";
+import { queryClient } from "../services/queryClient";
 
 export default function RootLayout() {
   useEffect(() => {
@@ -39,13 +41,15 @@ export default function RootLayout() {
 
   return (
     <Provider store={store}>
-      <NotificationProvider>
-        <StatusBar style="dark" backgroundColor={Colors.background} />
-        <SafeAreaView style={{ flex: 1, backgroundColor: Colors.background }} edges={['top', 'left', 'right']}>
-          <Stack screenOptions={{ headerShown: false }} />
-        </SafeAreaView>
-        <Toast config={toastConfig} />
-      </NotificationProvider>
+      <QueryClientProvider client={queryClient}>
+        <NotificationProvider>
+          <StatusBar style="dark" backgroundColor={Colors.background} />
+          <SafeAreaView style={{ flex: 1, backgroundColor: Colors.background }} edges={['top', 'left', 'right']}>
+            <Stack screenOptions={{ headerShown: false }} />
+          </SafeAreaView>
+          <Toast config={toastConfig} />
+        </NotificationProvider>
+      </QueryClientProvider>
     </Provider>
   );
 }
