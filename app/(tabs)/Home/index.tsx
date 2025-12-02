@@ -695,7 +695,6 @@ const HomeScreen = () => {
       visible={visible}
       transparent
       animationType="fade"
-      presentationStyle="formSheet"
       onRequestClose={() => setVisible(false)}
     >
       <View style={styles.modalOverlay}>

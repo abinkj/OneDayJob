@@ -65,7 +65,8 @@
           "color": "#ffffff",
           "defaultChannel": "default"
         }
-      ]
+      ],
+      "expo-web-browser"
     ],
     "notification": {
       "icon": "./assets/notification-icon.png",

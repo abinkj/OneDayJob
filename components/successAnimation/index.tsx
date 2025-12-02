@@ -1,8 +1,9 @@
 import React from "react";
 import { View, Text, StyleSheet } from "react-native";
 import LottieView from "lottie-react-native";
-import { Colors } from "react-native/Libraries/NewAppScreen";
+
 import DeviceDimensions from "../../constants/DeviceDimenions";
+import { Colors } from "../../constants/Colors";
 
 type SuccessAnimationProps = {
   message?: string; // Optional text to display under animation
