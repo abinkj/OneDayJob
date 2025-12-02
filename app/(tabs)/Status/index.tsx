@@ -143,7 +143,7 @@ const MyPostTab = () => {
     const interval = setInterval(() => {
       // Only refetch if not already fetching to avoid conflicts
       if (!isLoading && !isRefetching && !isFetchingNextPage) {
-        refetch(); 
+        refetch();
       }
     }, 30000);
 
@@ -181,7 +181,7 @@ const MyPostTab = () => {
   );
 
   const renderFooter = () => {
-    if (!loadingMore) return null;
+    if (!isFetchingNextPage) return null;
     return (
       <View style={{ padding: 20, alignItems: 'center' }}>
         <ActivityIndicator size="small" color={Colors.grey} />
@@ -392,7 +392,7 @@ const AppliedTab = () => {
   };
 
   const renderFooter = () => {
-    if (!loadingMore) return null;
+    if (!isFetchingNextPage) return null;
     return (
       <View style={{ padding: 20, alignItems: 'center' }}>
         <ActivityIndicator size="small" color={Colors.grey} />
