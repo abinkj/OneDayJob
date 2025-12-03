@@ -10,6 +10,7 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import RequestProfile from "@/main/requestProfile";
 import BankAccountScreen from "@/main/bankAccount";
 import PaymentHistoryScreen from "@/main/paymentHistory";
+import Settings from "@/main/settings";
 
 const Stack = createNativeStackNavigator();
 
@@ -37,6 +38,7 @@ const MainStack = () => {
       {/* <Stack.Screen name="RequestDetails" component={RequestDetails} /> */}
       <Stack.Screen name="BankAccount" component={BankAccountScreen} />
       <Stack.Screen name="PaymentHistory" component={PaymentHistoryScreen} />
+      <Stack.Screen name="Settings" component={Settings} />
     </Stack.Navigator>
   );
 };

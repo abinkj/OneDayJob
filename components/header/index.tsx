@@ -49,7 +49,7 @@ export const Header: React.FC<HeaderProps> = ({
 
       {showEditButton && (
         <TouchableOpacity style={styles.editIcon} onPress={onEditPress}>
-          <MaterialIcons name="mode-edit" size={22} color="black" />
+          <MaterialIcons name="settings" size={22} color="black" />
         </TouchableOpacity>
       )}
 

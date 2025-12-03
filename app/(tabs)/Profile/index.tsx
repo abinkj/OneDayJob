@@ -107,7 +107,7 @@ const Profile: React.FC = () => {
 
   const handleEdit = () => {
     if (user) {
-      navigation.navigate("EditProfile", { user });
+      navigation.navigate("Settings");
     } else {
       Alert.alert("Error", "User data not available");
     }

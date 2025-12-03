@@ -3,7 +3,6 @@
 // export default function RootLayout() {
 //   return <Stack screenOptions={{ headerShown: false }} />;
 // }
-import { StatusBar } from "expo-status-bar";
 import React, { useEffect } from "react";
 import { Provider } from "react-redux";
 import { store } from "../redux/store";
@@ -12,21 +11,24 @@ import Toast from "react-native-toast-message";
 import toastConfig from "../components/customToast";
 import { NotificationProvider } from "../contexts/NotificationContext";
 import socketService from "../services/socketService";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { Colors } from "../constants/Colors";
+
 import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "../services/queryClient";
+import AppLayout from "../components/ui/layout";
 
 export default function RootLayout() {
   useEffect(() => {
     // Initialize socket connection when app starts
     const initializeSocket = async () => {
       try {
-        console.log('🔌 Initializing global socket connection...');
+        console.log("🔌 Initializing global socket connection...");
         await socketService.connect();
-        console.log('✅ Global socket connection initialized');
+        console.log("✅ Global socket connection initialized");
       } catch (error) {
-        console.error('❌ Failed to initialize global socket connection:', error);
+        console.error(
+          "❌ Failed to initialize global socket connection:",
+          error
+        );
       }
     };
 
@@ -34,7 +36,7 @@ export default function RootLayout() {
 
     // Cleanup on unmount
     return () => {
-      console.log('🔌 Disconnecting global socket...');
+      console.log("🔌 Disconnecting global socket...");
       socketService.disconnect();
     };
   }, []);
@@ -43,11 +45,10 @@ export default function RootLayout() {
     <Provider store={store}>
       <QueryClientProvider client={queryClient}>
         <NotificationProvider>
-          <StatusBar style="dark" backgroundColor={Colors.background} />
-          <SafeAreaView style={{ flex: 1, backgroundColor: Colors.background }} edges={['top', 'left', 'right']}>
+          <AppLayout>
             <Stack screenOptions={{ headerShown: false }} />
-          </SafeAreaView>
-          <Toast config={toastConfig} />
+            <Toast config={toastConfig} />
+          </AppLayout>
         </NotificationProvider>
       </QueryClientProvider>
     </Provider>
