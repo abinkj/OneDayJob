@@ -15,13 +15,13 @@ const RootStackLayout = () => {
   const { isLoggedIn, kycStatus } = useSelector(
     (state) => state.authentication
   );
-  console.log('Kyc stats',kycStatus);
+  // console.log("Kyc stats", kycStatus);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const checkLogin = async () => {
       try {
-        await dispatch(restoreSession());
+        dispatch(restoreSession());
       } catch (error) {
         console.error("Error restoring session:", error);
       } finally {
@@ -46,12 +46,17 @@ const RootStackLayout = () => {
         animation: "slide_from_right",
       }}
     >
-      {isLoggedIn ? (
+      {/* {isLoggedIn ? (
         kycStatus === "completed" || kycStatus === "skipped" ? (
           <RootStack.Screen name="MainStack" component={MainStack} />
         ) : (
           <RootStack.Screen name="KycStack" component={KycStack} />
         )
+      ) : (
+        <RootStack.Screen name="OnBoardingStack" component={OnBoardingStack} />
+      )} */}
+      {isLoggedIn ? (
+        <RootStack.Screen name="MainStack" component={MainStack} />
       ) : (
         <RootStack.Screen name="OnBoardingStack" component={OnBoardingStack} />
       )}

@@ -15,27 +15,19 @@ export default function Index() {
 
   //const onboardingComplete = false;
 
-  const onLayoutRootView = useCallback(async () => {
-    if (fontsLoaded) {
-      await SplashScreen.hideAsync();
-    }
-  }, [fontsLoaded]);
+  // const onLayoutRootView = useCallback(async () => {
+  //   if (fontsLoaded) {
+  //     await SplashScreen.hideAsync();
+  //   }
+  // }, [fontsLoaded]);
 
-  if (!fontsLoaded) {
-    return null;
-  }
-
-  // if (onboardingComplete) {
-  //   console.log("Onboarding complete, redirecting to tabs layout");
-  //   return <Redirect href="/(tabs)/" />;
-  // } else {
-  //   return <Redirect href="/(auth)/" />;
+  // if (!fontsLoaded) {
+  //   return null;
   // }
+
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <Provider store={store}>
-        <RootStackLayout />
-      </Provider>
+      <RootStackLayout />
     </GestureHandlerRootView>
   );
 }

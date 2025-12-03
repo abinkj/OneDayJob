@@ -30,7 +30,12 @@ import {
 } from "../../../hooks/useJobs";
 import { useSelector } from "react-redux";
 import { JobPost } from "../../../types";
-import { getJobStatusInfo, getApplicationStatusInfo, JOB_STATUSES, APPLICATION_STATUSES } from "../../../utilities/statusUtils";
+import {
+  getJobStatusInfo,
+  getApplicationStatusInfo,
+  JOB_STATUSES,
+  APPLICATION_STATUSES,
+} from "../../../utilities/statusUtils";
 import styles from "./styles";
 import Toast from "react-native-toast-message";
 
@@ -60,7 +65,8 @@ const MyPostTab = () => {
 
   const [selectedStatus, setSelectedStatus] = useState<string | null>(null);
   const [paymentModalVisible, setPaymentModalVisible] = useState(false);
-  const [selectedJobForPayment, setSelectedJobForPayment] = useState<JobPost | null>(null);
+  const [selectedJobForPayment, setSelectedJobForPayment] =
+    useState<JobPost | null>(null);
 
   // Flatten data
   const posts = React.useMemo(() => {
@@ -118,8 +124,8 @@ const MyPostTab = () => {
     if (selectedStatus === null) {
       setFilteredPosts(posts);
     } else {
-      const filtered = posts.filter(post => {
-        const statusInfo = getJobStatusInfo(post.jobStatus || 'posted');
+      const filtered = posts.filter((post) => {
+        const statusInfo = getJobStatusInfo(post.jobStatus || "posted");
         return statusInfo.label === selectedStatus;
       });
       setFilteredPosts(filtered);
@@ -129,12 +135,15 @@ const MyPostTab = () => {
   // Add refresh on app state change (when app comes to foreground)
   React.useEffect(() => {
     const handleAppStateChange = (nextAppState: string) => {
-      if (nextAppState === 'active') {
+      if (nextAppState === "active") {
         refetch(); // Refresh when app becomes active
       }
     };
 
-    const subscription = AppState.addEventListener('change', handleAppStateChange);
+    const subscription = AppState.addEventListener(
+      "change",
+      handleAppStateChange
+    );
     return () => subscription?.remove();
   }, [refetch]);
 
@@ -143,7 +152,7 @@ const MyPostTab = () => {
     const interval = setInterval(() => {
       // Only refetch if not already fetching to avoid conflicts
       if (!isLoading && !isRefetching && !isFetchingNextPage) {
-        refetch(); 
+        refetch();
       }
     }, 30000);
 
@@ -181,9 +190,9 @@ const MyPostTab = () => {
   );
 
   const renderFooter = () => {
-    if (!loadingMore) return null;
+    if (!isFetchingNextPage) return null;
     return (
-      <View style={{ padding: 20, alignItems: 'center' }}>
+      <View style={{ padding: 20, alignItems: "center" }}>
         <ActivityIndicator size="small" color={Colors.grey} />
       </View>
     );
@@ -201,7 +210,9 @@ const MyPostTab = () => {
     >
       <Ionicons name="document-outline" size={64} color={Colors.grey} />
       <Text style={{ fontSize: 18, color: Colors.grey, marginTop: 16 }}>
-        {selectedStatus ? `No ${selectedStatus.toLowerCase()} jobs` : 'No job posts yet'}
+        {selectedStatus
+          ? `No ${selectedStatus.toLowerCase()} jobs`
+          : "No job posts yet"}
       </Text>
     </View>
   );
@@ -232,7 +243,9 @@ const MyPostTab = () => {
         onEndReachedThreshold={0.5}
         ListEmptyComponent={renderEmpty}
         ListFooterComponent={renderFooter}
-        contentContainerStyle={filteredPosts.length === 0 ? { flexGrow: 1 } : undefined}
+        contentContainerStyle={
+          filteredPosts.length === 0 ? { flexGrow: 1 } : undefined
+        }
       />
       {selectedJobForPayment && (
         <PaymentModal
@@ -264,7 +277,9 @@ const AppliedTab = () => {
 
   const withdrawMutation = useWithdrawApplication();
 
-  const [selectedStatus, setSelectedStatus] = React.useState<string | null>(null);
+  const [selectedStatus, setSelectedStatus] = React.useState<string | null>(
+    null
+  );
 
   // Flatten data and filter valid applications
   const appliedJobs = React.useMemo(() => {
@@ -275,7 +290,7 @@ const AppliedTab = () => {
         application.job &&
         application.job._id &&
         application.applicationId &&
-        application.status !== 'withdrawn'
+        application.status !== "withdrawn"
     );
   }, [data]);
 
@@ -289,7 +304,12 @@ const AppliedTab = () => {
 
   const handleWithdraw = async (applicationId: string, jobId: string) => {
     try {
-      console.log("Withdrawing application - jobId:", jobId, "applicationId:", applicationId);
+      console.log(
+        "Withdrawing application - jobId:",
+        jobId,
+        "applicationId:",
+        applicationId
+      );
 
       await withdrawMutation.mutateAsync(jobId);
 
@@ -321,7 +341,7 @@ const AppliedTab = () => {
     if (selectedStatus === null) {
       setFilteredJobs(appliedJobs);
     } else {
-      const filtered = appliedJobs.filter(application => {
+      const filtered = appliedJobs.filter((application) => {
         const statusInfo = getApplicationStatusInfo(application.status);
         return statusInfo.label === selectedStatus;
       });
@@ -332,12 +352,15 @@ const AppliedTab = () => {
   // Add refresh on app state change (when app comes to foreground)
   React.useEffect(() => {
     const handleAppStateChange = (nextAppState: string) => {
-      if (nextAppState === 'active') {
+      if (nextAppState === "active") {
         refetch(); // Refresh when app becomes active
       }
     };
 
-    const subscription = AppState.addEventListener('change', handleAppStateChange);
+    const subscription = AppState.addEventListener(
+      "change",
+      handleAppStateChange
+    );
     return () => subscription?.remove();
   }, [refetch]);
 
@@ -378,13 +401,11 @@ const AppliedTab = () => {
         key={item.applicationId}
         data={{
           ...item.job,
-          status: item.job.jobStatus || "posted"
+          status: item.job.jobStatus || "posted",
         }}
         onPress={() => handleNext(item.job)}
         withdraw={true}
-        onWithdraw={() =>
-          handleWithdraw(item.applicationId, item.job._id)
-        }
+        onWithdraw={() => handleWithdraw(item.applicationId, item.job._id)}
         isEmployer={false}
         applicationStatus={item.status}
       />
@@ -392,9 +413,9 @@ const AppliedTab = () => {
   };
 
   const renderFooter = () => {
-    if (!loadingMore) return null;
+    if (!isFetchingNextPage) return null;
     return (
-      <View style={{ padding: 20, alignItems: 'center' }}>
+      <View style={{ padding: 20, alignItems: "center" }}>
         <ActivityIndicator size="small" color={Colors.grey} />
       </View>
     );
@@ -412,7 +433,9 @@ const AppliedTab = () => {
     >
       <Ionicons name="document-outline" size={64} color={Colors.grey} />
       <Text style={{ fontSize: 18, color: Colors.grey, marginTop: 16 }}>
-        {selectedStatus ? `No ${selectedStatus.toLowerCase()} applications` : 'No applied jobs yet'}
+        {selectedStatus
+          ? `No ${selectedStatus.toLowerCase()} applications`
+          : "No applied jobs yet"}
       </Text>
     </View>
   );
@@ -443,7 +466,9 @@ const AppliedTab = () => {
         onEndReachedThreshold={0.5}
         ListEmptyComponent={renderEmpty}
         ListFooterComponent={renderFooter}
-        contentContainerStyle={filteredJobs.length === 0 ? { flexGrow: 1 } : undefined}
+        contentContainerStyle={
+          filteredJobs.length === 0 ? { flexGrow: 1 } : undefined
+        }
       />
     </View>
   );
