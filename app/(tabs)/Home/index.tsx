@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, useMemo } from "react";
 import {
   View,
   Text,
@@ -49,7 +49,6 @@ const HomeScreen = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [location, setLocation] = useState(null);
   const [locationAddress, setLocationAddress] = useState("Loading location...");
-  const [jobSections, setJobSections] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState(null);
@@ -266,23 +265,35 @@ const HomeScreen = () => {
     }
   };
 
-  // Construct filters object
-  const filters = {
-    search: searchQuery.trim() || undefined,
-    category: selectedCategory || undefined,
-    priceSort: selectedPriceSort || undefined,
-    distance: selectedDistance && location ? selectedDistance : undefined,
-    userLocation: selectedDistance && location ? {
-      latitude: location.latitude,
-      longitude: location.longitude,
-    } : undefined,
-  };
+
+  const filters = useMemo(() => {
+    return {
+      search: searchQuery.trim() || undefined,
+      category: selectedCategory || undefined,
+      priceSort: selectedPriceSort || undefined,
+      distance: selectedDistance && location ? selectedDistance : undefined,
+      userLocation:
+        selectedDistance && location
+          ? {
+            latitude: location.latitude,
+            longitude: location.longitude,
+          }
+          : undefined,
+    };
+  }, [
+    searchQuery,
+    selectedCategory,
+    selectedPriceSort,
+    selectedDistance,
+    location?.latitude,
+    location?.longitude,
+  ]);
 
   // Use TanStack Query hook
-  const { 
-    data: jobs = [], 
-    isLoading: isJobsLoading, 
-    isError: isJobsError, 
+  const {
+    data: jobs = [],
+    isLoading: isJobsLoading,
+    isError: isJobsError,
     refetch: refetchJobs,
     isRefetching: isJobsRefetching
   } = useJobPostings(filters);
@@ -292,20 +303,13 @@ const HomeScreen = () => {
     setLoading(isJobsLoading);
   }, [isJobsLoading]);
 
-  // Update jobSections when jobs data changes
-  useEffect(() => {
-    if (jobs) {
-      // Add distance to jobs for display if location is available
-      const jobsWithDistance = location
-        ? categorizeJobsByDistance(jobs, location)
-        : jobs;
-      
-      setJobSections([{ title: "Jobs", data: jobsWithDistance }]);
-      
-      // Only show toast on initial load or explicit refresh, not every time data updates from background
-      // This prevents toast spam
-    }
-  }, [jobs, location]);
+  const jobsWithDistance = useMemo(() => {
+    if (!jobs) return [];
+    // include selectedPriceSort since it affects categorizeJobsByDistance behavior
+    return location ? categorizeJobsByDistance(jobs, location) : jobs;
+  }, [jobs, location, selectedPriceSort]);
+
+  const allJobs = jobsWithDistance;
 
   // Handle search
   const handleSearch = async () => {
@@ -802,7 +806,6 @@ const HomeScreen = () => {
     );
   }
 
-  const allJobs = jobSections.length > 0 ? jobSections[0].data || [] : [];
 
   return (
     <View style={styles.container}>
