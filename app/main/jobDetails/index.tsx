@@ -30,7 +30,7 @@ import { get } from "react-native/Libraries/TurboModule/TurboModuleRegistry";
 const JobDetails = () => {
   const navigation = useNavigation<any>();
   const route = useRoute<any>();
-  const { kycStatus } = useSelector((state) => state.authentication);
+  const { kycStatus } = useSelector((state: any) => state.authentication);
   const { jobId, jobData } = route.params || {};
 
   const [job, setJob] = useState<JobPost | null>(null);
@@ -41,7 +41,7 @@ const JobDetails = () => {
   const [checkingVerification, setCheckingVerification] = useState(false);
   const [verificationCode, setVerificationCode] = useState<any>(null);
   const [loadingCode, setLoadingCode] = useState(false);
-  
+
   // Notification context
   const { sendVerificationCodeNotification } = useNotifications();
 
@@ -50,10 +50,11 @@ const JobDetails = () => {
       console.log("Job data received:", JSON.stringify(jobData, null, 2));
       setJob(jobData);
 
-      // Check verification status if job requires verification
+      // Only check verification status if job requires verification
+      // Don't fetch verification code automatically - it will be fetched
+      // only when user is assigned to the job (handled by socket events)
       if (jobData.requiresVerification && jobId) {
         checkVerificationStatus();
-        fetchVerificationCode();
       }
     } else if (jobId) {
       // If only jobId is passed, show error (fallback)
@@ -88,10 +89,10 @@ const JobDetails = () => {
           code: data.code,
           timestamp: data.timestamp,
         });
-        
+
         // Send notification
         sendVerificationCodeNotification(data.jobId, data.jobName, data.code);
-        
+
         Toast.show({
           type: "success",
           text1: "Verification Code Received",
@@ -201,13 +202,13 @@ const JobDetails = () => {
   // };
 
   const handleApply = async () => {
-    if (kycStatus !== 'completed') {
+    if (kycStatus !== "completed") {
       Toast.show({
-        type: 'info',
-        text1: 'KYC Required',
-        text2: 'Please complete your KYC to apply for jobs',
+        type: "info",
+        text1: "KYC Required",
+        text2: "Please complete your KYC to apply for jobs",
       });
-      navigation.navigate('BankAccount');
+      navigation.navigate("BankAccount");
       return;
     }
 
@@ -460,7 +461,27 @@ const JobDetails = () => {
         {job.requiresVerification && (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Verification Status</Text>
-            {checkingVerification ? (
+            {/* Show Job Completed if job is completed */}
+            {job.jobStatus === "completed" ? (
+              <View style={styles.verificationStatusContainer}>
+                <View style={styles.verificationStatusRow}>
+                  <Ionicons name="checkmark-circle" size={24} color="#4CAF50" />
+                  <View style={styles.verificationStatusInfo}>
+                    <Text
+                      style={[
+                        styles.verificationStatusText,
+                        { color: "#4CAF50" },
+                      ]}
+                    >
+                      Job Completed
+                    </Text>
+                    <Text style={styles.verificationMessageText}>
+                      This job has been completed successfully
+                    </Text>
+                  </View>
+                </View>
+              </View>
+            ) : checkingVerification ? (
               <View style={styles.verificationLoadingContainer}>
                 <ActivityIndicator size="small" color={Colors.primary} />
                 <Text style={styles.verificationLoadingText}>

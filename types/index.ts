@@ -115,10 +115,12 @@ export interface JobLocation {
 }
 
 export interface JobUser {
+  _id?: string;
   firstName: string;
   id: string;
   lastName: string;
   phoneNumber: string;
+  profilePicture?: string;
 }
 
 export interface JobPost {
@@ -150,6 +152,7 @@ export interface JobPost {
   toTime?: string; // HH:MM format for non-flexible jobs
   updatedAt: string;
   userId: JobUser;
+  requiresVerification?: boolean;
 }
 
 // For backward compatibility and convenience
@@ -174,4 +177,4 @@ export interface JobCardData {
   isCompletedByWorker?: boolean; // Backend flag for worker completion
   isVerifiedByEmployer?: boolean; // Backend flag for employer verification
   isPaymentDone?: boolean; // Backend flag for payment completion
-} 
+}
