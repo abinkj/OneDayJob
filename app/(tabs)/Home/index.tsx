@@ -267,11 +267,16 @@ const HomeScreen = () => {
 
 
   const filters = useMemo(() => {
+    // For "remote" filter, we don't need user location
+    const isRemote = selectedDistance === "remote";
+
     return {
       search: searchQuery.trim() || undefined,
       category: selectedCategory || undefined,
       priceSort: selectedPriceSort || undefined,
-      distance: selectedDistance && location ? selectedDistance : undefined,
+      // Allow distance filter if it's remote OR if we have location
+      distance:
+        selectedDistance && (location || isRemote) ? selectedDistance : undefined,
       userLocation:
         selectedDistance && location
           ? {
