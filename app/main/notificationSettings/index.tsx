@@ -108,7 +108,7 @@ const NotificationSettingsScreen = () => {
   }
 
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView style={styles.container} bounces={false}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Notification Settings</Text>
         <Text style={styles.headerSubtitle}>

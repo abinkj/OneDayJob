@@ -194,7 +194,7 @@ const NotificationScreen = () => {
         )}
       </View>
 
-      <FlatList
+      <FlatList bounces={false}
         data={notifications}
         renderItem={renderNotification}
         keyExtractor={(item, index) => `${item.type}-${index}`}

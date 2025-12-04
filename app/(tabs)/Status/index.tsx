@@ -8,7 +8,6 @@ import {
   ActivityIndicator,
   Animated,
   RefreshControl,
-  AppState,
 } from "react-native";
 import {
   TabView,
@@ -132,33 +131,6 @@ const MyPostTab = () => {
     }
   }, [selectedStatus, posts]);
 
-  // Add refresh on app state change (when app comes to foreground)
-  React.useEffect(() => {
-    const handleAppStateChange = (nextAppState: string) => {
-      if (nextAppState === "active") {
-        refetch(); // Refresh when app becomes active
-      }
-    };
-
-    const subscription = AppState.addEventListener(
-      "change",
-      handleAppStateChange
-    );
-    return () => subscription?.remove();
-  }, [refetch]);
-
-  // Add periodic refresh every 30 seconds when component is focused
-  React.useEffect(() => {
-    const interval = setInterval(() => {
-      // Only refetch if not already fetching to avoid conflicts
-      if (!isLoading && !isRefetching && !isFetchingNextPage) {
-        refetch();
-      }
-    }, 30000);
-
-    return () => clearInterval(interval);
-  }, [isLoading, isRefetching, isFetchingNextPage, refetch]);
-
   if (isLoading && !isRefetching && posts.length === 0) {
     return (
       <View style={{ justifyContent: "center", alignItems: "center", flex: 1 }}>
@@ -233,6 +205,7 @@ const MyPostTab = () => {
         keyExtractor={(item) => item._id}
         style={styles.scrollContainer}
         showsVerticalScrollIndicator={false}
+        bounces={false}
         refreshControl={
           <RefreshControl
             refreshing={isRefetching}
@@ -349,32 +322,6 @@ const AppliedTab = () => {
     }
   }, [selectedStatus, appliedJobs]);
 
-  // Add refresh on app state change (when app comes to foreground)
-  React.useEffect(() => {
-    const handleAppStateChange = (nextAppState: string) => {
-      if (nextAppState === "active") {
-        refetch(); // Refresh when app becomes active
-      }
-    };
-
-    const subscription = AppState.addEventListener(
-      "change",
-      handleAppStateChange
-    );
-    return () => subscription?.remove();
-  }, [refetch]);
-
-  // Add periodic refresh every 30 seconds when component is focused
-  React.useEffect(() => {
-    const interval = setInterval(() => {
-      if (!isLoading && !isRefetching && !isFetchingNextPage) {
-        refetch();
-      }
-    }, 30000);
-
-    return () => clearInterval(interval);
-  }, [isLoading, isRefetching, isFetchingNextPage, refetch]);
-
   if (isLoading && !isRefetching && appliedJobs.length === 0) {
     return (
       <View style={{ justifyContent: "center", alignItems: "center", flex: 1 }}>
@@ -456,6 +403,7 @@ const AppliedTab = () => {
         keyExtractor={(item) => item.applicationId}
         style={styles.scrollContainer}
         showsVerticalScrollIndicator={false}
+        bounces={false}
         refreshControl={
           <RefreshControl
             refreshing={isRefetching}

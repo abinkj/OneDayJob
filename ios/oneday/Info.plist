@@ -27,6 +27,7 @@
       <dict>
         <key>CFBundleURLSchemes</key>
         <array>
+          <string>oneday</string>
           <string>com.anonymous.oneday</string>
         </array>
       </dict>

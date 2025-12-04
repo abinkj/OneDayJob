@@ -136,7 +136,7 @@ const RequestProfile: React.FC = () => {
   return (
     <View style={styles.container}>
       <Header title="Request Profile" showBackButton />
-      <ScrollView
+      <ScrollView bounces={false}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -224,7 +224,7 @@ const RequestProfile: React.FC = () => {
               • Furniture moving, loading & unloading, safe lifting techniques
             </Text>
 
-            <ScrollView
+            <ScrollView bounces={false}
               horizontal
               style={styles.imageRow}
               contentContainerStyle={{ gap: 8 }}

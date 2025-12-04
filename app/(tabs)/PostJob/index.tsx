@@ -1,50 +1,122 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity, Image, StyleSheet, ScrollView, FlatList, Modal, Switch, Alert, Platform } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
-import { useSelector } from 'react-redux';
-import { Ionicons } from '@expo/vector-icons';
-import DeviceDimensions from '../../../constants/DeviceDimenions';
-import { Colors } from '../../../constants/Colors';
-import CustomButton from '../../../components/CustomButton';
-import { Picker } from '@react-native-picker/picker';
-import * as ImagePicker from 'expo-image-picker';
-import { Calendar } from 'react-native-calendars';
-import styles from './styles';
-import CustomSwitch from '../../../components/CustomSwich';
-import JobDescriptionSection from '../../../components/JobDescription';
-import LocationSearch from '../../../components/LocationSearch';
+import { useState, useEffect } from "react";
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  Image,
+  ScrollView,
+  Modal,
+  Alert,
+  Platform,
+} from "react-native";
+import { useNavigation } from "@react-navigation/native";
+import { useSelector } from "react-redux";
+import { Ionicons } from "@expo/vector-icons";
+import { Colors } from "../../../constants/Colors";
+import CustomButton from "../../../components/CustomButton";
+import { Picker } from "@react-native-picker/picker";
+import * as ImagePicker from "expo-image-picker";
+import { Calendar } from "react-native-calendars";
+import styles from "./styles";
+import CustomSwitch from "../../../components/CustomSwich";
+import JobDescriptionSection from "../../../components/JobDescription";
+import LocationSearch from "../../../components/LocationSearch";
 import {
   createJobPosting,
   getCategories,
   getCurrentUser, // Add this import
   isAuthenticated,
-  // uploadJobPhotos 
-} from '../../../services/api'; // Adjust the path according to your project structure
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { LocationData } from '../../../services/locationService';
-import { testLocationService } from '../../../services/locationService';
-import Toast from 'react-native-toast-message';
+  // uploadJobPhotos
+} from "../../../services/api"; // Adjust the path according to your project structure
+import { LocationData } from "../../../services/locationService";
+import { testLocationService } from "../../../services/locationService";
+import Toast from "react-native-toast-message";
 
 // Default Job Categories (fallback if API fails)
 const defaultJobCategories = [
-  { id: 'cleaning', name: 'Cleaning', icon: require('../../../assets/images/cleaning.png') },
-  { id: 'assembly', name: 'Assembly', icon: require('../../../assets/images/assembly.png') },
-  { id: 'repair', name: 'Repair', icon: require('../../../assets/images/repair.png') },
-  { id: 'delivery', name: 'Delivery', icon: require('../../../assets/images/delivery.png') },
-  { id: 'yardwork', name: 'Yard Work', icon: require('../../../assets/images/yardwork.png') },
-  { id: 'hauling', name: 'Hauling', icon: require('../../../assets/images/hauling.png') },
-  { id: 'catering', name: 'Catering', icon: require('../../../assets/images/catering.png') },
-  { id: 'painting', name: 'Painting', icon: require('../../../assets/images/paint.png') },
-  { id: 'computer', name: 'Computer Fixing', icon: require('../../../assets/images/computer.png') },
-  { id: 'custom', name: 'Custom', icon: require('../../../assets/images/custom.png') },
+  {
+    id: "cleaning",
+    name: "Cleaning",
+    icon: require("../../../assets/images/cleaning.png"),
+  },
+  {
+    id: "assembly",
+    name: "Assembly",
+    icon: require("../../../assets/images/assembly.png"),
+  },
+  {
+    id: "repair",
+    name: "Repair",
+    icon: require("../../../assets/images/repair.png"),
+  },
+  {
+    id: "delivery",
+    name: "Delivery",
+    icon: require("../../../assets/images/delivery.png"),
+  },
+  {
+    id: "yardwork",
+    name: "Yard Work",
+    icon: require("../../../assets/images/yardwork.png"),
+  },
+  {
+    id: "hauling",
+    name: "Hauling",
+    icon: require("../../../assets/images/hauling.png"),
+  },
+  {
+    id: "catering",
+    name: "Catering",
+    icon: require("../../../assets/images/catering.png"),
+  },
+  {
+    id: "painting",
+    name: "Painting",
+    icon: require("../../../assets/images/paint.png"),
+  },
+  {
+    id: "computer",
+    name: "Computer Fixing",
+    icon: require("../../../assets/images/computer.png"),
+  },
+  {
+    id: "custom",
+    name: "Custom",
+    icon: require("../../../assets/images/custom.png"),
+  },
 ];
 
 // Time Slot Data
 const timeSlots = [
-  { id: 'morning', name: 'Morning', time: 'Before 10AM', true: require('../../../assets/images/morning.png'), false: require('../../../assets/images/morningU.png') },
-  { id: 'midday', name: 'Midday', time: '10AM - 2PM', true: require('../../../assets/images/midday.png'), false: require('../../../assets/images/middayU.png') },
-  { id: 'afternoon', name: 'Afternoon', time: '2PM - 6PM', true: require('../../../assets/images/afternoon.png'), false: require('../../../assets/images/afternoonU.png') },
-  { id: 'evening', name: 'Evening', time: 'After 6PM', true: require('../../../assets/images/evening.png'), false: require('../../../assets/images/eveningU.png') },
+  {
+    id: "morning",
+    name: "Morning",
+    time: "Before 10AM",
+    true: require("../../../assets/images/morning.png"),
+    false: require("../../../assets/images/morningU.png"),
+  },
+  {
+    id: "midday",
+    name: "Midday",
+    time: "10AM - 2PM",
+    true: require("../../../assets/images/midday.png"),
+    false: require("../../../assets/images/middayU.png"),
+  },
+  {
+    id: "afternoon",
+    name: "Afternoon",
+    time: "2PM - 6PM",
+    true: require("../../../assets/images/afternoon.png"),
+    false: require("../../../assets/images/afternoonU.png"),
+  },
+  {
+    id: "evening",
+    name: "Evening",
+    time: "After 6PM",
+    true: require("../../../assets/images/evening.png"),
+    false: require("../../../assets/images/eveningU.png"),
+  },
 ];
 
 const PostJobScreen = ({ navigation: navProp }) => {
@@ -55,35 +127,37 @@ const PostJobScreen = ({ navigation: navProp }) => {
   const [currentStep, setCurrentStep] = useState(1);
   const [jobCategories, setJobCategories] = useState(defaultJobCategories);
   const [selectedCategory, setSelectedCategory] = useState(null);
-  const [jobName, setJobName] = useState('');
-  const [jobDescription, setJobDescription] = useState('');
+  const [jobName, setJobName] = useState("");
+  const [jobDescription, setJobDescription] = useState("");
   const [isMultipleVacancy, setIsMultipleVacancy] = useState(false);
   const [vacancyCount, setVacancyCount] = useState(1);
   const [canBeDoneRemotely, setCanBeDoneRemotely] = useState(false);
-  const [taskAddress, setTaskAddress] = useState('');
-  const [selectedLocation, setSelectedLocation] = useState<LocationData | null>(null);
+  const [taskAddress, setTaskAddress] = useState("");
+  const [selectedLocation, setSelectedLocation] = useState<LocationData | null>(
+    null
+  );
   const [selectedTimePreferences, setSelectedTimePreferences] = useState([]); // Changed to array
   const [budget, setBudget] = useState(null);
 
   // Date/Time mode - only one should be active
-  const [dateMode, setDateMode] = useState('flexible'); // 'flexible', 'onDate', 'beforeDate'
+  const [dateMode, setDateMode] = useState("flexible"); // 'flexible', 'onDate', 'beforeDate'
   const [onDate, setOnDate] = useState(null);
   const [beforeDate, setBeforeDate] = useState(null);
   const [isFlexible, setIsFlexible] = useState(true);
 
   // Time range settings - fromTime and toTime are required for non-flexible jobs
-  const [fromHour, setFromHour] = useState('00');
-  const [fromMinute, setFromMinute] = useState('00');
-  const [fromAmPm, setFromAmPm] = useState('AM');
-  const [toHour, setToHour] = useState('00');
-  const [toMinute, setToMinute] = useState('00');
-  const [toAmPm, setToAmPm] = useState('AM');
+  const [fromHour, setFromHour] = useState("00");
+  const [fromMinute, setFromMinute] = useState("00");
+  const [fromAmPm, setFromAmPm] = useState("AM");
+  const [toHour, setToHour] = useState("00");
+  const [toMinute, setToMinute] = useState("00");
+  const [toAmPm, setToAmPm] = useState("AM");
 
   const [selectedValue, setSelectedValue] = useState("mail");
   const [requirements, setRequirements] = useState([]);
   const [photos, setPhotos] = useState([]);
   const [showRequirementsModal, setShowRequirementsModal] = useState(false);
-  const [newRequirement, setNewRequirement] = useState('');
+  const [newRequirement, setNewRequirement] = useState("");
   const [showRequirementsList, setShowRequirementsList] = useState(false);
   const [showPhotosList, setShowPhotosList] = useState(false);
   const [editingRequirements, setEditingRequirements] = useState(false);
@@ -97,14 +171,11 @@ const PostJobScreen = ({ navigation: navProp }) => {
   const [categoryMapping, setCategoryMapping] = useState({});
   const [showCategoryPicker, setShowCategoryPicker] = useState(false);
 
-
-
-
   // Load categories on component mount
   useEffect(() => {
     loadCategories();
     // Test location service
-    testLocationService().then(result => {
+    testLocationService().then((result) => {
       console.log("Location service test result:", result);
     });
   }, []);
@@ -123,11 +194,11 @@ const PostJobScreen = ({ navigation: navProp }) => {
             "Please log in to post a job.",
             [
               {
-                text: 'OK',
+                text: "OK",
                 onPress: () => {
-                  navigation.navigate('Login'); // Adjust route name as needed
-                }
-              }
+                  navigation.navigate("Login"); // Adjust route name as needed
+                },
+              },
             ]
           );
         }
@@ -147,66 +218,72 @@ const PostJobScreen = ({ navigation: navProp }) => {
   const loadCategories = async () => {
     try {
       const response = await getCategories();
-      console.log('Raw API response:', response);
+      console.log("Raw API response:", response);
 
-      if (response.data && Array.isArray(response.data.data) && response.data.data.length > 0) {
+      if (
+        response.data &&
+        Array.isArray(response.data.data) &&
+        response.data.data.length > 0
+      ) {
         // Create mapping from frontend IDs to database IDs
         const mapping = {};
 
         // Map API categories to match your existing structure
-        const apiCategories = response.data.data.map(category => {
-          console.log('Processing API category:', category);
+        const apiCategories = response.data.data
+          .map((category) => {
+            console.log("Processing API category:", category);
 
-          // Find matching default category by name (case insensitive)
-          const matchingDefault = defaultJobCategories.find(
-            def => def.name.toLowerCase() === category.name.toLowerCase()
-          );
+            // Find matching default category by name (case insensitive)
+            const matchingDefault = defaultJobCategories.find(
+              (def) => def.name.toLowerCase() === category.name.toLowerCase()
+            );
 
-          if (matchingDefault) {
-            // Store the mapping: frontend ID -> backend ID
-            mapping[matchingDefault.id] = category._id;
-            console.log(`Mapped ${matchingDefault.id} -> ${category._id}`);
+            if (matchingDefault) {
+              // Store the mapping: frontend ID -> backend ID
+              mapping[matchingDefault.id] = category._id;
+              console.log(`Mapped ${matchingDefault.id} -> ${category._id}`);
 
-            // Use the frontend ID but store backend ID in mapping
-            return {
-              id: matchingDefault.id, // Keep frontend ID for UI consistency
-              backendId: category._id, // Store backend ID separately
-              name: category.name,
-              icon: matchingDefault.icon // Use frontend icon
-            };
-          } else {
-            // Handle categories that don't exist in defaults
-            console.log(`No matching default found for: ${category.name}`);
-            mapping[category._id] = category._id;
-            return {
-              id: category._id,
-              backendId: category._id,
-              name: category.name,
-              icon: require('../../../assets/images/custom.png')
-            };
-          }
-        }).filter(Boolean); // Remove any null entries
+              // Use the frontend ID but store backend ID in mapping
+              return {
+                id: matchingDefault.id, // Keep frontend ID for UI consistency
+                backendId: category._id, // Store backend ID separately
+                name: category.name,
+                icon: matchingDefault.icon, // Use frontend icon
+              };
+            } else {
+              // Handle categories that don't exist in defaults
+              console.log(`No matching default found for: ${category.name}`);
+              mapping[category._id] = category._id;
+              return {
+                id: category._id,
+                backendId: category._id,
+                name: category.name,
+                icon: require("../../../assets/images/custom.png"),
+              };
+            }
+          })
+          .filter(Boolean); // Remove any null entries
 
-        console.log('Final category mapping:', mapping);
-        console.log('Final API categories:', apiCategories);
+        console.log("Final category mapping:", mapping);
+        console.log("Final API categories:", apiCategories);
 
         setCategoryMapping(mapping);
         setJobCategories(apiCategories);
       } else {
-        console.log('No API categories found, using defaults');
+        console.log("No API categories found, using defaults");
         // If no API categories, use defaults but create identity mapping
         const identityMapping = {};
-        defaultJobCategories.forEach(cat => {
+        defaultJobCategories.forEach((cat) => {
           identityMapping[cat.id] = cat.id;
         });
         setCategoryMapping(identityMapping);
         setJobCategories(defaultJobCategories);
       }
     } catch (error) {
-      console.error('Error loading categories:', error);
+      console.error("Error loading categories:", error);
       // Create identity mapping for defaults
       const identityMapping = {};
-      defaultJobCategories.forEach(cat => {
+      defaultJobCategories.forEach((cat) => {
         identityMapping[cat.id] = cat.id;
       });
       setCategoryMapping(identityMapping);
@@ -214,13 +291,12 @@ const PostJobScreen = ({ navigation: navProp }) => {
     }
   };
 
-
   // Format time to HH:MM format for backend
   const get24HourTime = (hour, minute, amPm) => {
     let h = parseInt(hour);
-    if (amPm === 'PM' && h !== 12) h += 12;
-    if (amPm === 'AM' && h === 12) h = 0;
-    return `${String(h).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
+    if (amPm === "PM" && h !== 12) h += 12;
+    if (amPm === "AM" && h === 12) h = 0;
+    return `${String(h).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
   };
 
   // Helper function to validate time is within 12 AM to 11:59 PM range
@@ -229,7 +305,7 @@ const PostJobScreen = ({ navigation: navProp }) => {
     const hour24 = parseInt(hour);
     const minute24 = parseInt(minute);
 
-    if (amPm === 'AM') {
+    if (amPm === "AM") {
       // AM: 12 AM (00:00) to 11:59 AM (11:59)
       return (hour24 === 12 && minute24 >= 0) || (hour24 >= 1 && hour24 <= 11);
     } else {
@@ -242,7 +318,7 @@ const PostJobScreen = ({ navigation: navProp }) => {
   const incrementFromHour = () => {
     const newHour = parseInt(fromHour) + 1;
     if (newHour > 12) {
-      setFromHour('1');
+      setFromHour("1");
     } else {
       setFromHour(String(newHour));
     }
@@ -251,7 +327,7 @@ const PostJobScreen = ({ navigation: navProp }) => {
   const decrementFromHour = () => {
     const newHour = parseInt(fromHour) - 1;
     if (newHour < 1) {
-      setFromHour('12');
+      setFromHour("12");
     } else {
       setFromHour(String(newHour));
     }
@@ -260,7 +336,7 @@ const PostJobScreen = ({ navigation: navProp }) => {
   const incrementFromMinute = () => {
     const newMinute = parseInt(fromMinute) + 5;
     if (newMinute > 59) {
-      setFromMinute('0');
+      setFromMinute("0");
     } else {
       setFromMinute(String(newMinute));
     }
@@ -269,7 +345,7 @@ const PostJobScreen = ({ navigation: navProp }) => {
   const decrementFromMinute = () => {
     const newMinute = parseInt(fromMinute) - 5;
     if (newMinute < 0) {
-      setFromMinute('59');
+      setFromMinute("59");
     } else {
       setFromMinute(String(newMinute));
     }
@@ -279,7 +355,7 @@ const PostJobScreen = ({ navigation: navProp }) => {
   const incrementToHour = () => {
     const newHour = parseInt(toHour) + 1;
     if (newHour > 12) {
-      setToHour('1');
+      setToHour("1");
     } else {
       setToHour(String(newHour));
     }
@@ -288,7 +364,7 @@ const PostJobScreen = ({ navigation: navProp }) => {
   const decrementToHour = () => {
     const newHour = parseInt(toHour) - 1;
     if (newHour < 1) {
-      setToHour('12');
+      setToHour("12");
     } else {
       setToHour(String(newHour));
     }
@@ -297,7 +373,7 @@ const PostJobScreen = ({ navigation: navProp }) => {
   const incrementToMinute = () => {
     const newMinute = parseInt(toMinute) + 5;
     if (newMinute > 59) {
-      setToMinute('0');
+      setToMinute("0");
     } else {
       setToMinute(String(newMinute));
     }
@@ -306,7 +382,7 @@ const PostJobScreen = ({ navigation: navProp }) => {
   const decrementToMinute = () => {
     const newMinute = parseInt(toMinute) - 5;
     if (newMinute < 0) {
-      setToMinute('59');
+      setToMinute("59");
     } else {
       setToMinute(String(newMinute));
     }
@@ -317,32 +393,32 @@ const PostJobScreen = ({ navigation: navProp }) => {
     const errors = [];
 
     if (!selectedCategory) {
-      errors.push('Please select a job category');
+      errors.push("Please select a job category");
     }
 
     if (!jobName || jobName.length < 10) {
-      errors.push('Job name must be at least 10 characters long');
+      errors.push("Job name must be at least 10 characters long");
     }
 
     if (!jobDescription || jobDescription.length < 25) {
-      errors.push('Job description must be at least 25 characters long');
+      errors.push("Job description must be at least 25 characters long");
     }
 
     if (!canBeDoneRemotely && !selectedLocation) {
-      errors.push('Please provide a location for onsite jobs');
+      errors.push("Please provide a location for onsite jobs");
     }
 
     if (!budget || parseFloat(budget) <= 0) {
-      errors.push('Please enter a valid budget');
+      errors.push("Please enter a valid budget");
     }
 
     // Validate time fields for non-flexible jobs
     if (!isFlexible) {
       if (!fromHour || !fromMinute || !fromAmPm) {
-        errors.push('Please set the start time for the job');
+        errors.push("Please set the start time for the job");
       }
       if (!toHour || !toMinute || !toAmPm) {
-        errors.push('Please set the end time for the job');
+        errors.push("Please set the end time for the job");
       }
 
       // Validate that end time is after start time
@@ -351,13 +427,13 @@ const PostJobScreen = ({ navigation: navProp }) => {
         const toTime24 = get24HourTime(toHour, toMinute, toAmPm);
 
         if (fromTime24 >= toTime24) {
-          errors.push('End time must be after start time');
+          errors.push("End time must be after start time");
         }
       }
     }
 
     if (errors.length > 0) {
-      Alert.alert('Validation Error', errors.join('\n'));
+      Alert.alert("Validation Error", errors.join("\n"));
       return false;
     }
 
@@ -368,44 +444,43 @@ const PostJobScreen = ({ navigation: navProp }) => {
       // Use the same authentication check as HomeScreen
       const authValid = await isAuthenticated();
 
-      console.log('PostJob Auth check result:', authValid);
+      console.log("PostJob Auth check result:", authValid);
 
       if (!authValid) {
-        Alert.alert(
-          'Authentication Required',
-          'Please log in to post a job.',
-          [
-            {
-              text: 'OK',
-              onPress: () => {
-                // Navigate to login screen
-                navigation.navigate('Login'); // Adjust route name as needed
-              }
-            }
-          ]
-        );
+        Alert.alert("Authentication Required", "Please log in to post a job.", [
+          {
+            text: "OK",
+            onPress: () => {
+              // Navigate to login screen
+              navigation.navigate("Login"); // Adjust route name as needed
+            },
+          },
+        ]);
         return false;
       }
 
       return true;
     } catch (error) {
-      console.error('Error checking auth status in PostJob:', error);
+      console.error("Error checking auth status in PostJob:", error);
       Alert.alert(
-        'Authentication Error',
-        'Unable to verify authentication. Please try logging in again.'
+        "Authentication Error",
+        "Unable to verify authentication. Please try logging in again."
       );
       return false;
     }
   };
 
-
   const currentDate = new Date();
 
-
   // Helper function to combine date and time properly (IST → UTC)
-  const combineDateAndTime = (dateString: string, hour: string, minute: string, amPm: "AM" | "PM") => {
+  const combineDateAndTime = (
+    dateString: string,
+    hour: string,
+    minute: string,
+    amPm: "AM" | "PM"
+  ) => {
     // Parse the date string (format: "YYYY-MM-DD")
-    const [year, month, day] = dateString.split('-').map(Number);
+    const [year, month, day] = dateString.split("-").map(Number);
 
     // Convert time to 24-hour format
     let hour24 = parseInt(hour, 10);
@@ -416,32 +491,45 @@ const PostJobScreen = ({ navigation: navProp }) => {
     }
 
     // Create date in local timezone (IST)
-    const localDate = new Date(year, month - 1, day, hour24, parseInt(minute, 10), 0, 0);
+    const localDate = new Date(
+      year,
+      month - 1,
+      day,
+      hour24,
+      parseInt(minute, 10),
+      0,
+      0
+    );
 
     // Convert automatically to UTC string
     const utcString = localDate.toISOString();
 
-    console.log(`🕐 Input: ${dateString} ${hour}:${minute} ${amPm} (IST assumed)`);
-    console.log(`   Local time (IST): ${localDate.toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })}`);
+    console.log(
+      `🕐 Input: ${dateString} ${hour}:${minute} ${amPm} (IST assumed)`
+    );
+    console.log(
+      `   Local time (IST): ${localDate.toLocaleString("en-IN", {
+        timeZone: "Asia/Kolkata",
+      })}`
+    );
     console.log(`   UTC time: ${utcString}`);
 
     return utcString;
   };
 
-
   // Fixed formatJobData function
   const formatJobData = (photoUrls = []) => {
     if (!user || !user.id) {
-      throw new Error('User data is not available');
+      throw new Error("User data is not available");
     }
 
     // Get the backend category ID from the mapping
     const backendCategoryId = categoryMapping[selectedCategory];
 
     if (!backendCategoryId) {
-      console.error('Category mapping not found for:', selectedCategory);
-      console.error('Available mappings:', categoryMapping);
-      throw new Error('Invalid category selection');
+      console.error("Category mapping not found for:", selectedCategory);
+      console.error("Available mappings:", categoryMapping);
+      throw new Error("Invalid category selection");
     }
 
     console.log("Selected category:", selectedCategory);
@@ -455,31 +543,46 @@ const PostJobScreen = ({ navigation: navProp }) => {
       isMultiVacancy: isMultipleVacancy,
       participantsNumber: isMultipleVacancy ? vacancyCount : 1,
       isRemote: canBeDoneRemotely,
-      address: canBeDoneRemotely ? '' : (selectedLocation?.address || taskAddress),
+      address: canBeDoneRemotely
+        ? ""
+        : selectedLocation?.address || taskAddress,
       requirements: requirements,
       photos: photoUrls,
       timePreference: selectedTimePreferences, // Send as array
       budget: parseFloat(budget),
       isOpen: true,
       createdAt: currentDate,
-      updatedAt: currentDate
+      updatedAt: currentDate,
     };
 
     // Add location data if available and not remote
     if (!canBeDoneRemotely && selectedLocation) {
-      console.log("Adding location to job data:", JSON.stringify(selectedLocation, null, 2));
+      console.log(
+        "Adding location to job data:",
+        JSON.stringify(selectedLocation, null, 2)
+      );
       jobData.location = selectedLocation;
     } else {
-      console.log("No location data added - remote:", canBeDoneRemotely, "selectedLocation:", !!selectedLocation);
+      console.log(
+        "No location data added - remote:",
+        canBeDoneRemotely,
+        "selectedLocation:",
+        !!selectedLocation
+      );
     }
 
     // Handle date/time based on mode
-    if (dateMode === 'onDate' && onDate) {
+    if (dateMode === "onDate" && onDate) {
       // Combine date and time properly
-      const dateTime = combineDateAndTime(onDate, fromHour, fromMinute, fromAmPm as "AM" | "PM");
+      const dateTime = combineDateAndTime(
+        onDate,
+        fromHour,
+        fromMinute,
+        fromAmPm as "AM" | "PM"
+      );
       jobData.onDate = dateTime;
       jobData.isFlexible = false;
-    } else if (dateMode === 'beforeDate' && beforeDate) {
+    } else if (dateMode === "beforeDate" && beforeDate) {
       jobData.beforeDate = new Date(beforeDate);
       jobData.isFlexible = false;
     } else {
@@ -495,7 +598,6 @@ const PostJobScreen = ({ navigation: navProp }) => {
     return jobData;
   };
 
-
   const resetAllFields = () => {
     // Reset step
     setCurrentStep(1);
@@ -505,30 +607,30 @@ const PostJobScreen = ({ navigation: navProp }) => {
     setSelectedValue("mail");
 
     // Reset job details
-    setJobName('');
-    setJobDescription('');
+    setJobName("");
+    setJobDescription("");
     setIsMultipleVacancy(false);
     setVacancyCount(1);
     setCanBeDoneRemotely(false);
-    setTaskAddress('');
+    setTaskAddress("");
     setSelectedLocation(null);
 
     // Reset time preferences
     setSelectedTimePreferences([]);
-    setDateMode('flexible');
+    setDateMode("flexible");
     setOnDate(null);
     setBeforeDate(null);
     setIsFlexible(true);
-    setFromHour('00');
-    setFromMinute('00');
-    setFromAmPm('AM');
-    setToHour('00');
-    setToMinute('00');
-    setToAmPm('AM');
+    setFromHour("00");
+    setFromMinute("00");
+    setFromAmPm("AM");
+    setToHour("00");
+    setToMinute("00");
+    setToAmPm("AM");
     setSelectedDate(null);
 
     // Reset budget
-    setBudget('200');
+    setBudget("200");
 
     // Reset requirements and photos
     setRequirements([]);
@@ -542,21 +644,21 @@ const PostJobScreen = ({ navigation: navProp }) => {
     setEditingRequirements(false);
     setCalendarVisible(false);
     setShowMenu(false);
-    setNewRequirement('');
+    setNewRequirement("");
 
-    console.log('All form fields have been reset');
+    console.log("All form fields have been reset");
   };
 
   // Handle job posting
   // Debug handlePost function
   const handlePost = async () => {
-    if (kycStatus !== 'completed') {
+    if (kycStatus !== "completed") {
       Toast.show({
-        type: 'info',
-        text1: 'KYC Required',
-        text2: 'Please complete your KYC to post jobs',
+        type: "info",
+        text1: "KYC Required",
+        text2: "Please complete your KYC to post jobs",
       });
-      navigation.navigate('BankAccount');
+      navigation.navigate("BankAccount");
       return;
     }
 
@@ -572,61 +674,59 @@ const PostJobScreen = ({ navigation: navProp }) => {
     // Double-check user data is available
     if (!user || !user.id) {
       Alert.alert(
-        'User Error',
-        'User information is not available. Please try logging in again.'
+        "User Error",
+        "User information is not available. Please try logging in again."
       );
       return;
     }
 
-
-    console.log('Selected category before posting:', selectedCategory);
-    console.log('Category mapping:', categoryMapping);
-    console.log('Backend category ID:', categoryMapping[selectedCategory]);
+    console.log("Selected category before posting:", selectedCategory);
+    console.log("Category mapping:", categoryMapping);
+    console.log("Backend category ID:", categoryMapping[selectedCategory]);
 
     setIsLoading(true);
 
     try {
       // Create job posting
       const jobData = formatJobData();
-      console.log('Final job data being sent:', JSON.stringify(jobData, null, 2));
+      console.log(
+        "Final job data being sent:",
+        JSON.stringify(jobData, null, 2)
+      );
 
       const response = await createJobPosting(jobData);
 
       if (response.data) {
-        Alert.alert(
-          'Success!',
-          'Your job has been posted successfully!',
-          [
-            {
-              text: 'OK',
-              onPress: () => {
-                resetAllFields();
-                // Navigate back or to job list
-                navigation.goBack();
-              }
-            }
-          ]
-        );
+        Alert.alert("Success!", "Your job has been posted successfully!", [
+          {
+            text: "OK",
+            onPress: () => {
+              resetAllFields();
+              // Navigate back or to job list
+              navigation.goBack();
+            },
+          },
+        ]);
       }
     } catch (error) {
-      console.error('Error posting job:', error);
-      console.error('Error response data:', error.response?.data);
+      console.error("Error posting job:", error);
+      console.error("Error response data:", error.response?.data);
 
-      let errorMessage = 'Failed to post job. Please try again.';
+      let errorMessage = "Failed to post job. Please try again.";
 
       // Handle specific authentication errors
       if (error.response?.status === 401 || error.response?.status === 403) {
-        errorMessage = 'Authentication expired. Please log in again.';
+        errorMessage = "Authentication expired. Please log in again.";
         // Optionally navigate to login
         // navigation.navigate('Login');
       } else if (error.response?.data?.message) {
         errorMessage = error.response.data.message;
       } else if (error.response?.data?.errors) {
         const errors = Object.values(error.response.data.errors).flat();
-        errorMessage = errors.join('\n');
+        errorMessage = errors.join("\n");
       }
 
-      Alert.alert('Error', errorMessage);
+      Alert.alert("Error", errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -634,26 +734,26 @@ const PostJobScreen = ({ navigation: navProp }) => {
   // Handle date mode selection
   const handleDateModeChange = (mode) => {
     setDateMode(mode);
-    if (mode === 'flexible') {
+    if (mode === "flexible") {
       setIsFlexible(true);
       setOnDate(null);
       setBeforeDate(null);
     } else {
       setIsFlexible(false);
-      if (mode !== 'onDate') setOnDate(null);
-      if (mode !== 'beforeDate') setBeforeDate(null);
+      if (mode !== "onDate") setOnDate(null);
+      if (mode !== "beforeDate") setBeforeDate(null);
     }
   };
 
   // Format date for display
   const formatDateForDisplay = (dateString) => {
-    if (!dateString) return 'No date selected';
+    if (!dateString) return "No date selected";
     const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
+    return date.toLocaleDateString("en-US", {
+      weekday: "long",
+      year: "numeric",
+      month: "long",
+      day: "numeric",
     });
   };
 
@@ -661,24 +761,67 @@ const PostJobScreen = ({ navigation: navProp }) => {
   const handleDateSelect = (day) => {
     const selectedDateString = day.dateString;
 
-    if (dateMode === 'onDate') {
+    if (dateMode === "onDate") {
       setOnDate(selectedDateString);
-    } else if (dateMode === 'beforeDate') {
+    } else if (dateMode === "beforeDate") {
       setBeforeDate(selectedDateString);
     }
-
     setSelectedDate(selectedDateString);
     setCalendarVisible(false);
   };
 
+  const [isExactTime, setIsExactTime] = useState(false);
+
   // Handle time preference selection (only one allowed)
-  const handleTimePreferenceToggle = (timeSlotId) => {
-    setSelectedTimePreferences(prev => {
-      if (prev.includes(timeSlotId)) {
-        return []; // Deselect if already selected
+  const handleTimePreferenceToggle = (timeSlotId, toggle = true) => {
+    setSelectedTimePreferences((prev) => {
+      let newSelection = [];
+      if (toggle && prev.includes(timeSlotId)) {
+        newSelection = []; // Deselect if already selected
       } else {
-        return [timeSlotId]; // Select only this one
+        newSelection = [timeSlotId]; // Select only this one
       }
+
+      // Set default times if exact time is NOT enabled and we have a selection
+      if (!isExactTime && newSelection.length > 0) {
+        const selectedId = newSelection[0];
+        switch (selectedId) {
+          case "morning":
+            setFromHour("06");
+            setFromMinute("00");
+            setFromAmPm("AM");
+            setToHour("10");
+            setToMinute("00");
+            setToAmPm("AM");
+            break;
+          case "midday":
+            setFromHour("10");
+            setFromMinute("00");
+            setFromAmPm("AM");
+            setToHour("02");
+            setToMinute("00");
+            setToAmPm("PM");
+            break;
+          case "afternoon":
+            setFromHour("02");
+            setFromMinute("00");
+            setFromAmPm("PM");
+            setToHour("06");
+            setToMinute("00");
+            setToAmPm("PM");
+            break;
+          case "evening":
+            setFromHour("06");
+            setFromMinute("00");
+            setFromAmPm("PM");
+            setToHour("10");
+            setToMinute("00");
+            setToAmPm("PM");
+            break;
+        }
+      }
+
+      return newSelection;
     });
   };
 
@@ -686,47 +829,53 @@ const PostJobScreen = ({ navigation: navProp }) => {
   const handleNext = () => {
     // Validate current step before proceeding
     if (currentStep === 1 && !selectedCategory) {
-      Alert.alert('Required', 'Please select a job category');
+      Alert.alert("Required", "Please select a job category");
       return;
     }
 
     if (currentStep === 2) {
       if (!jobName || jobName.length < 10) {
-        Alert.alert('Required', 'Job name must be at least 10 characters long');
+        Alert.alert("Required", "Job name must be at least 10 characters long");
         return;
       }
       if (!jobDescription || jobDescription.length < 25) {
-        Alert.alert('Required', 'Job description must be at least 25 characters long');
+        Alert.alert(
+          "Required",
+          "Job description must be at least 25 characters long"
+        );
         return;
       }
       if (!canBeDoneRemotely && !selectedLocation) {
-        Alert.alert('Required', 'Please provide a location for onsite jobs');
+        Alert.alert("Required", "Please provide a location for onsite jobs");
         return;
       }
 
       // Debug logging
-      console.log('Step 2 validation:', {
+      console.log("Step 2 validation:", {
         canBeDoneRemotely,
         selectedLocation: !!selectedLocation,
-        taskAddress
+        taskAddress,
       });
     }
 
     if (currentStep === 3) {
       // Check if no time preference is selected
       if (selectedTimePreferences.length === 0) {
-        Alert.alert('Time Preference Required', 'Please select a time preference for your job');
+        Alert.alert(
+          "Time Preference Required",
+          "Please select a time preference for your job"
+        );
         return;
       }
 
       // Validate time fields for non-flexible jobs
       if (!isFlexible) {
         if (!fromHour || !fromMinute || !fromAmPm) {
-          Alert.alert('Required', 'Please set the start time for the job');
+          Alert.alert("Required", "Please set the start time for the job");
           return;
         }
         if (!toHour || !toMinute || !toAmPm) {
-          Alert.alert('Required', 'Please set the end time for the job');
+          Alert.alert("Required", "Please set the end time for the job");
           return;
         }
 
@@ -735,7 +884,7 @@ const PostJobScreen = ({ navigation: navProp }) => {
         const toTime24 = get24HourTime(toHour, toMinute, toAmPm);
 
         if (fromTime24 >= toTime24) {
-          Alert.alert('Invalid Time', 'End time must be after start time');
+          Alert.alert("Invalid Time", "End time must be after start time");
           return;
         }
       }
@@ -743,9 +892,18 @@ const PostJobScreen = ({ navigation: navProp }) => {
       // Validate time selection when time preference is selected
       if (selectedTimePreferences.length > 0) {
         // Check if time is still at initial values (00:00 AM)
-        if (fromHour === '00' && fromMinute === '00' && fromAmPm === 'AM' &&
-          toHour === '00' && toMinute === '00' && toAmPm === 'AM') {
-          Alert.alert('Time Selection Required', 'Please select the time range for your job');
+        if (
+          fromHour === "00" &&
+          fromMinute === "00" &&
+          fromAmPm === "AM" &&
+          toHour === "00" &&
+          toMinute === "00" &&
+          toAmPm === "AM"
+        ) {
+          Alert.alert(
+            "Time Selection Required",
+            "Please select the time range for your job"
+          );
           return;
         }
 
@@ -754,25 +912,31 @@ const PostJobScreen = ({ navigation: navProp }) => {
         const toTime24 = get24HourTime(toHour, toMinute, toAmPm);
 
         if (fromTime24 >= toTime24) {
-          Alert.alert('Invalid Time', 'End time must be after start time');
+          Alert.alert("Invalid Time", "End time must be after start time");
           return;
         }
 
         // Validate time is within 12 AM to 11:59 PM range
         if (!isValidTimeRange(fromHour, fromMinute, fromAmPm)) {
-          Alert.alert('Invalid Time', 'Start time must be between 12 AM and 11:59 PM');
+          Alert.alert(
+            "Invalid Time",
+            "Start time must be between 12 AM and 11:59 PM"
+          );
           return;
         }
 
         if (!isValidTimeRange(toHour, toMinute, toAmPm)) {
-          Alert.alert('Invalid Time', 'End time must be between 12 AM and 11:59 PM');
+          Alert.alert(
+            "Invalid Time",
+            "End time must be between 12 AM and 11:59 PM"
+          );
           return;
         }
       }
     }
 
     if (currentStep === 4 && (!budget || parseFloat(budget) <= 0)) {
-      Alert.alert('Required', 'Please enter a valid budget');
+      Alert.alert("Required", "Please enter a valid budget");
       return;
     }
 
@@ -822,7 +986,7 @@ const PostJobScreen = ({ navigation: navProp }) => {
   const handleAddRequirement = () => {
     if (newRequirement.trim()) {
       setRequirements([...requirements, newRequirement]);
-      setNewRequirement('');
+      setNewRequirement("");
       setShowRequirementsModal(false);
       setShowRequirementsList(true);
     }
@@ -877,9 +1041,9 @@ const PostJobScreen = ({ navigation: navProp }) => {
   };
 
   const formattedTime = time.toLocaleTimeString([], {
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: true
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true,
   });
 
   // Render Step 1: Select Category
@@ -887,19 +1051,23 @@ const PostJobScreen = ({ navigation: navProp }) => {
     <View style={{ paddingBottom: 20 }}>
       <Text style={styles.categoryText}>Select Category</Text>
       <View style={styles.categoryContainer}>
-        {jobCategories.map(category => (
+        {jobCategories.map((category) => (
           <View style={styles.CategoryView} key={category.id}>
             <TouchableOpacity
               style={[
                 styles.categoryItem,
-                selectedCategory === category.id && styles.selectedCategory
+                selectedCategory === category.id && styles.selectedCategory,
               ]}
               onPress={() => {
                 setSelectedCategory(category.id);
                 setSelectedValue(category.name);
               }}
             >
-              <Image source={category.icon} style={styles.categoryIcon} resizeMode='contain' />
+              <Image
+                source={category.icon}
+                style={styles.categoryIcon}
+                resizeMode="contain"
+              />
             </TouchableOpacity>
             <Text style={styles.categoryName}>{category.name}</Text>
           </View>
@@ -913,7 +1081,7 @@ const PostJobScreen = ({ navigation: navProp }) => {
     <View style={styles.stepContainer}>
       <Text style={styles.sectionTitle}>Category</Text>
       <View style={styles.dropContainer}>
-        {Platform.OS === 'ios' ? (
+        {Platform.OS === "ios" ? (
           <>
             <TouchableOpacity
               style={{ paddingVertical: 12 }}
@@ -930,23 +1098,55 @@ const PostJobScreen = ({ navigation: navProp }) => {
               animationType="slide"
               onRequestClose={() => setShowCategoryPicker(false)}
             >
-              <View style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.5)' }}>
-                <View style={{ backgroundColor: 'white', borderTopLeftRadius: 20, borderTopRightRadius: 20 }}>
-                  <View style={{ flexDirection: 'row', justifyContent: 'flex-end', padding: 16, borderBottomWidth: 1, borderBottomColor: '#eee' }}>
-                    <TouchableOpacity onPress={() => setShowCategoryPicker(false)}>
-                      <Text style={{ color: Colors.primary, fontSize: 16, fontWeight: '600' }}>Done</Text>
+              <View
+                style={{
+                  flex: 1,
+                  justifyContent: "flex-end",
+                  backgroundColor: "rgba(0,0,0,0.5)",
+                }}
+              >
+                <View
+                  style={{
+                    backgroundColor: "white",
+                    borderTopLeftRadius: 20,
+                    borderTopRightRadius: 20,
+                  }}
+                >
+                  <View
+                    style={{
+                      flexDirection: "row",
+                      justifyContent: "flex-end",
+                      padding: 16,
+                      borderBottomWidth: 1,
+                      borderBottomColor: "#eee",
+                    }}
+                  >
+                    <TouchableOpacity
+                      onPress={() => setShowCategoryPicker(false)}
+                    >
+                      <Text
+                        style={{
+                          color: Colors.primary,
+                          fontSize: 16,
+                          fontWeight: "600",
+                        }}
+                      >
+                        Done
+                      </Text>
                     </TouchableOpacity>
                   </View>
                   <Picker
                     selectedValue={selectedValue}
                     onValueChange={(itemValue, itemIndex) => {
                       setSelectedValue(itemValue);
-                      const category = jobCategories.find(cat => cat.name === itemValue);
+                      const category = jobCategories.find(
+                        (cat) => cat.name === itemValue
+                      );
                       if (category) {
                         setSelectedCategory(category.id);
                       }
                     }}
-                    style={{ width: '100%', height: 200 }}
+                    style={{ width: "100%", height: 200 }}
                   >
                     {jobCategories.map((option) => (
                       <Picker.Item
@@ -965,7 +1165,9 @@ const PostJobScreen = ({ navigation: navProp }) => {
             selectedValue={selectedValue}
             onValueChange={(itemValue, itemIndex) => {
               setSelectedValue(itemValue);
-              const category = jobCategories.find(cat => cat.name === itemValue);
+              const category = jobCategories.find(
+                (cat) => cat.name === itemValue
+              );
               if (category) {
                 setSelectedCategory(category.id);
               }
@@ -1009,13 +1211,13 @@ const PostJobScreen = ({ navigation: navProp }) => {
         jobDescription={jobDescription}
         setJobDescription={setJobDescription}
         requirements={requirements}
-        photos={photos}
+        // photos={photos}
         toggleRequirementsList={toggleRequirementsList}
         showRequirementsList={showRequirementsList}
         openEditRequirements={openEditRequirements}
-        togglePhotosList={togglePhotosList}
-        showPhotosList={showPhotosList}
-        handlePickImage={handlePickImage}
+        // togglePhotosList={togglePhotosList}
+        // showPhotosList={showPhotosList}
+        // handlePickImage={handlePickImage}
       />
 
       <View style={styles.switchContainer}>
@@ -1048,11 +1250,17 @@ const PostJobScreen = ({ navigation: navProp }) => {
                 placeholder="0"
               />
             </View>
-            <TouchableOpacity style={styles.counterButton} onPress={decreaseVacancy}>
+            <TouchableOpacity
+              style={styles.counterButton}
+              onPress={decreaseVacancy}
+            >
               <Text style={styles.counterButtonText}>−</Text>
             </TouchableOpacity>
             <Text style={styles.counterButtonText}>|</Text>
-            <TouchableOpacity style={styles.counterButton} onPress={increaseVacancy}>
+            <TouchableOpacity
+              style={styles.counterButton}
+              onPress={increaseVacancy}
+            >
               <Text style={styles.counterButtonText}>+</Text>
             </TouchableOpacity>
           </View>
@@ -1068,7 +1276,7 @@ const PostJobScreen = ({ navigation: navProp }) => {
             // Clear location data when switching to remote
             if (value) {
               setSelectedLocation(null);
-              setTaskAddress('');
+              setTaskAddress("");
             }
           }}
         />
@@ -1079,9 +1287,14 @@ const PostJobScreen = ({ navigation: navProp }) => {
           <LocationSearch
             value={selectedLocation?.address || taskAddress}
             onLocationSelect={(location) => {
-              console.log("Location selected:", JSON.stringify(location, null, 2));
+              console.log(
+                "Location selected:",
+                JSON.stringify(location, null, 2)
+              );
               setSelectedLocation(location);
-              setTaskAddress(location.address || `${location.city}, ${location.state}`);
+              setTaskAddress(
+                location.address || `${location.city}, ${location.state}`
+              );
             }}
             placeholder="Search for a location..."
             style={{ marginBottom: 10 }}
@@ -1099,38 +1312,50 @@ const PostJobScreen = ({ navigation: navProp }) => {
   // FIXED: Render Step 3: Time Preference
   const renderStep3 = () => (
     <View style={styles.stepContainer}>
-      <Text style={styles.sectionTitle}>When does the job need to be done?</Text>
+      <Text style={styles.sectionTitle}>
+        When does the job need to be done?
+      </Text>
 
       <View style={styles.timeOptionContainer}>
         <TouchableOpacity
-          style={[styles.timeOption, dateMode === 'onDate' && styles.selectedTimeOption]}
+          style={[
+            styles.timeOption,
+            dateMode === "onDate" && styles.selectedTimeOption,
+          ]}
           onPress={() => {
-            handleDateModeChange('onDate');
+            handleDateModeChange("onDate");
             setCalendarVisible(true);
           }}
         >
           <Text style={styles.timeOptionText}>
-            On Date {onDate ? `(${new Date(onDate).toLocaleDateString()})` : ''}
+            On Date {onDate ? `(${new Date(onDate).toLocaleDateString()})` : ""}
           </Text>
           <Ionicons name="chevron-down" size={16} color={Colors.black} />
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={[styles.timeOption, dateMode === 'beforeDate' && styles.selectedTimeOption]}
+          style={[
+            styles.timeOption,
+            dateMode === "beforeDate" && styles.selectedTimeOption,
+          ]}
           onPress={() => {
-            handleDateModeChange('beforeDate');
+            handleDateModeChange("beforeDate");
             setCalendarVisible(true);
           }}
         >
           <Text style={styles.timeOptionText}>
-            Before date {beforeDate ? `(${new Date(beforeDate).toLocaleDateString()})` : ''}
+            Before date{" "}
+            {beforeDate ? `(${new Date(beforeDate).toLocaleDateString()})` : ""}
           </Text>
           <Ionicons name="chevron-down" size={16} color={Colors.black} />
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={[styles.timeOption, dateMode === 'flexible' && styles.selectedTimeOption]}
-          onPress={() => handleDateModeChange('flexible')}
+          style={[
+            styles.timeOption,
+            dateMode === "flexible" && styles.selectedTimeOption,
+          ]}
+          onPress={() => handleDateModeChange("flexible")}
         >
           <Text style={styles.timeOptionText}>I am Flexible</Text>
         </TouchableOpacity>
@@ -1149,27 +1374,36 @@ const PostJobScreen = ({ navigation: navProp }) => {
               markedDates={{
                 [selectedDate]: {
                   selected: true,
-                  selectedColor: 'blue',
+                  selectedColor: "blue",
                 },
               }}
-              minDate={new Date().toISOString().split('T')[0]} // Prevent past dates
+              minDate={new Date().toISOString().split("T")[0]} // Prevent past dates
             />
             <View style={styles.row}>
               <TouchableOpacity onPress={() => setCalendarVisible(false)}>
-                <Text style={{ textAlign: 'center', marginTop: 10, color: 'blue' }}>Cancel</Text>
+                <Text
+                  style={{ textAlign: "center", marginTop: 10, color: "blue" }}
+                >
+                  Cancel
+                </Text>
               </TouchableOpacity>
               <TouchableOpacity onPress={() => setCalendarVisible(false)}>
-                <Text style={{ textAlign: 'center', marginTop: 10, color: 'blue' }}>Save</Text>
+                <Text
+                  style={{ textAlign: "center", marginTop: 10, color: "blue" }}
+                >
+                  Save
+                </Text>
               </TouchableOpacity>
             </View>
           </View>
         </View>
       </Modal>
 
-      {dateMode !== 'flexible' && (
+      {dateMode !== "flexible" && (
         <View style={styles.selectedDateContainer}>
           <Text style={styles.dateText}>
-            {dateMode === 'onDate' ? 'On Date' : 'Before Date'}: {formatDateForDisplay(onDate || beforeDate)}
+            {dateMode === "onDate" ? "On Date" : "Before Date"}:{" "}
+            {formatDateForDisplay(onDate || beforeDate)}
           </Text>
         </View>
       )}
@@ -1177,30 +1411,43 @@ const PostJobScreen = ({ navigation: navProp }) => {
       <Text style={styles.sectionTitle}>Mention your time preference</Text>
 
       <View style={styles.timeSlotGrid}>
-        {timeSlots.slice(0, 2).map(slot => (
+        {timeSlots.slice(0, 2).map((slot) => (
           <TouchableOpacity
             key={slot.id}
             style={[
               styles.timeSlot,
-              selectedTimePreferences.includes(slot.id) && styles.selectedTimeSlot
+              selectedTimePreferences.includes(slot.id) &&
+                styles.selectedTimeSlot,
             ]}
             onPress={() => handleTimePreferenceToggle(slot.id)}
           >
             <Image
-              source={selectedTimePreferences.includes(slot.id) ? slot.false : slot.true}
+              source={
+                selectedTimePreferences.includes(slot.id)
+                  ? slot.false
+                  : slot.true
+              }
               style={styles.timeSlotIcon}
-              resizeMode='contain'
+              resizeMode="contain"
             />
-            <Text style={[
-              styles.timeSlotName,
-              selectedTimePreferences.includes(slot.id) ? { color: Colors.white } : { color: Colors.black }
-            ]}>
+            <Text
+              style={[
+                styles.timeSlotName,
+                selectedTimePreferences.includes(slot.id)
+                  ? { color: Colors.white }
+                  : { color: Colors.black },
+              ]}
+            >
               {slot.name}
             </Text>
-            <Text style={[
-              styles.timeSlotTime,
-              selectedTimePreferences.includes(slot.id) ? { color: Colors.white } : { color: Colors.grey }
-            ]}>
+            <Text
+              style={[
+                styles.timeSlotTime,
+                selectedTimePreferences.includes(slot.id)
+                  ? { color: Colors.white }
+                  : { color: Colors.grey },
+              ]}
+            >
               {slot.time}
             </Text>
           </TouchableOpacity>
@@ -1208,38 +1455,69 @@ const PostJobScreen = ({ navigation: navProp }) => {
       </View>
 
       <View style={styles.timeSlotGrid}>
-        {timeSlots.slice(2).map(slot => (
+        {timeSlots.slice(2).map((slot) => (
           <TouchableOpacity
             key={slot.id}
             style={[
               styles.timeSlot,
-              selectedTimePreferences.includes(slot.id) && styles.selectedTimeSlot
+              selectedTimePreferences.includes(slot.id) &&
+                styles.selectedTimeSlot,
             ]}
             onPress={() => handleTimePreferenceToggle(slot.id)}
           >
             <Image
-              source={selectedTimePreferences.includes(slot.id) ? slot.false : slot.true}
+              source={
+                selectedTimePreferences.includes(slot.id)
+                  ? slot.false
+                  : slot.true
+              }
               style={styles.timeSlotIcon}
-              resizeMode='contain'
+              resizeMode="contain"
             />
-            <Text style={[
-              styles.timeSlotName,
-              selectedTimePreferences.includes(slot.id) ? { color: Colors.white } : { color: Colors.black }
-            ]}>
+            <Text
+              style={[
+                styles.timeSlotName,
+                selectedTimePreferences.includes(slot.id)
+                  ? { color: Colors.white }
+                  : { color: Colors.black },
+              ]}
+            >
               {slot.name}
             </Text>
-            <Text style={[
-              styles.timeSlotTime,
-              selectedTimePreferences.includes(slot.id) ? { color: Colors.white } : { color: Colors.grey }
-            ]}>
+            <Text
+              style={[
+                styles.timeSlotTime,
+                selectedTimePreferences.includes(slot.id)
+                  ? { color: Colors.white }
+                  : { color: Colors.grey },
+              ]}
+            >
               {slot.time}
             </Text>
           </TouchableOpacity>
         ))}
       </View>
 
+      {/* Exact Time Toggle */}
+      <View style={styles.switchContainer}>
+        <Text style={styles.switchLabel}>Set Exact Time</Text>
+        <CustomSwitch
+          value={isExactTime}
+          onValueChange={(value) => {
+            setIsExactTime(value);
+            if (!value) {
+              // If turning off exact time, reset to default if a preference is selected
+              if (selectedTimePreferences.length > 0) {
+                const pref = selectedTimePreferences[0];
+                handleTimePreferenceToggle(pref, false); // Re-trigger logic without toggling off
+              }
+            }
+          }}
+        />
+      </View>
+
       {/* Time Range Picker - Required for non-flexible jobs */}
-      {!isFlexible && (
+      {!isFlexible && isExactTime && (
         <View style={styles.timeRangeContainer}>
           <Text style={styles.sectionTitle}>Set time range (Required)</Text>
 
@@ -1248,11 +1526,19 @@ const PostJobScreen = ({ navigation: navProp }) => {
             <Text style={styles.timeRangeLabel}>From:</Text>
             <View style={styles.timePickerContainer}>
               <View style={styles.timePickerColumn}>
-                <TouchableOpacity onPress={incrementFromHour} style={styles.timePickerArrow}>
+                <TouchableOpacity
+                  onPress={incrementFromHour}
+                  style={styles.timePickerArrow}
+                >
                   <Ionicons name="chevron-up" size={24} color={Colors.grey} />
                 </TouchableOpacity>
-                <Text style={styles.timePickerValue}>{String(fromHour).padStart(2, '0')}</Text>
-                <TouchableOpacity onPress={decrementFromHour} style={styles.timePickerArrow}>
+                <Text style={styles.timePickerValue}>
+                  {String(fromHour).padStart(2, "0")}
+                </Text>
+                <TouchableOpacity
+                  onPress={decrementFromHour}
+                  style={styles.timePickerArrow}
+                >
                   <Ionicons name="chevron-down" size={24} color={Colors.grey} />
                 </TouchableOpacity>
               </View>
@@ -1260,27 +1546,53 @@ const PostJobScreen = ({ navigation: navProp }) => {
               <Text style={styles.timePickerSeparator}>:</Text>
 
               <View style={styles.timePickerColumn}>
-                <TouchableOpacity onPress={incrementFromMinute} style={styles.timePickerArrow}>
+                <TouchableOpacity
+                  onPress={incrementFromMinute}
+                  style={styles.timePickerArrow}
+                >
                   <Ionicons name="chevron-up" size={24} color={Colors.grey} />
                 </TouchableOpacity>
-                <Text style={styles.timePickerValue}>{String(fromMinute).padStart(2, '0')}</Text>
-                <TouchableOpacity onPress={decrementFromMinute} style={styles.timePickerArrow}>
+                <Text style={styles.timePickerValue}>
+                  {String(fromMinute).padStart(2, "0")}
+                </Text>
+                <TouchableOpacity
+                  onPress={decrementFromMinute}
+                  style={styles.timePickerArrow}
+                >
                   <Ionicons name="chevron-down" size={24} color={Colors.grey} />
                 </TouchableOpacity>
               </View>
 
               <View style={styles.amPmContainer}>
                 <TouchableOpacity
-                  style={[styles.amPmButton, fromAmPm === 'AM' && styles.selectedAmPm]}
-                  onPress={() => setFromAmPm('AM')}
+                  style={[
+                    styles.amPmButton,
+                    fromAmPm === "AM" && styles.selectedAmPm,
+                  ]}
+                  onPress={() => setFromAmPm("AM")}
                 >
-                  <Text style={fromAmPm === 'AM' ? styles.amPmText2 : styles.amPmText}>AM</Text>
+                  <Text
+                    style={
+                      fromAmPm === "AM" ? styles.amPmText2 : styles.amPmText
+                    }
+                  >
+                    AM
+                  </Text>
                 </TouchableOpacity>
                 <TouchableOpacity
-                  style={[styles.amPmButton, fromAmPm === 'PM' && styles.selectedAmPm]}
-                  onPress={() => setFromAmPm('PM')}
+                  style={[
+                    styles.amPmButton,
+                    fromAmPm === "PM" && styles.selectedAmPm,
+                  ]}
+                  onPress={() => setFromAmPm("PM")}
                 >
-                  <Text style={fromAmPm === 'PM' ? styles.amPmText2 : styles.amPmText}>PM</Text>
+                  <Text
+                    style={
+                      fromAmPm === "PM" ? styles.amPmText2 : styles.amPmText
+                    }
+                  >
+                    PM
+                  </Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -1291,11 +1603,19 @@ const PostJobScreen = ({ navigation: navProp }) => {
             <Text style={styles.timeRangeLabel}>To:</Text>
             <View style={styles.timePickerContainer}>
               <View style={styles.timePickerColumn}>
-                <TouchableOpacity onPress={incrementToHour} style={styles.timePickerArrow}>
+                <TouchableOpacity
+                  onPress={incrementToHour}
+                  style={styles.timePickerArrow}
+                >
                   <Ionicons name="chevron-up" size={24} color={Colors.grey} />
                 </TouchableOpacity>
-                <Text style={styles.timePickerValue}>{String(toHour).padStart(2, '0')}</Text>
-                <TouchableOpacity onPress={decrementToHour} style={styles.timePickerArrow}>
+                <Text style={styles.timePickerValue}>
+                  {String(toHour).padStart(2, "0")}
+                </Text>
+                <TouchableOpacity
+                  onPress={decrementToHour}
+                  style={styles.timePickerArrow}
+                >
                   <Ionicons name="chevron-down" size={24} color={Colors.grey} />
                 </TouchableOpacity>
               </View>
@@ -1303,27 +1623,49 @@ const PostJobScreen = ({ navigation: navProp }) => {
               <Text style={styles.timePickerSeparator}>:</Text>
 
               <View style={styles.timePickerColumn}>
-                <TouchableOpacity onPress={incrementToMinute} style={styles.timePickerArrow}>
+                <TouchableOpacity
+                  onPress={incrementToMinute}
+                  style={styles.timePickerArrow}
+                >
                   <Ionicons name="chevron-up" size={24} color={Colors.grey} />
                 </TouchableOpacity>
-                <Text style={styles.timePickerValue}>{String(toMinute).padStart(2, '0')}</Text>
-                <TouchableOpacity onPress={decrementToMinute} style={styles.timePickerArrow}>
+                <Text style={styles.timePickerValue}>
+                  {String(toMinute).padStart(2, "0")}
+                </Text>
+                <TouchableOpacity
+                  onPress={decrementToMinute}
+                  style={styles.timePickerArrow}
+                >
                   <Ionicons name="chevron-down" size={24} color={Colors.grey} />
                 </TouchableOpacity>
               </View>
 
               <View style={styles.amPmContainer}>
                 <TouchableOpacity
-                  style={[styles.amPmButton, toAmPm === 'AM' && styles.selectedAmPm]}
-                  onPress={() => setToAmPm('AM')}
+                  style={[
+                    styles.amPmButton,
+                    toAmPm === "AM" && styles.selectedAmPm,
+                  ]}
+                  onPress={() => setToAmPm("AM")}
                 >
-                  <Text style={toAmPm === 'AM' ? styles.amPmText2 : styles.amPmText}>AM</Text>
+                  <Text
+                    style={toAmPm === "AM" ? styles.amPmText2 : styles.amPmText}
+                  >
+                    AM
+                  </Text>
                 </TouchableOpacity>
                 <TouchableOpacity
-                  style={[styles.amPmButton, toAmPm === 'PM' && styles.selectedAmPm]}
-                  onPress={() => setToAmPm('PM')}
+                  style={[
+                    styles.amPmButton,
+                    toAmPm === "PM" && styles.selectedAmPm,
+                  ]}
+                  onPress={() => setToAmPm("PM")}
                 >
-                  <Text style={toAmPm === 'PM' ? styles.amPmText2 : styles.amPmText}>PM</Text>
+                  <Text
+                    style={toAmPm === "PM" ? styles.amPmText2 : styles.amPmText}
+                  >
+                    PM
+                  </Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -1344,8 +1686,8 @@ const PostJobScreen = ({ navigation: navProp }) => {
           style={styles.currencySymbol}
           value={budget}
           onChangeText={setBudget}
-          placeholder='200'
-          keyboardType='number-pad'
+          placeholder="200"
+          keyboardType="number-pad"
         />
       </View>
     </View>
@@ -1354,27 +1696,40 @@ const PostJobScreen = ({ navigation: navProp }) => {
   const renderStep5 = () => {
     // Get category name from selected category ID
     const getCategoryName = () => {
-      const category = jobCategories.find(cat => cat.id === selectedCategory);
+      const category = jobCategories.find((cat) => cat.id === selectedCategory);
       return category ? category.name : selectedValue;
     };
     const getTimePreferenceName = () => {
-      if (selectedTimePreferences.length === 0) return 'Flexible';
-      const timeSlot = timeSlots.find(slot => slot.id === selectedTimePreferences[0]);
-      return timeSlot ? timeSlot.name : 'Flexible';
+      if (selectedTimePreferences.length === 0) return "Flexible";
+      const timeSlot = timeSlots.find(
+        (slot) => slot.id === selectedTimePreferences[0]
+      );
+      return timeSlot ? timeSlot.name : "Flexible";
     };
 
     // Get time preference names
     const getFormattedDateTime = () => {
-      if (isFlexible) return 'Flexible';
+      if (isFlexible) return "Flexible";
 
       if (selectedDate) {
         let result = selectedDate;
         if (!isFlexible && fromHour && toHour) {
-          const fromTime = `${fromHour}:${String(fromMinute).padStart(2, '0')} ${fromAmPm}`;
-          const toTime = `${toHour}:${String(toMinute).padStart(2, '0')} ${toAmPm}`;
+          const fromTime = `${fromHour}:${String(fromMinute).padStart(
+            2,
+            "0"
+          )} ${fromAmPm}`;
+          const toTime = `${toHour}:${String(toMinute).padStart(
+            2,
+            "0"
+          )} ${toAmPm}`;
           result += ` ${fromTime} - ${toTime}`;
-        } else if (selectedTimePreferences && selectedTimePreferences.length > 0) {
-          const timeSlot = timeSlots.find(slot => slot.id === selectedTimePreferences[0]);
+        } else if (
+          selectedTimePreferences &&
+          selectedTimePreferences.length > 0
+        ) {
+          const timeSlot = timeSlots.find(
+            (slot) => slot.id === selectedTimePreferences[0]
+          );
           if (timeSlot) {
             result += ` (${timeSlot.time})`;
           }
@@ -1382,7 +1737,7 @@ const PostJobScreen = ({ navigation: navProp }) => {
         return result;
       }
 
-      return 'Flexible';
+      return "Flexible";
     };
     const toggleMenu = () => {
       setShowMenu(!showMenu);
@@ -1402,10 +1757,10 @@ const PostJobScreen = ({ navigation: navProp }) => {
 
     const handlePostSimilar = () => {
       // Reset certain fields but keep others
-      setJobName('');
-      setJobDescription('');
+      setJobName("");
+      setJobDescription("");
       setSelectedLocation(null);
-      setTaskAddress('');
+      setTaskAddress("");
       setSelectedDate(null);
       setOnDate(null);
       setBeforeDate(null);
@@ -1415,21 +1770,21 @@ const PostJobScreen = ({ navigation: navProp }) => {
 
     const handleRemoveJob = () => {
       Alert.alert(
-        'Remove Job',
-        'Are you sure you want to remove this job and clear all data?',
+        "Remove Job",
+        "Are you sure you want to remove this job and clear all data?",
         [
           {
-            text: 'Cancel',
-            style: 'cancel',
+            text: "Cancel",
+            style: "cancel",
           },
           {
-            text: 'Remove',
-            style: 'destructive',
+            text: "Remove",
+            style: "destructive",
             onPress: () => {
               resetAllFields();
               setShowMenu(false);
-            }
-          }
+            },
+          },
         ]
       );
     };
@@ -1440,10 +1795,18 @@ const PostJobScreen = ({ navigation: navProp }) => {
           <View style={styles.previewActions}>
             <View style={styles.statusBadge}>
               <Text style={styles.statusText}>Open</Text>
-              <Ionicons name="chevron-down" size={16} color={Colors.darkGreen} />
+              <Ionicons
+                name="chevron-down"
+                size={16}
+                color={Colors.darkGreen}
+              />
             </View>
             <TouchableOpacity onPress={toggleMenu}>
-              <Ionicons name="ellipsis-vertical" size={20} color={Colors.black} />
+              <Ionicons
+                name="ellipsis-vertical"
+                size={20}
+                color={Colors.black}
+              />
             </TouchableOpacity>
           </View>
         </View>
@@ -1452,20 +1815,29 @@ const PostJobScreen = ({ navigation: navProp }) => {
         {showMenu && (
           <View style={styles.menuContainer}>
             <TouchableOpacity style={styles.menuItem} onPress={handleShare}>
-              <Ionicons name="share-social-outline" size={20} color={Colors.black} />
+              <Ionicons
+                name="share-social-outline"
+                size={20}
+                color={Colors.black}
+              />
               <Text style={styles.menuText}>Share</Text>
             </TouchableOpacity>
             <TouchableOpacity style={styles.menuItem} onPress={handleEdit}>
               <Ionicons name="create-outline" size={20} color={Colors.black} />
               <Text style={styles.menuText}>Edit</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.menuItem} onPress={handlePostSimilar}>
+            <TouchableOpacity
+              style={styles.menuItem}
+              onPress={handlePostSimilar}
+            >
               <Ionicons name="copy-outline" size={20} color={Colors.black} />
               <Text style={styles.menuText}>Post Similar Job</Text>
             </TouchableOpacity>
             <TouchableOpacity style={styles.menuItem} onPress={handleRemoveJob}>
               <Ionicons name="trash-outline" size={20} color="red" />
-              <Text style={[styles.menuText, { color: 'red' }]}>Remove Job</Text>
+              <Text style={[styles.menuText, { color: "red" }]}>
+                Remove Job
+              </Text>
             </TouchableOpacity>
           </View>
         )}
@@ -1475,87 +1847,105 @@ const PostJobScreen = ({ navigation: navProp }) => {
           <View style={styles.nameContainer1}>
             <View>
               <View style={styles.profileSection}>
-                <Image style={styles.avatarContainer} source={require('../../../assets/images/profile/profile.png')} />
+                <Image
+                  style={styles.avatarContainer}
+                  source={require("../../../assets/images/profile/profile.png")}
+                />
                 <Text style={styles.userName}>John Doe</Text>
               </View>
-              <Text style={styles.jobTitlePreview}>{jobName || 'Furniture Lifting Help Needed'}</Text>
+              <Text style={styles.jobTitlePreview}>
+                {jobName || "Furniture Lifting Help Needed"}
+              </Text>
               <View style={styles.categoryBadge}>
-                <Image style={styles.avatarContainer} source={require('../../../assets/images/cleaning.png')} />
-                <Text style={styles.categoryBadgeText}>{getCategoryName().toUpperCase()}</Text>
+                <Image
+                  style={styles.avatarContainer}
+                  source={require("../../../assets/images/cleaning.png")}
+                />
+                <Text style={styles.categoryBadgeText}>
+                  {getCategoryName().toUpperCase()}
+                </Text>
               </View>
             </View>
             <View style={styles.separator} />
-
-
           </View>
           <View style={styles.nameContainer2}>
-            <Image source={require('../../../assets/placeholder-image.png')} style={styles.userImage} />
+            <Image
+              source={require("../../../assets/placeholder-image.png")}
+              style={styles.userImage}
+            />
           </View>
-
         </View>
-
-
-
 
         {/* Job Details */}
         <View style={styles.detailsSection}>
           <View style={[styles.detailRow, { marginBottom: 20 }]}>
             <Text style={styles.detailLabel}>BUDGET</Text>
-            <Text style={styles.budget}>₹{budget || '500'}/hr</Text>
+            <Text style={styles.budget}>₹{budget || "500"}/hr</Text>
           </View>
           <View style={styles.separator} />
 
-
           <View style={styles.detailRow}>
             <Text style={styles.detailLabel}>DATE</Text>
-            <Text style={styles.detailValue}>{getFormattedDateTime() || 'Mar 31, 2025\n2:00 pm'}</Text>
+            <Text style={styles.detailValue}>
+              {getFormattedDateTime() || "Mar 31, 2025\n2:00 pm"}
+            </Text>
           </View>
 
           <View style={styles.row}>
             <View style={styles.detailRow}>
               <Text style={styles.detailLabel}>WORK TYPE</Text>
-              <Text style={styles.detailValue}>{canBeDoneRemotely ? 'Remote' : 'Onsite'}</Text>
+              <Text style={styles.detailValue}>
+                {canBeDoneRemotely ? "Remote" : "Onsite"}
+              </Text>
             </View>
 
             <View style={styles.detailRow}>
               <Text style={styles.detailLabel}>NO. OF TASKERS REQUIRED</Text>
-              <Text style={styles.detailValue}>{isMultipleVacancy ? vacancyCount : '01'}</Text>
+              <Text style={styles.detailValue}>
+                {isMultipleVacancy ? vacancyCount : "01"}
+              </Text>
             </View>
-
           </View>
-
-
 
           <View style={styles.detailRow}>
             <Text style={styles.detailLabel}>LOCATION</Text>
             <Text style={styles.detailValue}>
               {selectedLocation
-                ? (selectedLocation.address || `${selectedLocation.city}, ${selectedLocation.state}`)
-                : (taskAddress || 'Remote')
-              }
+                ? selectedLocation.address ||
+                  `${selectedLocation.city}, ${selectedLocation.state}`
+                : taskAddress || "Remote"}
             </Text>
           </View>
 
           <View style={styles.detailRow}>
             <Text style={styles.detailLabel}>DESCRIPTION</Text>
             <Text style={styles.descriptionValue}>
-              {jobDescription || 'I need two people to help move furniture from my second-floor apartment to a moving truck. It includes a sofa, bed, and a few boxes. The task should take around an hour.'}
+              {jobDescription ||
+                "I need two people to help move furniture from my second-floor apartment to a moving truck. It includes a sofa, bed, and a few boxes. The task should take around an hour."}
             </Text>
           </View>
           <View style={styles.separator} />
 
           {/* Photos Section */}
-          {(photos.length > 0) && (
+          {photos.length > 0 && (
             <>
               <View style={styles.detailRow}>
                 <Text style={styles.detailLabel}>PHOTOS</Text>
               </View>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.photosScrollView}>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                bounces={false}
+                style={styles.photosScrollView}
+              >
                 {photos.length > 0 &&
                   photos.map((photo, index) => (
-                    <Image key={index} source={{ uri: photo }} style={styles.previewPhoto} />
-                  ))
-                }
+                    <Image
+                      key={index}
+                      source={{ uri: photo }}
+                      style={styles.previewPhoto}
+                    />
+                  ))}
               </ScrollView>
             </>
           )}
@@ -1569,7 +1959,11 @@ const PostJobScreen = ({ navigation: navProp }) => {
               <View style={styles.requirementsContainer}>
                 {requirements.map((req, index) => (
                   <View key={index} style={styles.requirementItemPreview}>
-                    <Ionicons name="checkmark" size={16} color={Colors.primary} />
+                    <Ionicons
+                      name="checkmark"
+                      size={16}
+                      color={Colors.primary}
+                    />
                     <Text style={styles.requirementTextPreview}>{req}</Text>
                   </View>
                 ))}
@@ -1579,7 +1973,6 @@ const PostJobScreen = ({ navigation: navProp }) => {
         </View>
         <View style={styles.separator} />
 
-
         {/* Edit and Remove buttons at bottom */}
         <View style={styles.bottomActions}>
           <TouchableOpacity style={styles.editButton123} onPress={handleEdit}>
@@ -1587,7 +1980,10 @@ const PostJobScreen = ({ navigation: navProp }) => {
             <Text style={styles.editButtonText}>Edit</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.removeButton} onPress={handleRemoveJob}>
+          <TouchableOpacity
+            style={styles.removeButton}
+            onPress={handleRemoveJob}
+          >
             <Ionicons name="trash-outline" size={20} color="red" />
             <Text style={styles.removeButtonText}>Remove Job</Text>
           </TouchableOpacity>
@@ -1603,11 +1999,14 @@ const PostJobScreen = ({ navigation: navProp }) => {
     return (
       <View style={styles.progressContainer}>
         {[...Array(totalSteps)].map((_, index) => (
-          <View key={index} style={[
-            styles.progressStep,
-            index < currentStep && styles.progressStepCompleted,
-            index === currentStep - 1 && styles.progressStepCurrent
-          ]} />
+          <View
+            key={index}
+            style={[
+              styles.progressStep,
+              index < currentStep && styles.progressStepCompleted,
+              index === currentStep - 1 && styles.progressStepCurrent,
+            ]}
+          />
         ))}
       </View>
     );
@@ -1626,7 +2025,11 @@ const PostJobScreen = ({ navigation: navProp }) => {
 
       {renderProgressSteps()}
 
-      <ScrollView style={styles.scrollContainer} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        style={styles.scrollContainer}
+        showsVerticalScrollIndicator={false}
+        bounces={false}
+      >
         {currentStep === 1 && renderStep1()}
         {currentStep === 2 && renderStep2()}
         {currentStep === 3 && renderStep3()}
@@ -1637,9 +2040,9 @@ const PostJobScreen = ({ navigation: navProp }) => {
         <Text style={styles.nextButtonText}>Next</Text>
       </TouchableOpacity> */}
       {currentStep === 5 ? (
-        <CustomButton text={'Post'} color={Colors.grey} onPress={handlePost} />
+        <CustomButton text={"Post"} color={Colors.grey} onPress={handlePost} />
       ) : (
-        <CustomButton text={'Next'} color={Colors.grey} onPress={handleNext} />
+        <CustomButton text={"Next"} color={Colors.grey} onPress={handleNext} />
       )}
 
       <Modal
@@ -1651,7 +2054,9 @@ const PostJobScreen = ({ navigation: navProp }) => {
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Add Requirements for the Job</Text>
+              <Text style={styles.modalTitle}>
+                Add Requirements for the Job
+              </Text>
               <TouchableOpacity onPress={() => setShowRequirementsModal(false)}>
                 <Ionicons name="close" size={24} color={Colors.grey} />
               </TouchableOpacity>
@@ -1665,12 +2070,19 @@ const PostJobScreen = ({ navigation: navProp }) => {
                 placeholder="Eg - Tools or Vehicles"
                 placeholderTextColor={Colors.subGrey}
               />
-              <TouchableOpacity onPress={handleAddRequirement} style={styles.addButton}>
+              <TouchableOpacity
+                onPress={handleAddRequirement}
+                style={styles.addButton}
+              >
                 <Ionicons name="add-circle" size={24} color={Colors.primary} />
               </TouchableOpacity>
             </View>
 
-            <CustomButton text="Add" color={Colors.primary} onPress={handleAddRequirement} />
+            <CustomButton
+              text="Add"
+              color={Colors.primary}
+              onPress={handleAddRequirement}
+            />
           </View>
         </View>
       </Modal>
@@ -1691,7 +2103,7 @@ const PostJobScreen = ({ navigation: navProp }) => {
               </TouchableOpacity>
             </View>
 
-            <ScrollView style={styles.modalScrollContent}>
+            <ScrollView style={styles.modalScrollContent} bounces={false}>
               {requirements.map((req, index) => (
                 <View key={index} style={styles.editRequirementItem}>
                   <Text style={styles.requirementText}>{req}</Text>
@@ -1709,13 +2121,24 @@ const PostJobScreen = ({ navigation: navProp }) => {
                   placeholder="Add new requirement"
                   placeholderTextColor={Colors.subGrey}
                 />
-                <TouchableOpacity onPress={handleAddRequirement} style={styles.addButton}>
-                  <Ionicons name="add-circle" size={24} color={Colors.primary} />
+                <TouchableOpacity
+                  onPress={handleAddRequirement}
+                  style={styles.addButton}
+                >
+                  <Ionicons
+                    name="add-circle"
+                    size={24}
+                    color={Colors.primary}
+                  />
                 </TouchableOpacity>
               </View>
             </ScrollView>
 
-            <CustomButton text="Update" color={Colors.primary} onPress={() => setEditingRequirements(false)} />
+            <CustomButton
+              text="Update"
+              color={Colors.primary}
+              onPress={() => setEditingRequirements(false)}
+            />
           </View>
         </View>
       </Modal>

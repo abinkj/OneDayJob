@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef, useMemo } from "react";
+import { useEffect, useState, useRef, useMemo } from "react";
 import {
   View,
   Text,
@@ -9,7 +9,6 @@ import {
   ImageBackground,
   ActivityIndicator,
   RefreshControl,
-  ScrollView,
   Animated,
   Modal,
 } from "react-native";
@@ -27,10 +26,7 @@ import { useNavigation } from "@react-navigation/native";
 import { useNotifications } from "../../../contexts/NotificationContext";
 import NotificationBadge from "../../../components/notificationBadge";
 import {
-  getJobsByLocation,
-  getJobPostings,
   getCurrentUser,
-  updateUserLocation,
   updateUserLocationWithRetry,
   isAuthenticated,
   getCategoriesForFilter,
@@ -112,9 +108,9 @@ const HomeScreen = () => {
     const a =
       Math.sin(dLat / 2) * Math.sin(dLat / 2) +
       Math.cos((lat1 * Math.PI) / 180) *
-      Math.cos((lat2 * Math.PI) / 180) *
-      Math.sin(dLon / 2) *
-      Math.sin(dLon / 2);
+        Math.cos((lat2 * Math.PI) / 180) *
+        Math.sin(dLon / 2) *
+        Math.sin(dLon / 2);
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     const distance = R * c;
     return Math.round(distance * 10) / 10;
@@ -131,8 +127,7 @@ const HomeScreen = () => {
       const loc = job.location as any;
       if (
         loc?.coordinates?.coordinates ||
-        (loc?.coordinates?.latitude &&
-          loc?.coordinates?.longitude)
+        (loc?.coordinates?.latitude && loc?.coordinates?.longitude)
       ) {
         let jobLat, jobLng;
 
@@ -265,7 +260,6 @@ const HomeScreen = () => {
     }
   };
 
-
   const filters = useMemo(() => {
     // For "remote" filter, we don't need user location
     const isRemote = selectedDistance === "remote";
@@ -276,13 +270,15 @@ const HomeScreen = () => {
       priceSort: selectedPriceSort || undefined,
       // Allow distance filter if it's remote OR if we have location
       distance:
-        selectedDistance && (location || isRemote) ? selectedDistance : undefined,
+        selectedDistance && (location || isRemote)
+          ? selectedDistance
+          : undefined,
       userLocation:
         selectedDistance && location
           ? {
-            latitude: location.latitude,
-            longitude: location.longitude,
-          }
+              latitude: location.latitude,
+              longitude: location.longitude,
+            }
           : undefined,
     };
   }, [
@@ -300,7 +296,7 @@ const HomeScreen = () => {
     isLoading: isJobsLoading,
     isError: isJobsError,
     refetch: refetchJobs,
-    isRefetching: isJobsRefetching
+    isRefetching: isJobsRefetching,
   } = useJobPostings(filters);
 
   // Sync loading state
@@ -395,7 +391,6 @@ const HomeScreen = () => {
     setSearchQuery("");
   };
 
-  const lastFetchTime = useRef(0);
   const debounceTimer = useRef<NodeJS.Timeout | null>(null);
 
   // Handle scroll to determine when filter row should be sticky
@@ -429,29 +424,8 @@ const HomeScreen = () => {
     initializeApp();
   }, [dispatch]);
 
-  // Add navigation listener to refresh jobs when returning from JobTimer
-  // OPTIMIZED: Throttle refetches to avoid 429 errors
-  useEffect(() => {
-    const unsubscribe = navigation.addListener("focus", () => {
-      const now = Date.now();
-      const timeSinceLastFetch = now - lastFetchTime.current;
-      const THROTTLE_TIME = 60000; // 60 seconds
-
-      console.log(
-        `HomeScreen focused. Time since last fetch: ${timeSinceLastFetch}ms`
-      );
-
-      if (isInitialized && timeSinceLastFetch > THROTTLE_TIME) {
-        console.log("Throttling check passed - refreshing jobs");
-        refetchJobs();
-        lastFetchTime.current = now;
-      } else {
-        console.log("Skipping refresh due to throttling");
-      }
-    });
-
-    return unsubscribe;
-  }, [navigation, isInitialized, refetchJobs]);
+  // TanStack Query automatically handles refetching on focus with refetchOnWindowFocus
+  // No need for manual throttling - the staleTime configuration prevents excessive refetches
 
   useEffect(() => {
     const fetchLocationAndJobs = async () => {
@@ -560,8 +534,8 @@ const HomeScreen = () => {
               {isInProgress
                 ? "In Progress"
                 : isCompleted
-                  ? "Completed"
-                  : item.status || "Active"}
+                ? "Completed"
+                : item.status || "Active"}
             </Text>
           </View>
         </View>
@@ -573,9 +547,9 @@ const HomeScreen = () => {
               {item.isRemote
                 ? "Remote Work"
                 : item.location?.address ||
-                item.location?.city ||
-                item.location?.state ||
-                "Location not specified"}
+                  item.location?.city ||
+                  item.location?.state ||
+                  "Location not specified"}
             </Text>
           </View>
         </View>
@@ -646,6 +620,7 @@ const HomeScreen = () => {
         <FlatList
           horizontal
           showsHorizontalScrollIndicator={false}
+          bounces={false}
           data={[
             {
               id: "category",
@@ -717,12 +692,13 @@ const HomeScreen = () => {
           <FlatList
             data={options}
             keyExtractor={(item) => String(item.id || item._id)}
+            bounces={false}
             renderItem={({ item }) => (
               <TouchableOpacity
                 style={[
                   styles.modalOption,
                   selectedValue === (item.id || item._id) &&
-                  styles.selectedOption,
+                    styles.selectedOption,
                 ]}
                 onPress={() => onSelect(item.id || item._id)}
               >
@@ -730,7 +706,7 @@ const HomeScreen = () => {
                   style={[
                     styles.modalOptionText,
                     selectedValue === (item.id || item._id) &&
-                    styles.selectedOptionText,
+                      styles.selectedOptionText,
                   ]}
                 >
                   {item.name}
@@ -811,7 +787,6 @@ const HomeScreen = () => {
     );
   }
 
-
   return (
     <View style={styles.container}>
       {/* Filter Modals */}
@@ -861,6 +836,7 @@ const HomeScreen = () => {
           isFilterSticky && { paddingTop: filterRowHeight },
         ]}
         showsVerticalScrollIndicator={false}
+        bounces={false}
         onScroll={handleScroll}
         scrollEventThrottle={16}
         refreshControl={
@@ -879,8 +855,8 @@ const HomeScreen = () => {
               <Text style={styles.locationSubtitle}>
                 {location
                   ? `${location.latitude.toFixed(
-                    4
-                  )}, ${location.longitude.toFixed(4)}`
+                      4
+                    )}, ${location.longitude.toFixed(4)}`
                   : "Getting location..."}
                 {authStatus ? " • Authenticated" : " • Not logged in"}
               </Text>

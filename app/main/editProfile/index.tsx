@@ -1,13 +1,9 @@
 import React, { useState, useEffect, useRef } from "react";
-import {
-  View,
-  Image,
-  TouchableOpacity,
-  ScrollView,
-} from "react-native";
+import { View, TouchableOpacity, ScrollView } from "react-native";
+import { Image } from "expo-image";
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation, useRoute } from "@react-navigation/native";
-import  styles  from "./styles";
+import styles from "./styles";
 
 import CustomButton from "../../../components/CustomButton";
 import { Colors } from "../../../constants/Colors";
@@ -17,7 +13,6 @@ import LabeledInput from "../../../components/labeledTextInput";
 import { User } from "../../../types";
 import { saveUserData } from "../../../utilities/asyncStore";
 import { updateProfile } from "../../../services/api";
-import { logoutUser } from "../../../utilities/authentication";
 import { useDispatch } from "react-redux";
 import Toast from "../../../components/toast";
 import ImagePickerActionSheet, {
@@ -51,18 +46,22 @@ const EditProfile: React.FC = () => {
   };
 
   useEffect(() => {
-    const init = initialUser || ({
-      firstName: "",
-      lastName: "",
-      email: "",
-      profilePicture: Images.profile.profileImage,
-    } as unknown as User);
+    const init =
+      initialUser ||
+      ({
+        firstName: "",
+        lastName: "",
+        email: "",
+        profilePicture: Images.profile.profileImage,
+      } as unknown as User);
 
     setUser(init);
     setFirstName(init.firstName || "");
     setLastName(init.lastName || "");
     setLocation((init.locationText || init.location?.address || "") as string);
-    setProfileImage((init.profilePicture || Images.profile.profileImage) as any);
+    setProfileImage(
+      (init.profilePicture || Images.profile.profileImage) as any
+    );
   }, []);
 
   const showImagePicker = () => {
@@ -131,7 +130,9 @@ const EditProfile: React.FC = () => {
         throw new Error("Unexpected response from server.");
       }
     } catch (error: any) {
-      showToast(error?.response?.data?.message || "Failed to save profile changes");
+      showToast(
+        error?.response?.data?.message || "Failed to save profile changes"
+      );
     } finally {
       setIsSaving(false);
     }
@@ -140,16 +141,17 @@ const EditProfile: React.FC = () => {
   return (
     <View style={styles.container}>
       <Header title="Edit Profile" showBackButton />
-      <ScrollView contentContainerStyle={styles.scrollContent}>
+      <ScrollView contentContainerStyle={styles.scrollContent} bounces={false}>
         {/* Profile Image */}
         <View style={styles.imageWrapper}>
           <Image
             source={
               typeof profileImage === "string"
-                ? { uri: profileImage }
-                : profileImage || Images.profile.profileImage
+                ? profileImage
+                : profileImage?.uri || Images.profile.profileImage
             }
             style={styles.profileImage}
+            placeholder={Images.profile.profileImage}
           />
           <TouchableOpacity onPress={showImagePicker} style={styles.editIcon}>
             <Ionicons name="camera" size={16} color="#fff" />
@@ -170,16 +172,6 @@ const EditProfile: React.FC = () => {
           value={lastName}
           onChangeText={setLastName}
           placeholder="Enter your last name"
-        />
-
-        {/* Location */}
-        <CustomButton
-          color={"red"}
-          text={"logout"}
-          onPress={() => {
-            console.log("Logout button pressed");
-            dispatch(logoutUser() as any);
-          }}
         />
         <Toast
           visible={toastVisible}

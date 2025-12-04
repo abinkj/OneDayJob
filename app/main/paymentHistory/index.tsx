@@ -144,7 +144,7 @@ const PaymentHistoryScreen = () => {
     <View style={styles.container}>
       <Header title="Payment History" showBackButton />
 
-      <ScrollView
+      <ScrollView bounces={false}
         style={styles.content}
         showsVerticalScrollIndicator={false}
         refreshControl={

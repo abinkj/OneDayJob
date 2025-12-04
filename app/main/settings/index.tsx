@@ -6,9 +6,9 @@ import {
   TouchableOpacity,
   Switch,
   Alert,
-  Image,
   ActivityIndicator,
 } from "react-native";
+import { Image } from "expo-image";
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import { useDispatch } from "react-redux";
@@ -20,6 +20,7 @@ import { User } from "../../../types";
 import Images from "../../../utilities/images";
 import Toast from "react-native-toast-message";
 import styles from "./styles";
+import strings from "../../../utilities/strings";
 
 interface SettingsItemProps {
   icon: string;
@@ -197,11 +198,6 @@ const Settings: React.FC = () => {
     );
   };
 
-  const profileImageSrc =
-    typeof user?.profilePicture === "string"
-      ? { uri: user.profilePicture }
-      : user?.profilePicture || Images.profile.profileImage;
-
   if (isLoading) {
     return (
       <View style={styles.container}>
@@ -219,6 +215,7 @@ const Settings: React.FC = () => {
       <ScrollView
         style={styles.scrollView}
         showsVerticalScrollIndicator={false}
+        bounces={false}
       >
         {/* Profile Card */}
         <TouchableOpacity
@@ -227,7 +224,11 @@ const Settings: React.FC = () => {
           //onPress={handleEditProfile}
           activeOpacity={0.7}
         >
-          <Image source={profileImageSrc} style={styles.profileImage} />
+          <Image
+            source={user?.profilePicture}
+            style={styles.profileImage}
+            placeholder={Images.profile.profileImage}
+          />
           <View style={styles.profileInfo}>
             <Text style={styles.profileName}>
               {user?.firstName} {user?.lastName}
@@ -372,10 +373,9 @@ const Settings: React.FC = () => {
             icon="document-text-outline"
             title="Terms & Conditions"
             onPress={() => {
-              Toast.show({
-                type: "info",
-                text1: "Coming Soon",
-                text2: "Terms & Conditions will be available soon",
+              navigation.navigate("PrivacyPolicy", {
+                url: strings.APP_TERMS_CONDITIONS,
+                title: "Terms & Conditions",
               });
             }}
           />
@@ -383,10 +383,9 @@ const Settings: React.FC = () => {
             icon="shield-checkmark-outline"
             title="Privacy Policy"
             onPress={() => {
-              Toast.show({
-                type: "info",
-                text1: "Coming Soon",
-                text2: "Privacy Policy will be available soon",
+              navigation.navigate("PrivacyPolicy", {
+                url: strings.APP_PRIVACY_POLICY,
+                title: "Privacy Policy",
               });
             }}
           />

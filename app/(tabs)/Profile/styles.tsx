@@ -142,7 +142,7 @@ const styles = StyleSheet.create({
     color: "#333",
   },
   seeAllButton: {
-    backgroundColor: Colors.backgroundGrey,
+    backgroundColor: Colors.background,
     borderRadius: 12,
     paddingVertical: 16,
     alignItems: "center",

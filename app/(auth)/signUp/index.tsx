@@ -56,7 +56,7 @@ const SignUp = () => {
 
   return (
     <KeyboardAvoidingView style={styles.container}>
-      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ alignItems: 'center' }} showsVerticalScrollIndicator={false}>
+      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ alignItems: 'center' }} showsVerticalScrollIndicator={false} bounces={false}>
 
         <Text style={styles.title}>Create Account</Text>
         <Image
