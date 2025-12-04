@@ -18,7 +18,7 @@ const CustomTabBar = ({ state, descriptors, navigation }) => {
   const currentRoute = state.routes[state.index];
   const routeName =
     getFocusedRouteNameFromRoute(currentRoute) || currentRoute.name;
-  const { kycStatus } = useSelector((state: any) => state.authentication);
+  //const { kycStatus } = useSelector((state: any) => state.authentication);
 
   // Animated values for each tab - hooks must be called before any early returns
   const scales = state.routes.map(
@@ -27,6 +27,7 @@ const CustomTabBar = ({ state, descriptors, navigation }) => {
 
   // Animated value for tab bar visibility
   const tabBarTranslateY = useRef(new Animated.Value(0)).current;
+  const tabBarOpacity = useRef(new Animated.Value(1)).current;
 
   // Check if tab bar should be hidden
   const hiddenTabBarScreens = ["PostJob"];
@@ -46,26 +47,33 @@ const CustomTabBar = ({ state, descriptors, navigation }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.index]);
 
-  // Animate tab bar visibility
+  // Animate tab bar visibility with both slide and fade
   useEffect(() => {
-    Animated.timing(tabBarTranslateY, {
-      toValue: shouldHideTabBar ? 100 : 0, // Slide down 100 units when hidden
-      duration: 250,
-      useNativeDriver: true,
-    }).start();
-  }, [shouldHideTabBar, tabBarTranslateY]);
+    Animated.parallel([
+      Animated.timing(tabBarTranslateY, {
+        toValue: shouldHideTabBar ? 100 : 0,
+        duration: 250,
+        useNativeDriver: true,
+      }),
+      Animated.timing(tabBarOpacity, {
+        toValue: shouldHideTabBar ? 0 : 1,
+        duration: 250,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, [shouldHideTabBar, tabBarTranslateY, tabBarOpacity]);
 
   const handlePostJobPress = () => {
-    if (kycStatus === "completed") {
-      navigation.navigate("PostJob");
-    } else {
-      Toast.show({
-        type: "info",
-        text1: "KYC Required",
-        text2: "Please complete your KYC to post jobs",
-      });
-      navigation.navigate("BankAccount");
-    }
+    //if (kycStatus === "completed") {
+    navigation.navigate("PostJob");
+    //} else {
+    // Toast.show({
+    //   type: "info",
+    //   text1: "KYC Required",
+    //   text2: "Please complete your KYC to post jobs",
+    // });
+    // navigation.navigate("BankAccount");
+    //}
   };
 
   const renderTab = (index, route, iconName, label) => (
@@ -99,6 +107,7 @@ const CustomTabBar = ({ state, descriptors, navigation }) => {
         styles.container,
         {
           transform: [{ translateY: tabBarTranslateY }],
+          opacity: tabBarOpacity,
         },
       ]}
     >
