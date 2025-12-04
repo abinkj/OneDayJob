@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -25,7 +25,6 @@ import socketService from "../../../services/socketService";
 import SuccessAnimation from "../../../components/successAnimation";
 import Toast from "react-native-toast-message";
 import { useNotifications } from "../../../contexts/NotificationContext";
-import { get } from "react-native/Libraries/TurboModule/TurboModuleRegistry";
 
 const JobDetails = () => {
   const navigation = useNavigation<any>();

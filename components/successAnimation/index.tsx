@@ -6,10 +6,12 @@ import DeviceDimensions from "../../constants/DeviceDimenions";
 import { Colors } from "../../constants/Colors";
 
 type SuccessAnimationProps = {
-  message?: string; // Optional text to display under animation
+  message?: string;
 };
 
-const SuccessAnimation: React.FC<SuccessAnimationProps> = ({ message = "Verified Successfully" }) => {
+const SuccessAnimation: React.FC<SuccessAnimationProps> = ({
+  message = "Verified Successfully",
+}) => {
   return (
     <View style={[styles.container, styles.center]}>
       <LottieView
@@ -46,5 +48,6 @@ const styles = StyleSheet.create({
     fontSize: 26,
     color: Colors.grey,
     fontWeight: "600",
+    textAlign: "center",
   },
 });

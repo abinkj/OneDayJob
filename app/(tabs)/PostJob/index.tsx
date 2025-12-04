@@ -1,22 +1,18 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import {
   View,
   Text,
   TextInput,
   TouchableOpacity,
   Image,
-  StyleSheet,
   ScrollView,
-  FlatList,
   Modal,
-  Switch,
   Alert,
   Platform,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { useSelector } from "react-redux";
 import { Ionicons } from "@expo/vector-icons";
-import DeviceDimensions from "../../../constants/DeviceDimenions";
 import { Colors } from "../../../constants/Colors";
 import CustomButton from "../../../components/CustomButton";
 import { Picker } from "@react-native-picker/picker";
@@ -33,11 +29,9 @@ import {
   isAuthenticated,
   // uploadJobPhotos
 } from "../../../services/api"; // Adjust the path according to your project structure
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { LocationData } from "../../../services/locationService";
 import { testLocationService } from "../../../services/locationService";
 import Toast from "react-native-toast-message";
-import { BLURHASH } from "../../../constants/UI";
 
 // Default Job Categories (fallback if API fails)
 const defaultJobCategories = [

@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef, useMemo } from "react";
+import { useEffect, useState, useRef, useMemo } from "react";
 import {
   View,
   Text,
@@ -9,7 +9,6 @@ import {
   ImageBackground,
   ActivityIndicator,
   RefreshControl,
-  ScrollView,
   Animated,
   Modal,
 } from "react-native";
@@ -27,10 +26,7 @@ import { useNavigation } from "@react-navigation/native";
 import { useNotifications } from "../../../contexts/NotificationContext";
 import NotificationBadge from "../../../components/notificationBadge";
 import {
-  getJobsByLocation,
-  getJobPostings,
   getCurrentUser,
-  updateUserLocation,
   updateUserLocationWithRetry,
   isAuthenticated,
   getCategoriesForFilter,
