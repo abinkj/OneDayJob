@@ -2,7 +2,6 @@ import React, { useState, useRef, useEffect } from "react";
 import {
   View,
   Text,
-  Image,
   TouchableOpacity,
   ScrollView,
   Animated,
@@ -12,7 +11,6 @@ import {
   Alert,
   ActivityIndicator,
 } from "react-native";
-import image from "expo-image";
 import { Ionicons } from "@expo/vector-icons";
 import styles from "./styles";
 import { Header } from "../../../components/header";
@@ -27,7 +25,7 @@ import { getUserData } from "../../../utilities/asyncStore";
 import { User, Review } from "../../../types";
 import { createConversation, getCurrentUser } from "../../../services/api";
 import Toast from "react-native-toast-message";
-import { BLURHASH } from "../../../constants/UI";
+import { Image } from "expo-image";
 
 if (
   Platform.OS === "android" &&
@@ -185,18 +183,18 @@ const Profile: React.FC = () => {
     );
   }
 
-  const profileImageSrc =
-    typeof user?.profilePicture === "string"
-      ? { uri: user.profilePicture }
-      : user?.profilePicture || Images.profile.profileImage;
-
   return (
     <View style={styles.container}>
       <Header title="Profile" showEditButton onEditPress={handleEdit} />
       <ScrollView>
         {/* Profile Card */}
         <View style={styles.profileCard}>
-          <Image source={profileImageSrc} style={styles.profileImage} />
+          {/* <Image source={profileImageSrc} style={styles.profileImage} /> */}
+          <Image
+            source={user.profilePicture}
+            style={styles.profileImage}
+            placeholder={Images.profile.profileImage}
+          />
           <Text style={styles.name}>
             {user?.firstName} {user?.lastName}
           </Text>

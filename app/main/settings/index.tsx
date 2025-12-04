@@ -6,9 +6,9 @@ import {
   TouchableOpacity,
   Switch,
   Alert,
-  Image,
   ActivityIndicator,
 } from "react-native";
+import { Image } from "expo-image";
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import { useDispatch } from "react-redux";
@@ -198,11 +198,6 @@ const Settings: React.FC = () => {
     );
   };
 
-  const profileImageSrc =
-    typeof user?.profilePicture === "string"
-      ? { uri: user.profilePicture }
-      : user?.profilePicture || Images.profile.profileImage;
-
   if (isLoading) {
     return (
       <View style={styles.container}>
@@ -228,7 +223,11 @@ const Settings: React.FC = () => {
           //onPress={handleEditProfile}
           activeOpacity={0.7}
         >
-          <Image source={profileImageSrc} style={styles.profileImage} />
+          <Image
+            source={user?.profilePicture}
+            style={styles.profileImage}
+            placeholder={Images.profile.profileImage}
+          />
           <View style={styles.profileInfo}>
             <Text style={styles.profileName}>
               {user?.firstName} {user?.lastName}
