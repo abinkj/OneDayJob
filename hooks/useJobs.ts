@@ -1,12 +1,17 @@
-import { useQuery, useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { 
-  getJobPostings, 
-  getJobPostingsByUserId, 
-  getAppliedJobsByUserId, 
-  deleteJobPosting, 
-  withdrawApplication 
-} from '../services/api';
-import { JobPost } from '../types';
+import {
+  useQuery,
+  useInfiniteQuery,
+  useMutation,
+  useQueryClient,
+} from "@tanstack/react-query";
+import {
+  getJobPostings,
+  getJobPostingsByUserId,
+  getAppliedJobsByUserId,
+  deleteJobPosting,
+  withdrawApplication,
+} from "../services/api";
+import { JobPost } from "../types";
 
 interface JobFilters {
   category?: string | null;
@@ -21,10 +26,10 @@ interface JobFilters {
 
 export const useJobPostings = (filters: JobFilters) => {
   return useQuery({
-    queryKey: ['jobs', filters],
+    queryKey: ["jobs", filters],
     queryFn: async () => {
       const response = await getJobPostings(filters);
-      
+
       // Handle different response structures based on existing api.tsx logic
       let jobs: JobPost[] = [];
       if (response.data?.data) {
@@ -34,16 +39,18 @@ export const useJobPostings = (filters: JobFilters) => {
       } else if (Array.isArray(response.data)) {
         jobs = response.data;
       }
-      
+
       return jobs;
     },
-    staleTime: 1000 * 60 * 5, // 5 minutes
+    staleTime: 1000 * 60, // 1 minute - data is fresh for 1 minute
+    refetchOnWindowFocus: true, // Refetch when app comes to foreground
+    refetchOnMount: true, // Refetch when component mounts
   });
 };
 
 export const useUserJobPostings = (userId: string | undefined) => {
   return useInfiniteQuery({
-    queryKey: ['userJobs', userId],
+    queryKey: ["userJobs", userId],
     queryFn: async ({ pageParam = 1 }) => {
       if (!userId) return { data: [], hasMore: false };
       const response = await getJobPostingsByUserId(userId, pageParam, 10);
@@ -54,12 +61,15 @@ export const useUserJobPostings = (userId: string | undefined) => {
       return lastPage.hasMore ? allPages.length + 1 : undefined;
     },
     enabled: !!userId,
+    staleTime: 1000 * 60, // 1 minute - data is fresh for 1 minute
+    refetchOnWindowFocus: true, // Refetch when app comes to foreground
+    refetchOnMount: true, // Refetch when component mounts
   });
 };
 
 export const useUserAppliedJobs = (userId: string | undefined) => {
   return useInfiniteQuery({
-    queryKey: ['userAppliedJobs', userId],
+    queryKey: ["userAppliedJobs", userId],
     queryFn: async ({ pageParam = 1 }) => {
       if (!userId) return { data: [], hasMore: false };
       const response = await getAppliedJobsByUserId(userId, pageParam, 10);
@@ -70,6 +80,9 @@ export const useUserAppliedJobs = (userId: string | undefined) => {
       return lastPage.hasMore ? allPages.length + 1 : undefined;
     },
     enabled: !!userId,
+    staleTime: 1000 * 60, // 1 minute - data is fresh for 1 minute
+    refetchOnWindowFocus: true, // Refetch when app comes to foreground
+    refetchOnMount: true, // Refetch when component mounts
   });
 };
 
@@ -78,8 +91,8 @@ export const useDeleteJob = () => {
   return useMutation({
     mutationFn: (jobId: string) => deleteJobPosting(jobId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['userJobs'] });
-      queryClient.invalidateQueries({ queryKey: ['jobs'] });
+      queryClient.invalidateQueries({ queryKey: ["userJobs"] });
+      queryClient.invalidateQueries({ queryKey: ["jobs"] });
     },
   });
 };
@@ -89,7 +102,7 @@ export const useWithdrawApplication = () => {
   return useMutation({
     mutationFn: (jobId: string) => withdrawApplication(jobId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['userAppliedJobs'] });
+      queryClient.invalidateQueries({ queryKey: ["userAppliedJobs"] });
     },
   });
 };

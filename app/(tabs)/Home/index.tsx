@@ -391,7 +391,6 @@ const HomeScreen = () => {
     setSearchQuery("");
   };
 
-  const lastFetchTime = useRef(0);
   const debounceTimer = useRef<NodeJS.Timeout | null>(null);
 
   // Handle scroll to determine when filter row should be sticky
@@ -425,29 +424,8 @@ const HomeScreen = () => {
     initializeApp();
   }, [dispatch]);
 
-  // Add navigation listener to refresh jobs when returning from JobTimer
-  // OPTIMIZED: Throttle refetches to avoid 429 errors
-  useEffect(() => {
-    const unsubscribe = navigation.addListener("focus", () => {
-      const now = Date.now();
-      const timeSinceLastFetch = now - lastFetchTime.current;
-      const THROTTLE_TIME = 60000; // 60 seconds
-
-      console.log(
-        `HomeScreen focused. Time since last fetch: ${timeSinceLastFetch}ms`
-      );
-
-      if (isInitialized && timeSinceLastFetch > THROTTLE_TIME) {
-        console.log("Throttling check passed - refreshing jobs");
-        refetchJobs();
-        lastFetchTime.current = now;
-      } else {
-        console.log("Skipping refresh due to throttling");
-      }
-    });
-
-    return unsubscribe;
-  }, [navigation, isInitialized, refetchJobs]);
+  // TanStack Query automatically handles refetching on focus with refetchOnWindowFocus
+  // No need for manual throttling - the staleTime configuration prevents excessive refetches
 
   useEffect(() => {
     const fetchLocationAndJobs = async () => {
