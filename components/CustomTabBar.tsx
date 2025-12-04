@@ -27,6 +27,7 @@ const CustomTabBar = ({ state, descriptors, navigation }) => {
 
   // Animated value for tab bar visibility
   const tabBarTranslateY = useRef(new Animated.Value(0)).current;
+  const tabBarOpacity = useRef(new Animated.Value(1)).current;
 
   // Check if tab bar should be hidden
   const hiddenTabBarScreens = ["PostJob"];
@@ -46,14 +47,21 @@ const CustomTabBar = ({ state, descriptors, navigation }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.index]);
 
-  // Animate tab bar visibility
+  // Animate tab bar visibility with both slide and fade
   useEffect(() => {
-    Animated.timing(tabBarTranslateY, {
-      toValue: shouldHideTabBar ? 100 : 0, // Slide down 100 units when hidden
-      duration: 250,
-      useNativeDriver: true,
-    }).start();
-  }, [shouldHideTabBar, tabBarTranslateY]);
+    Animated.parallel([
+      Animated.timing(tabBarTranslateY, {
+        toValue: shouldHideTabBar ? 100 : 0,
+        duration: 250,
+        useNativeDriver: true,
+      }),
+      Animated.timing(tabBarOpacity, {
+        toValue: shouldHideTabBar ? 0 : 1,
+        duration: 250,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, [shouldHideTabBar, tabBarTranslateY, tabBarOpacity]);
 
   const handlePostJobPress = () => {
     if (kycStatus === "completed") {
@@ -99,6 +107,7 @@ const CustomTabBar = ({ state, descriptors, navigation }) => {
         styles.container,
         {
           transform: [{ translateY: tabBarTranslateY }],
+          opacity: tabBarOpacity,
         },
       ]}
     >
