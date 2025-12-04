@@ -4,7 +4,13 @@ import { Ionicons } from "@expo/vector-icons";
 import { Colors } from "../../constants/Colors";
 import { JobCardData } from "../../types";
 import StatusBadge from "../statusBadge";
-import { getJobStatusInfo, getApplicationStatusInfo, getDisplayStatus, isWorkCompleted, getEmployerDisplayStatus } from "../../utilities/statusUtils";
+import {
+  getJobStatusInfo,
+  getApplicationStatusInfo,
+  getDisplayStatus,
+  isWorkCompleted,
+  getEmployerDisplayStatus,
+} from "../../utilities/statusUtils";
 
 const JobCard = ({
   data,
@@ -47,33 +53,42 @@ const JobCard = ({
   const actualStatus = jobStatus || status;
 
   // Get the appropriate status for display
-  let displayStatus = getDisplayStatus(actualStatus, applicationStatus, isEmployer);
-  
+  let displayStatus = getDisplayStatus(
+    actualStatus,
+    applicationStatus,
+    isEmployer
+  );
+
   // For employers, use the corrected display status that handles payment state
   if (isEmployer) {
     displayStatus = getEmployerDisplayStatus(actualStatus, data?.isPaymentDone);
   }
-  
+
   // Get status info based on context
-  const statusInfo = isEmployer 
+  const statusInfo = isEmployer
     ? getJobStatusInfo(displayStatus)
     : getApplicationStatusInfo(displayStatus);
 
-  const isApplied = displayStatus?.toLowerCase() === "applied" || displayStatus?.toLowerCase() === "accepted";
-  const isInProgress = displayStatus?.toLowerCase() === "in_progress" || displayStatus?.toLowerCase() === "in progress";
+  const isApplied =
+    displayStatus?.toLowerCase() === "applied" ||
+    displayStatus?.toLowerCase() === "accepted";
+  const isInProgress =
+    displayStatus?.toLowerCase() === "in_progress" ||
+    displayStatus?.toLowerCase() === "in progress";
   const isCompleted = displayStatus?.toLowerCase() === "completed";
-  const isWorkCompletedStatus = displayStatus?.toLowerCase() === "work_completed";
-  
+  const isWorkCompletedStatus =
+    displayStatus?.toLowerCase() === "work_completed";
+
   // Check if work is completed based on status or backend flags
   // Use actualStatus instead of displayStatus to check the real backend status
   const isWorkFinished = isWorkCompleted(
-    actualStatus, 
-    data?.isCompletedByWorker, 
+    actualStatus,
+    data?.isCompletedByWorker,
     data?.isVerifiedByEmployer
   );
 
   // Debug logging for payment button
-  console.log('🔍 JobCard Debug:', {
+  console.log("🔍 JobCard Debug:", {
     jobId: data?._id,
     jobName: data?.name,
     status: data?.status,
@@ -88,7 +103,7 @@ const JobCard = ({
     isPaymentDone: data?.isPaymentDone,
     isEmployer,
     showPaymentButton,
-    shouldShowPayment: showPaymentButton && isWorkFinished && isEmployer
+    shouldShowPayment: showPaymentButton && isWorkFinished && isEmployer,
   });
 
   const formattedLocation = location?.address
@@ -122,11 +137,7 @@ const JobCard = ({
           </Text>
         </View>
 
-        <StatusBadge 
-          statusInfo={statusInfo}
-          size="medium"
-          showIcon={true}
-        />
+        <StatusBadge statusInfo={statusInfo} size="medium" showIcon={true} />
       </View>
 
       {/* Job Title */}
@@ -255,13 +266,25 @@ const JobCard = ({
               }}
             >
               <View style={styles.paymentButtonContent}>
-                <Ionicons name="receipt-outline" size={14} color={Colors.white} />
-                <Text style={[styles.buttonText, { color: Colors.white, marginLeft: 4 }]}>
+                <Ionicons
+                  name="receipt-outline"
+                  size={14}
+                  color={Colors.white}
+                />
+                <Text
+                  style={[
+                    styles.buttonText,
+                    { color: Colors.white, marginLeft: 4 },
+                  ]}
+                >
                   View Receipt
                 </Text>
               </View>
             </TouchableOpacity>
-          ) : showPaymentButton && isWorkFinished && isEmployer && !data?.isPaymentDone ? (
+          ) : showPaymentButton &&
+            isWorkFinished &&
+            isEmployer &&
+            !data?.isPaymentDone ? (
             <TouchableOpacity
               style={[
                 styles.button,
@@ -272,8 +295,17 @@ const JobCard = ({
               }}
             >
               <View style={styles.paymentButtonContent}>
-                <Ionicons name="wallet-outline" size={14} color={Colors.white} />
-                <Text style={[styles.buttonText, { color: Colors.white, marginLeft: 4 }]}>
+                <Ionicons
+                  name="wallet-outline"
+                  size={14}
+                  color={Colors.white}
+                />
+                <Text
+                  style={[
+                    styles.buttonText,
+                    { color: Colors.white, marginLeft: 4 },
+                  ]}
+                >
                   Pay Now
                 </Text>
               </View>

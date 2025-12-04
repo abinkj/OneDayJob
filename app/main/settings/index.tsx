@@ -374,7 +374,7 @@ const Settings: React.FC = () => {
             title="Terms & Conditions"
             onPress={() => {
               navigation.navigate("PrivacyPolicy", {
-                url: strings.APP_TERMS_CONDITIONS, 
+                url: strings.APP_TERMS_CONDITIONS,
                 title: "Terms & Conditions",
               });
             }}
@@ -384,7 +384,7 @@ const Settings: React.FC = () => {
             title="Privacy Policy"
             onPress={() => {
               navigation.navigate("PrivacyPolicy", {
-                url: strings.APP_PRIVACY_POLICY, 
+                url: strings.APP_PRIVACY_POLICY,
                 title: "Privacy Policy",
               });
             }}

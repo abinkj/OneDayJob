@@ -37,6 +37,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { LocationData } from "../../../services/locationService";
 import { testLocationService } from "../../../services/locationService";
 import Toast from "react-native-toast-message";
+import { BLURHASH } from "../../../constants/UI";
 
 // Default Job Categories (fallback if API fails)
 const defaultJobCategories = [

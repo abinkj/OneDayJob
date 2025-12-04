@@ -12,6 +12,7 @@ import {
   Alert,
   ActivityIndicator,
 } from "react-native";
+import image from "expo-image";
 import { Ionicons } from "@expo/vector-icons";
 import styles from "./styles";
 import { Header } from "../../../components/header";
@@ -26,6 +27,7 @@ import { getUserData } from "../../../utilities/asyncStore";
 import { User, Review } from "../../../types";
 import { createConversation, getCurrentUser } from "../../../services/api";
 import Toast from "react-native-toast-message";
+import { BLURHASH } from "../../../constants/UI";
 
 if (
   Platform.OS === "android" &&
