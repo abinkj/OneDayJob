@@ -478,7 +478,7 @@ const BankAccount = () => {
         </View>
       </View> */}
 
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView style={styles.content} showsVerticalScrollIndicator={false} bounces={false}>
         {/* Step 1: PAN Card Details - Temporarily commented out */}
         {/* {currentStep === 1 && (
           <>

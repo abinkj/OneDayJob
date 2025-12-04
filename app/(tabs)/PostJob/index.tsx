@@ -1941,6 +1941,7 @@ const PostJobScreen = ({ navigation: navProp }) => {
               <ScrollView
                 horizontal
                 showsHorizontalScrollIndicator={false}
+                bounces={false}
                 style={styles.photosScrollView}
               >
                 {photos.length > 0 &&
@@ -2033,6 +2034,7 @@ const PostJobScreen = ({ navigation: navProp }) => {
       <ScrollView
         style={styles.scrollContainer}
         showsVerticalScrollIndicator={false}
+        bounces={false}
       >
         {currentStep === 1 && renderStep1()}
         {currentStep === 2 && renderStep2()}
@@ -2107,7 +2109,7 @@ const PostJobScreen = ({ navigation: navProp }) => {
               </TouchableOpacity>
             </View>
 
-            <ScrollView style={styles.modalScrollContent}>
+            <ScrollView style={styles.modalScrollContent} bounces={false}>
               {requirements.map((req, index) => (
                 <View key={index} style={styles.editRequirementItem}>
                   <Text style={styles.requirementText}>{req}</Text>

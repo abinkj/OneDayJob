@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from "react";
 import {
   View,
   Text,
@@ -7,10 +7,10 @@ import {
   ActivityIndicator,
   Alert,
   ScrollView,
-} from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { useNavigation, useRoute } from '@react-navigation/native';
-import { Header } from '../../../components/header';
+} from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import { useNavigation, useRoute } from "@react-navigation/native";
+import { Header } from "../../../components/header";
 import {
   getWorkerSession,
   getJobDashboard,
@@ -22,9 +22,9 @@ import {
   syncWorkerTime,
   formatTime,
   formatDuration,
-} from '../../../services/api';
-import Toast from 'react-native-toast-message';
-import styles from './styles';
+} from "../../../services/api";
+import Toast from "react-native-toast-message";
+import styles from "./styles";
 
 interface JobTimerRouteParams {
   jobId: string;
@@ -35,7 +35,11 @@ interface JobTimerRouteParams {
 const JobTimerScreen = () => {
   const navigation = useNavigation();
   const route = useRoute();
-  const { jobId, jobName, isEmployer = false } = route.params as JobTimerRouteParams;
+  const {
+    jobId,
+    jobName,
+    isEmployer = false,
+  } = route.params as JobTimerRouteParams;
 
   // Timer states
   const [sessionData, setSessionData] = useState<any>(null);
@@ -58,7 +62,7 @@ const JobTimerScreen = () => {
   useEffect(() => {
     if (isActive) {
       timerRef.current = setInterval(() => {
-        setCurrentTime(prev => prev + 1);
+        setCurrentTime((prev) => prev + 1);
       }, 1000);
     } else {
       if (timerRef.current) {
@@ -79,8 +83,9 @@ const JobTimerScreen = () => {
     if (isActive && sessionData?.session?.id) {
       syncIntervalRef.current = setInterval(() => {
         const timeToSync = currentTime - lastSyncTime;
-        if (timeToSync >= 30) { // Sync every 30 seconds
-          syncTime(sessionData.session.id, timeToSync, 'active');
+        if (timeToSync >= 30) {
+          // Sync every 30 seconds
+          syncTime(sessionData.session.id, timeToSync, "active");
           setLastSyncTime(currentTime);
         }
       }, 30000);
@@ -101,14 +106,14 @@ const JobTimerScreen = () => {
   const loadSessionData = async () => {
     try {
       setLoading(true);
-      
+
       console.log("JobTimer - isEmployer:", isEmployer, "jobId:", jobId);
-      
+
       if (isEmployer) {
         // Load employer dashboard data
         console.log("Loading employer dashboard for job:", jobId);
         const response = await getJobDashboard(jobId, true);
-        
+
         if (response.data.success) {
           setSessionData(response.data.data);
           // For employer view, we don't need timer states
@@ -121,23 +126,26 @@ const JobTimerScreen = () => {
         console.log("Loading worker session for job:", jobId);
         try {
           const response = await getWorkerSession(jobId, true);
-          
+
           if (response.data.success) {
             const session = response.data.data.session;
             console.log("Worker session data received:", {
               session: session,
               sessionStatus: session?.status,
               hasSession: !!session,
-              sessionId: session?.id || session?._id
+              sessionId: session?.id || session?._id,
             });
             setSessionData(response.data.data);
-            setIsActive(session.status === 'active');
+            setIsActive(session.status === "active");
             setCurrentTime(session.totalWorkedSeconds || 0);
             setLastSyncTime(session.totalWorkedSeconds || 0);
           }
         } catch (sessionError: any) {
           // Handle case where no session exists yet (404 error)
-          if (sessionError.response?.status === 404 || sessionError.response?.status === 403) {
+          if (
+            sessionError.response?.status === 404 ||
+            sessionError.response?.status === 403
+          ) {
             console.log("No worker session found yet - showing start button");
             setSessionData(null);
             setIsActive(false);
@@ -150,11 +158,11 @@ const JobTimerScreen = () => {
         }
       }
     } catch (error) {
-      console.error('Error loading session data:', error);
+      console.error("Error loading session data:", error);
       Toast.show({
-        type: 'error',
-        text1: 'Error',
-        text2: 'Failed to load session data',
+        type: "error",
+        text1: "Error",
+        text2: "Failed to load session data",
       });
     } finally {
       setLoading(false);
@@ -166,22 +174,23 @@ const JobTimerScreen = () => {
       setActionLoading(true);
       console.log("Initiating job execution for job:", jobId);
       const response = await initiateJobExecution(jobId);
-      
+
       if (response.data.success) {
         await loadSessionData(); // Reload to get updated dashboard data
-        
+
         Toast.show({
-          type: 'success',
-          text1: 'Job Initiated',
-          text2: 'Job execution has been started. Workers can now begin their sessions.',
+          type: "success",
+          text1: "Job Initiated",
+          text2:
+            "Job execution has been started. Workers can now begin their sessions.",
         });
       }
     } catch (error) {
-      console.error('Error initiating job:', error);
+      console.error("Error initiating job:", error);
       Toast.show({
-        type: 'error',
-        text1: 'Error',
-        text2: 'Failed to initiate job execution',
+        type: "error",
+        text1: "Error",
+        text2: "Failed to initiate job execution",
       });
     } finally {
       setActionLoading(false);
@@ -192,25 +201,25 @@ const JobTimerScreen = () => {
     try {
       setActionLoading(true);
       const response = await startWorkerSession(jobId);
-      
+
       if (response.data.success) {
         setIsActive(true);
         setCurrentTime(0);
         setLastSyncTime(0);
         await loadSessionData();
-        
+
         Toast.show({
-          type: 'success',
-          text1: 'Session Started',
-          text2: 'Work session has been started',
+          type: "success",
+          text1: "Session Started",
+          text2: "Work session has been started",
         });
       }
     } catch (error) {
-      console.error('Error starting session:', error);
+      console.error("Error starting session:", error);
       Toast.show({
-        type: 'error',
-        text1: 'Error',
-        text2: 'Failed to start work session',
+        type: "error",
+        text1: "Error",
+        text2: "Failed to start work session",
       });
     } finally {
       setActionLoading(false);
@@ -223,23 +232,23 @@ const JobTimerScreen = () => {
     try {
       setActionLoading(true);
       const response = await pauseWorkerSession(sessionData.session.id);
-      
+
       if (response.data.success) {
         setIsActive(false);
         await loadSessionData();
-        
+
         Toast.show({
-          type: 'success',
-          text1: 'Session Paused',
-          text2: 'Work session has been paused',
+          type: "success",
+          text1: "Session Paused",
+          text2: "Work session has been paused",
         });
       }
     } catch (error) {
-      console.error('Error pausing session:', error);
+      console.error("Error pausing session:", error);
       Toast.show({
-        type: 'error',
-        text1: 'Error',
-        text2: 'Failed to pause work session',
+        type: "error",
+        text1: "Error",
+        text2: "Failed to pause work session",
       });
     } finally {
       setActionLoading(false);
@@ -252,23 +261,23 @@ const JobTimerScreen = () => {
     try {
       setActionLoading(true);
       const response = await resumeWorkerSession(sessionData.session.id);
-      
+
       if (response.data.success) {
         setIsActive(true);
         await loadSessionData();
-        
+
         Toast.show({
-          type: 'success',
-          text1: 'Session Resumed',
-          text2: 'Work session has been resumed',
+          type: "success",
+          text1: "Session Resumed",
+          text2: "Work session has been resumed",
         });
       }
     } catch (error) {
-      console.error('Error resuming session:', error);
+      console.error("Error resuming session:", error);
       Toast.show({
-        type: 'error',
-        text1: 'Error',
-        text2: 'Failed to resume work session',
+        type: "error",
+        text1: "Error",
+        text2: "Failed to resume work session",
       });
     } finally {
       setActionLoading(false);
@@ -279,34 +288,37 @@ const JobTimerScreen = () => {
     if (!sessionData?.session?.id) return;
 
     Alert.alert(
-      'Complete Session',
-      'Are you sure you want to complete this work session?',
+      "Complete Session",
+      "Are you sure you want to complete this work session?",
       [
-        { text: 'Cancel', style: 'cancel' },
+        { text: "Cancel", style: "cancel" },
         {
-          text: 'Complete',
-          style: 'destructive',
+          text: "Complete",
+          style: "destructive",
           onPress: async () => {
             try {
               setActionLoading(true);
-              const response = await completeWorkerSession(sessionData.session.id, 'Work completed');
-              
+              const response = await completeWorkerSession(
+                sessionData.session.id,
+                "Work completed"
+              );
+
               if (response.data.success) {
                 setIsActive(false);
                 await loadSessionData();
-                
+
                 Toast.show({
-                  type: 'success',
-                  text1: 'Session Completed',
-                  text2: 'Work session has been completed',
+                  type: "success",
+                  text1: "Session Completed",
+                  text2: "Work session has been completed",
                 });
               }
             } catch (error) {
-              console.error('Error completing session:', error);
+              console.error("Error completing session:", error);
               Toast.show({
-                type: 'error',
-                text1: 'Error',
-                text2: 'Failed to complete work session',
+                type: "error",
+                text1: "Error",
+                text2: "Failed to complete work session",
               });
             } finally {
               setActionLoading(false);
@@ -317,11 +329,15 @@ const JobTimerScreen = () => {
     );
   };
 
-  const syncTime = async (sessionId: string, additionalSeconds: number, status: string) => {
+  const syncTime = async (
+    sessionId: string,
+    additionalSeconds: number,
+    status: string
+  ) => {
     try {
       await syncWorkerTime(sessionId, additionalSeconds, status, true);
     } catch (error) {
-      console.error('Error syncing time:', error);
+      console.error("Error syncing time:", error);
     }
   };
 
@@ -341,19 +357,26 @@ const JobTimerScreen = () => {
   const job = sessionData?.job || sessionData?.jobInfo;
   const employer = sessionData?.employer;
   const summary = sessionData?.summary;
-  
+
   console.log("Render state:", {
     isEmployer: isEmployer,
     hasSessionData: !!sessionData,
     hasSession: !!session,
-    sessionStatus: session?.status
+    sessionStatus: session?.status,
   });
 
   return (
     <View style={styles.container}>
-      <Header title={isEmployer ? "Job Dashboard" : "Job Timer"} showBackButton />
-      
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+      <Header
+        title={isEmployer ? "Job Dashboard" : "Job Timer"}
+        showBackButton
+      />
+
+      <ScrollView
+        style={styles.content}
+        showsVerticalScrollIndicator={false}
+        bounces={false}
+      >
         {/* Job Info */}
         <View style={styles.jobInfoCard}>
           <Text style={styles.jobTitle}>{jobName || job?.name}</Text>
@@ -380,23 +403,33 @@ const JobTimerScreen = () => {
                 </View>
                 <View style={styles.statsRow}>
                   <Text style={styles.statsLabel}>Active Workers:</Text>
-                  <Text style={[styles.statsValue, { color: '#4CAF50' }]}>{summary.activeWorkers}</Text>
+                  <Text style={[styles.statsValue, { color: "#4CAF50" }]}>
+                    {summary.activeWorkers}
+                  </Text>
                 </View>
                 <View style={styles.statsRow}>
                   <Text style={styles.statsLabel}>Paused Workers:</Text>
-                  <Text style={[styles.statsValue, { color: '#FF9800' }]}>{summary.pausedWorkers}</Text>
+                  <Text style={[styles.statsValue, { color: "#FF9800" }]}>
+                    {summary.pausedWorkers}
+                  </Text>
                 </View>
                 <View style={styles.statsRow}>
                   <Text style={styles.statsLabel}>Completed Workers:</Text>
-                  <Text style={[styles.statsValue, { color: '#2196F3' }]}>{summary.completedWorkers}</Text>
+                  <Text style={[styles.statsValue, { color: "#2196F3" }]}>
+                    {summary.completedWorkers}
+                  </Text>
                 </View>
                 <View style={styles.statsRow}>
                   <Text style={styles.statsLabel}>Total Time Spent:</Text>
-                  <Text style={styles.statsValue}>{formatDuration(summary.totalTimeSpent || 0)}</Text>
+                  <Text style={styles.statsValue}>
+                    {formatDuration(summary.totalTimeSpent || 0)}
+                  </Text>
                 </View>
                 <View style={styles.statsRow}>
                   <Text style={styles.statsLabel}>Average Time:</Text>
-                  <Text style={styles.statsValue}>{formatDuration(summary.averageTimePerWorker || 0)}</Text>
+                  <Text style={styles.statsValue}>
+                    {formatDuration(summary.averageTimePerWorker || 0)}
+                  </Text>
                 </View>
               </View>
             )}
@@ -432,16 +465,30 @@ const JobTimerScreen = () => {
                       <Text style={styles.workerEmail}>{worker.email}</Text>
                     </View>
                     <View style={styles.workerStatus}>
-                      <Text style={[
-                        styles.workerStatusText,
-                        { color: worker.status === 'active' ? '#4CAF50' : 
-                                 worker.status === 'paused' ? '#FF9800' : '#757575' }
-                      ]}>
-                        {worker.status === 'active' ? '⏱️ Active' : 
-                         worker.status === 'paused' ? '⏸️ Paused' : 
-                         worker.status === 'completed' ? '✅ Completed' : '⏹️ Not Started'}
+                      <Text
+                        style={[
+                          styles.workerStatusText,
+                          {
+                            color:
+                              worker.status === "active"
+                                ? "#4CAF50"
+                                : worker.status === "paused"
+                                ? "#FF9800"
+                                : "#757575",
+                          },
+                        ]}
+                      >
+                        {worker.status === "active"
+                          ? "⏱️ Active"
+                          : worker.status === "paused"
+                          ? "⏸️ Paused"
+                          : worker.status === "completed"
+                          ? "✅ Completed"
+                          : "⏹️ Not Started"}
                       </Text>
-                      <Text style={styles.workerTime}>{formatDuration(worker.timeSpent || 0)}</Text>
+                      <Text style={styles.workerTime}>
+                        {formatDuration(worker.timeSpent || 0)}
+                      </Text>
                     </View>
                   </View>
                 ))}
@@ -450,7 +497,9 @@ const JobTimerScreen = () => {
 
             {/* Instructions for Employer */}
             <View style={styles.instructionsCard}>
-              <Text style={styles.instructionsTitle}>Employer Instructions</Text>
+              <Text style={styles.instructionsTitle}>
+                Employer Instructions
+              </Text>
               {!summary ? (
                 <>
                   <Text style={styles.instructionsText}>
@@ -489,9 +538,13 @@ const JobTimerScreen = () => {
               <Text style={styles.timerLabel}>Work Time</Text>
               <Text style={styles.timerDisplay}>{formatTime(currentTime)}</Text>
               <Text style={styles.timerStatus}>
-                {isActive ? '⏱️ Active' : 
-                 session?.status === 'paused' ? '⏸️ Paused' : 
-                 session?.status === 'not_started' ? '⏹️ Not Started' : '⏹️ Stopped'}
+                {isActive
+                  ? "⏱️ Active"
+                  : session?.status === "paused"
+                  ? "⏸️ Paused"
+                  : session?.status === "not_started"
+                  ? "⏹️ Not Started"
+                  : "⏹️ Stopped"}
               </Text>
             </View>
 
@@ -501,7 +554,9 @@ const JobTimerScreen = () => {
                 <Text style={styles.statsTitle}>Session Statistics</Text>
                 <View style={styles.statsRow}>
                   <Text style={styles.statsLabel}>Total Time:</Text>
-                  <Text style={styles.statsValue}>{formatDuration(session.totalWorkedSeconds || 0)}</Text>
+                  <Text style={styles.statsValue}>
+                    {formatDuration(session.totalWorkedSeconds || 0)}
+                  </Text>
                 </View>
                 <View style={styles.statsRow}>
                   <Text style={styles.statsLabel}>Status:</Text>
@@ -510,7 +565,9 @@ const JobTimerScreen = () => {
                 {session.targetHours && (
                   <View style={styles.statsRow}>
                     <Text style={styles.statsLabel}>Target:</Text>
-                    <Text style={styles.statsValue}>{session.targetHours}h</Text>
+                    <Text style={styles.statsValue}>
+                      {session.targetHours}h
+                    </Text>
                   </View>
                 )}
               </View>
@@ -523,9 +580,9 @@ const JobTimerScreen = () => {
                   hasSession: !!session,
                   sessionStatus: session?.status,
                   isActive: isActive,
-                  actionLoading: actionLoading
+                  actionLoading: actionLoading,
                 });
-                
+
                 if (!session) {
                   return (
                     <TouchableOpacity
@@ -538,12 +595,14 @@ const JobTimerScreen = () => {
                       ) : (
                         <>
                           <Ionicons name="play" size={24} color="#fff" />
-                          <Text style={styles.actionButtonText}>Start Work</Text>
+                          <Text style={styles.actionButtonText}>
+                            Start Work
+                          </Text>
                         </>
                       )}
                     </TouchableOpacity>
                   );
-                } else if (session.status === 'not_started') {
+                } else if (session.status === "not_started") {
                   return (
                     <TouchableOpacity
                       style={[styles.actionButton, styles.startButton]}
@@ -555,12 +614,14 @@ const JobTimerScreen = () => {
                       ) : (
                         <>
                           <Ionicons name="play" size={24} color="#fff" />
-                          <Text style={styles.actionButtonText}>Start Work</Text>
+                          <Text style={styles.actionButtonText}>
+                            Start Work
+                          </Text>
                         </>
                       )}
                     </TouchableOpacity>
                   );
-                } else if (session.status === 'active') {
+                } else if (session.status === "active") {
                   return (
                     <TouchableOpacity
                       style={[styles.actionButton, styles.pauseButton]}
@@ -577,7 +638,7 @@ const JobTimerScreen = () => {
                       )}
                     </TouchableOpacity>
                   );
-                } else if (session.status === 'paused') {
+                } else if (session.status === "paused") {
                   return (
                     <TouchableOpacity
                       style={[styles.actionButton, styles.resumeButton]}
@@ -595,12 +656,15 @@ const JobTimerScreen = () => {
                     </TouchableOpacity>
                   );
                 } else {
-                  console.log("No action button shown - session status:", session.status);
+                  console.log(
+                    "No action button shown - session status:",
+                    session.status
+                  );
                   return null;
                 }
               })()}
 
-              {session && session.status !== 'completed' && (
+              {session && session.status !== "completed" && (
                 <TouchableOpacity
                   style={[styles.actionButton, styles.completeButton]}
                   onPress={handleCompleteSession}

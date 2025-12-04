@@ -577,7 +577,7 @@ const RequestsTab = ({
       {/* Filter Section - Only show when there's data */}
       {filteredRequests.length > 0 && (
         <View style={styles.filterSection}>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} bounces={false}>
             {filters.map((filter) => (
               <TouchableOpacity
                 key={filter}
@@ -635,7 +635,7 @@ const RequestsTab = ({
           <Text style={styles.loadingText}>Loading requests...</Text>
         </View>
       ) : (
-        <FlatList
+        <FlatList bounces={false}
           data={filteredRequests}
           renderItem={renderRequest}
           keyExtractor={(item) => item._id}
@@ -1389,7 +1389,7 @@ const RequestsVerifyTab = ({
             </View>
           )}
 
-          <FlatList
+          <FlatList bounces={false}
             data={acceptedUsers}
             renderItem={renderAcceptedUser}
             keyExtractor={(item) => item._id}

@@ -109,7 +109,7 @@ const Notification = () => {
         style={styles.segment}
       />
 
-      <FlatList
+      <FlatList bounces={false}
         data={filteredNotifications}
         keyExtractor={(item, index) => item.jobId || item.timestamp || index.toString()}
         renderItem={renderItem}

@@ -1,5 +1,11 @@
 import React, { useState, useEffect } from "react";
-import { View, FlatList, ActivityIndicator, Text, RefreshControl } from "react-native";
+import {
+  View,
+  FlatList,
+  ActivityIndicator,
+  Text,
+  RefreshControl,
+} from "react-native";
 import ChatItem from "../../../components/chatItem";
 import { Header } from "../../../components/header";
 import styles from "./styles";
@@ -18,19 +24,23 @@ export default function Chat() {
   const fetchConversations = async () => {
     try {
       const response = await getConversations();
-      console.log('Conversations fetched:', response);
+      console.log("Conversations fetched:", response);
 
       // Transform the response to match ChatItem expected format
       const conversations = response.data?.conversations || [];
       const transformedConversations = conversations.map((conv: any) => {
         // Find the other participant (not the current user)
-        const otherParticipant = conv.participants?.find((p: any) => p.id !== conv.createdBy);
+        const otherParticipant = conv.participants?.find(
+          (p: any) => p.id !== conv.createdBy
+        );
 
         return {
           id: conv._id,
-          name: otherParticipant ? `${otherParticipant.firstName} ${otherParticipant.lastName}` : 'Unknown User',
-          message: conv.lastMessage?.content?.text || 'No messages yet',
-          avatar: otherParticipant?.profilePicture || '',
+          name: otherParticipant
+            ? `${otherParticipant.firstName} ${otherParticipant.lastName}`
+            : "Unknown User",
+          message: conv.lastMessage?.content?.text || "No messages yet",
+          avatar: otherParticipant?.profilePicture || "",
           unread: conv.unreadCount || 0,
           conversationId: conv._id,
           participant: otherParticipant,
@@ -39,11 +49,11 @@ export default function Chat() {
 
       setConversations(transformedConversations);
     } catch (error) {
-      console.error('Error fetching conversations:', error);
+      console.error("Error fetching conversations:", error);
       Toast.show({
-        type: 'error',
-        text1: 'Error',
-        text2: 'Failed to load conversations',
+        type: "error",
+        text1: "Error",
+        text2: "Failed to load conversations",
       });
     } finally {
       setLoading(false);
@@ -73,9 +83,16 @@ export default function Chat() {
 
   if (loading) {
     return (
-      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+      <View
+        style={[
+          styles.container,
+          { justifyContent: "center", alignItems: "center" },
+        ]}
+      >
         <ActivityIndicator size="large" color={Colors.primary} />
-        <Text style={{ marginTop: 10, color: Colors.grey }}>Loading conversations...</Text>
+        <Text style={{ marginTop: 10, color: Colors.grey }}>
+          Loading conversations...
+        </Text>
       </View>
     );
   }
@@ -87,11 +104,9 @@ export default function Chat() {
       <FlatList
         data={conversations}
         keyExtractor={(item) => item.id}
+        bounces={false}
         renderItem={({ item }) => (
-          <ChatItem
-            item={item}
-            onPress={() => handleChatPress(item)}
-          />
+          <ChatItem item={item} onPress={() => handleChatPress(item)} />
         )}
         refreshControl={
           <RefreshControl
@@ -102,8 +117,17 @@ export default function Chat() {
           />
         }
         ListEmptyComponent={
-          <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', marginTop: 50 }}>
-            <Text style={{ color: Colors.grey, fontSize: 16 }}>No conversations yet</Text>
+          <View
+            style={{
+              flex: 1,
+              justifyContent: "center",
+              alignItems: "center",
+              marginTop: 50,
+            }}
+          >
+            <Text style={{ color: Colors.grey, fontSize: 16 }}>
+              No conversations yet
+            </Text>
             <Text style={{ color: Colors.grey, fontSize: 14, marginTop: 5 }}>
               Start a chat from a job or profile
             </Text>

@@ -215,6 +215,7 @@ const Settings: React.FC = () => {
       <ScrollView
         style={styles.scrollView}
         showsVerticalScrollIndicator={false}
+        bounces={false}
       >
         {/* Profile Card */}
         <TouchableOpacity

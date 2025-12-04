@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import {
   View,
   Text,
@@ -9,7 +9,6 @@ import {
   KeyboardAvoidingView,
 } from "react-native";
 import { requestOtp } from "../../../services/api"; // Import the API service
-import { SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
 import styles from "./styles";
 import { ScrollView } from "react-native-actions-sheet";
@@ -52,7 +51,7 @@ const Login = () => {
 
   return (
     <KeyboardAvoidingView style={styles.container}>
-      <ScrollView style={{flex:1}} contentContainerStyle={{alignItems:'center'}} showsVerticalScrollIndicator={false}>
+      <ScrollView style={{flex:1}} contentContainerStyle={{alignItems:'center'}} showsVerticalScrollIndicator={false} bounces={false}>
       <Text style={styles.title}>Log In</Text>
       <Image
         source={require("../../../assets/placeholder-image.png")}

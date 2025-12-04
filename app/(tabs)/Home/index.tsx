@@ -646,6 +646,7 @@ const HomeScreen = () => {
         <FlatList
           horizontal
           showsHorizontalScrollIndicator={false}
+          bounces={false}
           data={[
             {
               id: "category",
@@ -717,6 +718,7 @@ const HomeScreen = () => {
           <FlatList
             data={options}
             keyExtractor={(item) => String(item.id || item._id)}
+            bounces={false}
             renderItem={({ item }) => (
               <TouchableOpacity
                 style={[
@@ -860,6 +862,7 @@ const HomeScreen = () => {
           isFilterSticky && { paddingTop: filterRowHeight },
         ]}
         showsVerticalScrollIndicator={false}
+        bounces={false}
         onScroll={handleScroll}
         scrollEventThrottle={16}
         refreshControl={

@@ -355,7 +355,11 @@ const JobDetails = () => {
         showChatButton
         onChatPress={handleChat}
       />
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        style={styles.content}
+        showsVerticalScrollIndicator={false}
+        bounces={false}
+      >
         {/* Job Header */}
         <View style={styles.jobHeader}>
           <View style={styles.categoryContainer}>

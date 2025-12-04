@@ -66,7 +66,7 @@ const Status = () => {
       <Text style={styles.description}>{task.description}</Text>
 
       <Text style={styles.label}>PHOTOS</Text>
-      <FlatList
+      <FlatList bounces={false}
         data={task.photos}
         horizontal
         showsHorizontalScrollIndicator={false}

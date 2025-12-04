@@ -233,6 +233,7 @@ const MyPostTab = () => {
         keyExtractor={(item) => item._id}
         style={styles.scrollContainer}
         showsVerticalScrollIndicator={false}
+        bounces={false}
         refreshControl={
           <RefreshControl
             refreshing={isRefetching}
@@ -456,6 +457,7 @@ const AppliedTab = () => {
         keyExtractor={(item) => item.applicationId}
         style={styles.scrollContainer}
         showsVerticalScrollIndicator={false}
+        bounces={false}
         refreshControl={
           <RefreshControl
             refreshing={isRefetching}

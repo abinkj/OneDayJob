@@ -186,7 +186,7 @@ const Profile: React.FC = () => {
   return (
     <View style={styles.container}>
       <Header title="Profile" showEditButton onEditPress={handleEdit} />
-      <ScrollView>
+      <ScrollView bounces={false}>
         {/* Profile Card */}
         <View style={styles.profileCard}>
           {/* <Image source={profileImageSrc} style={styles.profileImage} /> */}

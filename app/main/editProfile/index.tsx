@@ -13,7 +13,6 @@ import LabeledInput from "../../../components/labeledTextInput";
 import { User } from "../../../types";
 import { saveUserData } from "../../../utilities/asyncStore";
 import { updateProfile } from "../../../services/api";
-import { logoutUser } from "../../../utilities/authentication";
 import { useDispatch } from "react-redux";
 import Toast from "../../../components/toast";
 import ImagePickerActionSheet, {
@@ -142,7 +141,7 @@ const EditProfile: React.FC = () => {
   return (
     <View style={styles.container}>
       <Header title="Edit Profile" showBackButton />
-      <ScrollView contentContainerStyle={styles.scrollContent}>
+      <ScrollView contentContainerStyle={styles.scrollContent} bounces={false}>
         {/* Profile Image */}
         <View style={styles.imageWrapper}>
           <Image
@@ -173,16 +172,6 @@ const EditProfile: React.FC = () => {
           value={lastName}
           onChangeText={setLastName}
           placeholder="Enter your last name"
-        />
-
-        {/* Location */}
-        <CustomButton
-          color={"red"}
-          text={"logout"}
-          onPress={() => {
-            console.log("Logout button pressed");
-            dispatch(logoutUser() as any);
-          }}
         />
         <Toast
           visible={toastVisible}
