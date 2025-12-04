@@ -172,42 +172,85 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
 
-  // Worker Card Styles
-  workerCard: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    backgroundColor: '#f8f9fa',
-    borderRadius: 8,
-    marginBottom: 8,
+  // Enhanced Worker Card Styles
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 12,
+    marginTop: 8,
   },
-  workerInfo: {
+  workerCardEnhanced: {
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 2,
+    borderWidth: 1,
+    borderColor: '#f0f0f0',
+  },
+  workerHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  workerAvatarContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#E3F2FD',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  workerAvatarText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#1565C0',
+  },
+  workerInfoEnhanced: {
     flex: 1,
   },
-  workerName: {
+  workerNameEnhanced: {
     fontSize: 16,
     fontWeight: '600',
     color: '#333',
-    marginBottom: 4,
+    marginBottom: 2,
   },
-  workerEmail: {
+  workerEmailEnhanced: {
     fontSize: 12,
     color: '#666',
   },
-  workerStatus: {
-    alignItems: 'flex-end',
+  statusBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
   },
-  workerStatusText: {
+  statusText: {
     fontSize: 12,
     fontWeight: '600',
-    marginBottom: 4,
   },
-  workerTime: {
-    fontSize: 12,
-    color: '#666',
+  workerStatsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: '#f0f0f0',
+  },
+  workerStatItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  workerStatValue: {
+    fontSize: 14,
     fontWeight: '500',
+    color: '#333',
+    marginLeft: 6,
   },
 });
 

@@ -7,6 +7,8 @@ import {
   ActivityIndicator,
   Alert,
   ScrollView,
+  AppState,
+  RefreshControl,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useRoute } from '@react-navigation/native';
@@ -48,14 +50,36 @@ const JobTimerScreen = () => {
   // Timer refs
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const syncIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const backgroundTimestamp = useRef<number | null>(null);
+  const employerRefreshInterval = useRef<NodeJS.Timeout | null>(null);
 
   // Load session data
   useEffect(() => {
     loadSessionData();
   }, [jobId]);
 
-  // Timer effect
+  // Timer effect with background handling
   useEffect(() => {
+    // Handle background state for accurate timing
+    const subscription = AppState.addEventListener('change', nextAppState => {
+      if (nextAppState === 'background' && isActive) {
+        backgroundTimestamp.current = Date.now();
+      } else if (nextAppState === 'active' && isActive && backgroundTimestamp.current) {
+        const now = Date.now();
+        const elapsedSeconds = Math.floor((now - backgroundTimestamp.current) / 1000);
+
+        if (elapsedSeconds > 0) {
+          setCurrentTime(prev => prev + elapsedSeconds);
+
+          // Trigger immediate sync when coming back from background
+          if (sessionData?.session?.id) {
+            syncTime(sessionData.session.id, elapsedSeconds, 'active');
+          }
+        }
+        backgroundTimestamp.current = null;
+      }
+    });
+
     if (isActive) {
       timerRef.current = setInterval(() => {
         setCurrentTime(prev => prev + 1);
@@ -71,8 +95,9 @@ const JobTimerScreen = () => {
       if (timerRef.current) {
         clearInterval(timerRef.current);
       }
+      subscription.remove();
     };
-  }, [isActive]);
+  }, [isActive, sessionData]);
 
   // Sync effect
   useEffect(() => {
@@ -98,17 +123,41 @@ const JobTimerScreen = () => {
     };
   }, [isActive, currentTime, lastSyncTime, sessionData]);
 
-  const loadSessionData = async () => {
+  // Employer auto-refresh effect
+  useEffect(() => {
+    if (isEmployer) {
+      // Poll every 30 seconds
+      employerRefreshInterval.current = setInterval(() => {
+        loadSessionData(true); // silent refresh
+      }, 30000);
+
+      // Also refresh when app comes to foreground
+      const subscription = AppState.addEventListener('change', nextAppState => {
+        if (nextAppState === 'active') {
+          loadSessionData(true);
+        }
+      });
+
+      return () => {
+        if (employerRefreshInterval.current) {
+          clearInterval(employerRefreshInterval.current);
+        }
+        subscription.remove();
+      };
+    }
+  }, [isEmployer, jobId]);
+
+  const loadSessionData = async (silent = false) => {
     try {
-      setLoading(true);
-      
+      if (!silent) setLoading(true);
+
       console.log("JobTimer - isEmployer:", isEmployer, "jobId:", jobId);
-      
+
       if (isEmployer) {
         // Load employer dashboard data
         console.log("Loading employer dashboard for job:", jobId);
         const response = await getJobDashboard(jobId, true);
-        
+
         if (response.data.success) {
           setSessionData(response.data.data);
           // For employer view, we don't need timer states
@@ -121,7 +170,7 @@ const JobTimerScreen = () => {
         console.log("Loading worker session for job:", jobId);
         try {
           const response = await getWorkerSession(jobId, true);
-          
+
           if (response.data.success) {
             const session = response.data.data.session;
             console.log("Worker session data received:", {
@@ -157,8 +206,12 @@ const JobTimerScreen = () => {
         text2: 'Failed to load session data',
       });
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
+  };
+
+  const onRefresh = async () => {
+    await loadSessionData(false);
   };
 
   const handleInitiateJob = async () => {
@@ -166,10 +219,10 @@ const JobTimerScreen = () => {
       setActionLoading(true);
       console.log("Initiating job execution for job:", jobId);
       const response = await initiateJobExecution(jobId);
-      
+
       if (response.data.success) {
         await loadSessionData(); // Reload to get updated dashboard data
-        
+
         Toast.show({
           type: 'success',
           text1: 'Job Initiated',
@@ -192,13 +245,13 @@ const JobTimerScreen = () => {
     try {
       setActionLoading(true);
       const response = await startWorkerSession(jobId);
-      
+
       if (response.data.success) {
         setIsActive(true);
         setCurrentTime(0);
         setLastSyncTime(0);
         await loadSessionData();
-        
+
         Toast.show({
           type: 'success',
           text1: 'Session Started',
@@ -223,11 +276,11 @@ const JobTimerScreen = () => {
     try {
       setActionLoading(true);
       const response = await pauseWorkerSession(sessionData.session.id);
-      
+
       if (response.data.success) {
         setIsActive(false);
         await loadSessionData();
-        
+
         Toast.show({
           type: 'success',
           text1: 'Session Paused',
@@ -252,11 +305,11 @@ const JobTimerScreen = () => {
     try {
       setActionLoading(true);
       const response = await resumeWorkerSession(sessionData.session.id);
-      
+
       if (response.data.success) {
         setIsActive(true);
         await loadSessionData();
-        
+
         Toast.show({
           type: 'success',
           text1: 'Session Resumed',
@@ -290,11 +343,11 @@ const JobTimerScreen = () => {
             try {
               setActionLoading(true);
               const response = await completeWorkerSession(sessionData.session.id, 'Work completed');
-              
+
               if (response.data.success) {
                 setIsActive(false);
                 await loadSessionData();
-                
+
                 Toast.show({
                   type: 'success',
                   text1: 'Session Completed',
@@ -341,7 +394,7 @@ const JobTimerScreen = () => {
   const job = sessionData?.job || sessionData?.jobInfo;
   const employer = sessionData?.employer;
   const summary = sessionData?.summary;
-  
+
   console.log("Render state:", {
     isEmployer: isEmployer,
     hasSessionData: !!sessionData,
@@ -352,8 +405,14 @@ const JobTimerScreen = () => {
   return (
     <View style={styles.container}>
       <Header title={isEmployer ? "Job Dashboard" : "Job Timer"} showBackButton />
-      
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+
+      <ScrollView
+        style={styles.content}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl refreshing={loading} onRefresh={onRefresh} />
+        }
+      >
         {/* Job Info */}
         <View style={styles.jobInfoCard}>
           <Text style={styles.jobTitle}>{jobName || job?.name}</Text>
@@ -423,25 +482,53 @@ const JobTimerScreen = () => {
 
             {/* Workers List */}
             {summary?.workers && summary.workers.length > 0 && (
-              <View style={styles.statsCard}>
-                <Text style={styles.statsTitle}>Workers Status</Text>
+              <View>
+                <Text style={styles.sectionTitle}>Workers Progress</Text>
                 {summary.workers.map((worker: any, index: number) => (
-                  <View key={worker.id || index} style={styles.workerCard}>
-                    <View style={styles.workerInfo}>
-                      <Text style={styles.workerName}>{worker.name}</Text>
-                      <Text style={styles.workerEmail}>{worker.email}</Text>
-                    </View>
-                    <View style={styles.workerStatus}>
-                      <Text style={[
-                        styles.workerStatusText,
-                        { color: worker.status === 'active' ? '#4CAF50' : 
-                                 worker.status === 'paused' ? '#FF9800' : '#757575' }
+                  <View key={worker.id || index} style={styles.workerCardEnhanced}>
+                    <View style={styles.workerHeader}>
+                      <View style={styles.workerAvatarContainer}>
+                        <Text style={styles.workerAvatarText}>
+                          {worker.name ? worker.name.charAt(0).toUpperCase() : '?'}
+                        </Text>
+                      </View>
+                      <View style={styles.workerInfoEnhanced}>
+                        <Text style={styles.workerNameEnhanced}>{worker.name}</Text>
+                        <Text style={styles.workerEmailEnhanced}>{worker.email}</Text>
+                      </View>
+                      <View style={[
+                        styles.statusBadge,
+                        {
+                          backgroundColor: worker.status === 'active' ? '#E8F5E9' :
+                            worker.status === 'paused' ? '#FFF3E0' :
+                              worker.status === 'completed' ? '#E3F2FD' : '#F5F5F5'
+                        }
                       ]}>
-                        {worker.status === 'active' ? '⏱️ Active' : 
-                         worker.status === 'paused' ? '⏸️ Paused' : 
-                         worker.status === 'completed' ? '✅ Completed' : '⏹️ Not Started'}
-                      </Text>
-                      <Text style={styles.workerTime}>{formatDuration(worker.timeSpent || 0)}</Text>
+                        <Text style={[
+                          styles.statusText,
+                          {
+                            color: worker.status === 'active' ? '#2E7D32' :
+                              worker.status === 'paused' ? '#EF6C00' :
+                                worker.status === 'completed' ? '#1565C0' : '#757575'
+                          }
+                        ]}>
+                          {worker.status === 'active' ? 'Active' :
+                            worker.status === 'paused' ? 'Paused' :
+                              worker.status === 'completed' ? 'Done' : 'Pending'}
+                        </Text>
+                      </View>
+                    </View>
+
+                    <View style={styles.workerStatsRow}>
+                      <View style={styles.workerStatItem}>
+                        <Ionicons name="time-outline" size={16} color="#666" />
+                        <Text style={styles.workerStatValue}>{formatDuration(worker.timeSpent || 0)}</Text>
+                      </View>
+                      {worker.status === 'active' && (
+                        <View style={styles.workerStatItem}>
+                          <ActivityIndicator size="small" color="#4CAF50" />
+                        </View>
+                      )}
                     </View>
                   </View>
                 ))}
@@ -489,9 +576,9 @@ const JobTimerScreen = () => {
               <Text style={styles.timerLabel}>Work Time</Text>
               <Text style={styles.timerDisplay}>{formatTime(currentTime)}</Text>
               <Text style={styles.timerStatus}>
-                {isActive ? '⏱️ Active' : 
-                 session?.status === 'paused' ? '⏸️ Paused' : 
-                 session?.status === 'not_started' ? '⏹️ Not Started' : '⏹️ Stopped'}
+                {isActive ? '⏱️ Active' :
+                  session?.status === 'paused' ? '⏸️ Paused' :
+                    session?.status === 'not_started' ? '⏹️ Not Started' : '⏹️ Stopped'}
               </Text>
             </View>
 
@@ -525,7 +612,7 @@ const JobTimerScreen = () => {
                   isActive: isActive,
                   actionLoading: actionLoading
                 });
-                
+
                 if (!session) {
                   return (
                     <TouchableOpacity
