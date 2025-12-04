@@ -1256,9 +1256,9 @@ export const getWorkerPayouts = async (workerId: string) => {
   try {
     console.log("Getting worker payouts for worker:", workerId);
 
-    const response = await api.get(`/payouts/status/${workerId}`);
+    //const response = await api.get(`/payouts/status/${workerId}`);
 
-    console.log("Worker payouts:", response.data);
+    //console.log("Worker payouts:", response.data);
     return response;
   } catch (error) {
     console.error("Error getting worker payouts:", error);

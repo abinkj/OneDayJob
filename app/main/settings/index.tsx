@@ -223,7 +223,8 @@ const Settings: React.FC = () => {
         {/* Profile Card */}
         <TouchableOpacity
           style={styles.profileCard}
-          onPress={handleEditProfile}
+          disabled={true}
+          //onPress={handleEditProfile}
           activeOpacity={0.7}
         >
           <Image source={profileImageSrc} style={styles.profileImage} />
@@ -233,7 +234,7 @@ const Settings: React.FC = () => {
             </Text>
             <Text style={styles.profileEmail}>{user?.email}</Text>
           </View>
-          <Ionicons name="chevron-forward" size={20} color={Colors.grey} />
+          {/* <Ionicons name="chevron-forward" size={20} color={Colors.grey} /> */}
         </TouchableOpacity>
 
         {/* Account Section */}
