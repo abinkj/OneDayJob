@@ -20,6 +20,7 @@ import { User } from "../../../types";
 import Images from "../../../utilities/images";
 import Toast from "react-native-toast-message";
 import styles from "./styles";
+import strings from "../../../utilities/strings";
 
 interface SettingsItemProps {
   icon: string;
@@ -372,10 +373,9 @@ const Settings: React.FC = () => {
             icon="document-text-outline"
             title="Terms & Conditions"
             onPress={() => {
-              Toast.show({
-                type: "info",
-                text1: "Coming Soon",
-                text2: "Terms & Conditions will be available soon",
+              navigation.navigate("PrivacyPolicy", {
+                url: strings.APP_TERMS_CONDITIONS, 
+                title: "Terms & Conditions",
               });
             }}
           />
@@ -383,10 +383,9 @@ const Settings: React.FC = () => {
             icon="shield-checkmark-outline"
             title="Privacy Policy"
             onPress={() => {
-              Toast.show({
-                type: "info",
-                text1: "Coming Soon",
-                text2: "Privacy Policy will be available soon",
+              navigation.navigate("PrivacyPolicy", {
+                url: strings.APP_PRIVACY_POLICY, 
+                title: "Privacy Policy",
               });
             }}
           />

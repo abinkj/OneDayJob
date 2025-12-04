@@ -4,6 +4,8 @@ export const strings = {
   APP_DESCRIPTION: "A platform to find and post one-day job listings.",
   APP_COPYRIGHT: "© 2024 One Day Job. All rights reserved.",
   APP_SUPPORT_EMAIL: "support@onedayjob.com",
+  APP_PRIVACY_POLICY: "https://www.zoopol.com/privacy-policy",
+  APP_TERMS_CONDITIONS: "https://www.zoopol.com/terms",
 
   validations: {
     // Signup
