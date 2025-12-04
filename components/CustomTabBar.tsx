@@ -18,7 +18,7 @@ const CustomTabBar = ({ state, descriptors, navigation }) => {
   const currentRoute = state.routes[state.index];
   const routeName =
     getFocusedRouteNameFromRoute(currentRoute) || currentRoute.name;
-  const { kycStatus } = useSelector((state: any) => state.authentication);
+  //const { kycStatus } = useSelector((state: any) => state.authentication);
 
   // Animated values for each tab - hooks must be called before any early returns
   const scales = state.routes.map(
@@ -64,16 +64,16 @@ const CustomTabBar = ({ state, descriptors, navigation }) => {
   }, [shouldHideTabBar, tabBarTranslateY, tabBarOpacity]);
 
   const handlePostJobPress = () => {
-    if (kycStatus === "completed") {
-      navigation.navigate("PostJob");
-    } else {
-      Toast.show({
-        type: "info",
-        text1: "KYC Required",
-        text2: "Please complete your KYC to post jobs",
-      });
-      navigation.navigate("BankAccount");
-    }
+    //if (kycStatus === "completed") {
+    navigation.navigate("PostJob");
+    //} else {
+    // Toast.show({
+    //   type: "info",
+    //   text1: "KYC Required",
+    //   text2: "Please complete your KYC to post jobs",
+    // });
+    // navigation.navigate("BankAccount");
+    //}
   };
 
   const renderTab = (index, route, iconName, label) => (
