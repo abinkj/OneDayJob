@@ -18,12 +18,21 @@ const CustomTabBar = ({ state, descriptors, navigation }) => {
   const currentRoute = state.routes[state.index];
   const routeName =
     getFocusedRouteNameFromRoute(currentRoute) || currentRoute.name;
-  const { kycStatus } = useSelector((state) => state.authentication);
+  const { kycStatus } = useSelector((state: any) => state.authentication);
 
   // Animated values for each tab - hooks must be called before any early returns
   const scales = state.routes.map(
     (_, i) => useRef(new Animated.Value(i === state.index ? 1.1 : 0.8)).current
   );
+
+  // Animated value for tab bar visibility
+  const tabBarTranslateY = useRef(new Animated.Value(0)).current;
+
+  // Check if tab bar should be hidden
+  const hiddenTabBarScreens = ["PostJob"];
+  const shouldHideTabBar =
+    hiddenTabBarScreens.includes(routeName) ||
+    focusedOptions.tabBarVisible === false;
 
   useEffect(() => {
     scales.forEach((scale, i) => {
@@ -32,14 +41,22 @@ const CustomTabBar = ({ state, descriptors, navigation }) => {
         useNativeDriver: true,
         speed: 5,
         bounciness: 10,
-
       }).start();
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.index]);
 
+  // Animate tab bar visibility
+  useEffect(() => {
+    Animated.timing(tabBarTranslateY, {
+      toValue: shouldHideTabBar ? 100 : 0, // Slide down 100 units when hidden
+      duration: 250,
+      useNativeDriver: true,
+    }).start();
+  }, [shouldHideTabBar, tabBarTranslateY]);
+
   const handlePostJobPress = () => {
-    if (kycStatus === 'completed') {
+    if (kycStatus === "completed") {
       navigation.navigate("PostJob");
     } else {
       Toast.show({
@@ -50,14 +67,6 @@ const CustomTabBar = ({ state, descriptors, navigation }) => {
       navigation.navigate("BankAccount");
     }
   };
-
-  const hiddenTabBarScreens = ["PostJob"];
-  if (
-    hiddenTabBarScreens.includes(routeName) ||
-    focusedOptions.tabBarVisible === false
-  ) {
-    return null;
-  }
 
   const renderTab = (index, route, iconName, label) => (
     <TouchableOpacity
@@ -85,7 +94,14 @@ const CustomTabBar = ({ state, descriptors, navigation }) => {
   );
 
   return (
-    <View style={styles.container}>
+    <Animated.View
+      style={[
+        styles.container,
+        {
+          transform: [{ translateY: tabBarTranslateY }],
+        },
+      ]}
+    >
       <View style={styles.tabBar}>
         {renderTab(0, state.routes[0], "home", "Home")}
         {renderTab(1, state.routes[1], "status", "Status")}
@@ -110,7 +126,7 @@ const CustomTabBar = ({ state, descriptors, navigation }) => {
         {renderTab(3, state.routes[3], "message", "Chat")}
         {renderTab(4, state.routes[4], "profile", "Profile")}
       </View>
-    </View>
+    </Animated.View>
   );
 };
 
