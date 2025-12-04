@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -6,11 +6,11 @@ import {
   TouchableOpacity,
   FlatList,
   Image,
-  StyleSheet
-} from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { styles } from './styles';
-import { Colors } from '../../constants/Colors';
+  StyleSheet,
+} from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import { styles } from "./styles";
+import { Colors } from "../../constants/Colors";
 
 const JobDescriptionSection = ({
   jobDescription,
@@ -22,7 +22,18 @@ const JobDescriptionSection = ({
   openEditRequirements,
   togglePhotosList,
   showPhotosList,
-  handlePickImage
+  handlePickImage,
+}: {
+  jobDescription: string;
+  setJobDescription: (text: string) => void;
+  requirements: string[];
+  photos?: string[];
+  toggleRequirementsList: () => void;
+  showRequirementsList: boolean;
+  openEditRequirements: () => void;
+  togglePhotosList?: () => void;
+  showPhotosList?: boolean;
+  handlePickImage?: () => void;
 }) => {
   return (
     <View style={styles.unifiedContainer}>
@@ -36,46 +47,64 @@ const JobDescriptionSection = ({
         multiline
         numberOfLines={4}
       />
-      
+
       {/* Separator */}
       <View style={styles.separator} />
-      
+
       {/* Requirements Section */}
-      <TouchableOpacity style={styles.optionRow} onPress={toggleRequirementsList}>
+      <TouchableOpacity
+        style={styles.optionRow}
+        onPress={toggleRequirementsList}
+      >
         <View style={styles.optionLeftSection}>
-          <Ionicons name="add-circle-outline" size={24} color={Colors.primary} />
+          <Ionicons
+            name="add-circle-outline"
+            size={24}
+            color={Colors.primary}
+          />
           <Text style={styles.optionText}>Add Requirements</Text>
         </View>
-        <Ionicons name="information-circle-outline" size={24} color={Colors.primary} />
+        <Ionicons
+          name="information-circle-outline"
+          size={24}
+          color={Colors.primary}
+        />
       </TouchableOpacity>
-      
+
       {showRequirementsList && (
         <View style={styles.expandedInnerSection}>
           {requirements.map((req, index) => (
             <View key={index} style={styles.requirementItem}>
-              <Ionicons name="document-outline" size={20} color={Colors.primary} />
+              <Ionicons
+                name="document-outline"
+                size={20}
+                color={Colors.primary}
+              />
               <Text style={styles.requirementText}>{req}</Text>
             </View>
           ))}
-          <TouchableOpacity style={styles.editButton} onPress={openEditRequirements}>
+          <TouchableOpacity
+            style={styles.editButton}
+            onPress={openEditRequirements}
+          >
             <Ionicons name="pencil" size={18} color={Colors.primary} />
           </TouchableOpacity>
         </View>
       )}
-      
+
       {/* Separator */}
       <View style={styles.separator} />
-      
+
       {/* Photos Section */}
-      <TouchableOpacity style={styles.optionRow} onPress={togglePhotosList}>
+      {/* <TouchableOpacity style={styles.optionRow} onPress={togglePhotosList}>
         <View style={styles.optionLeftSection}>
           <Ionicons name="add-circle-outline" size={24} color={Colors.primary} />
           <Text style={styles.optionText}>Add Photos</Text>
         </View>
         <Ionicons name="information-circle-outline" size={24} color={Colors.primary} />
-      </TouchableOpacity>
-      
-      {showPhotosList && (
+      </TouchableOpacity> */}
+
+      {/* {showPhotosList && (
         <View style={styles.expandedInnerSection}>
           <FlatList
             horizontal
@@ -92,10 +121,9 @@ const JobDescriptionSection = ({
             <Ionicons name="pencil" size={18} color={Colors.primary} />
           </TouchableOpacity>
         </View>
-      )}
+      )} */}
     </View>
   );
 };
-
 
 export default JobDescriptionSection;
