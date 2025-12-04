@@ -2,7 +2,7 @@ import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 import React from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { useRouter } from "expo-router";
-import { FontAwesome6 } from "@expo/vector-icons";
+
 
 interface HeaderProps {
   title?: string;
@@ -13,6 +13,7 @@ interface HeaderProps {
   onChatPress?: () => void;
   showSkipButton?: boolean;
   onSkipPress?: () => void;
+  showMessageIcon?: boolean;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -24,6 +25,7 @@ export const Header: React.FC<HeaderProps> = ({
   onChatPress,
   showSkipButton = false,
   onSkipPress,
+  showMessageIcon = false,
 }) => {
   const router = useRouter();
 
@@ -53,7 +55,7 @@ export const Header: React.FC<HeaderProps> = ({
         </TouchableOpacity>
       )}
 
-      {showChatButton && (
+      {(showChatButton || showMessageIcon) && (
         <TouchableOpacity style={styles.chatIcon} onPress={onChatPress}>
           <Ionicons name="chatbubble-outline" size={22} color="black" />
         </TouchableOpacity>
@@ -61,7 +63,6 @@ export const Header: React.FC<HeaderProps> = ({
     </View>
   );
 };
-
 
 const styles = StyleSheet.create({
   container: {
@@ -114,4 +115,3 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
 });
-

@@ -190,13 +190,7 @@ const Profile: React.FC = () => {
 
   return (
     <View style={styles.container}>
-      <Header
-        title="Profile"
-        showEditButton
-        onEditPress={handleEdit}
-        showChatButton
-        onChatPress={handleChat}
-      />
+      <Header title="Profile" showEditButton onEditPress={handleEdit} />
       <ScrollView>
         {/* Profile Card */}
         <View style={styles.profileCard}>
@@ -243,90 +237,6 @@ const Profile: React.FC = () => {
             </View>
           </View>
         </View>
-
-        {/* Bank Details Section */}
-        {user?.bankAccount && (
-          <View style={styles.bankDetailsCard}>
-            <View style={styles.bankDetailsHeader}>
-              <View style={styles.bankDetailsHeaderLeft}>
-                <Ionicons name="card-outline" size={24} color={Colors.blue} />
-                <Text style={styles.bankDetailsTitle}>Bank Account Details</Text>
-              </View>
-              <TouchableOpacity
-                style={styles.editIconButton}
-                onPress={() => navigation.navigate("BankAccount")}
-                activeOpacity={0.7}
-              >
-                <Ionicons name="create-outline" size={20} color={Colors.blue} />
-              </TouchableOpacity>
-            </View>
-
-            <View style={styles.bankDetailsRow}>
-              <Text style={styles.bankDetailsLabel}>Account Holder</Text>
-              <Text style={styles.bankDetailsValue}>
-                {user.bankAccount.accountHolderName || "N/A"}
-              </Text>
-            </View>
-
-            <View style={styles.bankDetailsRow}>
-              <Text style={styles.bankDetailsLabel}>Account Number</Text>
-              <Text style={styles.bankDetailsValue}>
-                {user.bankAccount.accountNumber
-                  ? `****${user.bankAccount.accountNumber.slice(-4)}`
-                  : "N/A"}
-              </Text>
-            </View>
-
-            <View style={styles.bankDetailsRow}>
-              <Text style={styles.bankDetailsLabel}>IFSC Code</Text>
-              <Text style={styles.bankDetailsValue}>
-                {user.bankAccount.ifscCode || "N/A"}
-              </Text>
-            </View>
-
-            <View style={styles.bankDetailsRow}>
-              <Text style={styles.bankDetailsLabel}>Bank Name</Text>
-              <Text style={styles.bankDetailsValue}>
-                {user.bankAccount.bankName || "N/A"}
-              </Text>
-            </View>
-
-            <View style={styles.bankDetailsRow}>
-              <Text style={styles.bankDetailsLabel}>Account Type</Text>
-              <Text style={styles.bankDetailsValue}>
-                {user.bankAccount.accountType
-                  ? user.bankAccount.accountType.charAt(0).toUpperCase() +
-                  user.bankAccount.accountType.slice(1)
-                  : "N/A"}
-              </Text>
-            </View>
-
-            <TouchableOpacity
-              style={styles.editBankButton}
-              onPress={() => navigation.navigate("BankAccount")}
-            >
-              <Ionicons name="create-outline" size={18} color={Colors.blue} />
-              <Text style={styles.editBankButtonText}>Edit Bank Details</Text>
-            </TouchableOpacity>
-          </View>
-        )}
-
-        {/* Add Bank Details CTA */}
-        {!user?.bankAccount && (
-          <View style={styles.addBankCard}>
-            <Ionicons name="card-outline" size={32} color={Colors.grey} />
-            <Text style={styles.addBankTitle}>No Bank Account Added</Text>
-            <Text style={styles.addBankText}>
-              Add your bank account details to receive payments
-            </Text>
-            <TouchableOpacity
-              style={styles.addBankButton}
-              onPress={() => navigation.navigate("BankAccount")}
-            >
-              <Text style={styles.addBankButtonText}>Add Bank Account</Text>
-            </TouchableOpacity>
-          </View>
-        )}
 
         {/* Experience/Skills Dropdown */}
         {/* <View style={styles.experienceContainer}>
