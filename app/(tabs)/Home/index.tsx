@@ -108,9 +108,9 @@ const HomeScreen = () => {
     const a =
       Math.sin(dLat / 2) * Math.sin(dLat / 2) +
       Math.cos((lat1 * Math.PI) / 180) *
-        Math.cos((lat2 * Math.PI) / 180) *
-        Math.sin(dLon / 2) *
-        Math.sin(dLon / 2);
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     const distance = R * c;
     return Math.round(distance * 10) / 10;
@@ -156,17 +156,26 @@ const HomeScreen = () => {
       }
     });
 
-    // Sort jobs by distance (nearby first) only if no other sorting is applied
-    if (!selectedPriceSort) {
-      return jobsWithDistance.sort((a, b) => {
+    // Sort jobs: In-Progress first, then by distance (if no price sort)
+    return jobsWithDistance.sort((a, b) => {
+      const aStatus = (a.jobStatus || a.status || "").toLowerCase();
+      const bStatus = (b.jobStatus || b.status || "").toLowerCase();
+      const aInProgress = aStatus === "in_progress";
+      const bInProgress = bStatus === "in_progress";
+
+      if (aInProgress && !bInProgress) return -1;
+      if (!aInProgress && bInProgress) return 1;
+
+      // If both are in-progress or both are not, sort by distance if no price sort is selected
+      if (!selectedPriceSort) {
         if (a.distance === null && b.distance === null) return 0;
         if (a.distance === null) return 1;
         if (b.distance === null) return -1;
         return a.distance - b.distance;
-      });
-    }
+      }
 
-    return jobsWithDistance;
+      return 0;
+    });
   };
 
   // Load categories for filter
@@ -276,9 +285,9 @@ const HomeScreen = () => {
       userLocation:
         selectedDistance && location
           ? {
-              latitude: location.latitude,
-              longitude: location.longitude,
-            }
+            latitude: location.latitude,
+            longitude: location.longitude,
+          }
           : undefined,
     };
   }, [
@@ -534,8 +543,8 @@ const HomeScreen = () => {
               {isInProgress
                 ? "In Progress"
                 : isCompleted
-                ? "Completed"
-                : item.status || "Active"}
+                  ? "Completed"
+                  : item.status || "Active"}
             </Text>
           </View>
         </View>
@@ -547,9 +556,9 @@ const HomeScreen = () => {
               {item.isRemote
                 ? "Remote Work"
                 : item.location?.address ||
-                  item.location?.city ||
-                  item.location?.state ||
-                  "Location not specified"}
+                item.location?.city ||
+                item.location?.state ||
+                "Location not specified"}
             </Text>
           </View>
         </View>
@@ -698,7 +707,7 @@ const HomeScreen = () => {
                 style={[
                   styles.modalOption,
                   selectedValue === (item.id || item._id) &&
-                    styles.selectedOption,
+                  styles.selectedOption,
                 ]}
                 onPress={() => onSelect(item.id || item._id)}
               >
@@ -706,7 +715,7 @@ const HomeScreen = () => {
                   style={[
                     styles.modalOptionText,
                     selectedValue === (item.id || item._id) &&
-                      styles.selectedOptionText,
+                    styles.selectedOptionText,
                   ]}
                 >
                   {item.name}
@@ -855,8 +864,8 @@ const HomeScreen = () => {
               <Text style={styles.locationSubtitle}>
                 {location
                   ? `${location.latitude.toFixed(
-                      4
-                    )}, ${location.longitude.toFixed(4)}`
+                    4
+                  )}, ${location.longitude.toFixed(4)}`
                   : "Getting location..."}
                 {authStatus ? " • Authenticated" : " • Not logged in"}
               </Text>
