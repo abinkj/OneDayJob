@@ -23,7 +23,7 @@ import ratingStars from "../../../components/ratingStars";
 import { useNavigation } from "@react-navigation/native";
 import { getUserData } from "../../../utilities/asyncStore";
 import { User, Review } from "../../../types";
-import { createConversation, getCurrentUser } from "../../../services/api";
+import { createConversation, getCurrentUser, getUserRatings } from "../../../services/api";
 import Toast from "react-native-toast-message";
 import { Image } from "expo-image";
 
@@ -36,6 +36,7 @@ if (
 
 const Profile: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
+  const [reviews, setReviews] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isReadyToWork, setIsReadyToWork] = useState(false);
   const [isDropdownVisible, setIsDropdownVisible] = useState(false);
@@ -44,41 +45,38 @@ const Profile: React.FC = () => {
 
   const navigation = useNavigation<any>();
 
-  const review: Review = {
-    id: "1",
-    reviewerName: "Jane Cooper",
-    date: "01/01/2021",
-    reviewerImage: Images.profile.profileImage,
-    rating: 5,
-    comment:
-      "Darell was very professional and punctual. He handled my furniture with care and completed the task efficiently. Highly recommended!",
-  };
-
   useEffect(() => {
-    const fetchUser = async () => {
+    const fetchUserAndRatings = async () => {
       try {
         setIsLoading(true);
         const currentUser = await getCurrentUser();
-        if (currentUser) {
-          setUser(currentUser);
-        } else {
-          const userData = await getUserData();
-          if (userData) {
-            setUser(userData);
+        let userData = currentUser;
+
+        if (!userData) {
+          userData = await getUserData();
+        }
+
+        if (userData) {
+          setUser(userData);
+          // Fetch ratings for this user (as an employee)
+          try {
+            const userId = userData.id || userData._id;
+            const ratingsResponse = await getUserRatings(userId, 'employee');
+            if (ratingsResponse.data.success) {
+              setReviews(ratingsResponse.data.data);
+            }
+          } catch (error) {
+            console.error("Error fetching ratings:", error);
           }
         }
       } catch (error) {
         console.error("Error fetching user data:", error);
-        const userData = await getUserData();
-        if (userData) {
-          setUser(userData);
-        }
       } finally {
         setIsLoading(false);
       }
     };
 
-    fetchUser();
+    fetchUserAndRatings();
   }, []);
 
   // Refresh user data when returning from edit profile
@@ -183,6 +181,11 @@ const Profile: React.FC = () => {
     );
   }
 
+  // Calculate average rating from user data or reviews
+  const averageRating = user?.averageEmployeeRating || (reviews.length > 0
+    ? reviews.reduce((acc, curr) => acc + curr.rating, 0) / reviews.length
+    : 0);
+
   return (
     <View style={styles.container}>
       <Header title="Profile" showEditButton onEditPress={handleEdit} />
@@ -191,7 +194,7 @@ const Profile: React.FC = () => {
         <View style={styles.profileCard}>
           {/* <Image source={profileImageSrc} style={styles.profileImage} /> */}
           <Image
-            source={user.profilePicture}
+            source={user?.profilePicture}
             style={styles.profileImage}
             placeholder={Images.profile.profileImage}
           />
@@ -211,10 +214,10 @@ const Profile: React.FC = () => {
             <View style={styles.statBox}>
               <Text style={styles.statLabel}>RATING</Text>
               <Text style={styles.statNumber}>
-                {user?.rating?.toFixed(1) || "0.0"}
+                {averageRating.toFixed(1)}
               </Text>
               <Text style={styles.statSubLabel}>
-                {user?.totalReviews || 0} Reviews
+                {reviews.length} Reviews
               </Text>
             </View>
             <View style={styles.separator} />
@@ -238,91 +241,42 @@ const Profile: React.FC = () => {
           </View>
         </View>
 
-        {/* Experience/Skills Dropdown */}
-        {/* <View style={styles.experienceContainer}>
-          <TouchableOpacity
-            style={styles.dropdownHeader}
-            onPress={toggleDropdown}
-            activeOpacity={0.7}
-          >
-            <Text style={styles.dropdownTitle}>Experience/Skills</Text>
-            <Ionicons
-              name={isDropdownVisible ? "chevron-up" : "chevron-down"}
-              size={20}
-              color="gray"
-            />
-          </TouchableOpacity>
-
-          <Animated.View
-            style={[
-              styles.dropdownContent,
-              {
-                height: heightInterpolation,
-                opacity: dropdownHeight,
-              },
-            ]}
-          >
-            {isDropdownVisible && (
-              <>
-                <Text style={styles.dropdownDetail}>
-                  • 3+ years in moving & heavy lifting
-                </Text>
-                <Text style={styles.dropdownDetail}>
-                  • Can disassemble & reassemble furniture if needed
-                </Text>
-                <Text style={styles.dropdownDetail}>
-                  • Furniture moving, loading & unloading, safe lifting
-                  techniques
-                </Text>
-
-                <ScrollView
-                  horizontal
-                  style={styles.imageRow}
-                  contentContainerStyle={{ gap: 8 }}
-                  showsHorizontalScrollIndicator={false}
-                >
-                  {[1, 2, 3, 4].map((item) => (
-                    <View key={item} style={styles.imagePlaceholder} />
-                  ))}
-                </ScrollView>
-              </>
-            )}
-          </Animated.View>
-        </View> */}
-
-        {/* Review */}
-        {/* <View style={styles.reviewContainer}>
-          <View style={styles.reviewerInfo}>
-            <Image source={review.reviewerImage} style={styles.reviewerImage} />
-            <View style={styles.reviewerNameContainer}>
-              <Text style={styles.reviewerName}>{review.reviewerName}</Text>
-              <View style={styles.stars}>{ratingStars(review.rating)}</View>
-            </View>
-            <Text style={styles.reviewDate}>{review.date}</Text>
+        {/* Reviews Section */}
+        {reviews.length > 0 && (
+          <View style={{ padding: 20 }}>
+            <Text style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 15 }}>Recent Reviews</Text>
+            {reviews.map((review, index) => (
+              <View key={review._id || index} style={styles.reviewContainer}>
+                <View style={styles.reviewerInfo}>
+                  <Image
+                    source={review.raterUser?.profilePicture}
+                    style={styles.reviewerImage}
+                    placeholder={Images.profile.profileImage}
+                  />
+                  <View style={styles.reviewerNameContainer}>
+                    <Text style={styles.reviewerName}>
+                      {review.raterUser?.firstName} {review.raterUser?.lastName}
+                    </Text>
+                    <View style={styles.stars}>{ratingStars(review.rating)}</View>
+                  </View>
+                  <Text style={styles.reviewDate}>
+                    {new Date(review.createdAt).toLocaleDateString()}
+                  </Text>
+                </View>
+                {review.comment && (
+                  <Text style={styles.reviewText}>{review.comment}</Text>
+                )}
+              </View>
+            ))}
           </View>
-          <Text style={styles.reviewText}>{review.comment}</Text>
-        </View> */}
+        )}
 
-        {/* {!isReadyToWork && (
-          <View style={styles.buttonContainer}>
-            <CustomButton
-              onPress={() => {}}
-              text={"See all reviews"}
-              color={Colors.background}
-            />
+        {reviews.length === 0 && (
+          <View style={{ padding: 20, alignItems: 'center' }}>
+            <Text style={{ color: 'gray' }}>No reviews yet</Text>
           </View>
-        )} */}
+        )}
       </ScrollView>
-
-      {/* {isReadyToWork && (
-        <View style={styles.fixedBottomContainer}>
-          <JobApplicationStatus
-            name={`${user?.firstName}`}
-            appliedDate="Mar 31, 2025.2:00 pm"
-            onPress={handleNext}
-          />
-        </View>
-      )} */}
     </View>
   );
 };

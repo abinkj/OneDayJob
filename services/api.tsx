@@ -811,6 +811,47 @@ export const getEmployeeVerificationCode = async (jobId: string) => {
   }
 };
 
+// ==================== RATING API ENDPOINTS ====================
+
+/**
+ * Submit a rating for a user
+ * POST /api/users/rate
+ */
+export const submitRating = async (data: {
+  ratedUser: string;
+  job: string;
+  role: 'employer' | 'employee';
+  rating: number;
+  comment?: string;
+}) => {
+  try {
+    console.log("Submitting rating:", data);
+    const response = await api.post('/users/rate', data);
+    console.log("Rating submitted successfully:", response.data);
+    return response;
+  } catch (error) {
+    console.error("Error submitting rating:", error);
+    throw error;
+  }
+};
+
+/**
+ * Get ratings for a user
+ * GET /api/users/:id/ratings
+ */
+export const getUserRatings = async (userId: string, role: 'employer' | 'employee') => {
+  try {
+    console.log(`Getting ratings for user ${userId} as ${role}`);
+    const response = await api.get(`/users/${userId}/ratings?role=${role}`);
+    console.log("Ratings fetched successfully:", response.data);
+    return response;
+  } catch (error) {
+    console.error("Error fetching ratings:", error);
+    throw error;
+  }
+};
+
+
 /**
  * Schedule verification for a job (manual trigger)
  * POST /api/verification/schedule/:jobId

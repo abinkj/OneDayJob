@@ -24,9 +24,11 @@ import {
   syncWorkerTime,
   formatTime,
   formatDuration,
+  submitRating,
 } from "../../../services/api";
 import Toast from "react-native-toast-message";
 import styles from "./styles";
+import RatingModal from "../../../components/RatingModal";
 
 interface JobTimerRouteParams {
   jobId: string;
@@ -50,6 +52,11 @@ const JobTimerScreen = () => {
   const [lastSyncTime, setLastSyncTime] = useState(0);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
+
+  // Rating states
+  const [isRatingModalVisible, setIsRatingModalVisible] = useState(false);
+  const [selectedWorkerForRating, setSelectedWorkerForRating] = useState<{ id: string, name: string } | null>(null);
+  const [isSubmittingRating, setIsSubmittingRating] = useState(false);
 
   // Timer refs
   const timerRef = useRef<NodeJS.Timeout | null>(null);
@@ -403,6 +410,45 @@ const JobTimerScreen = () => {
     }
   };
 
+  const openRatingModal = (worker: any) => {
+    setSelectedWorkerForRating({ id: worker.id, name: worker.name });
+    setIsRatingModalVisible(true);
+  };
+
+  const handleSubmitRating = async (rating: number, comment: string) => {
+    if (!selectedWorkerForRating) return;
+
+    try {
+      setIsSubmittingRating(true);
+      await submitRating({
+        ratedUser: selectedWorkerForRating.id,
+        job: jobId,
+        role: 'employee',
+        rating,
+        comment
+      });
+
+      Toast.show({
+        type: "success",
+        text1: "Rating Submitted",
+        text2: `You have successfully rated ${selectedWorkerForRating.name}`,
+      });
+
+      setIsRatingModalVisible(false);
+      // Refresh data to update UI
+      await loadSessionData(true);
+    } catch (error) {
+      console.error("Error submitting rating:", error);
+      Toast.show({
+        type: "error",
+        text1: "Error",
+        text2: "Failed to submit rating",
+      });
+    } finally {
+      setIsSubmittingRating(false);
+    }
+  };
+
   if (loading) {
     return (
       <View style={styles.container}>
@@ -566,6 +612,38 @@ const JobTimerScreen = () => {
                         </View>
                       )}
                     </View>
+
+                    {/* Rate Worker Button */}
+                    {worker.status === 'completed' && (
+                      <View style={{ marginTop: 10 }}>
+                        {worker.hasRated ? (
+                          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                            <Ionicons name="star" size={16} color="#FFD700" />
+                            <Text style={{ marginLeft: 5, color: '#666', fontWeight: '500' }}>
+                              Rated {worker.rating}/5
+                            </Text>
+                          </View>
+                        ) : (
+                          <TouchableOpacity
+                            style={{
+                              backgroundColor: '#007AFF',
+                              paddingVertical: 8,
+                              paddingHorizontal: 12,
+                              borderRadius: 6,
+                              alignSelf: 'flex-start',
+                              flexDirection: 'row',
+                              alignItems: 'center'
+                            }}
+                            onPress={() => openRatingModal(worker)}
+                          >
+                            <Ionicons name="star-outline" size={16} color="#fff" style={{ marginRight: 5 }} />
+                            <Text style={{ color: '#fff', fontWeight: '600', fontSize: 12 }}>
+                              Rate Worker
+                            </Text>
+                          </TouchableOpacity>
+                        )}
+                      </View>
+                    )}
                   </View>
                 ))}
               </View>
@@ -774,6 +852,15 @@ const JobTimerScreen = () => {
           </>
         )}
       </ScrollView>
+
+      {/* Rating Modal */}
+      <RatingModal
+        isVisible={isRatingModalVisible}
+        onClose={() => setIsRatingModalVisible(false)}
+        onSubmit={handleSubmitRating}
+        isSubmitting={isSubmittingRating}
+        workerName={selectedWorkerForRating?.name || 'Worker'}
+      />
     </View>
   );
 };
