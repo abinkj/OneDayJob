@@ -107,9 +107,8 @@ const JobCard = ({
   });
 
   const formattedLocation = location?.address
-    ? `${location.address}${location.city ? ", " + location.city : ""}${
-        location.state ? ", " + location.state : ""
-      }${location.country ? ", " + location.country : ""}`
+    ? `${location.address}${location.city ? ", " + location.city : ""}${location.state ? ", " + location.state : ""
+    }${location.country ? ", " + location.country : ""}`
     : location?.country || "Remote";
 
   const formatTimePreference = (timePrefs: string[]) => {
@@ -254,61 +253,6 @@ const JobCard = ({
               <Text style={[styles.buttonText, { color: Colors.white }]}>
                 Withdraw
               </Text>
-            </TouchableOpacity>
-          ) : showPaymentButton && isEmployer && data?.isPaymentDone ? (
-            <TouchableOpacity
-              style={[
-                styles.button,
-                { backgroundColor: Colors.blue, marginLeft: 12 },
-              ]}
-              onPress={() => {
-                if (onPayment) onPayment();
-              }}
-            >
-              <View style={styles.paymentButtonContent}>
-                <Ionicons
-                  name="receipt-outline"
-                  size={14}
-                  color={Colors.white}
-                />
-                <Text
-                  style={[
-                    styles.buttonText,
-                    { color: Colors.white, marginLeft: 4 },
-                  ]}
-                >
-                  View Receipt
-                </Text>
-              </View>
-            </TouchableOpacity>
-          ) : showPaymentButton &&
-            isWorkFinished &&
-            isEmployer &&
-            !data?.isPaymentDone ? (
-            <TouchableOpacity
-              style={[
-                styles.button,
-                { backgroundColor: "#4CAF50", marginLeft: 12 },
-              ]}
-              onPress={() => {
-                if (onPayment) onPayment();
-              }}
-            >
-              <View style={styles.paymentButtonContent}>
-                <Ionicons
-                  name="wallet-outline"
-                  size={14}
-                  color={Colors.white}
-                />
-                <Text
-                  style={[
-                    styles.buttonText,
-                    { color: Colors.white, marginLeft: 4 },
-                  ]}
-                >
-                  Pay Now
-                </Text>
-              </View>
             </TouchableOpacity>
           ) : (
             <TouchableOpacity

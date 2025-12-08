@@ -246,7 +246,7 @@ const Settings: React.FC = () => {
             subtitle="Update your personal information"
             onPress={handleEditProfile}
           />
-          <SettingsItem
+          {/* <SettingsItem
             icon="card-outline"
             title="Bank Account"
             subtitle="Manage your payment details"
@@ -257,7 +257,7 @@ const Settings: React.FC = () => {
             title="Payment History"
             subtitle="View your transaction history"
             onPress={handlePaymentHistory}
-          />
+          /> */}
         </SettingsSection>
 
         {/* Notifications Section */}

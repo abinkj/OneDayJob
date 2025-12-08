@@ -20,7 +20,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { Colors } from "../../../constants/Colors";
 import JobCard from "../../../components/jobCard";
 import StatusFilter from "../../../components/statusFilter";
-import PaymentModal from "../../../components/paymentModal";
+// import PaymentModal from "../../../components/paymentModal";
 import {
   useUserJobPostings,
   useUserAppliedJobs,
@@ -63,9 +63,8 @@ const MyPostTab = () => {
   const deleteJobMutation = useDeleteJob();
 
   const [selectedStatus, setSelectedStatus] = useState<string | null>(null);
-  const [paymentModalVisible, setPaymentModalVisible] = useState(false);
-  const [selectedJobForPayment, setSelectedJobForPayment] =
-    useState<JobPost | null>(null);
+  // const [paymentModalVisible, setPaymentModalVisible] = useState(false);
+  // const [selectedJobForPayment, setSelectedJobForPayment] = useState<JobPost | null>(null);
 
   // Flatten data
   const posts = React.useMemo(() => {
@@ -78,21 +77,21 @@ const MyPostTab = () => {
     navigation.navigate("RequestVerification", { jobId: jobId });
   };
 
-  const handlePayment = (job: JobPost) => {
-    console.log("Opening payment modal for job:", job._id);
-    setSelectedJobForPayment(job);
-    setPaymentModalVisible(true);
-  };
+  // const handlePayment = (job: JobPost) => {
+  //   console.log("Opening payment modal for job:", job._id);
+  //   setSelectedJobForPayment(job);
+  //   setPaymentModalVisible(true);
+  // };
 
-  const handlePaymentSuccess = () => {
-    // Refresh the posts list after successful payment
-    refetch();
-    Toast.show({
-      type: "success",
-      text1: "Payment Successful",
-      text2: "The payment has been processed successfully",
-    });
-  };
+  // const handlePaymentSuccess = () => {
+  //   // Refresh the posts list after successful payment
+  //   refetch();
+  //   Toast.show({
+  //     type: "success",
+  //     text1: "Payment Successful",
+  //     text2: "The payment has been processed successfully",
+  //   });
+  // };
 
   const handleDelete = async (jobId: string) => {
     try {
@@ -155,9 +154,9 @@ const MyPostTab = () => {
       data={item}
       onPress={() => handleNext(item._id)}
       onDelete={() => handleDelete(item._id)}
-      onPayment={() => handlePayment(item)}
+      // onPayment={() => handlePayment(item)}
       isEmployer={true}
-      showPaymentButton={true}
+    // showPaymentButton={true}
     />
   );
 
@@ -220,7 +219,7 @@ const MyPostTab = () => {
           filteredPosts.length === 0 ? { flexGrow: 1 } : undefined
         }
       />
-      {selectedJobForPayment && (
+      {/* {selectedJobForPayment && (
         <PaymentModal
           visible={paymentModalVisible}
           onClose={() => setPaymentModalVisible(false)}
@@ -228,7 +227,7 @@ const MyPostTab = () => {
           jobName={selectedJobForPayment.name}
           onPaymentSuccess={handlePaymentSuccess}
         />
-      )}
+      )} */}
     </View>
   );
 };
