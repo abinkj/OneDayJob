@@ -1,4 +1,4 @@
-package com.anonymous.oneday
+package com.zoopol.app
 
 import android.app.Application
 import android.content.res.Configuration

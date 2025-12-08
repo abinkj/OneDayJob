@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "oneday",
-    "slug": "oneday",
+    "name": "Zoopol",
+    "slug": "zoopol",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -14,15 +14,15 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.anonymous.oneday"
+      "bundleIdentifier": "com.zoopol.app"
     },
-    "scheme": "oneday",
+    "scheme": "zoopol",
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#294678"
       },
-      "package": "com.anonymous.oneday",
+      "package": "com.zoopol.app",
       "googleServicesFile": "./google-services.json",
       "permissions": [
         "android.permission.ACCESS_COARSE_LOCATION",

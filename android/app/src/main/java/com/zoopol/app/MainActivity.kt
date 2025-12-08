@@ -1,4 +1,4 @@
-package com.anonymous.oneday
+package com.zoopol.app
 import expo.modules.splashscreen.SplashScreenManager
 
 import android.os.Build

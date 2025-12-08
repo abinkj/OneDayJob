@@ -595,6 +595,9 @@ export const getCurrentUser = async () => {
 // Update user profile
 export const updateProfile = (id, data) => api.put(`/users/${id}`, data);
 
+// Delete user account
+export const deleteUser = (id) => api.delete(`/users/${id}`);
+
 // Conversation API endpoints
 export const getConversations = async () => {
   try {
