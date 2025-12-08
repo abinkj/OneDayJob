@@ -122,7 +122,7 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   filtersContainer: {
-   alignItems: "center",
+    alignItems: "center",
   },
   filterButton: {
     flexDirection: "row",
@@ -195,7 +195,7 @@ const styles = StyleSheet.create({
     color: Colors.black,
     marginBottom: 12 * DeviceDimensions.heightRatio,
     flex: 1,              // take remaining space
-  marginRight: 8, 
+    marginRight: 8,
   },
   jobDetailsContainer: {
     flexDirection: "row",
@@ -250,7 +250,7 @@ const styles = StyleSheet.create({
   statusContainer: {
     backgroundColor: Colors.tabGrey,
     paddingHorizontal: 12 * DeviceDimensions.widthRatio,
-    height:22,
+    height: 22,
     borderRadius: 20,
     justifyContent: "center",
     alignItems: "center",
@@ -288,9 +288,9 @@ const styles = StyleSheet.create({
     marginTop: 2,
     fontWeight: "500",
   },
-  
 
-modalOverlay: {
+
+  modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
     justifyContent: 'flex-end',

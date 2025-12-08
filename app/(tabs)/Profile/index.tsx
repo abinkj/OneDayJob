@@ -197,6 +197,7 @@ const Profile: React.FC = () => {
             source={user?.profilePicture}
             style={styles.profileImage}
             placeholder={Images.profile.profileImage}
+            contentFit="cover"
           />
           <Text style={styles.name}>
             {user?.firstName} {user?.lastName}

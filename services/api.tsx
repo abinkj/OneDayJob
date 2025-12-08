@@ -234,73 +234,42 @@ export const createJobPosting = async (data) => {
   }
 };
 
-// FIXED: Better authentication testing function
+// FIXED: Better authentication testing function - Local only
 export const testAuth = async () => {
   try {
     const token = await getAccessToken();
     if (!token) {
-      console.log("No token found - not authenticated");
+      console.log("auth check: No token found");
       return false;
     }
-
-    // Test with a simple jobs endpoint instead of auth endpoints
-    const response = await api.get("/jobs", { timeout: 5000 });
-    console.log("Auth test successful with jobs endpoint:", response.status);
+    // We trust the token is valid until an API call fails with 401
     return true;
   } catch (error) {
-    console.log("Auth test failed:", error.response?.status || error.message);
-    if (error.response?.status === 403 || error.response?.status === 401) {
-      console.log("Token invalid - clearing auth data");
-      await clearAuthData();
-      return false;
-    }
-    // For network errors or other issues, assume auth is valid if we have a token
-    const token = await getAccessToken();
-    return !!token;
+    console.log("Auth test failed:", error);
+    return false;
   }
 };
 
 // FIXED: Improved authentication check
+// FIXED: Improved authentication check - Local only
 export const isAuthenticated = async () => {
   try {
     const token = await getAccessToken();
     const user = await AsyncStorage.getItem("USER");
 
-    console.log("Checking authentication:", {
-      hasToken: !!token,
-      hasUser: !!user,
-      tokenPreview: token ? token.substring(0, 20) + "..." : "No token",
-    });
+    // console.log("Checking authentication (local):", {
+    //   hasToken: !!token,
+    //   hasUser: !!user,
+    // });
 
     if (!token || !user) {
-      console.log("Missing token or user data - not authenticated");
       return false;
     }
 
-    // Quick token validity check with jobs endpoint (more reliable than auth endpoints)
-    try {
-      const response = await api.get("/jobs", { timeout: 5000 });
-      console.log("Authentication verified with server");
-      return true;
-    } catch (error) {
-      console.log(
-        "Server authentication check failed:",
-        error.response?.status
-      );
-
-      // If it's a 403 or 401, the token is invalid
-      if (error.response?.status === 403 || error.response?.status === 401) {
-        console.log("Token is invalid, clearing auth data");
-        await clearAuthData();
-        return false;
-      }
-
-      // For other errors (network, timeout), assume valid if we have token and user
-      console.log(
-        "Server verification failed with non-auth error, assuming valid"
-      );
-      return true;
-    }
+    // We accept the token as valid. 
+    // If it's expired, the Axios interceptor will handle the 401 response
+    // by attempting a refresh or logging the user out.
+    return true;
   } catch (error) {
     console.error("Error checking authentication:", error);
     return false;
@@ -1300,7 +1269,8 @@ export const getWorkerPayouts = async (workerId: string) => {
     //const response = await api.get(`/payouts/status/${workerId}`);
 
     //console.log("Worker payouts:", response.data);
-    return response;
+    // return response;
+    return { data: [] }; // Mock empty response
   } catch (error) {
     console.error("Error getting worker payouts:", error);
     throw error;
