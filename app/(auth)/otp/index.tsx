@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { View, Text, TouchableOpacity, Alert, StyleSheet } from "react-native";
+import { View, Text, TouchableOpacity, Alert, StyleSheet, ScrollView, Platform, KeyboardAvoidingView } from "react-native";
 import { OtpInput } from "react-native-otp-entry";
 import { Colors } from "../../../constants/Colors";
 import { verifyOtp, requestOtp } from "../../../services/api";
@@ -10,6 +10,7 @@ import { loginUser } from "../../../utilities/authentication";
 import styles from "./styles";
 import { saveKycStatus } from "../../../utilities/asyncStore";
 import { completeKyc } from "../../../redux/reducers/authReducers";
+import Animated, { FadeInDown } from "react-native-reanimated";
 
 interface RouteParams {
   phoneNumber: string;
@@ -48,7 +49,6 @@ const Otp = () => {
           "resonse data-------------------> ",
           JSON.stringify(response.data.data)
         );
-        //console.log("User data from OTP verification:", userData);
 
         console.log("Tokens and user data received successfully");
 
@@ -133,59 +133,84 @@ const Otp = () => {
   }
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Verify account</Text>
-      <Text style={styles.subtitleOtp}>
-        Enter the OTP we have sent to {phoneNumber}
-      </Text>
-
-      <OtpInput
-        numberOfDigits={6}
-        focusColor={Colors.black}
-        autoFocus={true}
-        hideStick={true}
-        placeholder="------"
-        blurOnFilled={true}
-        disabled={isLoading}
-        type="numeric"
-        secureTextEntry={false}
-        focusStickBlinkingDuration={500}
-        onTextChange={(text) => setOtp(text)}
-        onFilled={(text) => setOtp(text)}
-        textInputProps={{
-          accessibilityLabel: "One-Time Password",
-        }}
-        theme={{
-          containerStyle: styles.containerOtp,
-          pinCodeContainerStyle: styles.pinCodeContainer,
-          pinCodeTextStyle: styles.pinCodeText,
-          focusedPinCodeContainerStyle: styles.activePinCodeContainer,
-        }}
-      />
-
-      <Text style={styles.resendText}>
-        Didn't receive an OTP?{" "}
-        <Text
-          style={[styles.resendButton, isResending && { opacity: 0.5 }]}
-          onPress={handleResendOtp}
-        >
-          {isResending ? "Sending..." : "Resend"}
-        </Text>
-      </Text>
-
-      <TouchableOpacity
-        style={[
-          styles.buttonOtp,
-          (isLoading || otp.length !== 6) && styles.disabledButton,
-        ]}
-        onPress={handleVerifyOtp}
-        disabled={isLoading || otp.length !== 6}
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+    >
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+        bounces={false}
       >
-        <Text style={styles.buttonText}>
-          {isLoading ? "Verifying..." : "Verify"}
-        </Text>
-      </TouchableOpacity>
-    </View>
+        <Animated.View
+          entering={FadeInDown.delay(200).duration(1000).springify()}
+          style={styles.headerContainer}
+        >
+          <Text style={styles.title}>Verify Account</Text>
+          <Text style={styles.subtitleOtp}>
+            Enter the 6-digit code sent to
+          </Text>
+          <Text style={[styles.subtitle, { fontFamily: 'bold', color: Colors.black }]}>
+            {phoneNumber}
+          </Text>
+        </Animated.View>
+
+        <Animated.View
+          entering={FadeInDown.delay(400).duration(1000).springify()}
+          style={{ width: '100%', alignItems: 'center' }}
+        >
+          <OtpInput
+            numberOfDigits={6}
+            focusColor={Colors.primary}
+            autoFocus={true}
+            hideStick={true}
+            placeholder=""
+            blurOnFilled={true}
+            disabled={isLoading}
+            type="numeric"
+            secureTextEntry={false}
+            focusStickBlinkingDuration={500}
+            onTextChange={(text) => setOtp(text)}
+            onFilled={(text) => setOtp(text)}
+            textInputProps={{
+              accessibilityLabel: "One-Time Password",
+            }}
+            theme={{
+              containerStyle: styles.containerOtp,
+              pinCodeContainerStyle: styles.pinCodeContainer,
+              pinCodeTextStyle: styles.pinCodeText,
+              focusedPinCodeContainerStyle: styles.activePinCodeContainer,
+            }}
+          />
+
+          <View style={styles.resendContainer}>
+            <Text style={styles.resendText}>
+              Didn't receive the code?{" "}
+              <Text
+                style={[styles.resendButton, isResending && { opacity: 0.5 }]}
+                onPress={handleResendOtp}
+              >
+                {isResending ? "Sending..." : "Resend"}
+              </Text>
+            </Text>
+          </View>
+
+          <TouchableOpacity
+            style={[
+              styles.buttonOtp,
+              (isLoading || otp.length !== 6) && styles.disabledButton,
+            ]}
+            onPress={handleVerifyOtp}
+            disabled={isLoading || otp.length !== 6}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.buttonText}>
+              {isLoading ? "Verifying..." : "Verify"}
+            </Text>
+          </TouchableOpacity>
+        </Animated.View>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 };
 

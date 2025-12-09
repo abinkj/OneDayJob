@@ -1,208 +1,147 @@
-import { Dimensions, StyleSheet } from "react-native";
+import { StyleSheet } from "react-native";
 import DeviceDimensions from "../../../constants/DeviceDimenions";
 import { Colors } from "../../../constants/Colors";
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 16,
-    backgroundColor: Colors.white,
+    backgroundColor: Colors.background,
+  },
+  scrollContent: {
+    flexGrow: 1,
     alignItems: "center",
+    paddingHorizontal: 24,
+    paddingTop: 40,
+  },
+  headerContainer: {
+    alignItems: 'center',
+    marginBottom: 40,
+    width: '100%',
   },
   title: {
-    fontSize: 24,
+    fontSize: 28,
     fontFamily: "bold",
-    marginTop: 56 * DeviceDimensions.heightRatio,
-    color: Colors.grey,
-  },
-  image: {
-    width: 272 * DeviceDimensions.widthRatio,
-    height: 206 * DeviceDimensions.heightRatio,
-    marginTop: 35,
+    color: Colors.black,
+    marginBottom: 12,
+    textAlign: "center",
   },
   subtitle: {
-    fontSize: 18,
-    lineHeight: 22,
+    fontSize: 16,
+    lineHeight: 24,
     textAlign: "center",
     fontFamily: "regular",
     color: Colors.grey,
-    marginTop: 34,
-    paddingHorizontal: 16,
+    maxWidth: '80%',
   },
   subtitleOtp: {
-    fontSize: 18,
-    lineHeight: 22,
+    fontSize: 16,
+    lineHeight: 24,
     textAlign: "center",
     fontFamily: "regular",
     color: Colors.grey,
-    marginTop: 55 * DeviceDimensions.heightRatio,
-    paddingHorizontal: 16,
+    marginTop: 8,
+    maxWidth: '90%',
   },
-  inputContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.grey,
-    width: DeviceDimensions.screenWidth * 0.8,
-    paddingBottom: 5,
-    marginTop: 60 * DeviceDimensions.heightRatio,
-  },
-  inputContainerSignUp: {
-    flexDirection: "row",
-    alignItems: "center",
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.grey,
-    width: DeviceDimensions.screenWidth * 0.8,
-    paddingBottom: 5,
-    marginTop: 40 * DeviceDimensions.heightRatio,
-  },
-  phoneContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.grey,
-    width: DeviceDimensions.screenWidth * 0.8,
-    paddingBottom: 5,
-    marginTop: 20 * DeviceDimensions.heightRatio,
-  },
-  countryCode: {
-    fontSize: 16,
-    marginRight: 10,
-    fontFamily: "regular",
-    color: Colors.grey,
-  },
-  input: {
-    flex: 1,
-    fontSize: 16,
-    fontFamily: "regular",
-    color: Colors.grey,
-  },
-  button: {
-    backgroundColor: Colors.black,
-    width: 361 * DeviceDimensions.widthRatio,
-    height: 42,
-    borderRadius: 10,
-    alignItems: "center",
-    justifyContent: "center",
-    marginTop: 162 * DeviceDimensions.heightRatio,
-  },
-  disabledButton: {
-    backgroundColor: "grey",
-    width: 361 * DeviceDimensions.widthRatio,
-    height: 42,
-    borderRadius: 10,
-    alignItems: "center",
-    justifyContent: "center",
-    marginTop: 373 * DeviceDimensions.heightRatio,
-  },
-  disabledButtonSign: {
-    backgroundColor: "grey",
-    width: 361 * DeviceDimensions.widthRatio,
-    height: 42,
-    borderRadius: 10,
-    alignItems: "center",
-    justifyContent: "center",
-    marginTop: 106 * DeviceDimensions.heightRatio,
-  },
-  disabledButtonOtp: {
-    backgroundColor: "grey",
-    width: 361 * DeviceDimensions.widthRatio,
-    height: 42,
-    borderRadius: 10,
-    alignItems: "center",
-    justifyContent: "center",
-    marginTop: 162 * DeviceDimensions.heightRatio,
-  },
-  buttonSign: {
-    backgroundColor: Colors.black,
-    width: 361 * DeviceDimensions.widthRatio,
-    height: 42,
-    borderRadius: 10,
-    alignItems: "center",
-    justifyContent: "center",
-    marginTop: 106 * DeviceDimensions.heightRatio,
-  },
-  buttonOtp: {
-    backgroundColor: Colors.black,
-    width: 361 * DeviceDimensions.widthRatio,
-    height: 42,
-    borderRadius: 10,
-    alignItems: "center",
-    justifyContent: "center",
-    marginTop: 373 * DeviceDimensions.heightRatio,
-  },
-  buttonText: {
-    color: Colors.white,
-    fontSize: 16,
-    fontFamily: "bold",
-  },
-  footerText: {
-    fontSize: 14,
-    color: Colors.grey,
-    fontFamily: "regular",
-  },
-  createAccount: {
-    fontSize: 14,
-    color: Colors.grey,
-    fontFamily: "bold",
-    marginLeft: 10,
-  },
-  row: {
-    flexDirection: "row",
-    marginTop: 10,
-  },
+  // OTP Input Specific Styles
   containerOtp: {
     flexDirection: "row",
     justifyContent: "center",
-    marginTop: 32,
+    marginTop: 40,
+    marginBottom: 10,
+    width: '100%',
+    gap: 8, // Add gap between inputs
   },
   pinCodeContainer: {
     width: 48,
-    height: 50,
+    height: 56, // Taller for modern look
     borderWidth: 1,
-    borderColor: Colors.black,
-    borderRadius: 8,
+    borderColor: 'transparent', // Remove border color for cleaner look with shadow
+    borderRadius: 12,
     justifyContent: "center",
     alignItems: "center",
-    marginHorizontal: 6,
     backgroundColor: Colors.white,
+    // Add shadow
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  activePinCodeContainer: {
+    borderColor: Colors.primary,
+    borderWidth: 1,
+    backgroundColor: Colors.white,
+    transform: [{ scale: 1.05 }], // Subtle scale effect on focus
   },
   pinCodeText: {
-    fontSize: 20,
+    fontSize: 24,
+    fontFamily: "bold",
     color: Colors.black,
     textAlign: "center",
   },
+
+  // Resend Section
+  resendContainer: {
+    marginTop: 20,
+    marginBottom: 10,
+    alignItems: 'center',
+  },
   resendText: {
-    marginTop: 12,
     fontSize: 14,
     color: Colors.grey,
     textAlign: "center",
+    fontFamily: "regular",
   },
   resendButton: {
-    color: Colors.black,
-    fontWeight: "bold",
+    color: Colors.primary, // Use primary color for action
+    fontFamily: "bold",
   },
-  activePinCodeContainer: {
-    backgroundColor: "#DDDDDD",
+
+  buttonOtp: {
+    backgroundColor: Colors.black,
+    width: '100%',
+    height: 56,
+    borderRadius: 16,
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: Colors.black,
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 4,
+    marginTop: 40,
   },
-  containerCenter: {
-    flex: 1,
+  disabledButton: {
+    backgroundColor: Colors.grey,
+    shadowOpacity: 0,
+    elevation: 0,
+  },
+  buttonText: {
+    color: Colors.white,
+    fontSize: 18,
+    fontFamily: "bold",
+  },
+
+  // Success view styles
+  center: {
     justifyContent: "center",
     alignItems: "center",
-  },
-  center: {
-    alignItems: "center",
-    paddingTop: 150 * DeviceDimensions.heightRatio,
   },
   animationContainer: {
     width: 200 * DeviceDimensions.widthRatio,
     height: 200 * DeviceDimensions.heightRatio,
   },
   text: {
-    paddingTop: 5,
-    fontSize: 26,
-    color: Colors.grey,
-    fontWeight: "600",
+    marginTop: 20,
+    fontSize: 24,
+    color: Colors.black,
+    fontFamily: "bold",
   },
 });
 
