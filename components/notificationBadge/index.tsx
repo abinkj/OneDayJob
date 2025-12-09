@@ -46,13 +46,12 @@ const NotificationBadge: React.FC<NotificationBadgeProps> = ({
 const styles = StyleSheet.create({
   badge: {
     position: 'absolute',
-    top: -6,
+    top: -3,
     right: -6,
     justifyContent: 'center',
     alignItems: 'center',
     minWidth: 18,
     minHeight: 18,
-    paddingHorizontal: 4,
   },
   badgeText: {
     fontWeight: '600',

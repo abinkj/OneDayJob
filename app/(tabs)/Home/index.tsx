@@ -879,11 +879,11 @@ const HomeScreen = () => {
           </View>
           <TouchableOpacity
             onPress={handleNotificationPress}
-            style={{ position: "relative" }}
+            style={{ position: "relative", marginRight: 10 }}
           >
             <Ionicons
               name="notifications-outline"
-              size={24}
+              size={22}
               color={Colors.black}
             />
             <NotificationBadge />
