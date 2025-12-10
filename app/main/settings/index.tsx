@@ -190,17 +190,17 @@ const Settings: React.FC = () => {
                 const userId = user.id || user._id;
                 // Call API to delete user
                 // Assuming deleteUser is imported from api.tsx, if not we need to import it
-                // We'll trust the import is handled or I'll fix it in a separate step if needed. 
+                // We'll trust the import is handled or I'll fix it in a separate step if needed.
                 // Wait, I need to make sure deleteUser is imported.
                 // Let's use dispatch(logoutUser()) after success.
 
-                // Since I can't easily auto-add imports here without risking conflict, 
+                // Since I can't easily auto-add imports here without risking conflict,
                 // I will add the logic and if import is missing I will fix it.
-                // Actually, I should probably check imports first. 
+                // Actually, I should probably check imports first.
                 // But let's write the logic:
 
                 setIsLoading(true);
-                // We need to import deleteUser at the top. 
+                // We need to import deleteUser at the top.
                 // For now, let's use the one we just added.
                 // Note: I will add the import in a subsequent tool call if needed or use a multi-replace.
                 // Actually, let's just emit the logic and then check imports.
@@ -267,6 +267,8 @@ const Settings: React.FC = () => {
             source={user?.profilePicture}
             style={styles.profileImage}
             placeholder={Images.profile.profileImage}
+            placeholderContentFit="cover"
+            contentFit="cover"
           />
           <View style={styles.profileInfo}>
             <Text style={styles.profileName}>
