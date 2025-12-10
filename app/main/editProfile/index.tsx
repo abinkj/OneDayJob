@@ -30,9 +30,9 @@ const EditProfile: React.FC = () => {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [location, setLocation] = useState("");
-  const [profileImage, setProfileImage] = useState<string | { uri: string }>(
-    Images.profile.profileImage as unknown as { uri: string }
-  );
+  const [profileImage, setProfileImage] = useState<{ uri: string }>({
+    uri: Images.profile.profileImage as unknown as string,
+  });
   const [isSaving, setIsSaving] = useState(false);
 
   // Toast state
@@ -145,13 +145,11 @@ const EditProfile: React.FC = () => {
         {/* Profile Image */}
         <View style={styles.imageWrapper}>
           <Image
-            source={
-              typeof profileImage === "string"
-                ? profileImage
-                : profileImage?.uri || Images.profile.profileImage
-            }
+            source={profileImage.uri}
             style={styles.profileImage}
             placeholder={Images.profile.profileImage}
+            placeholderContentFit="cover"
+            contentFit="cover"
           />
           <TouchableOpacity onPress={showImagePicker} style={styles.editIcon}>
             <Ionicons name="camera" size={16} color="#fff" />
