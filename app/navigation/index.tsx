@@ -13,7 +13,7 @@ const RootStack = createNativeStackNavigator();
 const RootStackLayout = () => {
   const dispatch = useDispatch();
   const { isLoggedIn, kycStatus } = useSelector(
-    (state) => state.authentication
+    (state: any) => state.authentication
   );
   // console.log("Kyc stats", kycStatus);
   const [isLoading, setIsLoading] = useState(true);

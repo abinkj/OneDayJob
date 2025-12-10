@@ -19,8 +19,7 @@ const PrivacyPolicy = () => {
         source={{ uri: displayUrl }}
         style={styles.webview}
         startInLoadingState
-        decelerationRate="normal"
-        overScrollMode="never"
+        originWhitelist={["*"]}
         renderLoading={() => (
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="large" color={Colors.blue} />
