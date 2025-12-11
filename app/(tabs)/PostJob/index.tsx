@@ -1215,9 +1215,9 @@ const PostJobScreen = ({ navigation: navProp }) => {
         toggleRequirementsList={toggleRequirementsList}
         showRequirementsList={showRequirementsList}
         openEditRequirements={openEditRequirements}
-        // togglePhotosList={togglePhotosList}
-        // showPhotosList={showPhotosList}
-        // handlePickImage={handlePickImage}
+      // togglePhotosList={togglePhotosList}
+      // showPhotosList={showPhotosList}
+      // handlePickImage={handlePickImage}
       />
 
       <View style={styles.switchContainer}>
@@ -1417,7 +1417,7 @@ const PostJobScreen = ({ navigation: navProp }) => {
             style={[
               styles.timeSlot,
               selectedTimePreferences.includes(slot.id) &&
-                styles.selectedTimeSlot,
+              styles.selectedTimeSlot,
             ]}
             onPress={() => handleTimePreferenceToggle(slot.id)}
           >
@@ -1461,7 +1461,7 @@ const PostJobScreen = ({ navigation: navProp }) => {
             style={[
               styles.timeSlot,
               selectedTimePreferences.includes(slot.id) &&
-                styles.selectedTimeSlot,
+              styles.selectedTimeSlot,
             ]}
             onPress={() => handleTimePreferenceToggle(slot.id)}
           >
@@ -1699,6 +1699,13 @@ const PostJobScreen = ({ navigation: navProp }) => {
       const category = jobCategories.find((cat) => cat.id === selectedCategory);
       return category ? category.name : selectedValue;
     };
+
+    const getCategoryIcon = () => {
+      const category = jobCategories.find((cat) => cat.id === selectedCategory);
+      return category
+        ? category.icon
+        : require("../../../assets/placeholder-image.png");
+    };
     const getTimePreferenceName = () => {
       if (selectedTimePreferences.length === 0) return "Flexible";
       const timeSlot = timeSlots.find(
@@ -1859,7 +1866,8 @@ const PostJobScreen = ({ navigation: navProp }) => {
               <View style={styles.categoryBadge}>
                 <Image
                   style={styles.avatarContainer}
-                  source={require("../../../assets/images/cleaning.png")}
+                  source={getCategoryIcon()}
+                  resizeMode="center"
                 />
                 <Text style={styles.categoryBadgeText}>
                   {getCategoryName().toUpperCase()}
@@ -1870,7 +1878,7 @@ const PostJobScreen = ({ navigation: navProp }) => {
           </View>
           <View style={styles.nameContainer2}>
             <Image
-              source={require("../../../assets/placeholder-image.png")}
+              source={getCategoryIcon()}
               style={styles.userImage}
             />
           </View>
@@ -1912,7 +1920,7 @@ const PostJobScreen = ({ navigation: navProp }) => {
             <Text style={styles.detailValue}>
               {selectedLocation
                 ? selectedLocation.address ||
-                  `${selectedLocation.city}, ${selectedLocation.state}`
+                `${selectedLocation.city}, ${selectedLocation.state}`
                 : taskAddress || "Remote"}
             </Text>
           </View>
