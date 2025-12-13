@@ -254,6 +254,8 @@ const Profile: React.FC = () => {
                     source={review.raterUser?.profilePicture}
                     style={styles.reviewerImage}
                     placeholder={Images.profile.profileImage}
+                    placeholderContentFit="cover"
+
                   />
                   <View style={styles.reviewerNameContainer}>
                     <Text style={styles.reviewerName}>
