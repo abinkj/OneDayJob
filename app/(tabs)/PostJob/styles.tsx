@@ -723,7 +723,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: Colors.black,
     fontWeight: 'bold',
-    marginBottom:20 * DeviceDimensions.heightRatio
+    marginBottom: 20 * DeviceDimensions.heightRatio
   },
   photosScrollView: {
     marginBottom: 15,
@@ -761,7 +761,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     marginTop: 20,
     paddingHorizontal: 20,
-    marginBottom:30 * DeviceDimensions.heightRatio,
+    marginBottom: 30 * DeviceDimensions.heightRatio,
   },
   editButton123: {
     flexDirection: 'row',
@@ -788,9 +788,9 @@ const styles = StyleSheet.create({
     height: 245 * DeviceDimensions.heightRatio,
   },
   userImage: {
-    width: 141 * DeviceDimensions.widthRatio,
-    height: 193 * DeviceDimensions.heightRatio,
-    resizeMode: 'stretch',
+    width: 111 * DeviceDimensions.widthRatio,
+    height: 163 * DeviceDimensions.heightRatio,
+    resizeMode: 'contain',
     justifyContent: 'center',
     alignItems: 'center',
     borderRadius: 20,
@@ -821,5 +821,5 @@ const styles = StyleSheet.create({
     marginBottom: 8 * DeviceDimensions.heightRatio,
   },
 
-}); 
+});
 export default styles;
