@@ -125,6 +125,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: Colors.grey,
     fontFamily: "regular",
+    textAlign: 'center',
   },
   createAccount: {
     fontSize: 14,

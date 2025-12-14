@@ -311,7 +311,7 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
-  - razorpay-core-pod (1.0.3)
+  - razorpay-core-pod (1.0.4)
   - razorpay-pod (1.5.0):
     - razorpay-core-pod
   - RCTDeprecation (0.81.5)
@@ -2807,7 +2807,7 @@ SPEC CHECKSUMS:
   libwebp: 02b23773aedb6ff1fd38cec7a77b81414c6842a8
   lottie-ios: a881093fab623c467d3bce374367755c272bdd59
   lottie-react-native: cbe3d931a7c24f7891a8e8032c2bb9b2373c4b9c
-  razorpay-core-pod: ef0309dbf8e3e5a1330f6cad89dcf9226d8ef758
+  razorpay-core-pod: a5ee92704a114e9468436dcba9d9b6222f6d9899
   razorpay-pod: f634f1b8397eb54d547f25d35291f679545ddf17
   RCTDeprecation: 943572d4be82d480a48f4884f670135ae30bf990
   RCTRequired: 8f3cfc90cc25cf6e420ddb3e7caaaabc57df6043
@@ -2894,6 +2894,6 @@ SPEC CHECKSUMS:
   SDWebImageWebPCoder: e38c0a70396191361d60c092933e22c20d5b1380
   Yoga: 5934998fbeaef7845dbf698f698518695ab4cd1a
 
-PODFILE CHECKSUM: 8ffdd64815edb6420dd12b93cc8079033e073f47
+PODFILE CHECKSUM: 9558c38ea49015f55e2d2313d859e277c98aeae0
 
 COCOAPODS: 1.16.2

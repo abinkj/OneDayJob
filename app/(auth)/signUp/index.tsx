@@ -60,9 +60,10 @@ const SignUp = () => {
   return (
     <KeyboardAvoidingView
       style={styles.container}
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      //behavior={Platform.OS === "ios" ? "padding" : undefined}
     >
       <ScrollView
+        automaticallyAdjustKeyboardInsets={true}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
         bounces={false}
@@ -76,9 +77,7 @@ const SignUp = () => {
             style={styles.image}
           />
           <Text style={styles.title}>Create Account</Text>
-          <Text style={styles.subtitle}>
-            Enter your details to get started
-          </Text>
+          <Text style={styles.subtitle}>Enter your details to get started</Text>
         </Animated.View>
 
         <Animated.View
@@ -91,6 +90,7 @@ const SignUp = () => {
               style={[
                 styles.inputWrapper,
                 focusedInput === "name" && styles.inputWrapperFocused,
+                //{ marginTop: 50 },
               ]}
             >
               <Ionicons
