@@ -107,8 +107,9 @@ const JobCard = ({
   });
 
   const formattedLocation = location?.address
-    ? `${location.address}${location.city ? ", " + location.city : ""}${location.state ? ", " + location.state : ""
-    }${location.country ? ", " + location.country : ""}`
+    ? `${location.address}${location.city ? ", " + location.city : ""}${
+        location.state ? ", " + location.state : ""
+      }${location.country ? ", " + location.country : ""}`
     : location?.country || "Remote";
 
   const formatTimePreference = (timePrefs: string[]) => {
