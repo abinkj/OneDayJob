@@ -14,6 +14,7 @@ import { Colors } from "../../../constants/Colors";
 import styles from "./styles";
 import { JobPost } from "../../../types";
 import { Header } from "../../../components/header";
+import { openMap } from "../../../utilities/mapUtils";
 import {
   applyJob,
   createConversation,
@@ -394,9 +395,32 @@ const JobDetails = () => {
         {/* Location */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Location</Text>
-          <View style={styles.locationContainer}>
-            <Ionicons name="location-outline" size={20} color={Colors.grey} />
-            <Text style={styles.locationText}>
+          <TouchableOpacity
+            style={styles.locationContainer}
+            onPress={() => openMap(job.location, job.name || "Job Location")}
+            disabled={
+              job.isRemote ||
+              job.jobStatus === "completed" ||
+              job.status === "completed"
+            }
+          >
+            <Ionicons
+              name="location-outline"
+              size={20}
+              color={Colors.primary}
+            />
+            <Text
+              style={[
+                styles.locationText,
+                !job.isRemote &&
+                  !(
+                    job.jobStatus === "completed" || job.status === "completed"
+                  ) && {
+                    color: Colors.primary,
+                    textDecorationLine: "underline",
+                  },
+              ]}
+            >
               {job.isRemote
                 ? "Remote Work"
                 : `${job.location?.address || ""}${
@@ -405,7 +429,7 @@ const JobDetails = () => {
                     job.location?.country ? ", " + job.location.country : ""
                   }`}
             </Text>
-          </View>
+          </TouchableOpacity>
         </View>
 
         {/* Time Preference */}
