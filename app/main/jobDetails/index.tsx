@@ -6,6 +6,8 @@ import {
   TouchableOpacity,
   ScrollView,
   ActivityIndicator,
+  Linking,
+  Platform,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation, useRoute } from "@react-navigation/native";
@@ -43,6 +45,64 @@ const JobDetails = () => {
 
   // Notification context
   const { sendVerificationCodeNotification } = useNotifications();
+
+  const openMap = () => {
+    if (!job?.location) return;
+
+    const loc = job.location as any;
+    let jobLat, jobLng;
+
+    // Handle both GeoJSON format and lat/lng format
+    // Checking for coordinates array (GeoJSON) or direct latitude/longitude properties
+    if (loc.coordinates?.coordinates) {
+      // GeoJSON format [lng, lat]
+      jobLng = loc.coordinates.coordinates[0];
+      jobLat = loc.coordinates.coordinates[1];
+    } else if (loc.coordinates?.latitude && loc.coordinates?.longitude) {
+      // Regular lat/lng format inside coordinates object
+      jobLat = loc.coordinates.latitude;
+      jobLng = loc.coordinates.longitude;
+    } else if (loc.latitude && loc.longitude) {
+      // Direct latitude/longitude on location object
+      jobLat = loc.latitude;
+      jobLng = loc.longitude;
+    }
+
+    if (!jobLat || !jobLng) {
+      // Fallback to address search if coordinates are missing
+      const address = [loc.address, loc.city, loc.state, loc.country]
+        .filter(Boolean)
+        .join(", ");
+
+      if (address) {
+        const url = Platform.select({
+          ios: `maps:0,0?q=${encodeURIComponent(address)}`,
+          android: `geo:0,0?q=${encodeURIComponent(address)}`,
+        });
+        Linking.openURL(url);
+      } else {
+        Toast.show({
+          type: "info",
+          text1: "Location Info",
+          text2: "No accurate location data available for map",
+        });
+      }
+      return;
+    }
+
+    const scheme = Platform.select({
+      ios: "maps:0,0?q=",
+      android: "geo:0,0?q=",
+    });
+    const latLng = `${jobLat},${jobLng}`;
+    const label = encodeURIComponent(job.name || "Job Location");
+    const url = Platform.select({
+      ios: `${scheme}${label}@${latLng}`,
+      android: `${scheme}${latLng}(${label})`,
+    });
+
+    Linking.openURL(url);
+  };
 
   useEffect(() => {
     if (jobData) {
@@ -394,9 +454,25 @@ const JobDetails = () => {
         {/* Location */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Location</Text>
-          <View style={styles.locationContainer}>
-            <Ionicons name="location-outline" size={20} color={Colors.grey} />
-            <Text style={styles.locationText}>
+          <TouchableOpacity
+            style={styles.locationContainer}
+            onPress={job.isRemote ? undefined : openMap}
+            activeOpacity={job.isRemote ? 1 : 0.7}
+          >
+            <Ionicons
+              name="location-outline"
+              size={20}
+              color={Colors.primary}
+            />
+            <Text
+              style={[
+                styles.locationText,
+                !job.isRemote && {
+                  color: Colors.primary,
+                  textDecorationLine: "underline",
+                },
+              ]}
+            >
               {job.isRemote
                 ? "Remote Work"
                 : `${job.location?.address || ""}${
@@ -405,7 +481,7 @@ const JobDetails = () => {
                     job.location?.country ? ", " + job.location.country : ""
                   }`}
             </Text>
-          </View>
+          </TouchableOpacity>
         </View>
 
         {/* Time Preference */}
