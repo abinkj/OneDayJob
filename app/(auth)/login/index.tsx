@@ -83,6 +83,7 @@ const Login = () => {
             <Text style={styles.countryCode}>+91</Text>
             <TextInput
               style={styles.input}
+              inputMode="numeric"
               keyboardType="number-pad"
               maxLength={10}
               placeholder="Enter 10-digit number"
