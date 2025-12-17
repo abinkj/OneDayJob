@@ -191,7 +191,7 @@ const EditProfile: React.FC = () => {
         <CustomButton
           text={isSaving ? "Saving..." : "Save Changes"}
           onPress={handleSave}
-          color={Colors.grey}
+          color={Colors.black}
           disabled={isSaving}
         />
       </View>
