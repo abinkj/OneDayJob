@@ -20,6 +20,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { Colors } from "../../../constants/Colors";
 import JobCard from "../../../components/jobCard";
 import StatusFilter from "../../../components/statusFilter";
+import { JobCardSkeleton } from "../../../components/Shimmer/Skeletons";
 // import PaymentModal from "../../../components/paymentModal";
 import {
   useUserJobPostings,
@@ -132,8 +133,10 @@ const MyPostTab = () => {
 
   if (isLoading && !isRefetching && posts.length === 0) {
     return (
-      <View style={{ justifyContent: "center", alignItems: "center", flex: 1 }}>
-        <ActivityIndicator size="large" color={Colors.grey} />
+      <View style={{ flex: 1, backgroundColor: Colors.background }}>
+        <JobCardSkeleton />
+        <JobCardSkeleton />
+        <JobCardSkeleton />
       </View>
     );
   }
@@ -323,8 +326,10 @@ const AppliedTab = () => {
 
   if (isLoading && !isRefetching && appliedJobs.length === 0) {
     return (
-      <View style={{ justifyContent: "center", alignItems: "center", flex: 1 }}>
-        <ActivityIndicator size="large" color={Colors.grey} />
+      <View style={{ flex: 1 }}>
+        <JobCardSkeleton />
+        <JobCardSkeleton />
+        <JobCardSkeleton />
       </View>
     );
   }

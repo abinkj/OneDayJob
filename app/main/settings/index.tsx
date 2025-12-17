@@ -14,6 +14,7 @@ import { useNavigation } from "@react-navigation/native";
 import { useDispatch } from "react-redux";
 import { Colors } from "../../../constants/Colors";
 import { Header } from "../../../components/header";
+import { ProfileSkeleton } from "../../../components/Shimmer/Skeletons";
 import { logoutUser } from "../../../utilities/authentication";
 import { getCurrentUser } from "../../../services/api";
 import { User } from "../../../types";
@@ -241,9 +242,7 @@ const Settings: React.FC = () => {
     return (
       <View style={styles.container}>
         <Header title="Settings" showBackButton />
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={Colors.blue} />
-        </View>
+        <ProfileSkeleton />
       </View>
     );
   }

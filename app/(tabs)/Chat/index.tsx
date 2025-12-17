@@ -8,6 +8,7 @@ import {
 } from "react-native";
 import ChatItem from "../../../components/chatItem";
 import { Header } from "../../../components/header";
+import { ChatListSkeleton } from "../../../components/Shimmer/Skeletons";
 import styles from "./styles";
 import { router } from "expo-router";
 import { useNavigation } from "@react-navigation/native";
@@ -82,19 +83,7 @@ export default function Chat() {
   };
 
   if (loading) {
-    return (
-      <View
-        style={[
-          styles.container,
-          { justifyContent: "center", alignItems: "center" },
-        ]}
-      >
-        <ActivityIndicator size="large" color={Colors.primary} />
-        <Text style={{ marginTop: 10, color: Colors.grey }}>
-          Loading conversations...
-        </Text>
-      </View>
-    );
+    return <ChatListSkeleton />;
   }
 
   return (

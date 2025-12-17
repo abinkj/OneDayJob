@@ -26,6 +26,7 @@ import socketService from "../../../services/socketService";
 import SuccessAnimation from "../../../components/successAnimation";
 import Toast from "react-native-toast-message";
 import { useNotifications } from "../../../contexts/NotificationContext";
+import { JobDetailsSkeleton } from "../../../components/Shimmer/Skeletons";
 
 const JobDetails = () => {
   const navigation = useNavigation<any>();
@@ -314,12 +315,7 @@ const JobDetails = () => {
   }
 
   if (loading) {
-    return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={Colors.primary} />
-        <Text style={styles.loadingText}>Loading job details...</Text>
-      </View>
-    );
+    return <JobDetailsSkeleton />;
   }
 
   if (error || !job) {
