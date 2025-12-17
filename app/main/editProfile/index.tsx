@@ -14,7 +14,7 @@ import { User } from "../../../types";
 import { saveUserData } from "../../../utilities/asyncStore";
 import { updateProfile } from "../../../services/api";
 import { useDispatch } from "react-redux";
-import Toast from "../../../components/toast";
+import Toast from "react-native-toast-message";
 import ImagePickerActionSheet, {
   ImagePickerActionSheetRef,
 } from "../../../components/imagePickerActionSheet";
@@ -34,16 +34,6 @@ const EditProfile: React.FC = () => {
     uri: Images.profile.profileImage as unknown as string,
   });
   const [isSaving, setIsSaving] = useState(false);
-
-  // Toast state
-  const [toastVisible, setToastVisible] = useState(false);
-  const [toastMessage, setToastMessage] = useState("");
-
-  const showToast = (msg: string) => {
-    setToastMessage(msg);
-    setToastVisible(true);
-    setTimeout(() => setToastVisible(false), 2000);
-  };
 
   useEffect(() => {
     const init =
@@ -73,16 +63,28 @@ const EditProfile: React.FC = () => {
   };
 
   const handleImageError = (error: string) => {
-    showToast(error);
+    Toast.show({
+      type: "error",
+      text1: "Error",
+      text2: error,
+    });
   };
 
   const validateForm = (): boolean => {
     if (!firstName.trim()) {
-      showToast("First name is required");
+      Toast.show({
+        type: "error",
+        text1: "Validation Error",
+        text2: "First name is required",
+      });
       return false;
     }
     if (!lastName.trim()) {
-      showToast("Last name is required");
+      Toast.show({
+        type: "error",
+        text1: "Validation Error",
+        text2: "Last name is required",
+      });
       return false;
     }
     return true;
@@ -98,7 +100,11 @@ const EditProfile: React.FC = () => {
       user.profilePicture !== profileImage;
 
     if (!hasChanges) {
-      showToast("You haven't made any changes");
+      Toast.show({
+        type: "info",
+        text1: "No Changes",
+        text2: "You haven't made any changes",
+      });
       return;
     }
 
@@ -124,15 +130,22 @@ const EditProfile: React.FC = () => {
       if (status >= 200 && status < 300 && data) {
         await saveUserData(data.data);
         setUser(data);
-        showToast("Profile updated successfully");
+        Toast.show({
+          type: "success",
+          text1: "Success",
+          text2: "Profile updated successfully",
+        });
         setTimeout(() => navigation.goBack(), 1500);
       } else {
         throw new Error("Unexpected response from server.");
       }
     } catch (error: any) {
-      showToast(
-        error?.response?.data?.message || "Failed to save profile changes"
-      );
+      Toast.show({
+        type: "error",
+        text1: "Error",
+        text2:
+          error?.response?.data?.message || "Failed to save profile changes",
+      });
     } finally {
       setIsSaving(false);
     }
@@ -145,7 +158,7 @@ const EditProfile: React.FC = () => {
         {/* Profile Image */}
         <View style={styles.imageWrapper}>
           <Image
-            source={profileImage.uri}
+            source={profileImage}
             style={styles.profileImage}
             placeholder={Images.profile.profileImage}
             placeholderContentFit="cover"
@@ -170,11 +183,6 @@ const EditProfile: React.FC = () => {
           value={lastName}
           onChangeText={setLastName}
           placeholder="Enter your last name"
-        />
-        <Toast
-          visible={toastVisible}
-          message={toastMessage}
-          onHide={() => setToastVisible(false)}
         />
       </ScrollView>
 

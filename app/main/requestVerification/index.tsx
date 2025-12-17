@@ -29,6 +29,7 @@ import { Header } from "../../../components/header";
 import ratingStars from "../../../components/ratingStars";
 import AcceptRejectButtons from "../../../components/acceptRejectButtons";
 import VerificationCode from "../../../components/verificationCode";
+import { ListSkeleton } from "../../../components/Shimmer/Skeletons";
 import {
   getAppliedUser,
   rejectApplicants,
@@ -577,7 +578,11 @@ const RequestsTab = ({
       {/* Filter Section - Only show when there's data */}
       {filteredRequests.length > 0 && (
         <View style={styles.filterSection}>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} bounces={false}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            bounces={false}
+          >
             {filters.map((filter) => (
               <TouchableOpacity
                 key={filter}
@@ -630,12 +635,10 @@ const RequestsTab = ({
       )}
 
       {loading ? (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#007AFF" />
-          <Text style={styles.loadingText}>Loading requests...</Text>
-        </View>
+        <ListSkeleton />
       ) : (
-        <FlatList bounces={false}
+        <FlatList
+          bounces={false}
           data={filteredRequests}
           renderItem={renderRequest}
           keyExtractor={(item) => item._id}
@@ -1247,10 +1250,7 @@ const RequestsVerifyTab = ({
   if (loading) {
     return (
       <View style={styles.tabContainer}>
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#007AFF" />
-          <Text style={styles.loadingText}>Loading accepted users...</Text>
-        </View>
+        <ListSkeleton />
       </View>
     );
   }
@@ -1389,7 +1389,8 @@ const RequestsVerifyTab = ({
             </View>
           )}
 
-          <FlatList bounces={false}
+          <FlatList
+            bounces={false}
             data={acceptedUsers}
             renderItem={renderAcceptedUser}
             keyExtractor={(item) => item._id}

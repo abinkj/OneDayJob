@@ -2,6 +2,7 @@ import React from "react";
 import { View, StyleSheet, ActivityIndicator } from "react-native";
 import { useRoute } from "@react-navigation/native";
 import { Header } from "../../../components/header";
+import { ListSkeleton } from "../../../components/Shimmer/Skeletons";
 import { Colors } from "../../../constants/Colors";
 import WebView from "react-native-webview";
 
@@ -22,7 +23,7 @@ const PrivacyPolicy = () => {
         originWhitelist={["*"]}
         renderLoading={() => (
           <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color={Colors.blue} />
+            <ListSkeleton />
           </View>
         )}
       />

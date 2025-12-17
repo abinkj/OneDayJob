@@ -12,10 +12,8 @@ import { useNavigation } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import { Colors } from "../../../constants/Colors";
 import { Header } from "../../../components/header";
-import {
-  getWorkerPayouts,
-  getCurrentUser,
-} from "../../../services/api";
+import { ListSkeleton } from "../../../components/Shimmer/Skeletons";
+import { getWorkerPayouts, getCurrentUser } from "../../../services/api";
 import Toast from "react-native-toast-message";
 
 interface Payout {
@@ -132,10 +130,7 @@ const PaymentHistoryScreen = () => {
     return (
       <View style={styles.container}>
         <Header title="Payment History" showBackButton />
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={Colors.primary} />
-          <Text style={styles.loadingText}>Loading payment history...</Text>
-        </View>
+        <ListSkeleton />
       </View>
     );
   }
@@ -144,7 +139,8 @@ const PaymentHistoryScreen = () => {
     <View style={styles.container}>
       <Header title="Payment History" showBackButton />
 
-      <ScrollView bounces={false}
+      <ScrollView
+        bounces={false}
         style={styles.content}
         showsVerticalScrollIndicator={false}
         refreshControl={
@@ -164,7 +160,12 @@ const PaymentHistoryScreen = () => {
           </View>
 
           <View style={styles.summaryCard}>
-            <View style={[styles.summaryIconContainer, { backgroundColor: "#FFF3E0" }]}>
+            <View
+              style={[
+                styles.summaryIconContainer,
+                { backgroundColor: "#FFF3E0" },
+              ]}
+            >
               <Ionicons name="time" size={24} color="#FF9800" />
             </View>
             <Text style={styles.summaryLabel}>Pending</Text>
@@ -231,7 +232,9 @@ const PaymentHistoryScreen = () => {
                     <View
                       style={[
                         styles.statusBadge,
-                        { backgroundColor: getStatusColor(payout.status) + "20" },
+                        {
+                          backgroundColor: getStatusColor(payout.status) + "20",
+                        },
                       ]}
                     >
                       <Text
@@ -271,7 +274,11 @@ const PaymentHistoryScreen = () => {
         {/* Info Card */}
         {payouts.length > 0 && (
           <View style={styles.infoCard}>
-            <Ionicons name="information-circle-outline" size={20} color={Colors.primary} />
+            <Ionicons
+              name="information-circle-outline"
+              size={20}
+              color={Colors.primary}
+            />
             <Text style={styles.infoText}>
               Payments are usually processed within 2-4 business hours after job
               completion
@@ -467,5 +474,3 @@ const styles = StyleSheet.create({
 });
 
 export default PaymentHistoryScreen;
-
-

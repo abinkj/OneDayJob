@@ -15,6 +15,7 @@ import { Ionicons } from "@expo/vector-icons";
 import styles from "./styles";
 import { Header } from "../../../components/header";
 import Images from "../../../utilities/images";
+import { ProfileSkeleton } from "../../../components/Shimmer/Skeletons";
 import DeviceDimensions from "../../../constants/DeviceDimenions";
 import CustomButton from "../../../components/CustomButton";
 import { Colors } from "../../../constants/Colors";
@@ -23,7 +24,11 @@ import ratingStars from "../../../components/ratingStars";
 import { useNavigation } from "@react-navigation/native";
 import { getUserData } from "../../../utilities/asyncStore";
 import { User, Review } from "../../../types";
-import { createConversation, getCurrentUser, getUserRatings } from "../../../services/api";
+import {
+  createConversation,
+  getCurrentUser,
+  getUserRatings,
+} from "../../../services/api";
 import Toast from "react-native-toast-message";
 import { Image } from "expo-image";
 
@@ -61,7 +66,7 @@ const Profile: React.FC = () => {
           // Fetch ratings for this user (as an employee)
           try {
             const userId = userData.id || userData._id;
-            const ratingsResponse = await getUserRatings(userId, 'employee');
+            const ratingsResponse = await getUserRatings(userId, "employee");
             if (ratingsResponse.data.success) {
               setReviews(ratingsResponse.data.data);
             }
@@ -169,22 +174,15 @@ const Profile: React.FC = () => {
   });
 
   if (isLoading) {
-    return (
-      <View
-        style={[
-          styles.container,
-          { justifyContent: "center", alignItems: "center" },
-        ]}
-      >
-        <ActivityIndicator size="large" color={Colors.primary} />
-      </View>
-    );
+    return <ProfileSkeleton />;
   }
 
   // Calculate average rating from user data or reviews
-  const averageRating = user?.averageEmployeeRating || (reviews.length > 0
-    ? reviews.reduce((acc, curr) => acc + curr.rating, 0) / reviews.length
-    : 0);
+  const averageRating =
+    user?.averageEmployeeRating ||
+    (reviews.length > 0
+      ? reviews.reduce((acc, curr) => acc + curr.rating, 0) / reviews.length
+      : 0);
 
   return (
     <View style={styles.container}>
@@ -198,7 +196,7 @@ const Profile: React.FC = () => {
             style={styles.profileImage}
             placeholder={Images.profile.profileImage}
             placeholderContentFit="cover"
-            contentFit='fill'
+            contentFit="fill"
           />
           <Text style={styles.name}>
             {user?.firstName} {user?.lastName}
@@ -215,12 +213,8 @@ const Profile: React.FC = () => {
           <View style={styles.statsContainer}>
             <View style={styles.statBox}>
               <Text style={styles.statLabel}>RATING</Text>
-              <Text style={styles.statNumber}>
-                {averageRating.toFixed(1)}
-              </Text>
-              <Text style={styles.statSubLabel}>
-                {reviews.length} Reviews
-              </Text>
+              <Text style={styles.statNumber}>{averageRating.toFixed(1)}</Text>
+              <Text style={styles.statSubLabel}>{reviews.length} Reviews</Text>
             </View>
             <View style={styles.separator} />
             <View style={styles.statBox}>
@@ -246,7 +240,11 @@ const Profile: React.FC = () => {
         {/* Reviews Section */}
         {reviews.length > 0 && (
           <View style={{ padding: 20 }}>
-            <Text style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 15 }}>Recent Reviews</Text>
+            <Text
+              style={{ fontSize: 18, fontWeight: "bold", marginBottom: 15 }}
+            >
+              Recent Reviews
+            </Text>
             {reviews.map((review, index) => (
               <View key={review._id || index} style={styles.reviewContainer}>
                 <View style={styles.reviewerInfo}>
@@ -255,13 +253,14 @@ const Profile: React.FC = () => {
                     style={styles.reviewerImage}
                     placeholder={Images.profile.profileImage}
                     placeholderContentFit="cover"
-
                   />
                   <View style={styles.reviewerNameContainer}>
                     <Text style={styles.reviewerName}>
                       {review.raterUser?.firstName} {review.raterUser?.lastName}
                     </Text>
-                    <View style={styles.stars}>{ratingStars(review.rating)}</View>
+                    <View style={styles.stars}>
+                      {ratingStars(review.rating)}
+                    </View>
                   </View>
                   <Text style={styles.reviewDate}>
                     {new Date(review.createdAt).toLocaleDateString()}
@@ -276,8 +275,8 @@ const Profile: React.FC = () => {
         )}
 
         {reviews.length === 0 && (
-          <View style={{ padding: 20, alignItems: 'center' }}>
-            <Text style={{ color: 'gray' }}>No reviews yet</Text>
+          <View style={{ padding: 20, alignItems: "center" }}>
+            <Text style={{ color: "gray" }}>No reviews yet</Text>
           </View>
         )}
       </ScrollView>

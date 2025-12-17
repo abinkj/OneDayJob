@@ -15,6 +15,7 @@ import * as ImagePicker from "expo-image-picker";
 import { Ionicons } from "@expo/vector-icons";
 import styles from "./styles";
 import { Header } from "../../../components/header";
+import { ChatScreenSkeleton } from "../../../components/Shimmer/Skeletons";
 import { Colors } from "../../../constants/Colors";
 import { useRoute } from "@react-navigation/native";
 import MessageBubble from "../../../components/messageBubble";
@@ -471,19 +472,7 @@ export default function ChatScreen() {
   };
 
   if (loading) {
-    return (
-      <View
-        style={[
-          styles.container,
-          { justifyContent: "center", alignItems: "center" },
-        ]}
-      >
-        <ActivityIndicator size="large" color={Colors.primary} />
-        <Text style={{ marginTop: 10, color: Colors.grey }}>
-          Loading chat...
-        </Text>
-      </View>
-    );
+    return <ChatScreenSkeleton />;
   }
 
   return (

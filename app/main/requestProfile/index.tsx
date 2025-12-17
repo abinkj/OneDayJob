@@ -16,6 +16,7 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import styles from "./styles";
 import { Header } from "../../../components/header";
+import { ProfileSkeleton } from "../../../components/Shimmer/Skeletons";
 import Images from "../../../utilities/images";
 import DeviceDimensions from "../../../constants/DeviceDimenions";
 import CustomButton from "../../../components/CustomButton";
@@ -116,13 +117,9 @@ const RequestProfile: React.FC = () => {
 
   if (isLoading) {
     return (
-      <View
-        style={[
-          styles.container,
-          { justifyContent: "center", alignItems: "center" },
-        ]}
-      >
-        <ActivityIndicator size="large" color={Colors.primary} />
+      <View style={styles.container}>
+        <Header title="Request Profile" showBackButton />
+        <ProfileSkeleton />
       </View>
     );
   }
@@ -136,12 +133,10 @@ const RequestProfile: React.FC = () => {
   return (
     <View style={styles.container}>
       <Header title="Request Profile" showBackButton />
-      <ScrollView bounces={false}
+      <ScrollView
+        bounces={false}
         refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={handleRefresh}
-          />
+          <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
         }
       >
         {/* Profile Card */}
@@ -224,7 +219,8 @@ const RequestProfile: React.FC = () => {
               • Furniture moving, loading & unloading, safe lifting techniques
             </Text>
 
-            <ScrollView bounces={false}
+            <ScrollView
+              bounces={false}
               horizontal
               style={styles.imageRow}
               contentContainerStyle={{ gap: 8 }}
