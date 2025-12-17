@@ -4,7 +4,7 @@ import DeviceDimensions from "../../../constants/DeviceDimenions";
 
 const styles = StyleSheet.create({
   scrollContainer: {
-    
+
     paddingHorizontal: 16,
     paddingTop: 14,
     backgroundColor: Colors.background,

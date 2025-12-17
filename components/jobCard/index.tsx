@@ -107,9 +107,8 @@ const JobCard = ({
   });
 
   const formattedLocation = location?.address
-    ? `${location.address}${location.city ? ", " + location.city : ""}${
-        location.state ? ", " + location.state : ""
-      }${location.country ? ", " + location.country : ""}`
+    ? `${location.address}${location.city ? ", " + location.city : ""}${location.state ? ", " + location.state : ""
+    }${location.country ? ", " + location.country : ""}`
     : location?.country || "Remote";
 
   const formatTimePreference = (timePrefs: string[]) => {
@@ -245,7 +244,11 @@ const JobCard = ({
             <TouchableOpacity
               style={[
                 styles.button,
-                { backgroundColor: Colors.red, marginLeft: 12 },
+                {
+                  backgroundColor: Colors.red,
+                  marginLeft: 12,
+                  shadowColor: Colors.red
+                },
               ]}
               onPress={() => {
                 if (onWithdraw) onWithdraw();
@@ -259,7 +262,11 @@ const JobCard = ({
             <TouchableOpacity
               style={[
                 styles.button,
-                { backgroundColor: Colors.red, marginLeft: 12 },
+                {
+                  backgroundColor: Colors.red,
+                  marginLeft: 12,
+                  shadowColor: Colors.red
+                },
               ]}
               onPress={() => {
                 if (onDelete) onDelete();
@@ -393,15 +400,22 @@ const styles = StyleSheet.create({
     fontWeight: "500",
   },
   button: {
-    borderColor: Colors.black,
-    borderWidth: 1,
+    backgroundColor: Colors.primary,
     borderRadius: 12,
-    paddingHorizontal: 10,
+    paddingHorizontal: 16,
     paddingVertical: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: Colors.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 4,
   },
   buttonText: {
     fontSize: 12,
-    fontWeight: "400",
+    fontWeight: "600",
+    color: Colors.white,
   },
   paymentButtonContent: {
     flexDirection: "row",

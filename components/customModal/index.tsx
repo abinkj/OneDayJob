@@ -1,6 +1,7 @@
 import React from "react";
 import { View, Text, Modal, StyleSheet, TouchableOpacity } from "react-native";
 import { fontSizes } from "../../themes/fonts";
+import { Colors } from "../../constants/Colors";
 
 type Button = {
   title: string;
@@ -100,7 +101,7 @@ const styles = StyleSheet.create({
   },
   actionButton: {
     flex: 1,
-    backgroundColor: "#007AFF",
+    backgroundColor: Colors.primary,
     paddingVertical: 10,
     borderRadius: 30,
     marginLeft: 10,

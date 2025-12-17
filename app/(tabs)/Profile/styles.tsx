@@ -297,7 +297,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   addBankButton: {
-    backgroundColor: Colors.blue,
+    backgroundColor: Colors.primary,
     paddingVertical: 12,
     paddingHorizontal: 24,
     borderRadius: 8,

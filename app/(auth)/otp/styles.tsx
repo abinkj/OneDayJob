@@ -101,13 +101,13 @@ const styles = StyleSheet.create({
   },
 
   buttonOtp: {
-    backgroundColor: Colors.black,
+    backgroundColor: Colors.primary,
     width: '100%',
     height: 56,
     borderRadius: 16,
     alignItems: "center",
     justifyContent: "center",
-    shadowColor: Colors.black,
+    shadowColor: Colors.primary,
     shadowOffset: {
       width: 0,
       height: 4,
