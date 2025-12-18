@@ -8,11 +8,13 @@ import OnBoardingStack from "./onBoardingStack";
 import KycStack from "./kycStack";
 import { restoreSession } from "../../utilities/authentication";
 
+import IntroStack from "./introStack";
+
 const RootStack = createNativeStackNavigator();
 
 const RootStackLayout = () => {
   const dispatch = useDispatch();
-  const { isLoggedIn, kycStatus } = useSelector(
+  const { isLoggedIn, kycStatus, hasSeenOnboarding } = useSelector(
     (state: any) => state.authentication
   );
   // console.log("Kyc stats", kycStatus);
@@ -21,7 +23,7 @@ const RootStackLayout = () => {
   useEffect(() => {
     const checkLogin = async () => {
       try {
-        dispatch(restoreSession());
+        await (dispatch as any)(restoreSession());
       } catch (error) {
         console.error("Error restoring session:", error);
       } finally {
@@ -41,22 +43,16 @@ const RootStackLayout = () => {
 
   return (
     <RootStack.Navigator
+      id={undefined}
       screenOptions={{
         headerShown: false,
         animation: "slide_from_right",
       }}
     >
-      {/* {isLoggedIn ? (
-        kycStatus === "completed" || kycStatus === "skipped" ? (
-          <RootStack.Screen name="MainStack" component={MainStack} />
-        ) : (
-          <RootStack.Screen name="KycStack" component={KycStack} />
-        )
-      ) : (
-        <RootStack.Screen name="OnBoardingStack" component={OnBoardingStack} />
-      )} */}
       {isLoggedIn ? (
         <RootStack.Screen name="MainStack" component={MainStack} />
+      ) : !hasSeenOnboarding ? (
+        <RootStack.Screen name="IntroStack" component={IntroStack} />
       ) : (
         <RootStack.Screen name="OnBoardingStack" component={OnBoardingStack} />
       )}

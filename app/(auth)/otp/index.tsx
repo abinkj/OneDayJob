@@ -1,5 +1,14 @@
 import React, { useState } from "react";
-import { View, Text, TouchableOpacity, Alert, StyleSheet, ScrollView, Platform, KeyboardAvoidingView } from "react-native";
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  Alert,
+  StyleSheet,
+  ScrollView,
+  Platform,
+  KeyboardAvoidingView,
+} from "react-native";
 import { OtpInput } from "react-native-otp-entry";
 import { Colors } from "../../../constants/Colors";
 import { verifyOtp, requestOtp } from "../../../services/api";
@@ -11,6 +20,7 @@ import styles from "./styles";
 import { saveKycStatus } from "../../../utilities/asyncStore";
 import { completeKyc } from "../../../redux/reducers/authReducers";
 import Animated, { FadeInDown } from "react-native-reanimated";
+import CustomButton from "../../../components/CustomButton";
 
 interface RouteParams {
   phoneNumber: string;
@@ -147,17 +157,20 @@ const Otp = () => {
           style={styles.headerContainer}
         >
           <Text style={styles.title}>Verify Account</Text>
-          <Text style={styles.subtitleOtp}>
-            Enter the 6-digit code sent to
-          </Text>
-          <Text style={[styles.subtitle, { fontFamily: 'bold', color: Colors.black }]}>
+          <Text style={styles.subtitleOtp}>Enter the 6-digit code sent to</Text>
+          <Text
+            style={[
+              styles.subtitle,
+              { fontFamily: "bold", color: Colors.black },
+            ]}
+          >
             {phoneNumber}
           </Text>
         </Animated.View>
 
         <Animated.View
           entering={FadeInDown.delay(400).duration(1000).springify()}
-          style={{ width: '100%', alignItems: 'center' }}
+          style={{ width: "100%", alignItems: "center" }}
         >
           <OtpInput
             numberOfDigits={6}
@@ -194,20 +207,14 @@ const Otp = () => {
               </Text>
             </Text>
           </View>
-
-          <TouchableOpacity
-            style={[
-              styles.buttonOtp,
-              (isLoading || otp.length !== 6) && styles.disabledButton,
-            ]}
-            onPress={handleVerifyOtp}
-            disabled={isLoading || otp.length !== 6}
-            activeOpacity={0.8}
-          >
-            <Text style={styles.buttonText}>
-              {isLoading ? "Verifying..." : "Verify"}
-            </Text>
-          </TouchableOpacity>
+          <View style={{ width: "100%", marginTop: 20,}}>
+            <CustomButton
+              onPress={handleVerifyOtp}
+              disabled={isLoading || otp.length !== 6}
+              isLoading={isLoading}
+              text={"Verify"}
+            />
+          </View>
         </Animated.View>
       </ScrollView>
     </KeyboardAvoidingView>

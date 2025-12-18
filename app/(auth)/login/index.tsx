@@ -16,6 +16,7 @@ import styles from "./styles";
 import Animated, { FadeInDown, FadeInUp } from "react-native-reanimated";
 import { Ionicons } from "@expo/vector-icons";
 import { Colors } from "../../../constants/Colors";
+import CustomButton from "../../../components/CustomButton";
 
 const Login = () => {
   const [phone, setPhone] = useState("");
@@ -78,8 +79,18 @@ const Login = () => {
           style={styles.formContainer}
         >
           <Text style={styles.inputLabel}>Mobile Number</Text>
-          <View style={[styles.inputWrapper, isFocused && styles.inputWrapperFocused]}>
-            <Ionicons name="call-outline" size={20} color={isFocused ? Colors.primary : Colors.grey} style={{ marginRight: 8 }} />
+          <View
+            style={[
+              styles.inputWrapper,
+              isFocused && styles.inputWrapperFocused,
+            ]}
+          >
+            <Ionicons
+              name="call-outline"
+              size={20}
+              color={isFocused ? Colors.primary : Colors.grey}
+              style={{ marginRight: 8 }}
+            />
             <Text style={styles.countryCode}>+91</Text>
             <TextInput
               style={styles.input}
@@ -94,17 +105,14 @@ const Login = () => {
               onBlur={() => setIsFocused(false)}
             />
           </View>
-
-          <TouchableOpacity
-            style={[styles.button, isLoading && styles.buttonDisabled]}
-            onPress={handleGetOtp}
-            disabled={isLoading}
-            activeOpacity={0.8}
-          >
-            <Text style={styles.buttonText}>
-              {isLoading ? "Sending OTP..." : "Get OTP"}
-            </Text>
-          </TouchableOpacity>
+          <View style={{ marginTop: 20 }}>
+            <CustomButton
+              text={"Send OTP"}
+              onPress={handleGetOtp}
+              isLoading={isLoading}
+              color={Colors.primary}
+            />
+          </View>{" "}
         </Animated.View>
 
         <Animated.View

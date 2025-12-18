@@ -17,6 +17,7 @@ import { useNavigation } from "@react-navigation/native";
 import Animated, { FadeInDown, FadeInUp } from "react-native-reanimated";
 import { Ionicons } from "@expo/vector-icons";
 import { Colors } from "../../../constants/Colors";
+import CustomButton from "../../../components/CustomButton";
 
 const SignUp = () => {
   const [phone, setPhone] = useState("");
@@ -139,17 +140,12 @@ const SignUp = () => {
               />
             </View>
           </View>
-
-          <TouchableOpacity
-            style={[styles.button, isLoading && styles.buttonDisabled]}
+          <CustomButton
             onPress={handleGetOtp}
             disabled={isLoading}
-            activeOpacity={0.8}
-          >
-            <Text style={styles.buttonText}>
-              {isLoading ? "Sending OTP..." : "Get OTP"}
-            </Text>
-          </TouchableOpacity>
+            isLoading={isLoading}
+            text={"Send OTP"}
+          />
         </Animated.View>
 
         <Animated.View
