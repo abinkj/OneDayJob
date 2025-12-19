@@ -1386,7 +1386,7 @@ const PostJobScreen = ({ navigation: navProp }) => {
       <Modal
         visible={isCalendarVisible}
         transparent={true}
-        animationType="slide"
+        animationType="fade"
         onRequestClose={() => setCalendarVisible(false)}
       >
         <View style={styles.modalOverlay}>
