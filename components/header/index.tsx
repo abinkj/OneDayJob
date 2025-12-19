@@ -72,6 +72,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingTop: 16,
     position: "relative",
+    paddingBottom: 12,
   },
   backIcon: {
     position: "absolute",
