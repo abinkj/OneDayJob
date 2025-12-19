@@ -21,6 +21,7 @@ import { completeKyc } from "../../../redux/reducers/authReducers";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import CustomButton from "../../../components/CustomButton";
 import { useAlert } from "../../../components/CustomAlert/AlertProvider";
+import { validateOtpCode } from "../../../utilities/formValidation";
 
 interface RouteParams {
   phoneNumber: string;
@@ -38,11 +39,13 @@ const Otp = () => {
   const { showAlert } = useAlert();
 
   const handleVerifyOtp = async () => {
-    if (!otp || otp.length !== 6) {
+    const otpValidation = validateOtpCode(otp);
+
+    if (!otpValidation.status) {
       showAlert({
         type: "error",
         title: "Error",
-        message: "Please enter a valid 6-digit OTP.",
+        message: otpValidation.otpError,
       });
       return;
     }

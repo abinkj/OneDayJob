@@ -17,6 +17,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { Colors } from "../../../constants/Colors";
 import CustomButton from "../../../components/CustomButton";
 import { useAlert } from "../../../components/CustomAlert/AlertProvider";
+import { validatePhone } from "../../../utilities/formValidation";
 
 const Login = () => {
   const [phone, setPhone] = useState("");
@@ -26,11 +27,13 @@ const Login = () => {
   const { showAlert } = useAlert();
 
   const handleGetOtp = async () => {
-    if (!phone || phone.length !== 10) {
+    const phoneValidation = validatePhone(phone);
+
+    if (!phoneValidation.status) {
       showAlert({
         type: "error",
         title: "Error",
-        message: "Please enter a valid 10-digit mobile number.",
+        message: phoneValidation.phoneError,
       });
       return;
     }

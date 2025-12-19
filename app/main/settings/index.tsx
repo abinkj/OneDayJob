@@ -296,7 +296,7 @@ const Settings: React.FC = () => {
                 onValueChange={setPushNotifications}
                 trackColor={{
                   false: Colors.switchGrey,
-                  true: Colors.switchBlue,
+                  true: Colors.primary,
                 }}
                 thumbColor={Colors.white}
               />
@@ -313,7 +313,7 @@ const Settings: React.FC = () => {
                 onValueChange={setEmailNotifications}
                 trackColor={{
                   false: Colors.switchGrey,
-                  true: Colors.switchBlue,
+                  true: Colors.primary,
                 }}
                 thumbColor={Colors.white}
               />
@@ -330,7 +330,7 @@ const Settings: React.FC = () => {
                 onValueChange={setJobAlerts}
                 trackColor={{
                   false: Colors.switchGrey,
-                  true: Colors.switchBlue,
+                  true: Colors.primary,
                 }}
                 thumbColor={Colors.white}
               />
@@ -358,7 +358,7 @@ const Settings: React.FC = () => {
                 }}
                 trackColor={{
                   false: Colors.switchGrey,
-                  true: Colors.switchBlue,
+                  true: Colors.primary,
                 }}
                 thumbColor={Colors.white}
               />

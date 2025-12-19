@@ -32,6 +32,11 @@ import { LocationData } from "../../../services/locationService";
 import { testLocationService } from "../../../services/locationService";
 import Toast from "react-native-toast-message";
 import { useAlert } from "../../../components/CustomAlert/AlertProvider";
+import {
+  validateJobTitle,
+  validateJobDescription,
+  validateHourlyRate,
+} from "../../../utilities/formValidation";
 
 // Default Job Categories (fallback if API fails)
 const defaultJobCategories = [
@@ -399,20 +404,26 @@ const PostJobScreen = ({ navigation: navProp }) => {
       errors.push("Please select a job category");
     }
 
-    if (!jobName) {
-      errors.push("Please enter a job name");
+    // Validate job title
+    const titleValidation = validateJobTitle(jobName);
+    if (!titleValidation.status) {
+      errors.push(titleValidation.titleError);
     }
 
-    if (!jobDescription) {
-      errors.push("Please enter a job description");
+    // Validate job description
+    const descriptionValidation = validateJobDescription(jobDescription);
+    if (!descriptionValidation.status) {
+      errors.push(descriptionValidation.descriptionError);
     }
 
     if (!canBeDoneRemotely && !selectedLocation) {
       errors.push("Please provide a location for onsite jobs");
     }
 
-    if (!budget || parseFloat(budget) <= 0) {
-      errors.push("Please enter a valid budget");
+    // Validate budget/hourly rate
+    const rateValidation = validateHourlyRate(budget?.toString() || "");
+    if (!rateValidation.status) {
+      errors.push(rateValidation.rateError);
     }
 
     // Validate time fields for non-flexible jobs
