@@ -34,6 +34,7 @@ import {
 import { restoreSession } from "../../../utilities/authentication";
 import { JobPost } from "../../../types";
 import { useJobPostings } from "../../../hooks/useJobs";
+import { JobCardSkeleton } from "../../../components/Shimmer/Skeletons";
 
 const HomeScreen = () => {
   const { sendVerificationCodeNotification } = useNotifications();
@@ -108,9 +109,9 @@ const HomeScreen = () => {
     const a =
       Math.sin(dLat / 2) * Math.sin(dLat / 2) +
       Math.cos((lat1 * Math.PI) / 180) *
-      Math.cos((lat2 * Math.PI) / 180) *
-      Math.sin(dLon / 2) *
-      Math.sin(dLon / 2);
+        Math.cos((lat2 * Math.PI) / 180) *
+        Math.sin(dLon / 2) *
+        Math.sin(dLon / 2);
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     const distance = R * c;
     return Math.round(distance * 10) / 10;
@@ -285,9 +286,9 @@ const HomeScreen = () => {
       userLocation:
         selectedDistance && location
           ? {
-            latitude: location.latitude,
-            longitude: location.longitude,
-          }
+              latitude: location.latitude,
+              longitude: location.longitude,
+            }
           : undefined,
     };
   }, [
@@ -543,8 +544,8 @@ const HomeScreen = () => {
               {isInProgress
                 ? "In Progress"
                 : isCompleted
-                  ? "Completed"
-                  : item.status || "Active"}
+                ? "Completed"
+                : item.status || "Active"}
             </Text>
           </View>
         </View>
@@ -556,9 +557,9 @@ const HomeScreen = () => {
               {item.isRemote
                 ? "Remote Work"
                 : item.location?.address ||
-                item.location?.city ||
-                item.location?.state ||
-                "Location not specified"}
+                  item.location?.city ||
+                  item.location?.state ||
+                  "Location not specified"}
             </Text>
           </View>
         </View>
@@ -707,7 +708,7 @@ const HomeScreen = () => {
                 style={[
                   styles.modalOption,
                   selectedValue === (item.id || item._id) &&
-                  styles.selectedOption,
+                    styles.selectedOption,
                 ]}
                 onPress={() => onSelect(item.id || item._id)}
               >
@@ -715,7 +716,7 @@ const HomeScreen = () => {
                   style={[
                     styles.modalOptionText,
                     selectedValue === (item.id || item._id) &&
-                    styles.selectedOptionText,
+                      styles.selectedOptionText,
                   ]}
                 >
                   {item.name}
@@ -782,16 +783,60 @@ const HomeScreen = () => {
 
   if (!isInitialized) {
     return (
-      <SafeAreaView
-        style={[
-          styles.container,
-          { justifyContent: "center", alignItems: "center" },
-        ]}
-      >
-        <ActivityIndicator size="large" color={Colors.primary} />
-        <Text style={{ marginTop: 16, color: Colors.grey }}>
-          Initializing...
-        </Text>
+      <SafeAreaView style={styles.container}>
+        {/* Skeleton Header */}
+        <View style={[styles.header, { paddingBottom: 10 }]}>
+          <View style={{ flexDirection: "row", alignItems: "center" }}>
+            <View
+              style={{
+                width: 32,
+                height: 32,
+                borderRadius: 16,
+                backgroundColor: "#F0F0F0",
+              }}
+            />
+            <View style={{ marginLeft: 12 }}>
+              <View
+                style={{
+                  width: 120,
+                  height: 16,
+                  borderRadius: 4,
+                  backgroundColor: "#F0F0F0",
+                }}
+              />
+              <View
+                style={{
+                  width: 80,
+                  height: 12,
+                  borderRadius: 4,
+                  backgroundColor: "#F0F0F0",
+                  marginTop: 4,
+                }}
+              />
+            </View>
+          </View>
+        </View>
+
+        {/* Skeleton Search */}
+        <View
+          style={[
+            styles.searchContainer,
+            { backgroundColor: "#F9F9F9", height: 50 },
+          ]}
+        />
+
+        {/* Skeleton Banner */}
+        <View
+          style={[
+            styles.bannerContainer,
+            { height: 156, backgroundColor: "#F0F0F0", borderRadius: 16 },
+          ]}
+        />
+
+        <View style={{ padding: 16 }}>
+          <JobCardSkeleton />
+          <JobCardSkeleton />
+        </View>
       </SafeAreaView>
     );
   }
@@ -857,16 +902,16 @@ const HomeScreen = () => {
           <View style={styles.locationHeader}>
             <Ionicons name="location" size={24} color={Colors.primary} />
             <View>
-              <TouchableOpacity style={styles.locationSelector}>
+              <TouchableOpacity style={styles.locationSelector} disabled>
                 <Text style={styles.locationTitle}>{locationAddress}</Text>
-                <Ionicons name="chevron-down" size={16} color={Colors.black} />
+                {/* <Ionicons name="chevron-down" size={16} color={Colors.black} /> */}
               </TouchableOpacity>
               <Text style={styles.locationSubtitle}>
-                {location
+                {/* {location
                   ? `${location.latitude.toFixed(
-                    4
-                  )}, ${location.longitude.toFixed(4)}`
-                  : "Getting location..."}
+                      4
+                    )}, ${location.longitude.toFixed(4)}`
+                  : "Getting location..."} */}
                 {authStatus ? " • Authenticated" : " • Not logged in"}
               </Text>
             </View>
@@ -952,15 +997,22 @@ const HomeScreen = () => {
 
         {/* Job Cards */}
         <View style={{ paddingBottom: 20 }}>
-          {loading ? (
-            <View style={{ padding: 20, alignItems: "center" }}>
-              <ActivityIndicator size="large" color={Colors.primary} />
+          {loading && allJobs.length === 0 ? (
+            <View style={{ padding: 16 }}>
+              <JobCardSkeleton />
+              <JobCardSkeleton />
+              <JobCardSkeleton />
             </View>
           ) : allJobs.length > 0 ? (
             <>
               {allJobs.map((item, index) => (
                 <View key={item._id || index}>{renderJobCard({ item })}</View>
               ))}
+              {isJobsRefetching && (
+                <View style={{ padding: 10, alignItems: "center" }}>
+                  <ActivityIndicator size="small" color={Colors.primary} />
+                </View>
+              )}
             </>
           ) : (
             renderEmptyState()
