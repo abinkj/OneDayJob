@@ -783,61 +783,11 @@ const HomeScreen = () => {
 
   if (!isInitialized) {
     return (
-      <SafeAreaView style={styles.container}>
-        {/* Skeleton Header */}
-        <View style={[styles.header, { paddingBottom: 10 }]}>
-          <View style={{ flexDirection: "row", alignItems: "center" }}>
-            <View
-              style={{
-                width: 32,
-                height: 32,
-                borderRadius: 16,
-                backgroundColor: "#F0F0F0",
-              }}
-            />
-            <View style={{ marginLeft: 12 }}>
-              <View
-                style={{
-                  width: 120,
-                  height: 16,
-                  borderRadius: 4,
-                  backgroundColor: "#F0F0F0",
-                }}
-              />
-              <View
-                style={{
-                  width: 80,
-                  height: 12,
-                  borderRadius: 4,
-                  backgroundColor: "#F0F0F0",
-                  marginTop: 4,
-                }}
-              />
-            </View>
-          </View>
-        </View>
-
-        {/* Skeleton Search */}
-        <View
-          style={[
-            styles.searchContainer,
-            { backgroundColor: "#F9F9F9", height: 50 },
-          ]}
-        />
-
-        {/* Skeleton Banner */}
-        <View
-          style={[
-            styles.bannerContainer,
-            { height: 156, backgroundColor: "#F0F0F0", borderRadius: 16 },
-          ]}
-        />
-
-        <View style={{ padding: 16 }}>
-          <JobCardSkeleton />
-          <JobCardSkeleton />
-        </View>
-      </SafeAreaView>
+      <View style={styles.container}>
+        <JobCardSkeleton />
+        <JobCardSkeleton />
+        <JobCardSkeleton />
+      </View>
     );
   }
 
