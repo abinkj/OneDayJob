@@ -56,7 +56,6 @@ const HomeScreen = () => {
   const [authStatus, setAuthStatus] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
   const [isFilterSticky, setIsFilterSticky] = useState(false);
-  const [isLocationLoading, setIsLocationLoading] = useState(false);
 
   // Filter modal states
   const [showCategoryModal, setShowCategoryModal] = useState(false);
@@ -222,7 +221,6 @@ const HomeScreen = () => {
   const fetchCurrentLocation = async () => {
     try {
       console.log("Fetching current location...");
-      setIsLocationLoading(true);
       const locationData = await getLocationWithAddress();
 
       if (!locationData) {
@@ -269,8 +267,6 @@ const HomeScreen = () => {
         text1: "Location Error",
         text2: "Could not get current location",
       });
-    } finally {
-      setIsLocationLoading(false);
     }
   };
 
@@ -287,12 +283,13 @@ const HomeScreen = () => {
         selectedDistance && (location || isRemote)
           ? selectedDistance
           : undefined,
-      userLocation: location
-        ? {
-            latitude: location.latitude,
-            longitude: location.longitude,
-          }
-        : undefined,
+      userLocation:
+        selectedDistance && location
+          ? {
+              latitude: location.latitude,
+              longitude: location.longitude,
+            }
+          : undefined,
     };
   }, [
     searchQuery,
@@ -940,19 +937,8 @@ const HomeScreen = () => {
 
         {/* Job Cards */}
         <View style={{ paddingBottom: 20 }}>
-          {(loading || isLocationLoading) && allJobs.length === 0 ? (
-            <View >
-              <Text
-                style={{
-                  fontSize: 14,
-                  color: Colors.grey,
-                  marginTop: 16,
-                  textAlign: "center",
-                  fontStyle: "italic",
-                }}
-              >
-                Fetching jobs near your location...
-              </Text>
+          {!loading && allJobs.length === 0 ? (
+            <View>
               <JobCardSkeleton />
               <JobCardSkeleton />
             </View>
