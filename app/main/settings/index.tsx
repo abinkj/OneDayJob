@@ -5,7 +5,6 @@ import {
   ScrollView,
   TouchableOpacity,
   Switch,
-  Alert,
   ActivityIndicator,
 } from "react-native";
 import { Image } from "expo-image";
@@ -22,6 +21,7 @@ import Images from "../../../utilities/images";
 import Toast from "react-native-toast-message";
 import styles from "./styles";
 import strings from "../../../utilities/strings";
+import { useAlert } from "../../../components/CustomAlert/AlertProvider";
 
 interface SettingsItemProps {
   icon: string;
@@ -106,6 +106,7 @@ const Settings: React.FC = () => {
   const [emailNotifications, setEmailNotifications] = useState(true);
   const [jobAlerts, setJobAlerts] = useState(true);
   const [darkMode, setDarkMode] = useState(false);
+  const { showAlert } = useAlert();
 
   useEffect(() => {
     fetchUserData();
@@ -153,10 +154,11 @@ const Settings: React.FC = () => {
   };
 
   const handleLogout = () => {
-    Alert.alert(
-      "Logout",
-      "Are you sure you want to log out?",
-      [
+    showAlert({
+      type: "warning",
+      title: "Logout",
+      message: "Are you sure you want to log out?",
+      buttons: [
         {
           text: "Cancel",
           style: "cancel",
@@ -169,15 +171,16 @@ const Settings: React.FC = () => {
           },
         },
       ],
-      { cancelable: true }
-    );
+    });
   };
 
   const handleDeleteAccount = () => {
-    Alert.alert(
-      "Delete Account",
-      "Are you sure you want to delete your account? This action cannot be undone and you will lose all your data.",
-      [
+    showAlert({
+      type: "warning",
+      title: "Delete Account",
+      message:
+        "Are you sure you want to delete your account? This action cannot be undone and you will lose all your data.",
+      buttons: [
         {
           text: "Cancel",
           style: "cancel",
@@ -189,25 +192,7 @@ const Settings: React.FC = () => {
             try {
               if (user) {
                 const userId = user.id || user._id;
-                // Call API to delete user
-                // Assuming deleteUser is imported from api.tsx, if not we need to import it
-                // We'll trust the import is handled or I'll fix it in a separate step if needed.
-                // Wait, I need to make sure deleteUser is imported.
-                // Let's use dispatch(logoutUser()) after success.
-
-                // Since I can't easily auto-add imports here without risking conflict,
-                // I will add the logic and if import is missing I will fix it.
-                // Actually, I should probably check imports first.
-                // But let's write the logic:
-
                 setIsLoading(true);
-                // We need to import deleteUser at the top.
-                // For now, let's use the one we just added.
-                // Note: I will add the import in a subsequent tool call if needed or use a multi-replace.
-                // Actually, let's just emit the logic and then check imports.
-
-                // Dynamic import to avoid import issues? No, standard import is better.
-                // Let's rely on adding it to the imports in a separate replace/multi-replace.
                 const { deleteUser } = require("../../../services/api");
 
                 await deleteUser(userId);
@@ -218,7 +203,6 @@ const Settings: React.FC = () => {
                   text2: "Your account has been deleted successfully",
                 });
 
-                // clear local data and logout
                 dispatch(logoutUser() as any);
               }
             } catch (error) {
@@ -234,8 +218,7 @@ const Settings: React.FC = () => {
           },
         },
       ],
-      { cancelable: true }
-    );
+    });
   };
 
   if (isLoading) {

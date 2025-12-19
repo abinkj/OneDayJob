@@ -15,6 +15,7 @@ import socketService from "../services/socketService";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "../services/queryClient";
 import AppLayout from "../components/ui/layout";
+import { AlertProvider } from "../components/CustomAlert/AlertProvider";
 
 export default function RootLayout() {
   useEffect(() => {
@@ -45,10 +46,12 @@ export default function RootLayout() {
     <Provider store={store}>
       <QueryClientProvider client={queryClient}>
         <NotificationProvider>
-          <AppLayout>
-            <Stack screenOptions={{ headerShown: false }} />
-            <Toast config={toastConfig} />
-          </AppLayout>
+          <AlertProvider>
+            <AppLayout>
+              <Stack screenOptions={{ headerShown: false }} />
+              <Toast config={toastConfig} />
+            </AppLayout>
+          </AlertProvider>
         </NotificationProvider>
       </QueryClientProvider>
     </Provider>

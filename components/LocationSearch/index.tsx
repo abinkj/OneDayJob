@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from "react";
 import {
   View,
   Text,
@@ -6,12 +6,16 @@ import {
   TouchableOpacity,
   FlatList,
   StyleSheet,
-  Alert,
   ActivityIndicator,
-} from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { Colors } from '../../constants/Colors';
-import { getCurrentLocation, searchPlacesFallback, LocationData } from '../../services/locationService';
+} from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import { Colors } from "../../constants/Colors";
+import {
+  getCurrentLocation,
+  searchPlacesFallback,
+  LocationData,
+} from "../../services/locationService";
+import { useAlert } from "../CustomAlert/AlertProvider";
 
 interface LocationSearchProps {
   value: string;
@@ -30,9 +34,11 @@ const LocationSearch: React.FC<LocationSearchProps> = ({
   const [suggestions, setSuggestions] = useState<LocationData[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
-  const [isGettingCurrentLocation, setIsGettingCurrentLocation] = useState(false);
+  const [isGettingCurrentLocation, setIsGettingCurrentLocation] =
+    useState(false);
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [isInputFocused, setIsInputFocused] = useState(false);
+  const { showAlert } = useAlert();
 
   useEffect(() => {
     setSearchText(value);
@@ -52,7 +58,7 @@ const LocationSearch: React.FC<LocationSearchProps> = ({
       setSuggestions(results);
       setShowSuggestions(true);
     } catch (error) {
-      console.error('Search error:', error);
+      console.error("Search error:", error);
       setSuggestions([]);
     } finally {
       setIsLoading(false);
@@ -62,7 +68,7 @@ const LocationSearch: React.FC<LocationSearchProps> = ({
   // Handle search text changes with improved debouncing
   const handleSearchTextChange = (text: string) => {
     setSearchText(text);
-    
+
     // Clear previous timeout
     if (searchTimeoutRef.current) {
       clearTimeout(searchTimeoutRef.current);
@@ -89,15 +95,26 @@ const LocationSearch: React.FC<LocationSearchProps> = ({
     try {
       const location = await getCurrentLocation();
       if (location) {
-        setSearchText(location.address || `${location.city}, ${location.state}`);
+        setSearchText(
+          location.address || `${location.city}, ${location.state}`
+        );
         onLocationSelect(location);
         setShowSuggestions(false);
       } else {
-        Alert.alert('Error', 'Unable to get current location. Please check your location permissions.');
+        showAlert({
+          type: "error",
+          title: "Error",
+          message:
+            "Unable to get current location. Please check your location permissions.",
+        });
       }
     } catch (error) {
-      console.error('Error getting current location:', error);
-      Alert.alert('Error', 'Failed to get current location. Please try again.');
+      console.error("Error getting current location:", error);
+      showAlert({
+        type: "error",
+        title: "Error",
+        message: "Failed to get current location. Please try again.",
+      });
     } finally {
       setIsGettingCurrentLocation(false);
     }
@@ -105,7 +122,9 @@ const LocationSearch: React.FC<LocationSearchProps> = ({
 
   // Handle suggestion selection
   const handleSuggestionSelect = (suggestion: LocationData) => {
-    setSearchText(suggestion.address || `${suggestion.city}, ${suggestion.state}`);
+    setSearchText(
+      suggestion.address || `${suggestion.city}, ${suggestion.state}`
+    );
     onLocationSelect(suggestion);
     setShowSuggestions(false);
     setIsInputFocused(false);
@@ -145,7 +164,7 @@ const LocationSearch: React.FC<LocationSearchProps> = ({
             placeholderTextColor={Colors.grey}
             onFocus={() => {
               setIsInputFocused(true);
-              if (suggestions.length > 0 || (searchText.trim().length >= 2)) {
+              if (suggestions.length > 0 || searchText.trim().length >= 2) {
                 setShowSuggestions(true);
               }
             }}
@@ -163,7 +182,7 @@ const LocationSearch: React.FC<LocationSearchProps> = ({
             <ActivityIndicator size="small" color={Colors.primary} />
           )}
         </View>
-        
+
         <TouchableOpacity
           style={styles.currentLocationButton}
           onPress={handleCurrentLocation}
@@ -192,7 +211,9 @@ const LocationSearch: React.FC<LocationSearchProps> = ({
             <FlatList
               data={suggestions}
               renderItem={renderSuggestion}
-              keyExtractor={(item, index) => `${item.coordinates.latitude}-${item.coordinates.longitude}-${index}`}
+              keyExtractor={(item, index) =>
+                `${item.coordinates.latitude}-${item.coordinates.longitude}-${index}`
+              }
               style={styles.suggestionsList}
               keyboardShouldPersistTaps="handled"
               nestedScrollEnabled={true}
@@ -206,18 +227,18 @@ const LocationSearch: React.FC<LocationSearchProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    position: 'relative',
+    position: "relative",
     zIndex: 1000,
   },
   searchContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 10,
   },
   inputContainer: {
     flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     backgroundColor: Colors.white,
     borderWidth: 1,
     borderColor: Colors.border,
@@ -235,13 +256,13 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.primary,
     padding: 12,
     borderRadius: 8,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     minWidth: 44,
   },
   suggestionsContainer: {
-    position: 'absolute',
-    top: '100%',
+    position: "absolute",
+    top: "100%",
     left: 0,
     right: 0,
     backgroundColor: Colors.white,
@@ -250,7 +271,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     marginTop: 4,
     maxHeight: 200,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: {
       width: 0,
       height: 2,
@@ -263,8 +284,8 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   suggestionItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderBottomWidth: 1,
@@ -277,7 +298,7 @@ const styles = StyleSheet.create({
   suggestionMainText: {
     fontSize: 16,
     color: Colors.black,
-    fontWeight: '500',
+    fontWeight: "500",
   },
   suggestionSubText: {
     fontSize: 14,
@@ -285,9 +306,9 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   loadingContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
     paddingVertical: 20,
     gap: 10,
   },
@@ -297,4 +318,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default LocationSearch; 
+export default LocationSearch;
