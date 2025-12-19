@@ -11,7 +11,7 @@ import Images from "../../../utilities/images";
 import { Header } from "../../../components/header";
 import LabeledInput from "../../../components/labeledTextInput";
 import { User } from "../../../types";
-import { saveUserData } from "../../../utilities/asyncStore";
+import { saveUserData } from "../../../utilities/mmkvStore";
 import { updateProfile } from "../../../services/api";
 import { useDispatch } from "react-redux";
 import Toast from "react-native-toast-message";

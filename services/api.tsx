@@ -1,4 +1,3 @@
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
 import {
   getAccessToken,
@@ -6,7 +5,7 @@ import {
   saveToken,
   getRefreshToken,
 } from "../utilities/secureStore";
-import { normalizeUser } from "../utilities/asyncStore";
+import { normalizeUser, storage } from "../utilities/mmkvStore";
 
 const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL; // Uses your .env EXPO_PUBLIC_API_URL
 
@@ -255,7 +254,7 @@ export const testAuth = async () => {
 export const isAuthenticated = async () => {
   try {
     const token = await getAccessToken();
-    const user = await AsyncStorage.getItem("USER");
+    const user = storage.getString("USER");
 
     // console.log("Checking authentication (local):", {
     //   hasToken: !!token,
@@ -266,7 +265,7 @@ export const isAuthenticated = async () => {
       return false;
     }
 
-    // We accept the token as valid. 
+    // We accept the token as valid.
     // If it's expired, the Axios interceptor will handle the 401 response
     // by attempting a refresh or logging the user out.
     return true;
@@ -279,7 +278,7 @@ export const isAuthenticated = async () => {
 // Enhanced clear auth data function
 export const clearAuthData = async () => {
   try {
-    await AsyncStorage.removeItem("USER");
+    storage.remove("USER");
     await clearTokens();
     console.log("Auth data cleared successfully");
   } catch (error) {
@@ -457,13 +456,25 @@ export const getCategoriesForFilter = async () => {
 };
 
 // services/jobService.ts
-export const getJobPostingsByUserId = async (userId: string, page: number = 1, limit: number = 10) => {
-  const res = await api.get(`jobs/user-posts/${userId}?page=${page}&limit=${limit}`);
+export const getJobPostingsByUserId = async (
+  userId: string,
+  page: number = 1,
+  limit: number = 10
+) => {
+  const res = await api.get(
+    `jobs/user-posts/${userId}?page=${page}&limit=${limit}`
+  );
   return res.data;
 };
 
-export const getAppliedJobsByUserId = async (userId: string, page: number = 1, limit: number = 10) => {
-  const res = await api.get(`applications/user/${userId}/applied-jobs?page=${page}&limit=${limit}`);
+export const getAppliedJobsByUserId = async (
+  userId: string,
+  page: number = 1,
+  limit: number = 10
+) => {
+  const res = await api.get(
+    `applications/user/${userId}/applied-jobs?page=${page}&limit=${limit}`
+  );
   return res.data;
 };
 
@@ -554,16 +565,13 @@ export const getCategories = () => api.get("/categories");
 export const getCurrentUser = async () => {
   try {
     // Prefer new key; migrate from legacy if needed
-    let userString = await AsyncStorage.getItem("USER");
+    let userString = storage.getString("USER");
     if (!userString) {
-      const legacy = await AsyncStorage.getItem("user");
+      const legacy = storage.getString("user");
       if (legacy) {
         const normalizedLegacy = normalizeUser(JSON.parse(legacy));
-        await AsyncStorage.setItem(
-          "USER",
-          JSON.stringify(normalizedLegacy, null, 2)
-        );
-        await AsyncStorage.removeItem("user");
+        storage.set("USER", JSON.stringify(normalizedLegacy));
+        storage.remove("user");
         userString = JSON.stringify(normalizedLegacy);
       }
     }
@@ -792,13 +800,13 @@ export const getEmployeeVerificationCode = async (jobId: string) => {
 export const submitRating = async (data: {
   ratedUser: string;
   job: string;
-  role: 'employer' | 'employee';
+  role: "employer" | "employee";
   rating: number;
   comment?: string;
 }) => {
   try {
     console.log("Submitting rating:", data);
-    const response = await api.post('/users/rate', data);
+    const response = await api.post("/users/rate", data);
     console.log("Rating submitted successfully:", response.data);
     return response;
   } catch (error) {
@@ -811,7 +819,10 @@ export const submitRating = async (data: {
  * Get ratings for a user
  * GET /api/users/:id/ratings
  */
-export const getUserRatings = async (userId: string, role: 'employer' | 'employee') => {
+export const getUserRatings = async (
+  userId: string,
+  role: "employer" | "employee"
+) => {
   try {
     console.log(`Getting ratings for user ${userId} as ${role}`);
     const response = await api.get(`/users/${userId}/ratings?role=${role}`);
@@ -822,7 +833,6 @@ export const getUserRatings = async (userId: string, role: 'employer' | 'employe
     throw error;
   }
 };
-
 
 /**
  * Schedule verification for a job (manual trigger)

@@ -17,7 +17,7 @@ import { useRoute } from "@react-navigation/native";
 import { useDispatch } from "react-redux";
 import { loginUser } from "../../../utilities/authentication";
 import styles from "./styles";
-import { saveKycStatus } from "../../../utilities/asyncStore";
+import { saveKycStatus } from "../../../utilities/mmkvStore";
 import { completeKyc } from "../../../redux/reducers/authReducers";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import CustomButton from "../../../components/CustomButton";
@@ -207,7 +207,7 @@ const Otp = () => {
               </Text>
             </Text>
           </View>
-          <View style={{ width: "100%", marginTop: 20,}}>
+          <View style={{ width: "100%", marginTop: 20 }}>
             <CustomButton
               onPress={handleVerifyOtp}
               disabled={isLoading || otp.length !== 6}

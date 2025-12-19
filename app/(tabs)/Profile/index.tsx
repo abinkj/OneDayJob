@@ -22,7 +22,7 @@ import { Colors } from "../../../constants/Colors";
 import JobApplicationStatus from "../../../components/jobApplicationStatus";
 import ratingStars from "../../../components/ratingStars";
 import { useNavigation } from "@react-navigation/native";
-import { getUserData } from "../../../utilities/asyncStore";
+import { getUserData } from "../../../utilities/mmkvStore";
 import { User, Review } from "../../../types";
 import {
   createConversation,

@@ -19,7 +19,7 @@ import Animated, {
   interpolateColor,
 } from "react-native-reanimated";
 import { setHasSeenOnboarding } from "../../redux/reducers/authReducers";
-import { saveHasSeenOnboarding } from "../../utilities/asyncStore";
+import { saveHasSeenOnboarding } from "../../utilities/mmkvStore";
 import { SafeAreaView } from "react-native-safe-area-context";
 import CustomButton from "../../components/CustomButton";
 import { Colors } from "../../constants/Colors";

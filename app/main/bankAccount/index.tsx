@@ -21,7 +21,7 @@ import {
 } from "../../../services/api";
 import Toast from "react-native-toast-message";
 import { skipKyc, completeKyc } from "../../../redux/reducers/authReducers";
-import { saveKycStatus, saveUserData } from "../../../utilities/asyncStore";
+import { saveKycStatus, saveUserData } from "../../../utilities/mmkvStore";
 
 const BankAccount = () => {
   const navigation = useNavigation<any>();
@@ -478,7 +478,11 @@ const BankAccount = () => {
         </View>
       </View> */}
 
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false} bounces={false}>
+      <ScrollView
+        style={styles.content}
+        showsVerticalScrollIndicator={false}
+        bounces={false}
+      >
         {/* Step 1: PAN Card Details - Temporarily commented out */}
         {/* {currentStep === 1 && (
           <>

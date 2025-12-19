@@ -1,5 +1,12 @@
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import { createMMKV } from "react-native-mmkv";
 import { User, UserLocation } from "../types";
+
+// Initialize MMKV storage
+const storage = createMMKV({
+  encryptionKey: process.env.EXPO_PUBLIC_MMKV_ENCRYPTION_KEY,
+  id: "mmkvStore",
+  mode: "multi-process",
+});
 
 const USER_DATA_KEY = "USER";
 
@@ -45,10 +52,7 @@ export const normalizeUser = (raw: any): User => {
 export const saveUserData = async (userData: User | any): Promise<void> => {
   try {
     const normalized = normalizeUser(userData);
-    await AsyncStorage.setItem(
-      USER_DATA_KEY,
-      JSON.stringify(normalized, null, 2)
-    );
+    storage.set(USER_DATA_KEY, JSON.stringify(normalized));
   } catch (error) {
     console.error("Failed to save user data:", error);
     throw error;
@@ -57,17 +61,14 @@ export const saveUserData = async (userData: User | any): Promise<void> => {
 
 export const getUserData = async (): Promise<User | null> => {
   try {
-    let data = await AsyncStorage.getItem(USER_DATA_KEY);
+    const data = storage.getString(USER_DATA_KEY);
     if (!data) {
       // Backward compatibility: try legacy key
-      const legacy = await AsyncStorage.getItem("user");
+      const legacy = storage.getString("user");
       if (legacy) {
         const parsedLegacy = normalizeUser(JSON.parse(legacy));
-        await AsyncStorage.setItem(
-          USER_DATA_KEY,
-          JSON.stringify(parsedLegacy, null, 2)
-        );
-        await AsyncStorage.removeItem("user");
+        storage.set(USER_DATA_KEY, JSON.stringify(parsedLegacy));
+        storage.remove("user");
         return parsedLegacy;
       }
       return null;
@@ -82,7 +83,7 @@ export const getUserData = async (): Promise<User | null> => {
 
 export const clearUserData = async () => {
   try {
-    await AsyncStorage.removeItem(USER_DATA_KEY);
+    storage.remove(USER_DATA_KEY);
   } catch (error) {
     console.error("Failed to clear user data:", error);
   }
@@ -92,7 +93,7 @@ const KYC_STATUS_KEY = "kycStatus";
 
 export const saveKycStatus = async (status: string): Promise<void> => {
   try {
-    await AsyncStorage.setItem(KYC_STATUS_KEY, status);
+    storage.set(KYC_STATUS_KEY, status);
   } catch (error) {
     console.error("Failed to save KYC status:", error);
     throw error;
@@ -101,8 +102,8 @@ export const saveKycStatus = async (status: string): Promise<void> => {
 
 export const getKycStatus = async (): Promise<string | null> => {
   try {
-    const status = await AsyncStorage.getItem(KYC_STATUS_KEY);
-    return status;
+    const status = storage.getString(KYC_STATUS_KEY);
+    return status ?? null;
   } catch (error) {
     console.error("Failed to load KYC status:", error);
     return null;
@@ -111,7 +112,7 @@ export const getKycStatus = async (): Promise<string | null> => {
 
 export const clearKycStatus = async (): Promise<void> => {
   try {
-    await AsyncStorage.removeItem(KYC_STATUS_KEY);
+    storage.remove(KYC_STATUS_KEY);
   } catch (error) {
     console.error("Failed to clear KYC status:", error);
   }
@@ -121,7 +122,7 @@ const ONBOARDING_STATUS_KEY = "hasSeenOnboarding";
 
 export const saveHasSeenOnboarding = async (status: boolean): Promise<void> => {
   try {
-    await AsyncStorage.setItem(ONBOARDING_STATUS_KEY, JSON.stringify(status));
+    storage.set(ONBOARDING_STATUS_KEY, status);
   } catch (error) {
     console.error("Failed to save onboarding status:", error);
   }
@@ -129,10 +130,13 @@ export const saveHasSeenOnboarding = async (status: boolean): Promise<void> => {
 
 export const getHasSeenOnboarding = async (): Promise<boolean> => {
   try {
-    const status = await AsyncStorage.getItem(ONBOARDING_STATUS_KEY);
-    return status ? JSON.parse(status) : false;
+    const status = storage.getBoolean(ONBOARDING_STATUS_KEY);
+    return status ?? false;
   } catch (error) {
     console.error("Failed to load onboarding status:", error);
     return false;
   }
 };
+
+// Export storage instance for direct access if needed
+export { storage };

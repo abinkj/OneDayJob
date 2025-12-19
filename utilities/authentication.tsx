@@ -12,7 +12,7 @@ import {
   getKycStatus,
   clearKycStatus,
   getHasSeenOnboarding,
-} from "./asyncStore";
+} from "./mmkvStore";
 import { saveToken, clearTokens } from "./secureStore";
 import type { KycStatus } from "../redux/reducers/authReducers";
 
