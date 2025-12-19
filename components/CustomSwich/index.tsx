@@ -1,34 +1,21 @@
-import React, { useEffect, useRef } from 'react';
-import { View, TouchableOpacity, StyleSheet, Animated } from 'react-native';
-import { styles } from './styles';
-import { Colors } from '../../constants/Colors';
+import React, { useEffect, useRef } from "react";
+import { View, TouchableOpacity, StyleSheet, Animated } from "react-native";
+import { styles } from "./styles";
+import { Colors } from "../../constants/Colors";
 
-const CustomSwitch = ({
-  value = false,
-  onValueChange,
-  disabled = false,
-}) => {
+const CustomSwitch = ({ value = false, onValueChange, disabled = false }) => {
   // Animation for thumb position
+  // Track: 51, Padding: 2*2=4, Thumb: 27.  Remaining space: 51 - 4 - 27 = 20.
   const thumbPosition = useRef(new Animated.Value(value ? 20 : 0)).current;
-  
-  // Animation for thumb size
-  const thumbSize = useRef(new Animated.Value(value ? 24 : 16)).current;
-  
+
   // Update animations when value changes
   useEffect(() => {
-    Animated.parallel([
-      Animated.timing(thumbPosition, {
-        toValue: value ? 20 : 0,
-        duration: 200,
-        useNativeDriver: false,
-      }),
-      Animated.timing(thumbSize, {
-        toValue: value ? 24 : 16,
-        duration: 200,
-        useNativeDriver: false,
-      }),
-    ]).start();
-  }, [value, thumbPosition, thumbSize]);
+    Animated.timing(thumbPosition, {
+      toValue: value ? 20 : 0,
+      duration: 250,
+      useNativeDriver: false,
+    }).start();
+  }, [value, thumbPosition]);
 
   const handleToggle = () => {
     if (!disabled) {
@@ -47,13 +34,13 @@ const CustomSwitch = ({
         style={[
           styles.track,
           {
-            backgroundColor: value ? Colors.switchBlue : Colors.switchGrey,
+            backgroundColor: value ? Colors.primary : Colors.switchGrey,
             opacity: disabled ? 0.5 : 1,
           },
-          !value&&{
-            borderWidth:2,
-            borderColor:Colors.switchBorder,
-        }
+          !value && {
+            borderWidth: .5, // Reduced border width for cleaner iOS look
+            borderColor: Colors.switchBorder,
+          },
         ]}
       >
         <Animated.View
@@ -61,9 +48,6 @@ const CustomSwitch = ({
             styles.thumb,
             {
               transform: [{ translateX: thumbPosition }],
-              width: thumbSize,
-              height: thumbSize,
-              backgroundColor:value? Colors.white:Colors.switchBorder,
             },
           ]}
         />
@@ -71,6 +55,5 @@ const CustomSwitch = ({
     </TouchableOpacity>
   );
 };
-
 
 export default CustomSwitch;

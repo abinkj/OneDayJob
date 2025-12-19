@@ -305,6 +305,14 @@ const JobDetails = () => {
       .join(", ");
   };
 
+  const format24to12h = (time24: string | undefined) => {
+    if (!time24) return "";
+    const [hour, minute] = time24.split(":").map(Number);
+    const amPm = hour >= 12 ? "PM" : "AM";
+    const hour12 = hour % 12 || 12;
+    return `${hour12}:${String(minute).padStart(2, "0")} ${amPm}`;
+  };
+
   const formatRequirements = (reqs: string[]) => {
     if (!reqs || reqs.length === 0) return "No specific requirements";
     return reqs.join(", ");
@@ -436,6 +444,13 @@ const JobDetails = () => {
             <Text style={styles.timeText}>
               {formatTimePreference(job.timePreference)}
               {job.isFlexible && " (Flexible)"}
+              {job.fromTime && job.toTime && (
+                <Text style={{ fontWeight: "600", color: Colors.black }}>
+                  {`\nExact Time: ${format24to12h(
+                    job.fromTime
+                  )} - ${format24to12h(job.toTime)}`}
+                </Text>
+              )}
             </Text>
           </View>
         </View>

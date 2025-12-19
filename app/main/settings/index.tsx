@@ -4,9 +4,9 @@ import {
   Text,
   ScrollView,
   TouchableOpacity,
-  Switch,
   ActivityIndicator,
 } from "react-native";
+import CustomSwitch from "../../../components/CustomSwich";
 import { Image } from "expo-image";
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
@@ -291,14 +291,9 @@ const Settings: React.FC = () => {
             subtitle="Receive push notifications"
             showArrow={false}
             rightComponent={
-              <Switch
+              <CustomSwitch
                 value={pushNotifications}
                 onValueChange={setPushNotifications}
-                trackColor={{
-                  false: Colors.switchGrey,
-                  true: Colors.primary,
-                }}
-                thumbColor={Colors.white}
               />
             }
           />
@@ -308,14 +303,9 @@ const Settings: React.FC = () => {
             subtitle="Receive email updates"
             showArrow={false}
             rightComponent={
-              <Switch
+              <CustomSwitch
                 value={emailNotifications}
                 onValueChange={setEmailNotifications}
-                trackColor={{
-                  false: Colors.switchGrey,
-                  true: Colors.primary,
-                }}
-                thumbColor={Colors.white}
               />
             }
           />
@@ -325,15 +315,7 @@ const Settings: React.FC = () => {
             subtitle="Get notified about new jobs"
             showArrow={false}
             rightComponent={
-              <Switch
-                value={jobAlerts}
-                onValueChange={setJobAlerts}
-                trackColor={{
-                  false: Colors.switchGrey,
-                  true: Colors.primary,
-                }}
-                thumbColor={Colors.white}
-              />
+              <CustomSwitch value={jobAlerts} onValueChange={setJobAlerts} />
             }
           />
         </SettingsSection>
@@ -346,7 +328,7 @@ const Settings: React.FC = () => {
             subtitle="Enable dark theme"
             showArrow={false}
             rightComponent={
-              <Switch
+              <CustomSwitch
                 value={darkMode}
                 onValueChange={(value) => {
                   setDarkMode(value);
@@ -356,11 +338,6 @@ const Settings: React.FC = () => {
                     text2: "Dark mode will be available soon",
                   });
                 }}
-                trackColor={{
-                  false: Colors.switchGrey,
-                  true: Colors.primary,
-                }}
-                thumbColor={Colors.white}
               />
             }
           />

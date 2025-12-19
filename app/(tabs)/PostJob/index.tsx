@@ -811,6 +811,34 @@ const PostJobScreen = ({ navigation: navProp }) => {
 
   const [isExactTime, setIsExactTime] = useState(false);
 
+  // Sync time preference when exact time is changed
+  useEffect(() => {
+    if (isExactTime) {
+      let hour24 = parseInt(fromHour);
+      if (fromAmPm === "PM" && hour24 !== 12) hour24 += 12;
+      if (fromAmPm === "AM" && hour24 === 12) hour24 = 0;
+
+      let slotId = "";
+      // Morning: Before 10 AM (6 AM - 10 AM)
+      // Midday: 10 AM - 2 PM (10 AM - 2 PM)
+      // Afternoon: 2 PM - 6 PM (2 PM - 6 PM)
+      // Evening: After 6 PM (6 PM onwards)
+      if (hour24 >= 6 && hour24 < 10) {
+        slotId = "morning";
+      } else if (hour24 >= 10 && hour24 < 14) {
+        slotId = "midday";
+      } else if (hour24 >= 14 && hour24 < 18) {
+        slotId = "afternoon";
+      } else if (hour24 >= 18 || hour24 < 6) {
+        slotId = "evening";
+      }
+
+      if (slotId && !selectedTimePreferences.includes(slotId)) {
+        setSelectedTimePreferences([slotId]);
+      }
+    }
+  }, [fromHour, fromMinute, fromAmPm, isExactTime]);
+
   // Handle time preference selection (only one allowed)
   const handleTimePreferenceToggle = (timeSlotId, toggle = true) => {
     setSelectedTimePreferences((prev) => {
