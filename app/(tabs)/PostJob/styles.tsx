@@ -312,7 +312,7 @@ const styles = StyleSheet.create({
   },
 
   selectedTimeSlot: {
-    backgroundColor: Colors.timeSelected,
+    backgroundColor: Colors.primary,
   },
   timeSlotIcon: {
     width: 50 * DeviceDimensions.widthRatio,

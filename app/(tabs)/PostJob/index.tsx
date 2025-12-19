@@ -396,12 +396,12 @@ const PostJobScreen = ({ navigation: navProp }) => {
       errors.push("Please select a job category");
     }
 
-    if (!jobName || jobName.length < 10) {
-      errors.push("Job name must be at least 10 characters long");
+    if (!jobName) {
+      errors.push("Please enter a job name");
     }
 
-    if (!jobDescription || jobDescription.length < 25) {
-      errors.push("Job description must be at least 25 characters long");
+    if (!jobDescription) {
+      errors.push("Please enter a job description");
     }
 
     if (!canBeDoneRemotely && !selectedLocation) {
@@ -589,8 +589,13 @@ const PostJobScreen = ({ navigation: navProp }) => {
       jobData.isFlexible = true;
     }
 
-    // Add time fields for non-flexible jobs
-    if (!isFlexible) {
+    // Add time fields for non-flexible jobs OR Exact Time jobs
+    if (isExactTime) {
+      jobData.fromTime = get24HourTime(fromHour, fromMinute, fromAmPm);
+      jobData.toTime = get24HourTime(toHour, toMinute, toAmPm);
+      jobData.isFlexible = false; // Force non-flexible if exact time is set
+    } else if (!isFlexible) {
+      // Original logic for non-exact time but non-flexible Date Mode
       jobData.fromTime = get24HourTime(fromHour, fromMinute, fromAmPm);
       jobData.toTime = get24HourTime(toHour, toMinute, toAmPm);
     }
@@ -834,14 +839,14 @@ const PostJobScreen = ({ navigation: navProp }) => {
     }
 
     if (currentStep === 2) {
-      if (!jobName || jobName.length < 10) {
-        Alert.alert("Required", "Job name must be at least 10 characters long");
+      if (!jobName) {
+        Alert.alert("Required", "Please enter a job name");
         return;
       }
-      if (!jobDescription || jobDescription.length < 25) {
+      if (!jobDescription) {
         Alert.alert(
           "Required",
-          "Job description must be at least 25 characters long"
+          "Please enter a job description"
         );
         return;
       }
@@ -868,8 +873,27 @@ const PostJobScreen = ({ navigation: navProp }) => {
         return;
       }
 
-      // Validate time fields for non-flexible jobs
-      if (!isFlexible) {
+      // Validate time fields for Exact Time jobs
+      if (isExactTime) {
+        if (!fromHour || !fromMinute || !fromAmPm) {
+          Alert.alert("Required", "Please set the start time for the job");
+          return;
+        }
+        if (!toHour || !toMinute || !toAmPm) {
+          Alert.alert("Required", "Please set the end time for the job");
+          return;
+        }
+
+        // Validate that end time is after start time
+        const fromTime24 = get24HourTime(fromHour, fromMinute, fromAmPm);
+        const toTime24 = get24HourTime(toHour, toMinute, toAmPm);
+
+        if (fromTime24 >= toTime24) {
+          Alert.alert("Invalid Time", "End time must be after start time");
+          return;
+        }
+      } else if (!isFlexible) {
+        // Original validation for non-flexible date mode
         if (!fromHour || !fromMinute || !fromAmPm) {
           Alert.alert("Required", "Please set the start time for the job");
           return;
@@ -1189,7 +1213,6 @@ const PostJobScreen = ({ navigation: navProp }) => {
 
       <View style={styles.row}>
         <Text style={styles.sectionTitle}>Job Name</Text>
-        <Text style={styles.inputHelper}>Minimum 10 Characters</Text>
       </View>
 
       <View style={styles.inputContainer}>
@@ -1203,7 +1226,6 @@ const PostJobScreen = ({ navigation: navProp }) => {
       </View>
       <View style={styles.row}>
         <Text style={styles.sectionTitle}>Describe Your Job</Text>
-        <Text style={styles.inputHelper}>Minimum 25 Characters</Text>
       </View>
 
       {/* Unified Job Description Section */}
@@ -1408,96 +1430,6 @@ const PostJobScreen = ({ navigation: navProp }) => {
         </View>
       )}
 
-      <Text style={styles.sectionTitle}>Mention your time preference</Text>
-
-      <View style={styles.timeSlotGrid}>
-        {timeSlots.slice(0, 2).map((slot) => (
-          <TouchableOpacity
-            key={slot.id}
-            style={[
-              styles.timeSlot,
-              selectedTimePreferences.includes(slot.id) &&
-              styles.selectedTimeSlot,
-            ]}
-            onPress={() => handleTimePreferenceToggle(slot.id)}
-          >
-            <Image
-              source={
-                selectedTimePreferences.includes(slot.id)
-                  ? slot.false
-                  : slot.true
-              }
-              style={styles.timeSlotIcon}
-              resizeMode="contain"
-            />
-            <Text
-              style={[
-                styles.timeSlotName,
-                selectedTimePreferences.includes(slot.id)
-                  ? { color: Colors.white }
-                  : { color: Colors.black },
-              ]}
-            >
-              {slot.name}
-            </Text>
-            <Text
-              style={[
-                styles.timeSlotTime,
-                selectedTimePreferences.includes(slot.id)
-                  ? { color: Colors.white }
-                  : { color: Colors.grey },
-              ]}
-            >
-              {slot.time}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </View>
-
-      <View style={styles.timeSlotGrid}>
-        {timeSlots.slice(2).map((slot) => (
-          <TouchableOpacity
-            key={slot.id}
-            style={[
-              styles.timeSlot,
-              selectedTimePreferences.includes(slot.id) &&
-              styles.selectedTimeSlot,
-            ]}
-            onPress={() => handleTimePreferenceToggle(slot.id)}
-          >
-            <Image
-              source={
-                selectedTimePreferences.includes(slot.id)
-                  ? slot.false
-                  : slot.true
-              }
-              style={styles.timeSlotIcon}
-              resizeMode="contain"
-            />
-            <Text
-              style={[
-                styles.timeSlotName,
-                selectedTimePreferences.includes(slot.id)
-                  ? { color: Colors.white }
-                  : { color: Colors.black },
-              ]}
-            >
-              {slot.name}
-            </Text>
-            <Text
-              style={[
-                styles.timeSlotTime,
-                selectedTimePreferences.includes(slot.id)
-                  ? { color: Colors.white }
-                  : { color: Colors.grey },
-              ]}
-            >
-              {slot.time}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </View>
-
       {/* Exact Time Toggle */}
       <View style={styles.switchContainer}>
         <Text style={styles.switchLabel}>Set Exact Time</Text>
@@ -1516,8 +1448,103 @@ const PostJobScreen = ({ navigation: navProp }) => {
         />
       </View>
 
-      {/* Time Range Picker - Required for non-flexible jobs */}
-      {!isFlexible && isExactTime && (
+      {!isExactTime && (
+        <>
+          <Text style={styles.sectionTitle}>Mention your time preference</Text>
+
+          <View style={styles.timeSlotGrid}>
+            {timeSlots.slice(0, 2).map((slot) => (
+              <TouchableOpacity
+                key={slot.id}
+                style={[
+                  styles.timeSlot,
+                  selectedTimePreferences.includes(slot.id) &&
+                  styles.selectedTimeSlot,
+                ]}
+                onPress={() => handleTimePreferenceToggle(slot.id)}
+              >
+                <Image
+                  source={
+                    selectedTimePreferences.includes(slot.id)
+                      ? slot.false
+                      : slot.true
+                  }
+                  style={styles.timeSlotIcon}
+                  resizeMode="contain"
+                />
+                <Text
+                  style={[
+                    styles.timeSlotName,
+                    selectedTimePreferences.includes(slot.id)
+                      ? { color: Colors.white }
+                      : { color: Colors.black },
+                  ]}
+                >
+                  {slot.name}
+                </Text>
+                <Text
+                  style={[
+                    styles.timeSlotTime,
+                    selectedTimePreferences.includes(slot.id)
+                      ? { color: Colors.white }
+                      : { color: Colors.grey },
+                  ]}
+                >
+                  {slot.time}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+
+          <View style={styles.timeSlotGrid}>
+            {timeSlots.slice(2).map((slot) => (
+              <TouchableOpacity
+                key={slot.id}
+                style={[
+                  styles.timeSlot,
+                  selectedTimePreferences.includes(slot.id) &&
+                  styles.selectedTimeSlot,
+                ]}
+                onPress={() => handleTimePreferenceToggle(slot.id)}
+              >
+                <Image
+                  source={
+                    selectedTimePreferences.includes(slot.id)
+                      ? slot.false
+                      : slot.true
+                  }
+                  style={styles.timeSlotIcon}
+                  resizeMode="contain"
+                />
+                <Text
+                  style={[
+                    styles.timeSlotName,
+                    selectedTimePreferences.includes(slot.id)
+                      ? { color: Colors.white }
+                      : { color: Colors.black },
+                  ]}
+                >
+                  {slot.name}
+                </Text>
+                <Text
+                  style={[
+                    styles.timeSlotTime,
+                    selectedTimePreferences.includes(slot.id)
+                      ? { color: Colors.white }
+                      : { color: Colors.grey },
+                  ]}
+                >
+                  {slot.time}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </>
+      )}
+
+
+      {/* Time Range Picker - Required for Exact Time jobs */}
+      {isExactTime && (
         <View style={styles.timeRangeContainer}>
           <Text style={styles.sectionTitle}>Set time range (Required)</Text>
 
@@ -1854,11 +1881,19 @@ const PostJobScreen = ({ navigation: navProp }) => {
           <View style={styles.nameContainer1}>
             <View>
               <View style={styles.profileSection}>
-                <Image
-                  style={styles.avatarContainer}
-                  source={require("../../../assets/images/profile/profile.png")}
-                />
-                <Text style={styles.userName}>John Doe</Text>
+
+                {user?.profilePicture || user?.profileImage ? (
+                  <Image
+                    style={styles.avatarContainer}
+                    source={{ uri: user.profilePicture || user.profileImage }}
+                  />
+                ) : (
+                  <Image
+                    style={styles.avatarContainer}
+                    source={require("../../../assets/images/profile/profile.png")}
+                  />
+                )}
+                <Text style={styles.userName}>{user?.name || user?.fullName || "John Doe"}</Text>
               </View>
               <Text style={styles.jobTitlePreview}>
                 {jobName || "Furniture Lifting Help Needed"}
@@ -2048,9 +2083,9 @@ const PostJobScreen = ({ navigation: navProp }) => {
         <Text style={styles.nextButtonText}>Next</Text>
       </TouchableOpacity> */}
       {currentStep === 5 ? (
-        <CustomButton text={"Post"} color={Colors.grey} onPress={handlePost} />
+        <CustomButton text={"Post"} color={Colors.primary} onPress={handlePost} />
       ) : (
-        <CustomButton text={"Next"} color={Colors.grey} onPress={handleNext} />
+        <CustomButton text={"Next"} color={Colors.primary} onPress={handleNext} />
       )}
 
       <Modal
