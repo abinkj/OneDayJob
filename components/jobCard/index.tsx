@@ -107,8 +107,9 @@ const JobCard = ({
   });
 
   const formattedLocation = location?.address
-    ? `${location.address}${location.city ? ", " + location.city : ""}${location.state ? ", " + location.state : ""
-    }${location.country ? ", " + location.country : ""}`
+    ? `${location.address}${location.city ? ", " + location.city : ""}${
+        location.state ? ", " + location.state : ""
+      }${location.country ? ", " + location.country : ""}`
     : location?.country || "Remote";
 
   const formatTimePreference = (timePrefs: string[]) => {
@@ -230,54 +231,56 @@ const JobCard = ({
               : `${applicantCount || 0} Requests`}
           </Text>
         </View>
-        <View style={styles.bottomRow}>
-          <TouchableOpacity style={styles.button} onPress={() => onPress()}>
+        {!isWorkFinished && (
+          <View style={styles.bottomRow}>
+            <TouchableOpacity style={styles.button} onPress={() => onPress()}>
+              {withdraw ? (
+                <Text style={styles.buttonText}>View Details</Text>
+              ) : isInProgress ? (
+                <Text style={styles.buttonText}>Start Timer</Text>
+              ) : (
+                <Text style={styles.buttonText}>View Requests</Text>
+              )}
+            </TouchableOpacity>
             {withdraw ? (
-              <Text style={styles.buttonText}>View Details</Text>
-            ) : isInProgress ? (
-              <Text style={styles.buttonText}>Start Timer</Text>
+              <TouchableOpacity
+                style={[
+                  styles.button,
+                  {
+                    backgroundColor: Colors.red,
+                    marginLeft: 12,
+                    shadowColor: Colors.red,
+                  },
+                ]}
+                onPress={() => {
+                  if (onWithdraw) onWithdraw();
+                }}
+              >
+                <Text style={[styles.buttonText, { color: Colors.white }]}>
+                  Withdraw
+                </Text>
+              </TouchableOpacity>
             ) : (
-              <Text style={styles.buttonText}>View Requests</Text>
+              <TouchableOpacity
+                style={[
+                  styles.button,
+                  {
+                    backgroundColor: Colors.red,
+                    marginLeft: 12,
+                    shadowColor: Colors.red,
+                  },
+                ]}
+                onPress={() => {
+                  if (onDelete) onDelete();
+                }}
+              >
+                <Text style={[styles.buttonText, { color: Colors.white }]}>
+                  Delete
+                </Text>
+              </TouchableOpacity>
             )}
-          </TouchableOpacity>
-          {withdraw ? (
-            <TouchableOpacity
-              style={[
-                styles.button,
-                {
-                  backgroundColor: Colors.red,
-                  marginLeft: 12,
-                  shadowColor: Colors.red
-                },
-              ]}
-              onPress={() => {
-                if (onWithdraw) onWithdraw();
-              }}
-            >
-              <Text style={[styles.buttonText, { color: Colors.white }]}>
-                Withdraw
-              </Text>
-            </TouchableOpacity>
-          ) : (
-            <TouchableOpacity
-              style={[
-                styles.button,
-                {
-                  backgroundColor: Colors.red,
-                  marginLeft: 12,
-                  shadowColor: Colors.red
-                },
-              ]}
-              onPress={() => {
-                if (onDelete) onDelete();
-              }}
-            >
-              <Text style={[styles.buttonText, { color: Colors.white }]}>
-                Delete
-              </Text>
-            </TouchableOpacity>
-          )}
-        </View>
+          </View>
+        )}
       </View>
     </View>
   );
@@ -404,8 +407,8 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     paddingHorizontal: 16,
     paddingVertical: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     shadowColor: Colors.primary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
