@@ -216,7 +216,7 @@ const Profile: React.FC = () => {
           </Text>
 
           <View style={styles.locationContainer}>
-            <Ionicons name="location-outline" size={16} color="gray" />
+            <Ionicons name="location-sharp" size={16} color={Colors.primary} />
             <Text style={styles.locationText}>
               {user?.locationText || user?.location?.address || "Not specified"}
             </Text>
@@ -237,9 +237,9 @@ const Profile: React.FC = () => {
                   {user?.completionRate || 0}%
                 </Text>
                 <Ionicons
-                  name="information-circle-outline"
-                  size={16}
-                  color="lightgray"
+                  name="information-circle"
+                  size={18}
+                  color={Colors.primary}
                   style={styles.infoIcon}
                 />
               </View>
