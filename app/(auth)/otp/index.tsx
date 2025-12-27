@@ -3,7 +3,6 @@ import {
   View,
   Text,
   TouchableOpacity,
-  Alert,
   StyleSheet,
   ScrollView,
   Platform,
@@ -17,10 +16,12 @@ import { useRoute } from "@react-navigation/native";
 import { useDispatch } from "react-redux";
 import { loginUser } from "../../../utilities/authentication";
 import styles from "./styles";
-import { saveKycStatus } from "../../../utilities/asyncStore";
+import { saveKycStatus } from "../../../utilities/mmkvStore";
 import { completeKyc } from "../../../redux/reducers/authReducers";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import CustomButton from "../../../components/CustomButton";
+import { useAlert } from "../../../components/CustomAlert/AlertProvider";
+import { validateOtpCode } from "../../../utilities/formValidation";
 
 interface RouteParams {
   phoneNumber: string;
@@ -35,10 +36,17 @@ const Otp = () => {
   const route = useRoute();
   const { phoneNumber } = route.params as RouteParams;
   const dispatch = useDispatch();
+  const { showAlert } = useAlert();
 
   const handleVerifyOtp = async () => {
-    if (!otp || otp.length !== 6) {
-      Alert.alert("Error", "Please enter a valid 6-digit OTP.");
+    const otpValidation = validateOtpCode(otp);
+
+    if (!otpValidation.status) {
+      showAlert({
+        type: "error",
+        title: "Error",
+        message: otpValidation.otpError,
+      });
       return;
     }
 
@@ -75,10 +83,11 @@ const Otp = () => {
           dispatch(loginUser(userData, accessToken, refreshToken) as any);
         }, 2000);
       } else {
-        Alert.alert(
-          "Error",
-          response.data.message || "OTP verification failed"
-        );
+        showAlert({
+          type: "error",
+          title: "Error",
+          message: response.data.message || "OTP verification failed",
+        });
       }
     } catch (error) {
       console.error("OTP verification failed:", error);
@@ -93,7 +102,11 @@ const Otp = () => {
         errorMessage = "Server error. Please try again later.";
       }
 
-      Alert.alert("Error", errorMessage);
+      showAlert({
+        type: "error",
+        title: "Error",
+        message: errorMessage,
+      });
     } finally {
       setIsLoading(false);
     }
@@ -108,7 +121,11 @@ const Otp = () => {
       const response = await requestOtp({ phoneNumber });
       console.log("OTP resent successfully:", response.data);
 
-      Alert.alert("Success", "OTP has been resent to your mobile number.");
+      showAlert({
+        type: "success",
+        title: "Success",
+        message: "OTP has been resent to your mobile number.",
+      });
       setOtp("");
     } catch (error) {
       console.error("Failed to resend OTP:", error);
@@ -118,7 +135,11 @@ const Otp = () => {
         errorMessage = error.response.data.message;
       }
 
-      Alert.alert("Error", errorMessage);
+      showAlert({
+        type: "error",
+        title: "Error",
+        message: errorMessage,
+      });
     } finally {
       setIsResending(false);
     }
@@ -207,7 +228,7 @@ const Otp = () => {
               </Text>
             </Text>
           </View>
-          <View style={{ width: "100%", marginTop: 20,}}>
+          <View style={{ width: "100%", marginTop: 20 }}>
             <CustomButton
               onPress={handleVerifyOtp}
               disabled={isLoading || otp.length !== 6}

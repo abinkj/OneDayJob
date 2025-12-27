@@ -1,58 +1,64 @@
-import io, { Socket } from 'socket.io-client';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { getAccessToken } from '../utilities/secureStore';
+import io, { Socket } from "socket.io-client";
+import { getAccessToken } from "../utilities/secureStore";
 
 // Socket.IO configuration
-const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://192.168.1.5:8000/api';
+const API_URL =
+  process.env.EXPO_PUBLIC_API_URL || "http://192.168.1.5:8000/api";
 // Remove /api from the URL for socket connection
-const SOCKET_URL = API_URL.replace('/api', '');
+const SOCKET_URL = API_URL.replace("/api", "");
 let socket: Socket | null = null;
 
 // Socket event types
 export interface SocketEvents {
   // Connection events
-  'connected': (data: { userId: string; message: string }) => void;
-  'disconnect': () => void;
-  'error': (error: { message: string }) => void;
-  
+  connected: (data: { userId: string; message: string }) => void;
+  disconnect: () => void;
+  error: (error: { message: string }) => void;
+
   // Message events
-  'new-message': (data: { 
-    message: { 
-      id: string; 
-      text: string; 
-      senderId: string; 
-      conversationId: string; 
-      createdAt: string; 
+  "new-message": (data: {
+    message: {
+      id: string;
+      text: string;
+      senderId: string;
+      conversationId: string;
+      createdAt: string;
       type: string;
-    }; 
-    conversationId: string; 
+    };
+    conversationId: string;
   }) => void;
-  'message-sent': (data: { message: any; conversationId: string }) => void;
-  'messages-read': (data: { conversationId: string; readCount: number }) => void;
-  
+  "message-sent": (data: { message: any; conversationId: string }) => void;
+  "messages-read": (data: {
+    conversationId: string;
+    readCount: number;
+  }) => void;
+
   // Conversation events
-  'conversation-joined': (data: { conversationId: string; participants: any[] }) => void;
-  'conversation-left': (data: { conversationId: string }) => void;
-  
-  // Typing events
-  'user-typing': (data: { 
-    userId: string; 
-    conversationId: string; 
-    isTyping: boolean; 
+  "conversation-joined": (data: {
+    conversationId: string;
+    participants: any[];
   }) => void;
-  
+  "conversation-left": (data: { conversationId: string }) => void;
+
+  // Typing events
+  "user-typing": (data: {
+    userId: string;
+    conversationId: string;
+    isTyping: boolean;
+  }) => void;
+
   // Presence events
-  'user-status-changed': (data: { userId: string; status: string }) => void;
-  
+  "user-status-changed": (data: { userId: string; status: string }) => void;
+
   // Verification events
-  'verification-code-received': (data: { 
-    jobId: string; 
+  "verification-code-received": (data: {
+    jobId: string;
     jobName: string;
     code: string;
     timestamp: string;
   }) => void;
-  'verification-status-updated': (data: { 
-    jobId: string; 
+  "verification-status-updated": (data: {
+    jobId: string;
     status: any;
     timestamp: string;
   }) => void;
@@ -70,26 +76,26 @@ class SocketService {
   async connect(): Promise<Socket | null> {
     try {
       if (this.socket?.connected) {
-        console.log('Socket already connected');
+        console.log("Socket already connected");
         return this.socket;
       }
 
       const token = await getAccessToken();
       if (!token) {
-        console.error('No authentication token found');
+        console.error("No authentication token found");
         return null;
       }
 
-      console.log('🔌 Socket Configuration:', {
+      console.log("🔌 Socket Configuration:", {
         API_URL,
         SOCKET_URL,
-        hasToken: !!token
+        hasToken: !!token,
       });
-      
+
       // Connect to default namespace (no namespace specified)
       this.socket = io(SOCKET_URL, {
         auth: { token },
-        transports: ['polling', 'websocket'],
+        transports: ["polling", "websocket"],
         timeout: 60000,
         forceNew: true,
         reconnection: true,
@@ -99,10 +105,10 @@ class SocketService {
       });
 
       this.setupEventListeners();
-      
+
       return this.socket;
     } catch (error) {
-      console.error('Error connecting to socket:', error);
+      console.error("Error connecting to socket:", error);
       return null;
     }
   }
@@ -111,53 +117,58 @@ class SocketService {
   private setupEventListeners() {
     if (!this.socket) return;
 
-    this.socket.on('connect', () => {
-      console.log('Socket connected successfully');
+    this.socket.on("connect", () => {
+      console.log("Socket connected successfully");
       this.isConnected = true;
       this.reconnectAttempts = 0;
     });
 
-    this.socket.on('connected', (data) => {
-      console.log('Socket authentication successful:', data);
+    this.socket.on("connected", (data) => {
+      console.log("Socket authentication successful:", data);
     });
 
-    this.socket.on('disconnect', (reason) => {
-      console.log('Socket disconnected:', reason);
+    this.socket.on("disconnect", (reason) => {
+      console.log("Socket disconnected:", reason);
       this.isConnected = false;
-      
+
       // Attempt to reconnect if not manually disconnected
-      if (reason !== 'io client disconnect') {
+      if (reason !== "io client disconnect") {
         this.attemptReconnect();
       }
     });
 
-    this.socket.on('connect_error', (error) => {
-      console.error('Socket connection error:', error);
+    this.socket.on("connect_error", (error) => {
+      console.error("Socket connection error:", error);
       this.isConnected = false;
-      
+
       // Only attempt reconnect if it's not a manual disconnect
-      if (error.message !== 'xhr poll error') {
+      if (error.message !== "xhr poll error") {
         this.attemptReconnect();
       }
     });
 
-    this.socket.on('error', (error) => {
-      console.error('Socket error:', error);
+    this.socket.on("error", (error) => {
+      console.error("Socket error:", error);
     });
   }
 
   // Attempt to reconnect
   private attemptReconnect() {
     if (this.reconnectAttempts >= this.maxReconnectAttempts) {
-      console.log('Max reconnection attempts reached');
+      console.log("Max reconnection attempts reached");
       return;
     }
 
     this.reconnectAttempts++;
-    const delay = Math.min(this.reconnectDelay * Math.pow(2, this.reconnectAttempts - 1), 10000);
-    
-    console.log(`Attempting to reconnect in ${delay}ms (attempt ${this.reconnectAttempts})`);
-    
+    const delay = Math.min(
+      this.reconnectDelay * Math.pow(2, this.reconnectAttempts - 1),
+      10000
+    );
+
+    console.log(
+      `Attempting to reconnect in ${delay}ms (attempt ${this.reconnectAttempts})`
+    );
+
     setTimeout(() => {
       this.connect();
     }, delay);
@@ -166,34 +177,34 @@ class SocketService {
   // Join a conversation
   joinConversation(conversationId: string) {
     if (!this.socket?.connected) {
-      console.error('Socket not connected');
+      console.error("Socket not connected");
       return;
     }
 
-    console.log('Joining conversation:', conversationId);
-    this.socket.emit('join-conversation', { conversationId });
+    console.log("Joining conversation:", conversationId);
+    this.socket.emit("join-conversation", { conversationId });
   }
 
   // Leave a conversation
   leaveConversation(conversationId: string) {
     if (!this.socket?.connected) {
-      console.error('Socket not connected');
+      console.error("Socket not connected");
       return;
     }
 
-    console.log('Leaving conversation:', conversationId);
-    this.socket.emit('leave-conversation', { conversationId });
+    console.log("Leaving conversation:", conversationId);
+    this.socket.emit("leave-conversation", { conversationId });
   }
 
   // Send a message
-  sendMessage(conversationId: string, text: string, type: string = 'text') {
+  sendMessage(conversationId: string, text: string, type: string = "text") {
     if (!this.socket?.connected) {
-      console.error('Socket not connected');
+      console.error("Socket not connected");
       return;
     }
 
-    console.log('Sending message:', { conversationId, text, type });
-    this.socket.emit('send-message', {
+    console.log("Sending message:", { conversationId, text, type });
+    this.socket.emit("send-message", {
       conversationId,
       text,
       type,
@@ -203,48 +214,48 @@ class SocketService {
   // Mark messages as read
   markMessagesRead(conversationId: string) {
     if (!this.socket?.connected) {
-      console.error('Socket not connected');
+      console.error("Socket not connected");
       return;
     }
 
-    console.log('Marking messages as read:', conversationId);
-    this.socket.emit('mark-messages-read', { conversationId });
+    console.log("Marking messages as read:", conversationId);
+    this.socket.emit("mark-messages-read", { conversationId });
   }
 
   // Start typing indicator
   startTyping(conversationId: string) {
     if (!this.socket?.connected) {
-      console.error('Socket not connected');
+      console.error("Socket not connected");
       return;
     }
 
     if (!conversationId) {
-      console.error('Conversation ID is required for typing indicator');
+      console.error("Conversation ID is required for typing indicator");
       return;
     }
 
-    this.socket.emit('typing-start', { conversationId });
+    this.socket.emit("typing-start", { conversationId });
   }
 
   // Stop typing indicator
   stopTyping(conversationId: string) {
     if (!this.socket?.connected) {
-      console.error('Socket not connected');
+      console.error("Socket not connected");
       return;
     }
 
     if (!conversationId) {
-      console.error('Conversation ID is required for typing indicator');
+      console.error("Conversation ID is required for typing indicator");
       return;
     }
 
-    this.socket.emit('typing-stop', { conversationId });
+    this.socket.emit("typing-stop", { conversationId });
   }
 
   // Listen to socket events
   on<K extends keyof SocketEvents>(event: K, callback: SocketEvents[K]) {
     if (!this.socket) {
-      console.error('Socket not initialized');
+      console.error("Socket not initialized");
       return;
     }
 
@@ -254,7 +265,7 @@ class SocketService {
   // Remove event listener
   off<K extends keyof SocketEvents>(event: K, callback?: SocketEvents[K]) {
     if (!this.socket) {
-      console.error('Socket not initialized');
+      console.error("Socket not initialized");
       return;
     }
 
@@ -277,14 +288,14 @@ class SocketService {
       socketConnected: this.socket?.connected || false,
       reconnectAttempts: this.reconnectAttempts,
       maxReconnectAttempts: this.maxReconnectAttempts,
-      socketId: this.socket?.id || null
+      socketId: this.socket?.id || null,
     };
   }
 
   // Disconnect socket
   disconnect() {
     if (this.socket) {
-      console.log('Disconnecting socket...');
+      console.log("Disconnecting socket...");
       this.socket.disconnect();
       this.socket = null;
       this.isConnected = false;

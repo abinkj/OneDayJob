@@ -83,7 +83,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
 
-    backgroundColor: Colors.subGrey,
+    backgroundColor: Colors.primary,
     padding: 8,
     borderRadius: 1234,
     marginLeft: 8,

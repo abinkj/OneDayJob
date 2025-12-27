@@ -7,7 +7,6 @@ import {
   Image,
   ScrollView,
   Modal,
-  Alert,
   Platform,
   KeyboardAvoidingView,
 } from "react-native";
@@ -33,6 +32,12 @@ import {
 import { LocationData } from "../../../services/locationService";
 import { testLocationService } from "../../../services/locationService";
 import Toast from "react-native-toast-message";
+import { useAlert } from "../../../components/CustomAlert/AlertProvider";
+import {
+  validateJobTitle,
+  validateJobDescription,
+  validateHourlyRate,
+} from "../../../utilities/formValidation";
 
 // Default Job Categories (fallback if API fails)
 const defaultJobCategories = [
@@ -123,6 +128,7 @@ const timeSlots = [
 const PostJobScreen = ({ navigation: navProp }) => {
   const navigation = useNavigation();
   const { kycStatus } = useSelector((state) => state.authentication);
+  const { showAlert } = useAlert();
 
   // State variables
   const [currentStep, setCurrentStep] = useState(1);
@@ -190,25 +196,27 @@ const PostJobScreen = ({ navigation: navProp }) => {
           setUser(userData);
           console.log("Loaded user data in PostJob:", userData);
         } else {
-          Alert.alert(
-            "Authentication Required",
-            "Please log in to post a job.",
-            [
+          showAlert({
+            type: "error",
+            title: "Authentication Required",
+            message: "Please log in to post a job.",
+            buttons: [
               {
                 text: "OK",
                 onPress: () => {
-                  navigation.navigate("Login"); // Adjust route name as needed
+                  navigation.navigate("Login");
                 },
               },
-            ]
-          );
+            ],
+          });
         }
       } catch (error) {
         console.error("Error fetching user data in PostJob:", error);
-        Alert.alert(
-          "Error",
-          "Unable to load user data. Please try logging in again."
-        );
+        showAlert({
+          type: "error",
+          title: "Error",
+          message: "Unable to load user data. Please try logging in again.",
+        });
       }
     };
 
@@ -397,20 +405,26 @@ const PostJobScreen = ({ navigation: navProp }) => {
       errors.push("Please select a job category");
     }
 
-    if (!jobName) {
-      errors.push("Please enter a job name");
+    // Validate job title
+    const titleValidation = validateJobTitle(jobName);
+    if (!titleValidation.status) {
+      errors.push(titleValidation.titleError);
     }
 
-    if (!jobDescription) {
-      errors.push("Please enter a job description");
+    // Validate job description
+    const descriptionValidation = validateJobDescription(jobDescription);
+    if (!descriptionValidation.status) {
+      errors.push(descriptionValidation.descriptionError);
     }
 
     if (!canBeDoneRemotely && !selectedLocation) {
       errors.push("Please provide a location for onsite jobs");
     }
 
-    if (!budget || parseFloat(budget) <= 0) {
-      errors.push("Please enter a valid budget");
+    // Validate budget/hourly rate
+    const rateValidation = validateHourlyRate(budget?.toString() || "");
+    if (!rateValidation.status) {
+      errors.push(rateValidation.rateError);
     }
 
     // Validate time fields for non-flexible jobs
@@ -434,7 +448,11 @@ const PostJobScreen = ({ navigation: navProp }) => {
     }
 
     if (errors.length > 0) {
-      Alert.alert("Validation Error", errors.join("\n"));
+      showAlert({
+        type: "warning",
+        title: "Validation Error",
+        message: errors.join("\n"),
+      });
       return false;
     }
 
@@ -448,25 +466,31 @@ const PostJobScreen = ({ navigation: navProp }) => {
       console.log("PostJob Auth check result:", authValid);
 
       if (!authValid) {
-        Alert.alert("Authentication Required", "Please log in to post a job.", [
-          {
-            text: "OK",
-            onPress: () => {
-              // Navigate to login screen
-              navigation.navigate("Login"); // Adjust route name as needed
+        showAlert({
+          type: "error",
+          title: "Authentication Required",
+          message: "Please log in to post a job.",
+          buttons: [
+            {
+              text: "OK",
+              onPress: () => {
+                navigation.navigate("Login");
+              },
             },
-          },
-        ]);
+          ],
+        });
         return false;
       }
 
       return true;
     } catch (error) {
       console.error("Error checking auth status in PostJob:", error);
-      Alert.alert(
-        "Authentication Error",
-        "Unable to verify authentication. Please try logging in again."
-      );
+      showAlert({
+        type: "error",
+        title: "Authentication Error",
+        message:
+          "Unable to verify authentication. Please try logging in again.",
+      });
       return false;
     }
   };
@@ -679,10 +703,12 @@ const PostJobScreen = ({ navigation: navProp }) => {
 
     // Double-check user data is available
     if (!user || !user.id) {
-      Alert.alert(
-        "User Error",
-        "User information is not available. Please try logging in again."
-      );
+      showAlert({
+        type: "error",
+        title: "User Error",
+        message:
+          "User information is not available. Please try logging in again.",
+      });
       return;
     }
 
@@ -703,16 +729,20 @@ const PostJobScreen = ({ navigation: navProp }) => {
       const response = await createJobPosting(jobData);
 
       if (response.data) {
-        Alert.alert("Success!", "Your job has been posted successfully!", [
-          {
-            text: "OK",
-            onPress: () => {
-              resetAllFields();
-              // Navigate back or to job list
-              navigation.goBack();
+        showAlert({
+          type: "success",
+          title: "Success!",
+          message: "Your job has been posted successfully!",
+          buttons: [
+            {
+              text: "OK",
+              onPress: () => {
+                resetAllFields();
+                navigation.goBack();
+              },
             },
-          },
-        ]);
+          ],
+        });
       }
     } catch (error) {
       console.error("Error posting job:", error);
@@ -732,7 +762,11 @@ const PostJobScreen = ({ navigation: navProp }) => {
         errorMessage = errors.join("\n");
       }
 
-      Alert.alert("Error", errorMessage);
+      showAlert({
+        type: "error",
+        title: "Error",
+        message: errorMessage,
+      });
     } finally {
       setIsLoading(false);
     }
@@ -777,6 +811,34 @@ const PostJobScreen = ({ navigation: navProp }) => {
   };
 
   const [isExactTime, setIsExactTime] = useState(false);
+
+  // Sync time preference when exact time is changed
+  useEffect(() => {
+    if (isExactTime) {
+      let hour24 = parseInt(fromHour);
+      if (fromAmPm === "PM" && hour24 !== 12) hour24 += 12;
+      if (fromAmPm === "AM" && hour24 === 12) hour24 = 0;
+
+      let slotId = "";
+      // Morning: Before 10 AM (6 AM - 10 AM)
+      // Midday: 10 AM - 2 PM (10 AM - 2 PM)
+      // Afternoon: 2 PM - 6 PM (2 PM - 6 PM)
+      // Evening: After 6 PM (6 PM onwards)
+      if (hour24 >= 6 && hour24 < 10) {
+        slotId = "morning";
+      } else if (hour24 >= 10 && hour24 < 14) {
+        slotId = "midday";
+      } else if (hour24 >= 14 && hour24 < 18) {
+        slotId = "afternoon";
+      } else if (hour24 >= 18 || hour24 < 6) {
+        slotId = "evening";
+      }
+
+      if (slotId && !selectedTimePreferences.includes(slotId)) {
+        setSelectedTimePreferences([slotId]);
+      }
+    }
+  }, [fromHour, fromMinute, fromAmPm, isExactTime]);
 
   // Handle time preference selection (only one allowed)
   const handleTimePreferenceToggle = (timeSlotId, toggle = true) => {
@@ -835,24 +897,37 @@ const PostJobScreen = ({ navigation: navProp }) => {
   const handleNext = () => {
     // Validate current step before proceeding
     if (currentStep === 1 && !selectedCategory) {
-      Alert.alert("Required", "Please select a job category");
+      showAlert({
+        type: "info",
+        title: "Required",
+        message: "Please select a job category",
+      });
       return;
     }
 
     if (currentStep === 2) {
       if (!jobName) {
-        Alert.alert("Required", "Please enter a job name");
+        showAlert({
+          type: "info",
+          title: "Required",
+          message: "Please enter a job name",
+        });
         return;
       }
       if (!jobDescription) {
-        Alert.alert(
-          "Required",
-          "Please enter a job description"
-        );
+        showAlert({
+          type: "info",
+          title: "Required",
+          message: "Please enter a job description",
+        });
         return;
       }
       if (!canBeDoneRemotely && !selectedLocation) {
-        Alert.alert("Required", "Please provide a location for onsite jobs");
+        showAlert({
+          type: "info",
+          title: "Required",
+          message: "Please provide a location for onsite jobs",
+        });
         return;
       }
 
@@ -866,14 +941,31 @@ const PostJobScreen = ({ navigation: navProp }) => {
 
     if (currentStep === 3) {
       // Check if no time preference is selected
+      if (selectedTimePreferences.length === 0) {
+        showAlert({
+          type: "info",
+          title: "Time Preference Required",
+          message: "Please select a time preference for your job",
+        });
+        return;
+      }
+
       // Validate time fields for Exact Time jobs
       if (isExactTime) {
         if (!fromHour || !fromMinute || !fromAmPm) {
-          Alert.alert("Required", "Please set the start time for the job");
+          showAlert({
+            type: "info",
+            title: "Required",
+            message: "Please set the start time for the job",
+          });
           return;
         }
         if (!toHour || !toMinute || !toAmPm) {
-          Alert.alert("Required", "Please set the end time for the job");
+          showAlert({
+            type: "info",
+            title: "Required",
+            message: "Please set the end time for the job",
+          });
           return;
         }
 
@@ -882,17 +974,29 @@ const PostJobScreen = ({ navigation: navProp }) => {
         const toTime24 = get24HourTime(toHour, toMinute, toAmPm);
 
         if (fromTime24 >= toTime24) {
-          Alert.alert("Invalid Time", "End time must be after start time");
+          showAlert({
+            type: "warning",
+            title: "Invalid Time",
+            message: "End time must be after start time",
+          });
           return;
         }
       } else if (!isFlexible) {
         // Original validation for non-flexible date mode
         if (!fromHour || !fromMinute || !fromAmPm) {
-          Alert.alert("Required", "Please set the start time for the job");
+          showAlert({
+            type: "info",
+            title: "Required",
+            message: "Please set the start time for the job",
+          });
           return;
         }
         if (!toHour || !toMinute || !toAmPm) {
-          Alert.alert("Required", "Please set the end time for the job");
+          showAlert({
+            type: "info",
+            title: "Required",
+            message: "Please set the end time for the job",
+          });
           return;
         }
 
@@ -901,7 +1005,11 @@ const PostJobScreen = ({ navigation: navProp }) => {
         const toTime24 = get24HourTime(toHour, toMinute, toAmPm);
 
         if (fromTime24 >= toTime24) {
-          Alert.alert("Invalid Time", "End time must be after start time");
+          showAlert({
+            type: "warning",
+            title: "Invalid Time",
+            message: "End time must be after start time",
+          });
           return;
         }
       }
@@ -917,10 +1025,11 @@ const PostJobScreen = ({ navigation: navProp }) => {
           toMinute === "00" &&
           toAmPm === "AM"
         ) {
-          Alert.alert(
-            "Time Selection Required",
-            "Please select the time range for your job"
-          );
+          showAlert({
+            type: "info",
+            title: "Time Selection Required",
+            message: "Please select the time range for your job",
+          });
           return;
         }
 
@@ -929,31 +1038,41 @@ const PostJobScreen = ({ navigation: navProp }) => {
         const toTime24 = get24HourTime(toHour, toMinute, toAmPm);
 
         if (fromTime24 >= toTime24) {
-          Alert.alert("Invalid Time", "End time must be after start time");
+          showAlert({
+            type: "warning",
+            title: "Invalid Time",
+            message: "End time must be after start time",
+          });
           return;
         }
 
         // Validate time is within 12 AM to 11:59 PM range
         if (!isValidTimeRange(fromHour, fromMinute, fromAmPm)) {
-          Alert.alert(
-            "Invalid Time",
-            "Start time must be between 12 AM and 11:59 PM"
-          );
+          showAlert({
+            type: "warning",
+            title: "Invalid Time",
+            message: "Start time must be between 12 AM and 11:59 PM",
+          });
           return;
         }
 
         if (!isValidTimeRange(toHour, toMinute, toAmPm)) {
-          Alert.alert(
-            "Invalid Time",
-            "End time must be between 12 AM and 11:59 PM"
-          );
+          showAlert({
+            type: "warning",
+            title: "Invalid Time",
+            message: "End time must be between 12 AM and 11:59 PM",
+          });
           return;
         }
       }
     }
 
     if (currentStep === 4 && (!budget || parseFloat(budget) <= 0)) {
-      Alert.alert("Required", "Please enter a valid budget");
+      showAlert({
+        type: "info",
+        title: "Required",
+        message: "Please enter a valid budget",
+      });
       return;
     }
 
@@ -1379,7 +1498,7 @@ const PostJobScreen = ({ navigation: navProp }) => {
       <Modal
         visible={isCalendarVisible}
         transparent={true}
-        animationType="slide"
+        animationType="fade"
         onRequestClose={() => setCalendarVisible(false)}
       >
         <View style={styles.modalOverlay}>
@@ -1534,7 +1653,6 @@ const PostJobScreen = ({ navigation: navProp }) => {
           </View>
         </>
       )}
-
 
       {/* Time Range Picker - Required for Exact Time jobs */}
       {isExactTime && (
@@ -1796,10 +1914,11 @@ const PostJobScreen = ({ navigation: navProp }) => {
     };
 
     const handleRemoveJob = () => {
-      Alert.alert(
-        "Remove Job",
-        "Are you sure you want to remove this job and clear all data?",
-        [
+      showAlert({
+        type: "warning",
+        title: "Remove Job",
+        message: "Are you sure you want to remove this job and clear all data?",
+        buttons: [
           {
             text: "Cancel",
             style: "cancel",
@@ -1812,8 +1931,8 @@ const PostJobScreen = ({ navigation: navProp }) => {
               setShowMenu(false);
             },
           },
-        ]
-      );
+        ],
+      });
     };
     return (
       <View style={styles.stepContainer}>
@@ -1874,7 +1993,6 @@ const PostJobScreen = ({ navigation: navProp }) => {
           <View style={styles.nameContainer1}>
             <View>
               <View style={styles.profileSection}>
-
                 {user?.profilePicture || user?.profileImage ? (
                   <Image
                     style={styles.avatarContainer}
@@ -1886,7 +2004,9 @@ const PostJobScreen = ({ navigation: navProp }) => {
                     source={require("../../../assets/images/profile/profile.png")}
                   />
                 )}
-                <Text style={styles.userName}>{user?.name || user?.fullName || "John Doe"}</Text>
+                <Text style={styles.userName}>
+                  {user?.name || user?.fullName || "John Doe"}
+                </Text>
               </View>
               <Text style={styles.jobTitlePreview}>
                 {jobName || "Furniture Lifting Help Needed"}
@@ -1905,10 +2025,7 @@ const PostJobScreen = ({ navigation: navProp }) => {
             <View style={styles.separator} />
           </View>
           <View style={styles.nameContainer2}>
-            <Image
-              source={getCategoryIcon()}
-              style={styles.userImage}
-            />
+            <Image source={getCategoryIcon()} style={styles.userImage} />
           </View>
         </View>
 
@@ -2083,109 +2200,117 @@ const PostJobScreen = ({ navigation: navProp }) => {
         <Text style={styles.nextButtonText}>Next</Text>
       </TouchableOpacity> */}
         {currentStep === 5 ? (
-          <CustomButton text={"Post"} color={Colors.primary} onPress={handlePost} />
+          <CustomButton
+            text={"Post"}
+            color={Colors.primary}
+            onPress={handlePost}
+          />
         ) : (
-          <CustomButton text={"Next"} color={Colors.primary} onPress={handleNext} />
+          <CustomButton
+            text={"Next"}
+            color={Colors.primary}
+            onPress={handleNext}
+          />
         )}
-      </KeyboardAvoidingView>
 
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={showRequirementsModal}
-        onRequestClose={() => setShowRequirementsModal(false)}
-      >
-        <View style={styles.modalContainer}>
-          <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>
-                Add Requirements for the Job
-              </Text>
-              <TouchableOpacity onPress={() => setShowRequirementsModal(false)}>
-                <Ionicons name="close" size={24} color={Colors.grey} />
-              </TouchableOpacity>
-            </View>
-
-            <View style={styles.modalInputContainer}>
-              <TextInput
-                style={styles.modalInput}
-                value={newRequirement}
-                onChangeText={setNewRequirement}
-                placeholder="Eg - Tools or Vehicles"
-                placeholderTextColor={Colors.subGrey}
-              />
-              <TouchableOpacity
-                onPress={handleAddRequirement}
-                style={styles.addButton}
-              >
-                <Ionicons name="add-circle" size={24} color={Colors.primary} />
-              </TouchableOpacity>
-            </View>
-
-            <CustomButton
-              text="Add"
-              color={Colors.primary}
-              onPress={handleAddRequirement}
-            />
-          </View>
-        </View>
-      </Modal>
-
-      {/* Edit Requirements Modal */}
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={editingRequirements}
-        onRequestClose={() => setEditingRequirements(false)}
-      >
-        <View style={styles.modalContainer}>
-          <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Edit Requirements</Text>
-              <TouchableOpacity onPress={() => setEditingRequirements(false)}>
-                <Ionicons name="close" size={24} color={Colors.grey} />
-              </TouchableOpacity>
-            </View>
-
-            <ScrollView style={styles.modalScrollContent} bounces={false}>
-              {requirements.map((req, index) => (
-                <View key={index} style={styles.editRequirementItem}>
-                  <Text style={styles.requirementText}>{req}</Text>
-                  <TouchableOpacity onPress={() => removeRequirement(index)}>
-                    <Ionicons name="trash-outline" size={20} color="red" />
-                  </TouchableOpacity>
-                </View>
-              ))}
+        <Modal
+          animationType="slide"
+          transparent={true}
+          visible={showRequirementsModal}
+          onRequestClose={() => setShowRequirementsModal(false)}
+        >
+          <View style={styles.modalContainer}>
+            <View style={styles.modalContent}>
+              <View style={styles.modalHeader}>
+                <Text style={styles.modalTitle}>
+                  Add Requirements for the Job
+                </Text>
+                <TouchableOpacity onPress={() => setShowRequirementsModal(false)}>
+                  <Ionicons name="close" size={24} color={Colors.grey} />
+                </TouchableOpacity>
+              </View>
 
               <View style={styles.modalInputContainer}>
                 <TextInput
                   style={styles.modalInput}
                   value={newRequirement}
                   onChangeText={setNewRequirement}
-                  placeholder="Add new requirement"
+                  placeholder="Eg - Tools or Vehicles"
                   placeholderTextColor={Colors.subGrey}
                 />
                 <TouchableOpacity
                   onPress={handleAddRequirement}
                   style={styles.addButton}
                 >
-                  <Ionicons
-                    name="add-circle"
-                    size={24}
-                    color={Colors.primary}
-                  />
+                  <Ionicons name="add-circle" size={24} color={Colors.primary} />
                 </TouchableOpacity>
               </View>
-            </ScrollView>
 
-            <CustomButton
-              text="Update"
-              color={Colors.primary}
-              onPress={() => setEditingRequirements(false)}
-            />
+              <CustomButton
+                text="Add"
+                color={Colors.primary}
+                onPress={handleAddRequirement}
+              />
+            </View>
           </View>
-        </View>
-      </Modal>
+        </Modal>
+
+        <Modal
+          animationType="slide"
+          transparent={true}
+          visible={editingRequirements}
+          onRequestClose={() => setEditingRequirements(false)}
+        >
+          <View style={styles.modalContainer}>
+            <View style={styles.modalContent}>
+              <View style={styles.modalHeader}>
+                <Text style={styles.modalTitle}>Edit Requirements</Text>
+                <TouchableOpacity onPress={() => setEditingRequirements(false)}>
+                  <Ionicons name="close" size={24} color={Colors.grey} />
+                </TouchableOpacity>
+              </View>
+
+              <ScrollView style={styles.modalScrollContent} bounces={false}>
+                {requirements.map((req, index) => (
+                  <View key={index} style={styles.editRequirementItem}>
+                    <Text style={styles.requirementText}>{req}</Text>
+                    <TouchableOpacity onPress={() => removeRequirement(index)}>
+                      <Ionicons name="trash-outline" size={20} color="red" />
+                    </TouchableOpacity>
+                  </View>
+                ))}
+
+                <View style={styles.modalInputContainer}>
+                  <TextInput
+                    style={styles.modalInput}
+                    value={newRequirement}
+                    onChangeText={setNewRequirement}
+                    placeholder="Add new requirement"
+                    placeholderTextColor={Colors.subGrey}
+                  />
+                  <TouchableOpacity
+                    onPress={handleAddRequirement}
+                    style={styles.addButton}
+                  >
+                    <Ionicons
+                      name="add-circle"
+                      size={24}
+                      color={Colors.primary}
+                    />
+                  </TouchableOpacity>
+                </View>
+              </ScrollView>
+
+              <CustomButton
+                text="Update"
+                color={Colors.primary}
+                onPress={() => setEditingRequirements(false)}
+              />
+            </View>
+          </View>
+        </Modal>
+
+      </KeyboardAvoidingView>
     </View>
   );
 };

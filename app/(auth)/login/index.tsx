@@ -5,7 +5,6 @@ import {
   TextInput,
   TouchableOpacity,
   Image,
-  Alert,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -17,16 +16,25 @@ import Animated, { FadeInDown, FadeInUp } from "react-native-reanimated";
 import { Ionicons } from "@expo/vector-icons";
 import { Colors } from "../../../constants/Colors";
 import CustomButton from "../../../components/CustomButton";
+import { useAlert } from "../../../components/CustomAlert/AlertProvider";
+import { validatePhone } from "../../../utilities/formValidation";
 
 const Login = () => {
   const [phone, setPhone] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
   const navigation = useNavigation<any>();
+  const { showAlert } = useAlert();
 
   const handleGetOtp = async () => {
-    if (!phone || phone.length !== 10) {
-      Alert.alert("Error", "Please enter a valid 10-digit mobile number.");
+    const phoneValidation = validatePhone(phone);
+
+    if (!phoneValidation.status) {
+      showAlert({
+        type: "error",
+        title: "Error",
+        message: phoneValidation.phoneError,
+      });
       return;
     }
 
@@ -44,7 +52,11 @@ const Login = () => {
         "OTP request failed:",
         error.response?.data || error.message
       );
-      Alert.alert("Error", "Failed to send OTP. Please try again.");
+      showAlert({
+        type: "error",
+        title: "Error",
+        message: "Failed to send OTP. Please try again.",
+      });
     } finally {
       setIsLoading(false);
     }

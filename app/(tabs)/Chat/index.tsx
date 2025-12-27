@@ -10,6 +10,7 @@ import ChatItem from "../../../components/chatItem";
 import { Header } from "../../../components/header";
 import { ChatListSkeleton } from "../../../components/Shimmer/Skeletons";
 import styles from "./styles";
+import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { useNavigation } from "@react-navigation/native";
 import { getConversations } from "../../../services/api";
@@ -21,6 +22,25 @@ export default function Chat() {
   const [conversations, setConversations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+
+  const formatTime = (dateString: string) => {
+    if (!dateString) return "";
+    const date = new Date(dateString);
+    const now = new Date();
+    const diff = now.getTime() - date.getTime();
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+
+    if (days === 0) {
+      return date.toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+    } else if (days === 1) {
+      return "Yesterday";
+    } else {
+      return date.toLocaleDateString();
+    }
+  };
 
   const fetchConversations = async () => {
     try {
@@ -45,6 +65,7 @@ export default function Chat() {
           unread: conv.unreadCount || 0,
           conversationId: conv._id,
           participant: otherParticipant,
+          time: formatTime(conv.lastMessage?.createdAt || conv.updatedAt),
         };
       });
 
@@ -93,7 +114,9 @@ export default function Chat() {
       <FlatList
         data={conversations}
         keyExtractor={(item) => item.id}
-        bounces={false}
+        bounces={true}
+        contentContainerStyle={{ paddingBottom: 100, paddingTop: 10 }}
+        showsVerticalScrollIndicator={false}
         renderItem={({ item }) => (
           <ChatItem item={item} onPress={() => handleChatPress(item)} />
         )}
@@ -111,14 +134,48 @@ export default function Chat() {
               flex: 1,
               justifyContent: "center",
               alignItems: "center",
-              marginTop: 50,
+              marginTop: 100,
+              paddingHorizontal: 32,
             }}
           >
-            <Text style={{ color: Colors.grey, fontSize: 16 }}>
-              No conversations yet
+            <View
+              style={{
+                width: 120,
+                height: 120,
+                borderRadius: 60,
+                backgroundColor: Colors.categoryBox,
+                justifyContent: "center",
+                alignItems: "center",
+                marginBottom: 24,
+                shadowColor: Colors.primary,
+                shadowOffset: { width: 0, height: 4 },
+                shadowOpacity: 0.2,
+                shadowRadius: 8,
+                elevation: 4,
+              }}
+            >
+              <Ionicons name="chatbubbles" size={60} color={Colors.primary} />
+            </View>
+            <Text
+              style={{
+                color: Colors.black,
+                fontSize: 22,
+                fontWeight: "700",
+                marginBottom: 12,
+                textAlign: "center",
+              }}
+            >
+              No Chats Yet
             </Text>
-            <Text style={{ color: Colors.grey, fontSize: 14, marginTop: 5 }}>
-              Start a chat from a job or profile
+            <Text
+              style={{
+                color: Colors.grey,
+                fontSize: 16,
+                textAlign: "center",
+                lineHeight: 24,
+              }}
+            >
+              Connect with employers or job seekers to start a conversation.
             </Text>
           </View>
         }

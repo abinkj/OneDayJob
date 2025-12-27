@@ -8,7 +8,6 @@ import {
   LayoutAnimation,
   Platform,
   UIManager,
-  Alert,
   ActivityIndicator,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
@@ -22,7 +21,7 @@ import { Colors } from "../../../constants/Colors";
 import JobApplicationStatus from "../../../components/jobApplicationStatus";
 import ratingStars from "../../../components/ratingStars";
 import { useNavigation } from "@react-navigation/native";
-import { getUserData } from "../../../utilities/asyncStore";
+import { getUserData } from "../../../utilities/mmkvStore";
 import { User, Review } from "../../../types";
 import {
   createConversation,
@@ -31,6 +30,7 @@ import {
 } from "../../../services/api";
 import Toast from "react-native-toast-message";
 import { Image } from "expo-image";
+import { useAlert } from "../../../components/CustomAlert/AlertProvider";
 
 if (
   Platform.OS === "android" &&
@@ -49,6 +49,7 @@ const Profile: React.FC = () => {
   const experiencedHeight = 206 * DeviceDimensions.heightRatio;
 
   const navigation = useNavigation<any>();
+  const { showAlert } = useAlert();
 
   useEffect(() => {
     const fetchUserAndRatings = async () => {
@@ -112,13 +113,21 @@ const Profile: React.FC = () => {
     if (user) {
       navigation.navigate("Settings");
     } else {
-      Alert.alert("Error", "User data not available");
+      showAlert({
+        type: "error",
+        title: "Error",
+        message: "User data not available",
+      });
     }
   };
 
   const handleChat = async () => {
     if (!user) {
-      Alert.alert("Error", "User data not available");
+      showAlert({
+        type: "error",
+        title: "Error",
+        message: "User data not available",
+      });
       return;
     }
 
@@ -128,7 +137,11 @@ const Profile: React.FC = () => {
       currentUser &&
       (currentUser.id === user.id || currentUser._id === user._id)
     ) {
-      Alert.alert("Error", "You cannot chat with yourself");
+      showAlert({
+        type: "error",
+        title: "Error",
+        message: "You cannot chat with yourself",
+      });
       return;
     }
 

@@ -1,27 +1,29 @@
 import { StyleSheet } from "react-native";
+import { Colors } from "../../constants/Colors";
 
 export const styles = StyleSheet.create({
-    container: {
-      width: 52,
-      height: 32,
-      justifyContent: 'center',
-    },
-    track: {
-      width: 52,
-      height: 32,
-      borderRadius: 16,
-      justifyContent: 'center',
-      paddingHorizontal: 4,
-    },
-    thumb: {
-      width: 16,
-      height: 16,
-      borderRadius: 16,
-      elevation: 2,
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 1 },
-      shadowOpacity: 0.2,
-      shadowRadius: 1,
-    },
-  });
-  
+  container: {
+    width: 51,
+    height: 31,
+    justifyContent: "center",
+  },
+  track: {
+    width: 51,
+    height: 31,
+    borderRadius: 15.5,
+    justifyContent: "center",
+    paddingHorizontal: 2,
+  },
+  thumb: {
+    width: 27,
+    height: 27,
+    borderRadius: 13,
+    backgroundColor: Colors.white,
+    // iOS shadow
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2.5,
+    elevation: 3,
+  },
+});

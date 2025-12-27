@@ -1,7 +1,7 @@
 import React from "react";
 import { View, Text, StyleSheet } from "react-native";
 import { AntDesign } from "@expo/vector-icons";
-import { Colors } from "../../constants/Colors"; 
+import { Colors } from "../../constants/Colors";
 
 const MessageBubble = ({ text, time, type }) => {
   return (
@@ -54,50 +54,62 @@ export default MessageBubble;
 
 const styles = StyleSheet.create({
   messageBubble: {
-    paddingVertical: 12,
+    paddingVertical: 14,
     paddingHorizontal: 16,
     marginVertical: 6,
-    maxWidth: "80%",
+    maxWidth: "85%", // Increased from 80%
+    minWidth: 120, // Added minWidth to prevent cramping on short messages
     height: "auto",
     position: "relative",
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 1,
+    elevation: 1,
   },
   myMessage: {
-    backgroundColor: Colors.subGrey,
+    backgroundColor: Colors.primary,
     alignSelf: "flex-end",
     borderBottomStartRadius: 21,
-    borderBottomEndRadius: 21,
+    borderBottomEndRadius: 4, // Make it look like a bubble
     borderTopStartRadius: 21,
+    borderTopEndRadius: 21,
   },
   otherMessage: {
-    backgroundColor: Colors.messagageBubble,
+    backgroundColor: Colors.white,
     alignSelf: "flex-start",
-    borderBottomStartRadius: 21,
+    borderBottomStartRadius: 4, // Make it look like a bubble
     borderBottomEndRadius: 21,
     borderTopEndRadius: 21,
+    borderTopStartRadius: 21,
+    borderWidth: 0,
   },
   messageText: {
     color: Colors.white,
     fontWeight: "400",
     fontSize: 16,
-    paddingRight: 40,
+    paddingRight: 55, // Increased padding to avoid overlap with time
   },
   otherMessageText: {
-    color: "#343434",
+    color: Colors.black,
   },
   timeContainer: {
     flexDirection: "row",
     position: "absolute",
-    right: 8,
-    bottom: 6,
+    right: 10,
+    bottom: 8,
     alignItems: "center",
   },
   messageTime: {
     fontSize: 10,
-    color: "#ccc",
+    color: "rgba(255, 255, 255, 0.7)",
     marginRight: 4,
   },
   otherMessageTime: {
-    color: "#4A4A4A",
+    color: Colors.grey,
   },
   tickIcon: {
     marginLeft: 1,

@@ -133,7 +133,7 @@ export default function ChatScreen() {
       if (
         data.conversationId === conversationIdString &&
         normalizeUserId({ id: data.userId }) !==
-          normalizeUserId(currentUserRef.current)
+        normalizeUserId(currentUserRef.current)
       ) {
         setOtherUserTyping(data.isTyping);
       }

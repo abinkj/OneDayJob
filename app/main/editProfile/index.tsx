@@ -11,13 +11,14 @@ import Images from "../../../utilities/images";
 import { Header } from "../../../components/header";
 import LabeledInput from "../../../components/labeledTextInput";
 import { User } from "../../../types";
-import { saveUserData } from "../../../utilities/asyncStore";
+import { saveUserData } from "../../../utilities/mmkvStore";
 import { updateProfile } from "../../../services/api";
 import { useDispatch } from "react-redux";
 import Toast from "react-native-toast-message";
 import ImagePickerActionSheet, {
   ImagePickerActionSheetRef,
 } from "../../../components/imagePickerActionSheet";
+import { validateName } from "../../../utilities/formValidation";
 
 const EditProfile: React.FC = () => {
   const dispatch = useDispatch();
@@ -71,22 +72,26 @@ const EditProfile: React.FC = () => {
   };
 
   const validateForm = (): boolean => {
-    if (!firstName.trim()) {
+    const firstNameValidation = validateName(firstName.trim(), "firstname");
+    if (!firstNameValidation.status) {
       Toast.show({
         type: "error",
         text1: "Validation Error",
-        text2: "First name is required",
+        text2: firstNameValidation.nameError,
       });
       return false;
     }
-    if (!lastName.trim()) {
+
+    const lastNameValidation = validateName(lastName.trim(), "lastname");
+    if (!lastNameValidation.status) {
       Toast.show({
         type: "error",
         text1: "Validation Error",
-        text2: "Last name is required",
+        text2: lastNameValidation.nameError,
       });
       return false;
     }
+
     return true;
   };
 
