@@ -9,6 +9,7 @@ import {
   Modal,
   Alert,
   Platform,
+  KeyboardAvoidingView,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { useSelector } from "react-redux";
@@ -865,14 +866,6 @@ const PostJobScreen = ({ navigation: navProp }) => {
 
     if (currentStep === 3) {
       // Check if no time preference is selected
-      if (selectedTimePreferences.length === 0) {
-        Alert.alert(
-          "Time Preference Required",
-          "Please select a time preference for your job"
-        );
-        return;
-      }
-
       // Validate time fields for Exact Time jobs
       if (isExactTime) {
         if (!fromHour || !fromMinute || !fromAmPm) {
@@ -2068,25 +2061,33 @@ const PostJobScreen = ({ navigation: navProp }) => {
 
       {renderProgressSteps()}
 
-      <ScrollView
-        style={styles.scrollContainer}
-        showsVerticalScrollIndicator={false}
-        bounces={false}
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 100 : 0}
       >
-        {currentStep === 1 && renderStep1()}
-        {currentStep === 2 && renderStep2()}
-        {currentStep === 3 && renderStep3()}
-        {currentStep === 4 && renderStep4()}
-        {currentStep === 5 && renderStep5()}
-      </ScrollView>
-      {/* <TouchableOpacity style={styles.nextButton} onPress={handleNext}>
+        <ScrollView
+          style={styles.scrollContainer}
+          contentContainerStyle={{ paddingBottom: 300 }}
+          showsVerticalScrollIndicator={false}
+          bounces={false}
+          keyboardShouldPersistTaps="handled"
+        >
+          {currentStep === 1 && renderStep1()}
+          {currentStep === 2 && renderStep2()}
+          {currentStep === 3 && renderStep3()}
+          {currentStep === 4 && renderStep4()}
+          {currentStep === 5 && renderStep5()}
+        </ScrollView>
+        {/* <TouchableOpacity style={styles.nextButton} onPress={handleNext}>
         <Text style={styles.nextButtonText}>Next</Text>
       </TouchableOpacity> */}
-      {currentStep === 5 ? (
-        <CustomButton text={"Post"} color={Colors.primary} onPress={handlePost} />
-      ) : (
-        <CustomButton text={"Next"} color={Colors.primary} onPress={handleNext} />
-      )}
+        {currentStep === 5 ? (
+          <CustomButton text={"Post"} color={Colors.primary} onPress={handlePost} />
+        ) : (
+          <CustomButton text={"Next"} color={Colors.primary} onPress={handleNext} />
+        )}
+      </KeyboardAvoidingView>
 
       <Modal
         animationType="slide"
