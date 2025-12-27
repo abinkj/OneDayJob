@@ -109,9 +109,9 @@ const HomeScreen = () => {
     const a =
       Math.sin(dLat / 2) * Math.sin(dLat / 2) +
       Math.cos((lat1 * Math.PI) / 180) *
-        Math.cos((lat2 * Math.PI) / 180) *
-        Math.sin(dLon / 2) *
-        Math.sin(dLon / 2);
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     const distance = R * c;
     return Math.round(distance * 10) / 10;
@@ -286,9 +286,9 @@ const HomeScreen = () => {
       userLocation:
         selectedDistance && location
           ? {
-              latitude: location.latitude,
-              longitude: location.longitude,
-            }
+            latitude: location.latitude,
+            longitude: location.longitude,
+          }
           : undefined,
     };
   }, [
@@ -544,22 +544,22 @@ const HomeScreen = () => {
               {isInProgress
                 ? "In Progress"
                 : isCompleted
-                ? "Completed"
-                : item.status || "Active"}
+                  ? "Completed"
+                  : item.status || "Active"}
             </Text>
           </View>
         </View>
 
         <View style={styles.jobDetailsContainer}>
           <View style={styles.locationContainer}>
-            <Ionicons name="location-outline" size={16} color={Colors.grey} />
+            <Ionicons name="location-sharp" size={16} color={Colors.primary} />
             <Text style={styles.locationText}>
               {item.isRemote
                 ? "Remote Work"
                 : item.location?.address ||
-                  item.location?.city ||
-                  item.location?.state ||
-                  "Location not specified"}
+                item.location?.city ||
+                item.location?.state ||
+                "Location not specified"}
             </Text>
           </View>
         </View>
@@ -708,7 +708,7 @@ const HomeScreen = () => {
                 style={[
                   styles.modalOption,
                   selectedValue === (item.id || item._id) &&
-                    styles.selectedOption,
+                  styles.selectedOption,
                 ]}
                 onPress={() => onSelect(item.id || item._id)}
               >
@@ -716,7 +716,7 @@ const HomeScreen = () => {
                   style={[
                     styles.modalOptionText,
                     selectedValue === (item.id || item._id) &&
-                      styles.selectedOptionText,
+                    styles.selectedOptionText,
                   ]}
                 >
                   {item.name}
@@ -738,44 +738,72 @@ const HomeScreen = () => {
         flex: 1,
         justifyContent: "center",
         alignItems: "center",
-        padding: 20,
-        minHeight: 300,
+        padding: 32,
+        minHeight: 400,
       }}
     >
-      <Ionicons name="search-outline" size={64} color={Colors.grey} />
+      <View
+        style={{
+          width: 120,
+          height: 120,
+          borderRadius: 60,
+          backgroundColor: Colors.white,
+          justifyContent: "center",
+          alignItems: "center",
+          marginBottom: 24,
+          shadowColor: Colors.primary,
+          shadowOffset: { width: 0, height: 8 },
+          shadowOpacity: 0.15,
+          shadowRadius: 16,
+          elevation: 6,
+          borderWidth: 1,
+          borderColor: "rgba(79, 70, 229, 0.1)",
+        }}
+      >
+        <Ionicons name="search" size={60} color={Colors.primary} />
+      </View>
       <Text
         style={{
-          fontSize: 18,
-          color: Colors.grey,
-          marginTop: 16,
+          fontSize: 22,
+          color: Colors.black,
+          fontWeight: "700",
+          marginBottom: 12,
           textAlign: "center",
         }}
       >
-        {loading ? "Loading jobs..." : "No jobs found"}
+        {loading ? "Finding Jobs..." : "No Jobs Found"}
       </Text>
       <Text
         style={{
-          fontSize: 14,
+          fontSize: 16,
           color: Colors.grey,
-          marginTop: 8,
           textAlign: "center",
+          lineHeight: 24,
+          marginBottom: 24,
         }}
       >
         {!authStatus
-          ? "Login to see location-based jobs"
-          : "Try adjusting your search filters"}
+          ? "Login to see jobs near you."
+          : "Try adjusting your filters or search radius."}
       </Text>
       {!loading && (
         <TouchableOpacity
           style={{
-            marginTop: 16,
-            padding: 12,
+            paddingVertical: 14,
+            paddingHorizontal: 32,
             backgroundColor: Colors.primary,
-            borderRadius: 8,
+            borderRadius: 12,
+            shadowColor: Colors.primary,
+            shadowOpacity: 0.3,
+            shadowRadius: 8,
+            shadowOffset: { width: 0, height: 4 },
+            elevation: 4,
           }}
           onPress={onRefresh}
         >
-          <Text style={{ color: "white" }}>Refresh</Text>
+          <Text style={{ color: "white", fontSize: 16, fontWeight: "700" }}>
+            Refresh Jobs
+          </Text>
         </TouchableOpacity>
       )}
     </View>

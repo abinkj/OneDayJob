@@ -252,9 +252,9 @@ const Profile: React.FC = () => {
 
         {/* Reviews Section */}
         {reviews.length > 0 && (
-          <View style={{ padding: 20 }}>
+          <View >
             <Text
-              style={{ fontSize: 18, fontWeight: "bold", marginBottom: 15 }}
+              style={{ fontSize: 18, fontWeight: "bold", marginBottom: 15, marginTop: 15, paddingHorizontal: 20 }}
             >
               Recent Reviews
             </Text>
