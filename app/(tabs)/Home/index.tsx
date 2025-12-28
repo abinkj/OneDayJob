@@ -506,7 +506,14 @@ const HomeScreen = () => {
     };
 
     return (
-      <TouchableOpacity style={styles.jobCard} onPress={handleJobPress}>
+      <TouchableOpacity
+        style={[
+          styles.jobCard,
+          isInProgress && { borderLeftColor: "#FF9800" },
+          isCompleted && { borderLeftColor: "#4CAF50" }
+        ]}
+        onPress={handleJobPress}
+      >
         <View style={styles.jobCardHeader}>
           <View style={styles.categoryContainer}>
             <Image
