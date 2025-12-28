@@ -36,6 +36,27 @@ import { JobPost } from "../../../types";
 import { useJobPostings } from "../../../hooks/useJobs";
 import { JobCardSkeleton } from "../../../components/Shimmer/Skeletons";
 
+const categoryIcons: Record<string, any> = {
+  assembly: require("../../../assets/images/assembly.png"),
+  catering: require("../../../assets/images/catering.png"),
+  cleaning: require("../../../assets/images/cleaning.png"),
+  computer: require("../../../assets/images/computer.png"),
+  delivery: require("../../../assets/images/delivery.png"),
+  hauling: require("../../../assets/images/hauling.png"),
+  paint: require("../../../assets/images/paint.png"),
+  painting: require("../../../assets/images/paint.png"),
+  repair: require("../../../assets/images/repair.png"),
+  yardwork: require("../../../assets/images/yardwork.png"),
+  default: require("../../../assets/images/custom.png"),
+};
+
+const getCategoryIcon = (categoryName?: string) => {
+  if (!categoryName) return categoryIcons.default;
+  const key = categoryName.toLowerCase();
+  return categoryIcons[key] || categoryIcons.default;
+};
+
+
 const HomeScreen = () => {
   const { sendVerificationCodeNotification } = useNotifications();
 
@@ -518,7 +539,7 @@ const HomeScreen = () => {
           <View style={styles.categoryContainer}>
             <Image
               style={styles.avatarContainer}
-              source={require("../../../assets/images/paint.png")}
+              source={getCategoryIcon(item.category?.name)}
             />
             <Text style={styles.categoryText}>
               {item.category?.name || "GENERAL"}
