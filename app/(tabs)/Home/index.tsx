@@ -14,8 +14,8 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
-import { Colors } from "../../../constants/Colors";
-import styles from "./styles";
+import { useTheme } from "../../../contexts/ThemeContext";
+import { createStyles } from "./styles";
 import {
   getCurrentLocation as getLocationWithAddress,
   searchPlacesFallback,
@@ -90,6 +90,9 @@ const HomeScreen = () => {
 
   // Notification context
   const { unreadCount } = useNotifications();
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
+
   const scrollY = useRef(new Animated.Value(0)).current;
   const filterRowRef = useRef(null);
   const [filterRowHeight, setFilterRowHeight] = useState(0);
@@ -580,7 +583,7 @@ const HomeScreen = () => {
 
         <View style={styles.jobDetailsContainer}>
           <View style={styles.locationContainer}>
-            <Ionicons name="location-sharp" size={16} color={Colors.primary} />
+            <Ionicons name="location-sharp" size={16} color={colors.primary} />
             <Text style={styles.locationText}>
               {item.isRemote
                 ? "Remote Work"
@@ -597,7 +600,7 @@ const HomeScreen = () => {
             <Text style={styles.vacanciesText}>
               Vacancies: {item.participantsNumber || 1}
             </Text>
-            <Ionicons name="people" size={16} color={Colors.primary} />
+            <Ionicons name="people" size={16} color={colors.primary} />
           </View>
           <Text style={styles.timeAgoText}>
             {item.createdAt
@@ -612,7 +615,7 @@ const HomeScreen = () => {
   const renderFilterRow = () => {
     const getFilterButtonStyle = (isSelected) => [
       styles.filterButton,
-      isSelected && { backgroundColor: Colors.primary },
+      isSelected && { backgroundColor: colors.primary },
     ];
 
     const getFilterTextStyle = (isSelected) => [
@@ -695,7 +698,7 @@ const HomeScreen = () => {
                 <Ionicons
                   name="chevron-down"
                   size={16}
-                  color={item.isSelected ? "white" : Colors.black}
+                  color={item.isSelected ? "white" : colors.black}
                 />
               )}
             </TouchableOpacity>
@@ -724,7 +727,7 @@ const HomeScreen = () => {
           <View style={styles.modalHeader}>
             <Text style={styles.modalTitle}>{title}</Text>
             <TouchableOpacity onPress={() => setVisible(false)}>
-              <Ionicons name="close" size={24} color={Colors.black} />
+              <Ionicons name="close" size={24} color={colors.black} />
             </TouchableOpacity>
           </View>
           <FlatList
@@ -750,7 +753,7 @@ const HomeScreen = () => {
                   {item.name}
                 </Text>
                 {selectedValue === (item.id || item._id) && (
-                  <Ionicons name="checkmark" size={20} color={Colors.primary} />
+                  <Ionicons name="checkmark" size={20} color={colors.primary} />
                 )}
               </TouchableOpacity>
             )}
@@ -775,11 +778,11 @@ const HomeScreen = () => {
           width: 120,
           height: 120,
           borderRadius: 60,
-          backgroundColor: Colors.white,
+          backgroundColor: colors.white,
           justifyContent: "center",
           alignItems: "center",
           marginBottom: 24,
-          shadowColor: Colors.primary,
+          shadowColor: colors.primary,
           shadowOffset: { width: 0, height: 8 },
           shadowOpacity: 0.15,
           shadowRadius: 16,
@@ -788,12 +791,12 @@ const HomeScreen = () => {
           borderColor: "rgba(79, 70, 229, 0.1)",
         }}
       >
-        <Ionicons name="search" size={60} color={Colors.primary} />
+        <Ionicons name="search" size={60} color={colors.primary} />
       </View>
       <Text
         style={{
           fontSize: 22,
-          color: Colors.black,
+          color: colors.black,
           fontWeight: "700",
           marginBottom: 12,
           textAlign: "center",
@@ -804,7 +807,7 @@ const HomeScreen = () => {
       <Text
         style={{
           fontSize: 16,
-          color: Colors.grey,
+          color: colors.grey,
           textAlign: "center",
           lineHeight: 24,
           marginBottom: 24,
@@ -819,9 +822,9 @@ const HomeScreen = () => {
           style={{
             paddingVertical: 14,
             paddingHorizontal: 32,
-            backgroundColor: Colors.primary,
+            backgroundColor: colors.primary,
             borderRadius: 12,
-            shadowColor: Colors.primary,
+            shadowColor: colors.primary,
             shadowOpacity: 0.3,
             shadowRadius: 8,
             shadowOffset: { width: 0, height: 4 },
@@ -896,11 +899,11 @@ const HomeScreen = () => {
         {/* Header */}
         <View style={styles.header}>
           <View style={styles.locationHeader}>
-            <Ionicons name="location" size={24} color={Colors.primary} />
+            <Ionicons name="location" size={24} color={colors.primary} />
             <View>
               <TouchableOpacity style={styles.locationSelector} disabled>
                 <Text style={styles.locationTitle}>{locationAddress}</Text>
-                {/* <Ionicons name="chevron-down" size={16} color={Colors.black} /> */}
+                {/* <Ionicons name="chevron-down" size={16} color={colors.black} /> */}
               </TouchableOpacity>
               <Text style={styles.locationSubtitle}>
                 {/* {location
@@ -915,7 +918,7 @@ const HomeScreen = () => {
               onPress={fetchCurrentLocation}
               style={{ marginLeft: 8, padding: 4 }}
             >
-              <Ionicons name="refresh" size={20} color={Colors.primary} />
+              <Ionicons name="refresh" size={20} color={colors.primary} />
             </TouchableOpacity>
           </View>
           <TouchableOpacity
@@ -925,7 +928,7 @@ const HomeScreen = () => {
             <Ionicons
               name="notifications-outline"
               size={22}
-              color={Colors.black}
+              color={colors.black}
             />
             <NotificationBadge />
           </TouchableOpacity>
@@ -936,13 +939,13 @@ const HomeScreen = () => {
           <Ionicons
             name="search"
             size={20}
-            color={Colors.grey}
+            color={colors.grey}
             style={styles.searchIcon}
           />
           <TextInput
             style={styles.searchInput}
             placeholder="Search jobs or locations"
-            placeholderTextColor={Colors.black}
+            placeholderTextColor={colors.black}
             value={searchQuery}
             onChangeText={setSearchQuery}
             onSubmitEditing={handleSearch}
@@ -950,7 +953,7 @@ const HomeScreen = () => {
           />
           {searchQuery.length > 0 && (
             <TouchableOpacity onPress={() => setSearchQuery("")}>
-              <Ionicons name="close-circle" size={20} color={Colors.grey} />
+              <Ionicons name="close-circle" size={20} color={colors.grey} />
             </TouchableOpacity>
           )}
         </View>
@@ -1005,7 +1008,7 @@ const HomeScreen = () => {
               ))}
               {isJobsRefetching && (
                 <View style={{ padding: 10, alignItems: "center" }}>
-                  <ActivityIndicator size="small" color={Colors.primary} />
+                  <ActivityIndicator size="small" color={colors.primary} />
                 </View>
               )}
             </>

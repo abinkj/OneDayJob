@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 import {
   View,
   Text,
@@ -7,8 +7,9 @@ import {
   ScrollView,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { Colors } from "../../constants/Colors";
+import { ThemeColors } from "../../constants/Colors";
 import { StatusInfo } from "../../utilities/statusUtils";
+import { useTheme } from "../../contexts/ThemeContext";
 
 interface StatusFilterProps {
   statuses: StatusInfo[];
@@ -23,6 +24,9 @@ const StatusFilter: React.FC<StatusFilterProps> = ({
   onStatusSelect,
   showAll = true,
 }) => {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
+
   return (
     <ScrollView
       horizontal
@@ -62,7 +66,7 @@ const StatusFilter: React.FC<StatusFilterProps> = ({
             name={status.icon as any}
             size={14}
             color={
-              selectedStatus === status.label ? Colors.white : status.color
+              selectedStatus === status.label ? colors.white : status.color
             }
             style={styles.filterIcon}
           />
@@ -72,7 +76,7 @@ const StatusFilter: React.FC<StatusFilterProps> = ({
               selectedStatus === status.label && styles.activeFilterText,
               {
                 color:
-                  selectedStatus === status.label ? Colors.white : status.color,
+                  selectedStatus === status.label ? colors.white : status.color,
               },
             ]}
           >
@@ -84,10 +88,10 @@ const StatusFilter: React.FC<StatusFilterProps> = ({
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   container: {
     marginVertical: 8,
-    backgroundColor: Colors.background,
+    backgroundColor: colors.background,
     maxHeight: 50,
     flexGrow: 0,
   },
@@ -101,14 +105,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 20,
-    backgroundColor: Colors.white,
+    backgroundColor: colors.white,
     borderWidth: 1,
-    borderColor: Colors.subGrey + "30",
+    borderColor: colors.subGrey + "30",
     marginRight: 8,
   },
   activeFilter: {
-    backgroundColor: Colors.blue,
-    borderColor: Colors.blue,
+    backgroundColor: colors.blue,
+    borderColor: colors.blue,
   },
   filterIcon: {
     marginRight: 4,
@@ -116,10 +120,10 @@ const styles = StyleSheet.create({
   filterText: {
     fontSize: 12,
     fontWeight: "500",
-    color: Colors.black,
+    color: colors.black,
   },
   activeFilterText: {
-    color: Colors.white,
+    color: colors.white,
   },
 });
 

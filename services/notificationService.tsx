@@ -14,6 +14,7 @@ export interface NotificationData {
   jobId?: string;
   userId?: string;
   timestamp?: string;
+  read?: boolean;
 }
 
 export interface NotificationPermission {
@@ -28,6 +29,8 @@ Notifications.setNotificationHandler({
     shouldShowAlert: true,
     shouldPlaySound: true,
     shouldSetBadge: true,
+    shouldShowBanner: true,
+    shouldShowList: true,
   }),
 });
 
@@ -41,10 +44,10 @@ class NotificationService {
     try {
       // Register for push notifications
       await this.registerForPushNotificationsAsync();
-      
+
       // Set up notification listeners
       this.setupNotificationListeners();
-      
+
       return true;
     } catch (error) {
       console.error('Failed to initialize notification service:', error);
@@ -68,23 +71,23 @@ class NotificationService {
     if (Device.isDevice) {
       const { status: existingStatus } = await Notifications.getPermissionsAsync();
       let finalStatus = existingStatus;
-      
+
       if (existingStatus !== 'granted') {
         const { status } = await Notifications.requestPermissionsAsync();
         finalStatus = status;
       }
-      
+
       if (finalStatus !== 'granted') {
         console.log('Failed to get push token for push notification!');
         return null;
       }
-      
+
       try {
         const projectId = Constants.expoConfig?.extra?.eas?.projectId ?? Constants.easConfig?.projectId;
         if (!projectId) {
           throw new Error('Project ID not found');
         }
-        
+
         token = (await Notifications.getExpoPushTokenAsync({ projectId })).data;
         console.log('Expo push token:', token);
       } catch (error) {
@@ -116,8 +119,8 @@ class NotificationService {
 
   // Handle incoming notifications
   private handleIncomingNotification(notification: Notifications.Notification): void {
-    const { data, request } = notification;
-    const notificationData = data as NotificationData;
+    const { data } = notification.request.content;
+    const notificationData = data as unknown as NotificationData;
 
     // Show in-app toast based on notification type
     this.showInAppNotification(notificationData);
@@ -144,7 +147,7 @@ class NotificationService {
   // Handle notification tap responses
   private handleNotificationResponse(response: Notifications.NotificationResponse): void {
     const { data } = response.notification.request.content;
-    const notificationData = data as NotificationData;
+    const notificationData = data as unknown as NotificationData;
 
     // Navigate based on notification type
     switch (notificationData.type) {
@@ -272,7 +275,7 @@ class NotificationService {
   async sendVerificationCodeNotification(jobId: string, jobName: string, code: string): Promise<void> {
     const title = '🔑 Verification Code Received';
     const body = `Your verification code for "${jobName}" is: ${code}`;
-    
+
     await this.sendLocalNotification(title, body, {
       type: 'verification_code',
       jobId,
@@ -285,7 +288,7 @@ class NotificationService {
   async sendJobUpdateNotification(jobId: string, jobName: string, update: string): Promise<void> {
     const title = '💼 Job Update';
     const body = `Update for "${jobName}": ${update}`;
-    
+
     await this.sendLocalNotification(title, body, {
       type: 'job_update',
       jobId,
@@ -298,7 +301,7 @@ class NotificationService {
   async sendApplicationStatusNotification(jobId: string, jobName: string, status: string): Promise<void> {
     const title = '📋 Application Update';
     const body = `Your application for "${jobName}" status: ${status}`;
-    
+
     await this.sendLocalNotification(title, body, {
       type: 'application_status',
       jobId,
@@ -311,7 +314,7 @@ class NotificationService {
   async sendMessageNotification(conversationId: string, senderName: string, message: string): Promise<void> {
     const title = `💬 Message from ${senderName}`;
     const body = message;
-    
+
     await this.sendLocalNotification(title, body, {
       type: 'message',
       conversationId,
@@ -322,7 +325,7 @@ class NotificationService {
   // Get notification permissions
   async getNotificationPermissions(): Promise<NotificationPermission> {
     const { status, canAskAgain } = await Notifications.getPermissionsAsync();
-    
+
     return {
       granted: status === 'granted',
       canAskAgain,
@@ -408,10 +411,10 @@ class NotificationService {
   // Clean up listeners
   cleanup(): void {
     if (this.notificationListener) {
-      Notifications.removeNotificationSubscription(this.notificationListener);
+      this.notificationListener.remove();
     }
     if (this.responseListener) {
-      Notifications.removeNotificationSubscription(this.responseListener);
+      this.responseListener.remove();
     }
   }
 }

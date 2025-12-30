@@ -1,7 +1,7 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { View, Text, StyleSheet, Image, TouchableOpacity } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { Colors } from "../../constants/Colors";
+import { ThemeColors } from "../../constants/Colors";
 import { JobCardData } from "../../types";
 import StatusBadge from "../statusBadge";
 import {
@@ -11,6 +11,7 @@ import {
   isWorkCompleted,
   getEmployerDisplayStatus,
 } from "../../utilities/statusUtils";
+import { useTheme } from "../../contexts/ThemeContext";
 
 const JobCard = ({
   data,
@@ -33,6 +34,9 @@ const JobCard = ({
   applicationStatus?: string;
   showPaymentButton?: boolean;
 }) => {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
+
   const {
     name,
     budget,
@@ -107,9 +111,8 @@ const JobCard = ({
   });
 
   const formattedLocation = location?.address
-    ? `${location.address}${location.city ? ", " + location.city : ""}${
-        location.state ? ", " + location.state : ""
-      }${location.country ? ", " + location.country : ""}`
+    ? `${location.address}${location.city ? ", " + location.city : ""}${location.state ? ", " + location.state : ""
+    }${location.country ? ", " + location.country : ""}`
     : location?.country || "Remote";
 
   const formatTimePreference = (timePrefs: string[]) => {
@@ -170,7 +173,7 @@ const JobCard = ({
         <Ionicons
           name={isRemote ? "laptop" : "location"}
           size={14}
-          color={Colors.iconBlack}
+          color={colors.iconBlack}
         />
         <Text style={styles.metaLocation}>
           {isRemote ? "Remote Work" : formattedLocation}
@@ -178,7 +181,7 @@ const JobCard = ({
         <Ionicons
           name="calendar"
           size={14}
-          color={Colors.iconBlack}
+          color={colors.iconBlack}
           style={{ marginLeft: 14 }}
         />
         <Text style={styles.metaText}>
@@ -188,7 +191,7 @@ const JobCard = ({
 
       {/* Time Preference */}
       <View style={styles.metaRow}>
-        <Ionicons name="time" size={14} color={Colors.iconBlack} />
+        <Ionicons name="time" size={14} color={colors.iconBlack} />
         <Text style={styles.metaText}>
           {formatTimePreference(timePreference)}
         </Text>
@@ -203,7 +206,7 @@ const JobCard = ({
       {/* Requirements */}
       {requirements && requirements.length > 0 && (
         <View style={styles.metaRow}>
-          <Ionicons name="construct" size={14} color={Colors.iconBlack} />
+          <Ionicons name="construct" size={14} color={colors.iconBlack} />
           <Text style={styles.metaText}>
             {formatRequirements(requirements)}
           </Text>
@@ -247,16 +250,16 @@ const JobCard = ({
                 style={[
                   styles.button,
                   {
-                    backgroundColor: Colors.red,
+                    backgroundColor: colors.red,
                     marginLeft: 12,
-                    shadowColor: Colors.red,
+                    shadowColor: colors.red,
                   },
                 ]}
                 onPress={() => {
                   if (onWithdraw) onWithdraw();
                 }}
               >
-                <Text style={[styles.buttonText, { color: Colors.white }]}>
+                <Text style={[styles.buttonText, { color: colors.white }]}>
                   Withdraw
                 </Text>
               </TouchableOpacity>
@@ -265,16 +268,16 @@ const JobCard = ({
                 style={[
                   styles.button,
                   {
-                    backgroundColor: Colors.red,
+                    backgroundColor: colors.red,
                     marginLeft: 12,
-                    shadowColor: Colors.red,
+                    shadowColor: colors.red,
                   },
                 ]}
                 onPress={() => {
                   if (onDelete) onDelete();
                 }}
               >
-                <Text style={[styles.buttonText, { color: Colors.white }]}>
+                <Text style={[styles.buttonText, { color: colors.white }]}>
                   Delete
                 </Text>
               </TouchableOpacity>
@@ -286,9 +289,9 @@ const JobCard = ({
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   card: {
-    backgroundColor: Colors.white,
+    backgroundColor: colors.white,
     borderRadius: 16,
     padding: 12,
     shadowColor: "#000",
@@ -305,7 +308,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   categoryContainer: {
-    backgroundColor: Colors.blue + "20",
+    backgroundColor: colors.blue + "20",
     paddingHorizontal: 12,
     paddingVertical: 4,
     borderRadius: 12,
@@ -313,10 +316,10 @@ const styles = StyleSheet.create({
   category: {
     fontSize: 10,
     fontWeight: "600",
-    color: Colors.blue,
+    color: colors.blue,
   },
   statusTag: {
-    backgroundColor: Colors.whiteBack,
+    backgroundColor: colors.whiteBack,
     paddingHorizontal: 19,
     paddingVertical: 4,
     borderRadius: 12,
@@ -324,17 +327,17 @@ const styles = StyleSheet.create({
   statusText: {
     fontSize: 12,
     fontWeight: "600",
-    color: Colors.black,
+    color: colors.black,
   },
   title: {
     fontSize: 16,
     fontWeight: "600",
     marginBottom: 8,
-    color: Colors.black,
+    color: colors.black,
   },
   description: {
     fontSize: 14,
-    color: Colors.subGrey,
+    color: colors.subGrey,
     marginBottom: 8,
     lineHeight: 20,
   },
@@ -344,34 +347,34 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   price: {
-    color: Colors.blue,
+    color: colors.blue,
     fontWeight: "600",
     fontSize: 14,
   },
   separator: {
     marginHorizontal: 8,
-    color: Colors.subGrey,
+    color: colors.subGrey,
   },
   slots: {
     fontSize: 14,
-    color: Colors.subGrey,
+    color: colors.subGrey,
   },
   metaText: {
     fontSize: 14,
-    color: Colors.subGrey,
+    color: colors.subGrey,
     fontWeight: "400",
     marginLeft: 4,
   },
   metaLocation: {
     fontSize: 14,
-    color: Colors.subGrey,
+    color: colors.subGrey,
     fontWeight: "400",
     marginLeft: 4,
     flex: 1,
   },
   flexibleText: {
     fontSize: 12,
-    color: Colors.blue,
+    color: colors.blue,
     fontWeight: "500",
   },
   bottomRow: {
@@ -399,17 +402,17 @@ const styles = StyleSheet.create({
   requestText: {
     marginLeft: 8,
     fontSize: 12,
-    color: Colors.subGrey,
+    color: colors.subGrey,
     fontWeight: "500",
   },
   button: {
-    backgroundColor: Colors.primary,
+    backgroundColor: colors.primary,
     borderRadius: 12,
     paddingHorizontal: 16,
     paddingVertical: 12,
     alignItems: "center",
     justifyContent: "center",
-    shadowColor: Colors.primary,
+    shadowColor: colors.primary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
     shadowRadius: 8,
@@ -418,7 +421,7 @@ const styles = StyleSheet.create({
   buttonText: {
     fontSize: 12,
     fontWeight: "600",
-    color: Colors.white,
+    color: colors.white,
   },
   paymentButtonContent: {
     flexDirection: "row",

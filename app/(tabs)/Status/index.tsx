@@ -17,7 +17,7 @@ import {
 } from "react-native-tab-view";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
-import { Colors } from "../../../constants/Colors";
+// import { Colors } from "../../../constants/Colors";
 import JobCard from "../../../components/jobCard";
 import StatusFilter from "../../../components/statusFilter";
 import { JobCardSkeleton } from "../../../components/Shimmer/Skeletons";
@@ -36,7 +36,8 @@ import {
   JOB_STATUSES,
   APPLICATION_STATUSES,
 } from "../../../utilities/statusUtils";
-import styles from "./styles";
+import { createStyles } from "./styles";
+import { useTheme } from "../../../contexts/ThemeContext";
 import Toast from "react-native-toast-message";
 
 type Route = {
@@ -47,6 +48,8 @@ type Route = {
 type State = NavigationState<Route>;
 
 const MyPostTab = () => {
+  const { colors } = useTheme();
+  const styles = React.useMemo(() => createStyles(colors), [colors]);
   const navigation = useNavigation<any>();
   const userData = useSelector((state: any) => state.authentication.userData);
   const userId = userData?.id || userData?._id;
@@ -133,7 +136,7 @@ const MyPostTab = () => {
 
   if (isLoading && !isRefetching && posts.length === 0) {
     return (
-      <View style={{ flex: 1, backgroundColor: Colors.background }}>
+      <View style={{ flex: 1, backgroundColor: colors.background }}>
         <JobCardSkeleton />
         <JobCardSkeleton />
         <JobCardSkeleton />
@@ -159,7 +162,7 @@ const MyPostTab = () => {
       onDelete={() => handleDelete(item._id)}
       // onPayment={() => handlePayment(item)}
       isEmployer={true}
-      // showPaymentButton={true}
+    // showPaymentButton={true}
     />
   );
 
@@ -167,7 +170,7 @@ const MyPostTab = () => {
     if (!isFetchingNextPage) return null;
     return (
       <View style={{ padding: 20, alignItems: "center" }}>
-        <ActivityIndicator size="small" color={Colors.grey} />
+        <ActivityIndicator size="small" color={colors.grey} />
       </View>
     );
   };
@@ -182,8 +185,8 @@ const MyPostTab = () => {
         minHeight: 400,
       }}
     >
-      <Ionicons name="document-outline" size={64} color={Colors.grey} />
-      <Text style={{ fontSize: 18, color: Colors.grey, marginTop: 16 }}>
+      <Ionicons name="document-outline" size={64} color={colors.grey} />
+      <Text style={{ fontSize: 18, color: colors.grey, marginTop: 16 }}>
         {selectedStatus
           ? `No ${selectedStatus.toLowerCase()} jobs`
           : "No job posts yet"}
@@ -192,7 +195,7 @@ const MyPostTab = () => {
   );
 
   return (
-    <View style={{ flex: 1, backgroundColor: Colors.background }}>
+    <View style={{ flex: 1, backgroundColor: colors.background }}>
       {posts.length > 0 && (
         <StatusFilter
           statuses={availableStatuses}
@@ -236,6 +239,8 @@ const MyPostTab = () => {
 };
 
 const AppliedTab = () => {
+  const { colors } = useTheme();
+  const styles = React.useMemo(() => createStyles(colors), [colors]);
   const navigation = useNavigation<any>();
   const userData = useSelector((state: any) => state.authentication.userData);
   const userId = userData?.id || userData?._id;
@@ -367,7 +372,7 @@ const AppliedTab = () => {
     if (!isFetchingNextPage) return null;
     return (
       <View style={{ padding: 20, alignItems: "center" }}>
-        <ActivityIndicator size="small" color={Colors.grey} />
+        <ActivityIndicator size="small" color={colors.grey} />
       </View>
     );
   };
@@ -382,8 +387,8 @@ const AppliedTab = () => {
         minHeight: 400,
       }}
     >
-      <Ionicons name="document-outline" size={64} color={Colors.grey} />
-      <Text style={{ fontSize: 18, color: Colors.grey, marginTop: 16 }}>
+      <Ionicons name="document-outline" size={64} color={colors.grey} />
+      <Text style={{ fontSize: 18, color: colors.grey, marginTop: 16 }}>
         {selectedStatus
           ? `No ${selectedStatus.toLowerCase()} applications`
           : "No applied jobs yet"}
@@ -392,7 +397,7 @@ const AppliedTab = () => {
   );
 
   return (
-    <View style={{ flex: 1 }}>
+    <View style={{ flex: 1, backgroundColor: colors.background }}>
       {appliedJobs.length > 0 && (
         <StatusFilter
           statuses={availableStatuses}
@@ -427,6 +432,8 @@ const AppliedTab = () => {
 };
 
 const Status = () => {
+  const { colors } = useTheme();
+  const styles = React.useMemo(() => createStyles(colors), [colors]);
   const layout = Dimensions.get("window");
   const [index, onIndexChange] = useState(0);
   const [routes] = useState<Route[]>([

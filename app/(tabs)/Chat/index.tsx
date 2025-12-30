@@ -9,16 +9,20 @@ import {
 import ChatItem from "../../../components/chatItem";
 import { Header } from "../../../components/header";
 import { ChatListSkeleton } from "../../../components/Shimmer/Skeletons";
-import styles from "./styles";
+
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { useNavigation } from "@react-navigation/native";
 import { getConversations } from "../../../services/api";
 import { Colors } from "../../../constants/Colors";
 import Toast from "react-native-toast-message";
+import { useTheme } from "../../../contexts/ThemeContext";
+import { createStyles } from "./styles";
 
 export default function Chat() {
   const navigation = useNavigation();
+  const { colors } = useTheme();
+  const styles = React.useMemo(() => createStyles(colors), [colors]);
   const [conversations, setConversations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -124,8 +128,8 @@ export default function Chat() {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            colors={[Colors.primary]}
-            tintColor={Colors.primary}
+            colors={[colors.primary]}
+            tintColor={colors.primary}
           />
         }
         ListEmptyComponent={
@@ -143,22 +147,22 @@ export default function Chat() {
                 width: 120,
                 height: 120,
                 borderRadius: 60,
-                backgroundColor: Colors.categoryBox,
+                backgroundColor: colors.categoryBox,
                 justifyContent: "center",
                 alignItems: "center",
                 marginBottom: 24,
-                shadowColor: Colors.primary,
+                shadowColor: colors.primary,
                 shadowOffset: { width: 0, height: 4 },
                 shadowOpacity: 0.2,
                 shadowRadius: 8,
                 elevation: 4,
               }}
             >
-              <Ionicons name="chatbubbles" size={60} color={Colors.primary} />
+              <Ionicons name="chatbubbles" size={60} color={colors.primary} />
             </View>
             <Text
               style={{
-                color: Colors.black,
+                color: colors.black,
                 fontSize: 22,
                 fontWeight: "700",
                 marginBottom: 12,
@@ -169,7 +173,7 @@ export default function Chat() {
             </Text>
             <Text
               style={{
-                color: Colors.grey,
+                color: colors.grey,
                 fontSize: 16,
                 textAlign: "center",
                 lineHeight: 24,

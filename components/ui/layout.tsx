@@ -4,18 +4,18 @@ import {
   StatusBar,
   StyleSheet,
   Platform,
-  useColorScheme,
 } from "react-native";
+import { useTheme } from "../../contexts/ThemeContext";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 const AppLayout = ({ children }) => {
-  const theme = useColorScheme();
+  const { theme, colors } = useTheme();
 
   return (
     <SafeAreaView
       style={[
         styles.safeArea,
-        { backgroundColor: theme === "dark" ? "#000" : "#fff" },
+        { backgroundColor: colors.background },
       ]}
     >
       <StatusBar

@@ -8,7 +8,8 @@ import {
 } from "react-native";
 import { useSelector } from "react-redux";
 import DeviceDimensions from "../constants/DeviceDimenions";
-import { Colors } from "../constants/Colors";
+// import { Colors } from "../constants/Colors";
+import { useTheme } from "../contexts/ThemeContext";
 import { getFocusedRouteNameFromRoute } from "@react-navigation/native";
 import SvgImage from "../utilities/svg";
 import Toast from "react-native-toast-message";
@@ -19,6 +20,7 @@ const CustomTabBar = ({ state, descriptors, navigation }) => {
   const routeName =
     getFocusedRouteNameFromRoute(currentRoute) || currentRoute.name;
   //const { kycStatus } = useSelector((state: any) => state.authentication);
+  const { colors } = useTheme();
 
   // Animated values for each tab - hooks must be called before any early returns
   const scales = state.routes.map(
@@ -93,7 +95,7 @@ const CustomTabBar = ({ state, descriptors, navigation }) => {
       <Text
         style={[
           styles.tabText,
-          { color: state.index === index ? Colors.tabBlue : Colors.tabGrey },
+          { color: state.index === index ? colors.tabBlue : colors.tabGrey },
         ]}
       >
         {label}
@@ -111,7 +113,7 @@ const CustomTabBar = ({ state, descriptors, navigation }) => {
         },
       ]}
     >
-      <View style={styles.tabBar}>
+      <View style={[styles.tabBar, { backgroundColor: colors.white }]}>
         {renderTab(0, state.routes[0], "home", "Home")}
         {renderTab(1, state.routes[1], "status", "Status")}
 
@@ -125,7 +127,7 @@ const CustomTabBar = ({ state, descriptors, navigation }) => {
           <Text
             style={[
               styles.JobPostText,
-              { color: state.index === 2 ? Colors.tabBlue : Colors.tabGrey },
+              { color: state.index === 2 ? colors.tabBlue : colors.tabGrey },
             ]}
           >
             Post Job
@@ -154,7 +156,7 @@ const styles = StyleSheet.create({
   },
   tabBar: {
     flexDirection: "row",
-    backgroundColor: Colors.white,
+    // backgroundColor: Colors.white,
     height: 75 * DeviceDimensions.heightRatio,
     width: DeviceDimensions.screenWidth,
     alignItems: "center",

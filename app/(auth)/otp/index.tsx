@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import {
   View,
   Text,
@@ -9,13 +9,13 @@ import {
   KeyboardAvoidingView,
 } from "react-native";
 import { OtpInput } from "react-native-otp-entry";
-import { Colors } from "../../../constants/Colors";
+import { useTheme } from "../../../contexts/ThemeContext";
 import { verifyOtp, requestOtp } from "../../../services/api";
 import LottieView from "lottie-react-native";
 import { useRoute } from "@react-navigation/native";
 import { useDispatch } from "react-redux";
 import { loginUser } from "../../../utilities/authentication";
-import styles from "./styles";
+import { createStyles } from "./styles";
 import { saveKycStatus } from "../../../utilities/mmkvStore";
 import { completeKyc } from "../../../redux/reducers/authReducers";
 import Animated, { FadeInDown } from "react-native-reanimated";
@@ -37,6 +37,9 @@ const Otp = () => {
   const { phoneNumber } = route.params as RouteParams;
   const dispatch = useDispatch();
   const { showAlert } = useAlert();
+
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
 
   const handleVerifyOtp = async () => {
     const otpValidation = validateOtpCode(otp);
@@ -182,7 +185,7 @@ const Otp = () => {
           <Text
             style={[
               styles.subtitle,
-              { fontFamily: "bold", color: Colors.black },
+              { fontFamily: "bold", color: colors.black },
             ]}
           >
             {phoneNumber}
@@ -195,7 +198,7 @@ const Otp = () => {
         >
           <OtpInput
             numberOfDigits={6}
-            focusColor={Colors.primary}
+            focusColor={colors.primary}
             autoFocus={true}
             hideStick={true}
             placeholder=""

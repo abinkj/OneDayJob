@@ -8,6 +8,7 @@ import Animated, {
   withTiming,
   Easing,
 } from "react-native-reanimated";
+import { useTheme } from "../../contexts/ThemeContext";
 
 interface ShimmerPlaceholderProps {
   width?: DimensionValue;
@@ -24,7 +25,14 @@ const ShimmerPlaceholder: React.FC<ShimmerPlaceholderProps> = ({
   style,
   visible = true,
 }) => {
+  const { theme, colors } = useTheme();
   const translateX = useSharedValue(-100);
+
+  const shimmerColors: [string, string, string] = theme === "dark"
+    ? ["#2C2C2C", "#3A3A3A", "#2C2C2C"]
+    : ["#E0E0E0", "#F5F5F5", "#E0E0E0"];
+
+  const backgroundColor = theme === "dark" ? "#2C2C2C" : "#E0E0E0";
 
   useEffect(() => {
     translateX.value = withRepeat(
@@ -48,10 +56,10 @@ const ShimmerPlaceholder: React.FC<ShimmerPlaceholderProps> = ({
   }
 
   return (
-    <View style={[styles.container, { width, height, borderRadius }, style]}>
+    <View style={[styles.container, { width, height, borderRadius, backgroundColor }, style]}>
       <Animated.View style={[styles.shimmer, animatedStyle]}>
         <LinearGradient
-          colors={["#E0E0E0", "#F5F5F5", "#E0E0E0"]}
+          colors={shimmerColors}
           start={{ x: 0, y: 0.5 }}
           end={{ x: 1, y: 0.5 }}
           style={styles.gradient}
@@ -63,7 +71,6 @@ const ShimmerPlaceholder: React.FC<ShimmerPlaceholderProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: "#E0E0E0",
     overflow: "hidden",
   },
   shimmer: {

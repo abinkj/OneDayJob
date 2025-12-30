@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { View, Text, StyleSheet, FlatList, RefreshControl } from "react-native";
 import { Swipeable, TouchableOpacity } from "react-native-gesture-handler";
 import { MaterialIcons } from "@expo/vector-icons";
@@ -7,6 +7,8 @@ import SegmentedControl from "@react-native-segmented-control/segmented-control"
 import NotificationCard from "../../../components/notificationCard";
 import { useNotifications } from "../../../contexts/NotificationContext";
 import { NotificationData } from "../../../services/notificationService";
+import { useTheme } from "../../../contexts/ThemeContext";
+import { ThemeColors } from "../../../constants/Colors";
 
 const initialNotifications = [
   {
@@ -26,14 +28,17 @@ const initialNotifications = [
 ];
 
 const Notification = () => {
-  const { 
-    notifications, 
-    unreadCount, 
-    clearAllNotifications, 
-    markAsRead, 
-    refreshNotifications 
+  const {
+    notifications,
+    unreadCount,
+    clearAllNotifications,
+    markAsRead,
+    refreshNotifications
   } = useNotifications();
-  
+
+  const { colors, theme } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
+
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -79,7 +84,7 @@ const Notification = () => {
     if (segmentValues[selectedIndex] === "All") {
       return notifications;
     }
-    
+
     const filterType = segmentValues[selectedIndex].toLowerCase();
     return notifications.filter((n) => {
       switch (filterType) {
@@ -107,6 +112,7 @@ const Notification = () => {
           setSelectedIndex(event.nativeEvent.selectedSegmentIndex);
         }}
         style={styles.segment}
+        appearance={theme === 'dark' ? 'dark' : 'light'}
       />
 
       <FlatList bounces={false}
@@ -119,13 +125,13 @@ const Notification = () => {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={handleRefresh}
-            colors={['#007AFF']}
-            tintColor="#007AFF"
+            colors={[colors.primary]}
+            tintColor={colors.primary}
           />
         }
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
-            <MaterialIcons name="notifications-none" size={64} color="#ccc" />
+            <MaterialIcons name="notifications-none" size={64} color={colors.grey} />
             <Text style={styles.empty}>No notifications found.</Text>
             <Text style={styles.emptySubtitle}>
               You'll receive notifications about job updates, applications, and messages here.
@@ -139,33 +145,35 @@ const Notification = () => {
 
 export default Notification;
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#fff",
+    backgroundColor: colors.background,
     paddingHorizontal: 16,
   },
   title: {
     fontSize: 24,
     fontWeight: "bold",
     marginBottom: 12,
+    color: colors.black,
   },
   segment: {
     marginVertical: 16,
   },
   notificationItem: {
-    backgroundColor: "#f1f1f1",
+    backgroundColor: colors.white,
     padding: 16,
     borderRadius: 10,
   },
   text: {
     fontSize: 16,
+    color: colors.black,
   },
   separator: {
     height: 16,
   },
   deleteBox: {
-    backgroundColor: "red",
+    backgroundColor: colors.red,
     justifyContent: "center",
     alignItems: "center",
     width: 70,
@@ -181,14 +189,14 @@ const styles = StyleSheet.create({
   empty: {
     textAlign: "center",
     fontSize: 18,
-    color: "#999",
+    color: colors.grey,
     marginTop: 16,
     fontWeight: "600",
   },
   emptySubtitle: {
     textAlign: "center",
     fontSize: 14,
-    color: "#ccc",
+    color: colors.subGrey,
     marginTop: 8,
     lineHeight: 20,
   },

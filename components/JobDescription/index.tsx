@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useMemo } from "react";
 import {
   View,
   Text,
@@ -6,11 +6,10 @@ import {
   TouchableOpacity,
   FlatList,
   Image,
-  StyleSheet,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { styles } from "./styles";
-import { Colors } from "../../constants/Colors";
+import { createStyles } from "./styles";
+import { useTheme } from "../../contexts/ThemeContext";
 
 const JobDescriptionSection = ({
   jobDescription,
@@ -35,6 +34,9 @@ const JobDescriptionSection = ({
   showPhotosList?: boolean;
   handlePickImage?: () => void;
 }) => {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
+
   return (
     <View style={styles.unifiedContainer}>
       {/* Job Description Input */}
@@ -43,7 +45,7 @@ const JobDescriptionSection = ({
         value={jobDescription}
         onChangeText={setJobDescription}
         placeholder="Add a detailed description about the job you wanted to done"
-        placeholderTextColor={Colors.grey}
+        placeholderTextColor={colors.grey}
         multiline
         numberOfLines={4}
       />
@@ -60,14 +62,14 @@ const JobDescriptionSection = ({
           <Ionicons
             name="add-circle-outline"
             size={24}
-            color={Colors.primary}
+            color={colors.primary}
           />
           <Text style={styles.optionText}>Add Requirements</Text>
         </View>
         <Ionicons
           name="information-circle-outline"
           size={24}
-          color={Colors.primary}
+          color={colors.primary}
         />
       </TouchableOpacity>
 
@@ -78,7 +80,7 @@ const JobDescriptionSection = ({
               <Ionicons
                 name="document-outline"
                 size={20}
-                color={Colors.primary}
+                color={colors.primary}
               />
               <Text style={styles.requirementText}>{req}</Text>
             </View>
@@ -87,41 +89,13 @@ const JobDescriptionSection = ({
             style={styles.editButton}
             onPress={openEditRequirements}
           >
-            <Ionicons name="pencil" size={18} color={Colors.primary} />
+            <Ionicons name="pencil" size={18} color={colors.primary} />
           </TouchableOpacity>
         </View>
       )}
 
       {/* Separator */}
       <View style={styles.separator} />
-
-      {/* Photos Section */}
-      {/* <TouchableOpacity style={styles.optionRow} onPress={togglePhotosList}>
-        <View style={styles.optionLeftSection}>
-          <Ionicons name="add-circle-outline" size={24} color={Colors.primary} />
-          <Text style={styles.optionText}>Add Photos</Text>
-        </View>
-        <Ionicons name="information-circle-outline" size={24} color={Colors.primary} />
-      </TouchableOpacity> */}
-
-      {/* {showPhotosList && (
-        <View style={styles.expandedInnerSection}>
-          <FlatList
-            horizontal
-            data={photos}
-            keyExtractor={(item, index) => index.toString()}
-            renderItem={({ item, index }) => (
-              <View style={styles.photoContainer}>
-                <Image source={{ uri: item }} style={styles.photoThumbnail} />
-              </View>
-            )}
-            contentContainerStyle={{ paddingLeft: 8 }}
-          />
-          <TouchableOpacity style={styles.editButton} onPress={handlePickImage}>
-            <Ionicons name="pencil" size={18} color={Colors.primary} />
-          </TouchableOpacity>
-        </View>
-      )} */}
     </View>
   );
 };

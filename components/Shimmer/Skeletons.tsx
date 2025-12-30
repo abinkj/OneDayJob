@@ -1,11 +1,13 @@
 import React from "react";
 import { View, StyleSheet, ScrollView } from "react-native";
 import ShimmerPlaceholder from "./ShimmerPlaceholder";
+import { useTheme } from "../../contexts/ThemeContext";
 
 // === Job Card Skeleton (Home, Status Listeners) ===
 export const JobCardSkeleton = () => {
+  const { colors } = useTheme();
   return (
-    <View style={styles.cardContainer}>
+    <View style={[styles.cardContainer, { backgroundColor: colors.white }]}>
       <View style={styles.cardHeader}>
         <ShimmerPlaceholder width={50} height={50} borderRadius={25} />
         <View style={styles.cardHeaderText}>
@@ -45,8 +47,9 @@ export const JobCardSkeleton = () => {
 
 // === Job Details Skeleton ===
 export const JobDetailsSkeleton = () => {
+  const { colors } = useTheme();
   return (
-    <View style={styles.detailsContainer}>
+    <View style={[styles.detailsContainer, { backgroundColor: colors.background }]}>
       {/* Header / Map placeholder */}
       <ShimmerPlaceholder
         width="100%"
@@ -128,8 +131,9 @@ export const JobDetailsSkeleton = () => {
 
 // === Profile Skeleton ===
 export const ProfileSkeleton = () => {
+  const { colors } = useTheme();
   return (
-    <View style={styles.profileContainer}>
+    <View style={[styles.profileContainer, { backgroundColor: colors.background }]}>
       {/* Profile Header */}
       <View style={{ alignItems: "center", marginVertical: 20 }}>
         <ShimmerPlaceholder
@@ -155,7 +159,7 @@ export const ProfileSkeleton = () => {
             alignItems: "center",
             padding: 16,
             borderBottomWidth: 1,
-            borderBottomColor: "#f0f0f0",
+            borderBottomColor: colors.border,
           }}
         >
           <ShimmerPlaceholder
@@ -173,10 +177,11 @@ export const ProfileSkeleton = () => {
 
 // === Chat List Skeleton ===
 export const ChatListSkeleton = () => {
+  const { colors } = useTheme();
   return (
-    <View style={{ flex: 1 }}>
+    <View style={{ flex: 1, backgroundColor: colors.background }}>
       {[1, 2, 3, 4, 5, 6].map((item) => (
-        <View key={item} style={styles.chatListItem}>
+        <View key={item} style={[styles.chatListItem, { borderBottomColor: colors.border }]}>
           <ShimmerPlaceholder
             width={50}
             height={50}
@@ -204,8 +209,9 @@ export const ChatListSkeleton = () => {
 
 // === Chat Screen Skeleton (Messages) ===
 export const ChatScreenSkeleton = () => {
+  const { colors } = useTheme();
   return (
-    <View style={{ flex: 1, padding: 16 }}>
+    <View style={{ flex: 1, padding: 16, backgroundColor: colors.background }}>
       <View style={{ alignSelf: "flex-start", marginBottom: 16, width: "70%" }}>
         <ShimmerPlaceholder width="100%" height={60} borderRadius={12} />
       </View>
@@ -224,6 +230,7 @@ export const ChatScreenSkeleton = () => {
 
 // === List Skeleton ===
 export const ListSkeleton = () => {
+  const { colors } = useTheme();
   return (
     <View style={{ flex: 1, padding: 16 }}>
       {[1, 2, 3, 4, 5, 6].map((item) => (
@@ -231,7 +238,7 @@ export const ListSkeleton = () => {
           key={item}
           style={{
             marginBottom: 16,
-            backgroundColor: "white",
+            backgroundColor: colors.white,
             padding: 16,
             borderRadius: 12,
           }}
@@ -257,7 +264,7 @@ const styles = StyleSheet.create({
   cardContainer: {
     padding: 16,
     margin: 16,
-    backgroundColor: "white",
+    // backgroundColor: "white", // Moved to dynamic style
     borderRadius: 12,
     elevation: 2,
     shadowColor: "#000",
@@ -281,17 +288,17 @@ const styles = StyleSheet.create({
   },
   detailsContainer: {
     flex: 1,
-    backgroundColor: "#fff",
+    // backgroundColor: "#fff", // Moved to dynamic style
   },
   profileContainer: {
     flex: 1,
-    backgroundColor: "#fff",
+    // backgroundColor: "#fff", // Moved to dynamic style
   },
   chatListItem: {
     flexDirection: "row",
     padding: 16,
     alignItems: "center",
     borderBottomWidth: 1,
-    borderBottomColor: "#f0f0f0",
+    // borderBottomColor: "#f0f0f0", // Moved to dynamic style
   },
 });

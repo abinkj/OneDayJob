@@ -1,10 +1,10 @@
 import { StyleSheet } from 'react-native';
-import { Colors } from '../../../constants/Colors';
+import { ThemeColors } from '../../../constants/Colors';
 
-const styles = StyleSheet.create({
+export const createStyles = (colors: ThemeColors) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: colors.background,
   },
   header: {
     flexDirection: 'row',
@@ -12,17 +12,17 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingVertical: 12,
-    backgroundColor: Colors.white,
+    backgroundColor: colors.white,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.subGrey + '20',
+    borderBottomColor: colors.border + '20', // Using dynamic border color
   },
   headerTitle: {
     fontSize: 20,
     fontWeight: '600',
-    color: Colors.black,
+    color: colors.black,
   },
   badgeContainer: {
-    backgroundColor: Colors.red,
+    backgroundColor: colors.red,
     borderRadius: 12,
     minWidth: 24,
     height: 24,
@@ -31,33 +31,34 @@ const styles = StyleSheet.create({
     marginLeft: 8,
   },
   badgeText: {
-    color: Colors.white,
+    color: "#fff", // Text on red badge usually stays white
     fontSize: 12,
     fontWeight: '600',
   },
   clearButton: {
     padding: 8,
     borderRadius: 8,
-    backgroundColor: Colors.red + '10',
+    backgroundColor: colors.red + '10',
   },
   listContainer: {
     flexGrow: 1,
   },
   notificationItem: {
-    backgroundColor: Colors.white,
+    backgroundColor: colors.white,
     marginHorizontal: 16,
     marginVertical: 4,
     borderRadius: 12,
     padding: 16,
-    shadowColor: '#000',
+    shadowColor: colors.black,
     shadowOpacity: 0.05,
     shadowRadius: 8,
     elevation: 2,
+    shadowOffset: { width: 0, height: 2 },
   },
   unreadNotification: {
-    backgroundColor: Colors.blue + '05',
+    backgroundColor: colors.blue + '05',
     borderLeftWidth: 4,
-    borderLeftColor: Colors.blue,
+    borderLeftColor: colors.blue,
   },
   notificationContent: {
     flex: 1,
@@ -70,7 +71,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: Colors.subGrey + '20',
+    backgroundColor: colors.subGrey + '20',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
@@ -81,7 +82,7 @@ const styles = StyleSheet.create({
   notificationTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: Colors.black,
+    color: colors.black,
     marginBottom: 4,
   },
   unreadText: {
@@ -89,20 +90,20 @@ const styles = StyleSheet.create({
   },
   notificationBody: {
     fontSize: 14,
-    color: Colors.subGrey,
+    color: colors.subGrey,
     lineHeight: 20,
     marginBottom: 8,
   },
   timestamp: {
     fontSize: 12,
-    color: Colors.subGrey,
+    color: colors.grey,
     fontWeight: '500',
   },
   unreadDot: {
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: Colors.blue,
+    backgroundColor: colors.blue,
     marginLeft: 8,
     marginTop: 4,
   },
@@ -116,17 +117,14 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: 20,
     fontWeight: '600',
-    color: Colors.black,
+    color: colors.black,
     marginTop: 16,
     marginBottom: 8,
   },
   emptySubtitle: {
     fontSize: 14,
-    color: Colors.subGrey,
+    color: colors.subGrey,
     textAlign: 'center',
     lineHeight: 20,
   },
 });
-
-export default styles;
-

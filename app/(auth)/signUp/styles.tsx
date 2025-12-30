@@ -1,11 +1,11 @@
 import { StyleSheet } from "react-native";
 import DeviceDimensions from "../../../constants/DeviceDimenions";
-import { Colors } from "../../../constants/Colors";
+import { ThemeColors } from "../../../constants/Colors";
 
-const styles = StyleSheet.create({
+export const createStyles = (colors: ThemeColors) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: colors.background,
   },
   scrollContent: {
     flexGrow: 1,
@@ -21,7 +21,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28, // Slightly smaller to fit if needed, or keep 32
     fontFamily: "bold",
-    color: Colors.black,
+    color: colors.black,
     marginBottom: 8,
     textAlign: "center",
   },
@@ -30,7 +30,7 @@ const styles = StyleSheet.create({
     lineHeight: 24,
     textAlign: "center",
     fontFamily: "regular",
-    color: Colors.grey,
+    color: colors.grey,
     maxWidth: '80%',
   },
   image: {
@@ -50,14 +50,14 @@ const styles = StyleSheet.create({
   inputLabel: {
     fontSize: 14,
     fontFamily: "medium",
-    color: Colors.black,
+    color: colors.black,
     marginBottom: 8,
     marginLeft: 4,
   },
   inputWrapper: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: Colors.white,
+    backgroundColor: colors.white,
     borderRadius: 16,
     height: 56,
     paddingHorizontal: 16,
@@ -73,32 +73,32 @@ const styles = StyleSheet.create({
     borderColor: 'transparent',
   },
   inputWrapperFocused: {
-    borderColor: Colors.primary,
+    borderColor: colors.primary,
   },
   countryCode: {
     fontSize: 16,
     fontFamily: "medium",
-    color: Colors.black,
+    color: colors.black,
     marginRight: 12,
     paddingRight: 12,
     borderRightWidth: 1,
-    borderRightColor: Colors.addressGrey,
+    borderRightColor: colors.addressGrey,
   },
   input: {
     flex: 1,
     fontSize: 16,
     fontFamily: "regular",
-    color: Colors.black,
+    color: colors.black,
     height: '100%',
   },
   button: {
-    backgroundColor: Colors.primary,
+    backgroundColor: colors.primary,
     width: '100%',
     height: 56,
     borderRadius: 16,
     alignItems: "center",
     justifyContent: "center",
-    shadowColor: Colors.primary,
+    shadowColor: colors.primary,
     shadowOffset: {
       width: 0,
       height: 4,
@@ -109,12 +109,12 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   buttonDisabled: {
-    backgroundColor: Colors.grey,
+    backgroundColor: colors.grey,
     shadowOpacity: 0,
     elevation: 0,
   },
   buttonText: {
-    color: Colors.white,
+    color: colors.white,
     fontSize: 18,
     fontFamily: "bold",
   },
@@ -126,15 +126,13 @@ const styles = StyleSheet.create({
   },
   footerText: {
     fontSize: 14,
-    color: Colors.grey,
+    color: colors.grey,
     fontFamily: "regular",
   },
   createAccount: {
     fontSize: 14,
-    color: Colors.blue,
+    color: colors.blue,
     fontFamily: "bold",
     marginLeft: 4,
   },
 });
-
-export default styles;

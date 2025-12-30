@@ -24,7 +24,8 @@ import {
   useRoute,
   useFocusEffect,
 } from "@react-navigation/native";
-import styles from "./styles";
+import { useTheme } from "../../../contexts/ThemeContext";
+import { createStyles } from "./styles";
 import { Header } from "../../../components/header";
 import ratingStars from "../../../components/ratingStars";
 import AcceptRejectButtons from "../../../components/acceptRejectButtons";
@@ -63,6 +64,8 @@ const RequestCard = React.memo(
   ({ data, isSelected, onSelect, loading = false }: RequestCardProps) => {
     const user = data.user || {};
     const navigation = useNavigation();
+    const { colors } = useTheme();
+    const styles = useMemo(() => createStyles(colors), [colors]);
 
     const handleProfilePress = useCallback(
       (userId: string) => {
@@ -148,8 +151,8 @@ const RequestCard = React.memo(
         {isDisabled && (
           <View style={styles.statusContainer}>
             <AcceptRejectButtons
-              onAccept={() => {}}
-              onReject={() => {}}
+              onAccept={() => { }}
+              onReject={() => { }}
               isAccepted={statusInfo.isAccepted}
               isRejected={statusInfo.isRejected}
             />
@@ -173,6 +176,8 @@ const AcceptedUserCard = ({
   isSelected = false,
 }: AcceptedUserCardProps) => {
   const user = data.user || {};
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
 
   const handleCall = (phoneNumber: string) => {
     if (phoneNumber) {
@@ -235,8 +240,8 @@ const AcceptedUserCard = ({
               {data.verificationStatus.isExpired
                 ? "Expired"
                 : data.verificationStatus.isLocked
-                ? "Locked"
-                : "Pending"}
+                  ? "Locked"
+                  : "Pending"}
             </Text>
           </View>
         ) : (
@@ -277,6 +282,8 @@ const RequestsTab = ({
   refreshTrigger,
   onTriggerRefresh,
 }: RequestsTabProps) => {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const [selectedFilter, setSelectedFilter] = useState("All");
   const [selectedRequests, setSelectedRequests] = useState<string[]>([]);
   const [showMenu, setShowMenu] = useState(false);
@@ -309,22 +316,22 @@ const RequestsTab = ({
         );
         const appliedUsers = Array.isArray(response?.data)
           ? response.data.map((item) => ({
-              _id: item._id,
-              appliedAt: item.appliedAt,
-              status: item.status,
-              acceptedAt: item.acceptedAt,
-              user: {
-                id: item.user.id,
-                name: `${item.user.firstName} ${item.user.lastName}`,
-                avatar: item.user.profilePicture,
-                rating: item.user.rating ?? 0,
-                rate: item.user.rate ?? "$0/hr",
-                description: item.user.description ?? "No description provided",
-                availability: item.user.availability ?? "Not specified",
-                phoneNumber: item.user.phoneNumber || item.user.phone,
-                email: item.user.email,
-              },
-            }))
+            _id: item._id,
+            appliedAt: item.appliedAt,
+            status: item.status,
+            acceptedAt: item.acceptedAt,
+            user: {
+              id: item.user.id,
+              name: `${item.user.firstName} ${item.user.lastName}`,
+              avatar: item.user.profilePicture,
+              rating: item.user.rating ?? 0,
+              rate: item.user.rate ?? "$0/hr",
+              description: item.user.description ?? "No description provided",
+              availability: item.user.availability ?? "Not specified",
+              phoneNumber: item.user.phoneNumber || item.user.phone,
+              email: item.user.email,
+            },
+          }))
           : [];
 
         setRequests(appliedUsers);
@@ -722,6 +729,9 @@ const RequestsVerifyTab = ({
   refreshTrigger,
   onDataUpdate,
 }: RequestsVerifyTabProps) => {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
+
   const [acceptedUsers, setAcceptedUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -760,36 +770,36 @@ const RequestsVerifyTab = ({
 
         const accepted = Array.isArray(appliedResponse?.data)
           ? appliedResponse.data
-              .filter((item) => item.status === "accepted")
-              .map((item) => {
-                // Find verification status for this user
-                const verificationStatus =
-                  verificationResponse.data?.data?.participants?.find(
-                    (participant: any) =>
-                      participant.employeeId === item.user.id
-                  );
+            .filter((item) => item.status === "accepted")
+            .map((item) => {
+              // Find verification status for this user
+              const verificationStatus =
+                verificationResponse.data?.data?.participants?.find(
+                  (participant: any) =>
+                    participant.employeeId === item.user.id
+                );
 
-                return {
-                  _id: item._id,
-                  appliedAt: item.appliedAt,
-                  acceptedAt: item.acceptedAt,
-                  status: item.status,
-                  isVerified: verificationStatus?.isVerified || false,
-                  verificationStatus: verificationStatus,
-                  user: {
-                    id: item.user.id,
-                    name: `${item.user.firstName} ${item.user.lastName}`,
-                    avatar: item.user.profilePicture,
-                    rating: item.user.rating ?? 0,
-                    rate: item.user.rate ?? "$0/hr",
-                    description:
-                      item.user.description ?? "No description provided",
-                    availability: item.user.availability ?? "Not specified",
-                    phoneNumber: item.user.phoneNumber || item.user.phone,
-                    email: item.user.email,
-                  },
-                };
-              })
+              return {
+                _id: item._id,
+                appliedAt: item.appliedAt,
+                acceptedAt: item.acceptedAt,
+                status: item.status,
+                isVerified: verificationStatus?.isVerified || false,
+                verificationStatus: verificationStatus,
+                user: {
+                  id: item.user.id,
+                  name: `${item.user.firstName} ${item.user.lastName}`,
+                  avatar: item.user.profilePicture,
+                  rating: item.user.rating ?? 0,
+                  rate: item.user.rate ?? "$0/hr",
+                  description:
+                    item.user.description ?? "No description provided",
+                  availability: item.user.availability ?? "Not specified",
+                  phoneNumber: item.user.phoneNumber || item.user.phone,
+                  email: item.user.email,
+                },
+              };
+            })
           : [];
 
         setAcceptedUsers(accepted);
@@ -1305,9 +1315,8 @@ const RequestsVerifyTab = ({
                     style={[
                       styles.progressFill,
                       {
-                        width: `${
-                          verificationStatus.verificationProgress || 0
-                        }%`,
+                        width: `${verificationStatus.verificationProgress || 0
+                          }%`,
                       },
                     ]}
                   />
@@ -1341,7 +1350,7 @@ const RequestsVerifyTab = ({
           {verificationStatus &&
             verificationStatus.verifiedCount > 0 &&
             verificationStatus.verifiedCount ===
-              verificationStatus.totalParticipants &&
+            verificationStatus.totalParticipants &&
             !jobInitiated && (
               <View style={styles.startJobContainer}>
                 <TouchableOpacity
@@ -1425,9 +1434,12 @@ const RequestsVerifyTab = ({
 const RequestVerification = () => {
   const layout = useWindowDimensions();
   const route = useRoute<any>();
-  const { jobId } = route.params;
+  const { jobId } = route.params || {};
 
-  const [index, onIndexChange] = useState(0);
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
+
+  const [index, setIndex] = useState(0);
   const [pendingCount, setPendingCount] = useState(0);
   const [acceptedCount, setAcceptedCount] = useState(0);
   const [verifiedCount, setVerifiedCount] = useState(0);
@@ -1436,7 +1448,7 @@ const RequestVerification = () => {
 
   const [routes] = useState([
     { key: "requests", title: "Requests" },
-    { key: "requestsVerify", title: "Accepted" },
+    { key: "requestsVerify", title: "Verify" },
   ]);
 
   const handleCountUpdate = useCallback(
@@ -1474,7 +1486,7 @@ const RequestVerification = () => {
           console.log(
             "Auto-switching to Accepted tab: no pending requests but accepted users exist"
           );
-          onIndexChange(1);
+          setIndex(1);
         }
         // If there are pending requests or no data, stay on Requests tab (index 0)
       }
@@ -1500,7 +1512,7 @@ const RequestVerification = () => {
       setAcceptedCount(0);
       setVerifiedCount(0);
       // Always start on Requests tab when first entering
-      onIndexChange(0);
+      setIndex(0);
       console.log("🔄 Screen focused - resetting state");
     }, []) // Remove automatic refresh to prevent double loading
   );
@@ -1593,7 +1605,7 @@ const RequestVerification = () => {
         navigationState={{ index, routes }}
         renderScene={renderScene}
         renderTabBar={renderTabBar}
-        onIndexChange={onIndexChange}
+        onIndexChange={setIndex}
         initialLayout={{ width: layout.width }}
       />
     </View>

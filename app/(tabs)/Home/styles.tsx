@@ -1,11 +1,11 @@
 import { StyleSheet } from "react-native";
 import DeviceDimensions from "../../../constants/DeviceDimenions";
-import { Colors } from "../../../constants/Colors";
+import { ThemeColors } from "../../../constants/Colors";
 
-const styles = StyleSheet.create({
+export const createStyles = (colors: ThemeColors) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: colors.background,
     padding: 16,
   },
   scrollContainer: {
@@ -27,18 +27,18 @@ const styles = StyleSheet.create({
   locationTitle: {
     fontSize: 16,
     fontFamily: "bold",
-    color: Colors.black,
+    color: colors.black,
     marginRight: 4 * DeviceDimensions.widthRatio,
   },
   locationSubtitle: {
     fontSize: 12,
     fontFamily: "regular",
-    color: Colors.grey,
+    color: colors.grey,
   },
   searchContainer: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#E8E8E8",
+    backgroundColor: colors.whiteBack, // Changed from hardcoded #E8E8E8 to use theme color if available or keep hardcoded if not in theme
     borderRadius: 12,
     width: "100%",
     height: 50 * DeviceDimensions.heightRatio,
@@ -52,7 +52,7 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 14,
     fontFamily: "regular",
-    color: Colors.black,
+    color: colors.black,
   },
   bannerContainer: {
     borderRadius: 16,
@@ -75,7 +75,7 @@ const styles = StyleSheet.create({
   bannerTitle: {
     fontSize: 20,
     fontFamily: "bold",
-    color: Colors.white,
+    color: colors.white, // Keep as white for banner potentially
     textShadowColor: 'rgba(0, 0, 0, 0.2)',
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 2,
@@ -83,12 +83,12 @@ const styles = StyleSheet.create({
   bannerSubtitle: {
     fontSize: 14,
     fontFamily: "regular",
-    color: Colors.white,
+    color: colors.white,
     marginTop: 4 * DeviceDimensions.heightRatio,
     opacity: 0.9,
   },
   postNowButton: {
-    backgroundColor: Colors.white,
+    backgroundColor: colors.white,
     justifyContent: "center",
     alignItems: "center",
     borderRadius: 8,
@@ -103,7 +103,7 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   postNowText: {
-    color: Colors.primary,
+    color: colors.primary,
     fontSize: 12,
     fontFamily: "bold",
   },
@@ -112,16 +112,16 @@ const styles = StyleSheet.create({
     height: "100%",
   },
   filtersScrollContainer: {
-    backgroundColor: Colors.background,
+    backgroundColor: colors.background,
     paddingVertical: 10,
     marginBottom: 4,
   },
   stickyFilterContainer: {
-    backgroundColor: Colors.background,
+    backgroundColor: colors.background,
     paddingVertical: 10,
     paddingHorizontal: 6,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.grey + "10",
+    borderBottomColor: colors.grey + "10",
     shadowColor: "#000",
     shadowOffset: {
       width: 0,
@@ -137,10 +137,10 @@ const styles = StyleSheet.create({
   filterButton: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: Colors.white,
+    backgroundColor: colors.white,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: Colors.addressGrey,
+    borderColor: colors.switchBorder, // Changed from addressGrey
     paddingHorizontal: 14 * DeviceDimensions.widthRatio,
     paddingVertical: 8 * DeviceDimensions.heightRatio,
     marginRight: 10 * DeviceDimensions.widthRatio,
@@ -153,15 +153,15 @@ const styles = StyleSheet.create({
   filterText: {
     fontSize: 13,
     fontFamily: "medium",
-    color: Colors.black,
+    color: colors.black,
     marginRight: 4 * DeviceDimensions.widthRatio,
   },
   jobCard: {
-    backgroundColor: Colors.white,
+    backgroundColor: colors.white,
     borderRadius: 16,
     padding: 16 * DeviceDimensions.widthRatio,
     marginBottom: 16 * DeviceDimensions.heightRatio,
-    shadowColor: Colors.primary,
+    shadowColor: colors.primary,
     shadowOffset: {
       width: 0,
       height: 4,
@@ -171,7 +171,7 @@ const styles = StyleSheet.create({
     elevation: 3,
     width: "100%",
     borderLeftWidth: 5,
-    borderLeftColor: Colors.primary,
+    borderLeftColor: colors.primary,
   },
   jobCardHeader: {
     flexDirection: "row",
@@ -182,7 +182,7 @@ const styles = StyleSheet.create({
   categoryContainer: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: Colors.categoryBox,
+    backgroundColor: colors.categoryBox,
     paddingHorizontal: 10,
     paddingVertical: 6,
     borderRadius: 12,
@@ -198,19 +198,19 @@ const styles = StyleSheet.create({
   categoryText: {
     fontSize: 12,
     fontFamily: "bold",
-    color: Colors.primary,
+    color: colors.primary,
     textTransform: "uppercase",
     letterSpacing: 0.5,
   },
   priceText: {
     fontSize: 18,
     fontFamily: "bold",
-    color: Colors.primary,
+    color: colors.primary,
   },
   jobTitle: {
     fontSize: 17,
     fontFamily: "bold",
-    color: Colors.black,
+    color: colors.black,
     marginBottom: 12 * DeviceDimensions.heightRatio,
     flex: 1,
     marginRight: 8,
@@ -231,7 +231,7 @@ const styles = StyleSheet.create({
   locationContainer: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#F8F8F8",
+    backgroundColor: colors.whiteBack, // Changed from #F8F8F8 for better dark mode support
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 8,
@@ -239,7 +239,7 @@ const styles = StyleSheet.create({
   locationText: {
     fontSize: 13,
     fontFamily: "medium",
-    color: Colors.grey,
+    color: colors.grey,
     marginLeft: 4 * DeviceDimensions.widthRatio,
   },
   jobFooter: {
@@ -249,12 +249,12 @@ const styles = StyleSheet.create({
     marginTop: 4,
     paddingTop: 12,
     borderTopWidth: 1,
-    borderTopColor: "#F5F5F5",
+    borderTopColor: colors.borderGrey + "20", // Use borderGrey with opacity
   },
   vacanciesContainer: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: Colors.background,
+    backgroundColor: colors.background,
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 12,
@@ -263,15 +263,15 @@ const styles = StyleSheet.create({
   vacanciesText: {
     fontSize: 12,
     fontFamily: "medium",
-    color: Colors.primary,
+    color: colors.primary,
   },
   timeAgoText: {
     fontSize: 12,
     fontFamily: "medium",
-    color: Colors.grey,
+    color: colors.grey,
   },
   statusContainer: {
-    backgroundColor: Colors.tabGrey,
+    backgroundColor: colors.tabGrey,
     paddingHorizontal: 12 * DeviceDimensions.widthRatio,
     height: 24,
     borderRadius: 20,
@@ -281,14 +281,14 @@ const styles = StyleSheet.create({
   statusText: {
     fontSize: 11,
     fontFamily: "bold",
-    color: Colors.black,
+    color: colors.black,
     textTransform: "uppercase",
   },
 
   // Distance Text Style (add to job card)
   distanceText: {
     fontSize: 11,
-    color: Colors.grey,
+    color: colors.grey,
     marginTop: 2,
     fontWeight: "600",
     textAlign: 'right',
@@ -300,7 +300,7 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   modalContainer: {
-    backgroundColor: Colors.background,
+    backgroundColor: colors.background,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     maxHeight: '75%',
@@ -318,12 +318,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingBottom: 20,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.addressGrey,
+    borderBottomColor: colors.addressGrey,
   },
   modalTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: Colors.black,
+    color: colors.black,
   },
   modalOption: {
     flexDirection: 'row',
@@ -332,18 +332,18 @@ const styles = StyleSheet.create({
     paddingVertical: 18,
     paddingHorizontal: 24,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.addressGrey,
+    borderBottomColor: colors.addressGrey,
   },
   selectedOption: {
-    backgroundColor: Colors.categoryBox + "40", // 40% opacity
+    backgroundColor: colors.categoryBox + "40", // 40% opacity
   },
   modalOptionText: {
     fontSize: 16,
-    color: Colors.black,
+    color: colors.black,
     fontWeight: '500',
   },
   selectedOptionText: {
-    color: Colors.primary,
+    color: colors.primary,
     fontWeight: 'bold',
   },
 
@@ -351,17 +351,17 @@ const styles = StyleSheet.create({
   activeFiltersContainer: {
     paddingHorizontal: 16,
     paddingVertical: 10,
-    backgroundColor: Colors.white,
+    backgroundColor: colors.white,
     marginHorizontal: 16,
     borderRadius: 12,
     marginVertical: 8,
     borderWidth: 1,
-    borderColor: Colors.addressGrey,
+    borderColor: colors.addressGrey,
   },
   activeFiltersTitle: {
     fontSize: 13,
     fontWeight: '600',
-    color: Colors.primary,
+    color: colors.primary,
     marginBottom: 8,
     textTransform: 'uppercase',
   },
@@ -373,17 +373,17 @@ const styles = StyleSheet.create({
   activeFilterChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'white',
+    backgroundColor: colors.white,
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: Colors.primary,
+    borderColor: colors.primary,
     marginBottom: 4,
   },
   activeFilterText: {
     fontSize: 12,
-    color: Colors.primary,
+    color: colors.primary,
     marginRight: 4,
   },
 
@@ -394,7 +394,7 @@ const styles = StyleSheet.create({
   },
   resultsText: {
     fontSize: 14,
-    color: Colors.grey,
+    color: colors.grey,
     fontWeight: '500',
   },
   loadMoreContainer: {
@@ -402,7 +402,7 @@ const styles = StyleSheet.create({
     paddingVertical: 20,
   },
   loadMoreButton: {
-    backgroundColor: Colors.primary,
+    backgroundColor: colors.primary,
     paddingHorizontal: 24,
     paddingVertical: 12,
     borderRadius: 8,
@@ -418,11 +418,8 @@ const styles = StyleSheet.create({
   },
   endOfResultsText: {
     fontSize: 14,
-    color: Colors.grey,
+    color: colors.grey,
     fontStyle: 'italic',
   },
 
 });
-
-
-export default styles;

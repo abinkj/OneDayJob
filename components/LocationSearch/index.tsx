@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import {
   View,
   Text,
@@ -9,7 +9,8 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { Colors } from "../../constants/Colors";
+import { useTheme } from "../../contexts/ThemeContext";
+import { ThemeColors } from "../../constants/Colors";
 import {
   getCurrentLocation,
   searchPlacesFallback,
@@ -30,6 +31,9 @@ const LocationSearch: React.FC<LocationSearchProps> = ({
   placeholder = "Search for a location...",
   style,
 }) => {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
+
   const [searchText, setSearchText] = useState(value);
   const [suggestions, setSuggestions] = useState<LocationData[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -137,7 +141,7 @@ const LocationSearch: React.FC<LocationSearchProps> = ({
       onPress={() => handleSuggestionSelect(item)}
       activeOpacity={0.7}
     >
-      <Ionicons name="location-outline" size={20} color={Colors.grey} />
+      <Ionicons name="location-outline" size={20} color={colors.grey} />
       <View style={styles.suggestionTextContainer}>
         <Text style={styles.suggestionMainText}>
           {item.address || `${item.city}, ${item.state}`}
@@ -155,13 +159,13 @@ const LocationSearch: React.FC<LocationSearchProps> = ({
     <View style={[styles.container, style]}>
       <View style={styles.searchContainer}>
         <View style={styles.inputContainer}>
-          <Ionicons name="search-outline" size={20} color={Colors.grey} />
+          <Ionicons name="search-outline" size={20} color={colors.grey} />
           <TextInput
             style={styles.input}
             value={searchText}
             onChangeText={handleSearchTextChange}
             placeholder={placeholder}
-            placeholderTextColor={Colors.grey}
+            placeholderTextColor={colors.grey}
             onFocus={() => {
               setIsInputFocused(true);
               if (suggestions.length > 0 || searchText.trim().length >= 2) {
@@ -179,7 +183,7 @@ const LocationSearch: React.FC<LocationSearchProps> = ({
             }}
           />
           {isLoading && (
-            <ActivityIndicator size="small" color={Colors.primary} />
+            <ActivityIndicator size="small" color={colors.primary} />
           )}
         </View>
 
@@ -189,9 +193,9 @@ const LocationSearch: React.FC<LocationSearchProps> = ({
           disabled={isGettingCurrentLocation}
         >
           {isGettingCurrentLocation ? (
-            <ActivityIndicator size="small" color={Colors.white} />
+            <ActivityIndicator size="small" color={colors.white} />
           ) : (
-            <Ionicons name="locate" size={20} color={Colors.white} />
+            <Ionicons name="locate" size={20} color={colors.white} />
           )}
         </TouchableOpacity>
       </View>
@@ -200,7 +204,7 @@ const LocationSearch: React.FC<LocationSearchProps> = ({
         <View style={styles.suggestionsContainer}>
           {isLoading && suggestions.length === 0 ? (
             <View style={styles.loadingContainer}>
-              <ActivityIndicator size="small" color={Colors.primary} />
+              <ActivityIndicator size="small" color={colors.primary} />
               <Text style={styles.loadingText}>Searching...</Text>
             </View>
           ) : suggestions.length === 0 && searchText.trim().length >= 2 ? (
@@ -225,7 +229,7 @@ const LocationSearch: React.FC<LocationSearchProps> = ({
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   container: {
     position: "relative",
     zIndex: 1000,
@@ -239,9 +243,9 @@ const styles = StyleSheet.create({
     flex: 1,
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: Colors.white,
+    backgroundColor: colors.white,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: colors.border,
     borderRadius: 8,
     paddingHorizontal: 12,
     paddingVertical: 12,
@@ -250,10 +254,10 @@ const styles = StyleSheet.create({
   input: {
     flex: 1,
     fontSize: 16,
-    color: Colors.black,
+    color: colors.black,
   },
   currentLocationButton: {
-    backgroundColor: Colors.primary,
+    backgroundColor: colors.primary,
     padding: 12,
     borderRadius: 8,
     justifyContent: "center",
@@ -265,9 +269,9 @@ const styles = StyleSheet.create({
     top: "100%",
     left: 0,
     right: 0,
-    backgroundColor: Colors.white,
+    backgroundColor: colors.white,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: colors.border,
     borderRadius: 8,
     marginTop: 4,
     maxHeight: 200,
@@ -289,7 +293,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
+    borderBottomColor: colors.border,
     gap: 12,
   },
   suggestionTextContainer: {
@@ -297,12 +301,12 @@ const styles = StyleSheet.create({
   },
   suggestionMainText: {
     fontSize: 16,
-    color: Colors.black,
+    color: colors.black,
     fontWeight: "500",
   },
   suggestionSubText: {
     fontSize: 14,
-    color: Colors.grey,
+    color: colors.grey,
     marginTop: 2,
   },
   loadingContainer: {
@@ -314,7 +318,7 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     fontSize: 14,
-    color: Colors.grey,
+    color: colors.grey,
   },
 });
 

@@ -1,13 +1,13 @@
 import { StyleSheet } from "react-native";
-import { Colors } from "../../../constants/Colors";
+import { ThemeColors } from "../../../constants/Colors";
 import DeviceDimensions from "../../../constants/DeviceDimenions";
 
-const styles = StyleSheet.create({
+export const createStyles = (colors: ThemeColors) => StyleSheet.create({
   scrollContainer: {
 
     paddingHorizontal: 16,
     paddingTop: 14,
-    backgroundColor: Colors.background,
+    backgroundColor: colors.background,
     marginBottom: 75 * DeviceDimensions.heightRatio, // Adjusted for device height ratio
   },
   contentContainer: {
@@ -21,7 +21,7 @@ const styles = StyleSheet.create({
     paddingTop: 32,
     paddingBottom: 8,
     position: "relative",
-    backgroundColor: Colors.white,
+    backgroundColor: colors.white,
   },
   tab: {
     flex: 1,
@@ -32,16 +32,16 @@ const styles = StyleSheet.create({
     fontWeight: "500",
   },
   active: {
-    color: "#000",
+    color: colors.black,
   },
   inactive: {
-    color: "#888",
+    color: colors.grey,
   },
   underline: {
     position: "absolute",
     bottom: 0,
     height: 3,
-    backgroundColor: Colors.blue,
+    backgroundColor: colors.blue,
     borderBottomEndRadius: 10,
     borderBottomStartRadius: 10,
     left: 28 * DeviceDimensions.widthRatio, // Adjusted for device width ratio
@@ -62,12 +62,12 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '600',
     marginLeft: 4,
+    color: colors.black,
   },
   statusDescription: {
     fontSize: 10,
-    color: Colors.subGrey,
+    color: colors.subGrey,
     fontStyle: 'italic',
     marginTop: 2,
   },
 });
-export default styles;

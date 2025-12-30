@@ -1,11 +1,11 @@
 import { StyleSheet } from "react-native";
 import DeviceDimensions from "../../../constants/DeviceDimenions";
-import { Colors } from "../../../constants/Colors";
+import { ThemeColors } from "../../../constants/Colors";
 
-const styles = StyleSheet.create({
+export const createStyles = (colors: ThemeColors) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: colors.background,
   },
   scrollContent: {
     flexGrow: 1,
@@ -21,7 +21,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontFamily: "bold",
-    color: Colors.black,
+    color: colors.black,
     marginBottom: 12,
     textAlign: "center",
   },
@@ -30,7 +30,7 @@ const styles = StyleSheet.create({
     lineHeight: 24,
     textAlign: "center",
     fontFamily: "regular",
-    color: Colors.grey,
+    color: colors.grey,
     maxWidth: '80%',
   },
   subtitleOtp: {
@@ -38,7 +38,7 @@ const styles = StyleSheet.create({
     lineHeight: 24,
     textAlign: "center",
     fontFamily: "regular",
-    color: Colors.grey,
+    color: colors.grey,
     marginTop: 8,
     maxWidth: '90%',
   },
@@ -59,7 +59,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: Colors.white,
+    backgroundColor: colors.white,
     // Add shadow
     shadowColor: "#000",
     shadowOffset: {
@@ -71,15 +71,15 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   activePinCodeContainer: {
-    borderColor: Colors.primary,
+    borderColor: colors.primary,
     borderWidth: 1,
-    backgroundColor: Colors.white,
+    backgroundColor: colors.white,
     transform: [{ scale: 1.05 }], // Subtle scale effect on focus
   },
   pinCodeText: {
     fontSize: 24,
     fontFamily: "bold",
-    color: Colors.black,
+    color: colors.black,
     textAlign: "center",
   },
 
@@ -91,23 +91,23 @@ const styles = StyleSheet.create({
   },
   resendText: {
     fontSize: 14,
-    color: Colors.grey,
+    color: colors.grey,
     textAlign: "center",
     fontFamily: "regular",
   },
   resendButton: {
-    color: Colors.primary, // Use primary color for action
+    color: colors.primary, // Use primary color for action
     fontFamily: "bold",
   },
 
   buttonOtp: {
-    backgroundColor: Colors.primary,
+    backgroundColor: colors.primary,
     width: '100%',
     height: 56,
     borderRadius: 16,
     alignItems: "center",
     justifyContent: "center",
-    shadowColor: Colors.primary,
+    shadowColor: colors.primary,
     shadowOffset: {
       width: 0,
       height: 4,
@@ -118,12 +118,12 @@ const styles = StyleSheet.create({
     marginTop: 40,
   },
   disabledButton: {
-    backgroundColor: Colors.grey,
+    backgroundColor: colors.grey,
     shadowOpacity: 0,
     elevation: 0,
   },
   buttonText: {
-    color: Colors.white,
+    color: colors.white,
     fontSize: 18,
     fontFamily: "bold",
   },
@@ -140,9 +140,7 @@ const styles = StyleSheet.create({
   text: {
     marginTop: 20,
     fontSize: 24,
-    color: Colors.black,
+    color: colors.black,
     fontFamily: "bold",
   },
 });
-
-export default styles;

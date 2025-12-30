@@ -1,7 +1,8 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { View, Text, StyleSheet, Image, TouchableOpacity } from "react-native";
-import { Colors } from "../../constants/Colors";
+import { ThemeColors } from "../../constants/Colors";
 import { Ionicons } from "@expo/vector-icons";
+import { useTheme } from "../../contexts/ThemeContext";
 
 interface ChatItemProps {
   item: {
@@ -17,6 +18,9 @@ interface ChatItemProps {
 }
 
 export default function ChatItem({ item, onPress }: ChatItemProps) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
+
   return (
     <TouchableOpacity
       onPress={onPress}
@@ -69,11 +73,11 @@ export default function ChatItem({ item, onPress }: ChatItemProps) {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   container: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: Colors.white,
+    backgroundColor: colors.white,
     marginVertical: 6,
     marginHorizontal: 16,
     padding: 16,
@@ -95,18 +99,18 @@ const styles = StyleSheet.create({
     height: 60,
     borderRadius: 30,
     borderWidth: 3,
-    borderColor: Colors.background,
+    borderColor: colors.background,
   },
   placeholderAvatar: {
-    backgroundColor: Colors.categoryBox,
+    backgroundColor: colors.categoryBox,
     justifyContent: "center",
     alignItems: "center",
-    borderColor: Colors.white,
+    borderColor: colors.white,
   },
   placeholderText: {
     fontSize: 24,
     fontWeight: "700",
-    color: Colors.primary,
+    color: colors.primary,
   },
   onlineIndicator: {
     position: "absolute",
@@ -115,9 +119,9 @@ const styles = StyleSheet.create({
     width: 16,
     height: 16,
     borderRadius: 8,
-    backgroundColor: Colors.primary,
+    backgroundColor: colors.primary,
     borderWidth: 3,
-    borderColor: Colors.white,
+    borderColor: colors.white,
   },
   contentContainer: {
     flex: 1,
@@ -132,18 +136,18 @@ const styles = StyleSheet.create({
   name: {
     fontWeight: "700",
     fontSize: 17,
-    color: Colors.black,
+    color: colors.black,
     flex: 1,
     marginRight: 8,
     letterSpacing: 0.3,
   },
   time: {
     fontSize: 12,
-    color: Colors.grey,
+    color: colors.grey,
     fontWeight: "500",
   },
   activeTime: {
-    color: Colors.primary,
+    color: colors.primary,
     fontWeight: "700",
   },
   messageRow: {
@@ -152,25 +156,25 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   message: {
-    color: Colors.grey,
+    color: colors.grey,
     fontSize: 14,
     flex: 1,
     marginRight: 12,
     lineHeight: 20,
   },
   activeMessage: {
-    color: Colors.black,
+    color: colors.black,
     fontWeight: "600",
   },
   badge: {
-    backgroundColor: Colors.primary,
+    backgroundColor: colors.primary,
     borderRadius: 12,
     minWidth: 24,
     height: 24,
     justifyContent: "center",
     alignItems: "center",
     paddingHorizontal: 8,
-    shadowColor: Colors.primary,
+    shadowColor: colors.primary,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.3,
     shadowRadius: 4,

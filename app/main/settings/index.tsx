@@ -11,7 +11,8 @@ import { Image } from "expo-image";
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import { useDispatch } from "react-redux";
-import { Colors } from "../../../constants/Colors";
+// import { Colors } from "../../../constants/Colors";
+import { useTheme } from "../../../contexts/ThemeContext";
 import { Header } from "../../../components/header";
 import { ProfileSkeleton } from "../../../components/Shimmer/Skeletons";
 import { logoutUser } from "../../../utilities/authentication";
@@ -45,36 +46,47 @@ const SettingsItem: React.FC<SettingsItemProps> = ({
   danger = false,
 }) => {
   const IconComponent = iconFamily === "material" ? MaterialIcons : Ionicons;
+  const { colors } = useTheme();
 
   return (
     <TouchableOpacity
-      style={styles.settingsItem}
+      style={[
+        styles.settingsItem,
+        { borderBottomColor: colors.addressGrey }
+      ]}
       onPress={onPress}
       activeOpacity={0.7}
       disabled={!onPress}
     >
       <View style={styles.settingsItemLeft}>
         <View
-          style={[styles.iconContainer, danger && styles.iconContainerDanger]}
+          style={[
+            styles.iconContainer,
+            { backgroundColor: danger ? "#FFE5E5" : colors.categoryBox },
+            danger && styles.iconContainerDanger
+          ]}
         >
           <IconComponent
             name={icon as any}
             size={22}
-            color={danger ? Colors.red : Colors.blue}
+            color={danger ? colors.red : colors.blue}
           />
         </View>
         <View style={styles.settingsItemText}>
-          <Text style={[styles.settingsItemTitle, danger && styles.dangerText]}>
+          <Text style={[
+            styles.settingsItemTitle,
+            { color: danger ? colors.red : colors.black }
+          ]}>
             {title}
           </Text>
           {subtitle && (
-            <Text style={styles.settingsItemSubtitle}>{subtitle}</Text>
+            <Text style={[styles.settingsItemSubtitle, { color: colors.grey }]}>{subtitle}</Text>
           )}
         </View>
       </View>
       {rightComponent ||
         (showArrow && (
-          <Ionicons name="chevron-forward" size={20} color={Colors.grey} />
+          <Ionicons name="chevron-forward" size={20} color={colors.grey} />
         ))}
     </TouchableOpacity>
   );
@@ -89,10 +101,11 @@ const SettingsSection: React.FC<SettingsSectionProps> = ({
   title,
   children,
 }) => {
+  const { colors } = useTheme();
   return (
     <View style={styles.section}>
-      <Text style={styles.sectionTitle}>{title}</Text>
-      <View style={styles.sectionContent}>{children}</View>
+      <Text style={[styles.sectionTitle, { color: colors.grey }]}>{title}</Text>
+      <View style={[styles.sectionContent, { backgroundColor: colors.white }]}>{children}</View>
     </View>
   );
 };
@@ -105,7 +118,10 @@ const Settings: React.FC = () => {
   const [pushNotifications, setPushNotifications] = useState(true);
   const [emailNotifications, setEmailNotifications] = useState(true);
   const [jobAlerts, setJobAlerts] = useState(true);
-  const [darkMode, setDarkMode] = useState(false);
+
+  const { theme, colors, toggleTheme } = useTheme();
+  const darkMode = theme === 'dark';
+
   const { showAlert } = useAlert();
 
   useEffect(() => {
@@ -223,7 +239,7 @@ const Settings: React.FC = () => {
 
   if (isLoading) {
     return (
-      <View style={styles.container}>
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
         <Header title="Settings" showBackButton />
         <ProfileSkeleton />
       </View>
@@ -231,7 +247,7 @@ const Settings: React.FC = () => {
   }
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <Header title="Settings" showBackButton />
       <ScrollView
         style={styles.scrollView}
@@ -240,25 +256,25 @@ const Settings: React.FC = () => {
       >
         {/* Profile Card */}
         <TouchableOpacity
-          style={styles.profileCard}
+          style={[styles.profileCard, { backgroundColor: colors.white }]}
           disabled={true}
           //onPress={handleEditProfile}
           activeOpacity={0.7}
         >
           <Image
             source={user?.profilePicture}
-            style={styles.profileImage}
+            style={[styles.profileImage, { backgroundColor: colors.categoryBox }]}
             placeholder={Images.profile.profileImage}
             placeholderContentFit="cover"
             contentFit="cover"
           />
           <View style={styles.profileInfo}>
-            <Text style={styles.profileName}>
+            <Text style={[styles.profileName, { color: colors.black }]}>
               {user?.firstName} {user?.lastName}
             </Text>
-            <Text style={styles.profileEmail}>{user?.email}</Text>
+            <Text style={[styles.profileEmail, { color: colors.grey }]}>{user?.email}</Text>
           </View>
-          {/* <Ionicons name="chevron-forward" size={20} color={Colors.grey} /> */}
+          {/* <Ionicons name="chevron-forward" size={20} color={colors.grey} /> */}
         </TouchableOpacity>
 
         {/* Account Section */}
@@ -331,12 +347,7 @@ const Settings: React.FC = () => {
               <CustomSwitch
                 value={darkMode}
                 onValueChange={(value) => {
-                  setDarkMode(value);
-                  Toast.show({
-                    type: "info",
-                    text1: "Coming Soon",
-                    text2: "Dark mode will be available soon",
-                  });
+                  toggleTheme();
                 }}
               />
             }

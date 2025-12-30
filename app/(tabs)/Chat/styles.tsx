@@ -1,14 +1,14 @@
 import { StyleSheet } from "react-native";
 import DeviceDimensions from "../../../constants/DeviceDimenions";
-import { Colors } from "../../../constants/Colors";
+import { ThemeColors } from "../../../constants/Colors";
 
-const styles = StyleSheet.create({
+export const createStyles = (colors: ThemeColors) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: colors.background,
   },
   chatHeader: {
     marginTop: 22 * DeviceDimensions.heightRatio,
   },
 });
-export default styles;
+

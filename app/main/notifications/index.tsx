@@ -9,10 +9,10 @@ import {
   Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Colors } from '../../../constants/Colors';
+import { useTheme } from '../../../contexts/ThemeContext';
 import { useNotifications } from '../../../contexts/NotificationContext';
 import { NotificationData } from '../../../services/notificationService';
-import styles from './styles';
+import { createStyles } from './styles';
 
 const NotificationScreen = () => {
   const {
@@ -22,6 +22,9 @@ const NotificationScreen = () => {
     markAsRead,
     refreshNotifications,
   } = useNotifications();
+
+  const { colors } = useTheme();
+  const styles = React.useMemo(() => createStyles(colors), [colors]);
 
   const [refreshing, setRefreshing] = useState(false);
 
@@ -108,7 +111,7 @@ const NotificationScreen = () => {
       case 'system':
         return '#607D8B';
       default:
-        return Colors.blue;
+        return colors.blue;
     }
   };
 
@@ -167,7 +170,7 @@ const NotificationScreen = () => {
 
   const renderEmptyState = () => (
     <View style={styles.emptyContainer}>
-      <Ionicons name="notifications-outline" size={64} color={Colors.grey} />
+      <Ionicons name="notifications-outline" size={64} color={colors.grey} />
       <Text style={styles.emptyTitle}>No Notifications</Text>
       <Text style={styles.emptySubtitle}>
         You'll receive notifications about job updates, applications, and messages here.
@@ -189,7 +192,7 @@ const NotificationScreen = () => {
             style={styles.clearButton}
             onPress={handleClearAll}
           >
-            <Ionicons name="trash-outline" size={20} color={Colors.red} />
+            <Ionicons name="trash-outline" size={20} color={colors.red} />
           </TouchableOpacity>
         )}
       </View>
@@ -203,8 +206,8 @@ const NotificationScreen = () => {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={handleRefresh}
-            colors={[Colors.blue]}
-            tintColor={Colors.blue}
+            colors={[colors.blue]}
+            tintColor={colors.blue}
           />
         }
         showsVerticalScrollIndicator={false}

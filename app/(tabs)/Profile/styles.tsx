@@ -1,26 +1,26 @@
 import { StyleSheet } from "react-native";
 import DeviceDimensions from "../../../constants/DeviceDimenions";
-import { Colors } from "../../../constants/Colors";
+import { ThemeColors } from "../../../constants/Colors";
 
-const styles = StyleSheet.create({
+export const createStyles = (colors: ThemeColors) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: colors.background,
   },
   profileCard: {
-    backgroundColor: Colors.white,
+    backgroundColor: colors.white,
     borderRadius: 24,
     marginHorizontal: 16,
     marginTop: 12 * DeviceDimensions.heightRatio,
     padding: 20,
     alignItems: "center",
-    shadowColor: Colors.primary,
+    shadowColor: colors.primary,
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.15,
     shadowRadius: 16,
     elevation: 8,
     borderWidth: 1,
-    borderColor: "rgba(79, 70, 229, 0.1)", // Primary with low opacity
+    borderColor: "rgba(79, 70, 229, 0.1)", // Primary with low opacity - keeping static for glass effect or use colors.primary + opacity if supported
   },
   profileImage: {
     width: 110,
@@ -28,28 +28,28 @@ const styles = StyleSheet.create({
     borderRadius: 55,
     marginBottom: 12,
     borderWidth: 3,
-    borderColor: Colors.primary,
+    borderColor: colors.primary,
   },
   name: {
     fontSize: 22,
     fontWeight: "700",
     marginTop: 8,
     marginBottom: 4,
-    color: Colors.black,
+    color: colors.black,
     letterSpacing: 0.5,
   },
   locationContainer: {
     flexDirection: "row",
     alignItems: "center",
     marginBottom: 20,
-    backgroundColor: Colors.categoryBox,
+    backgroundColor: colors.categoryBox,
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 20,
   },
   locationText: {
     fontSize: 14,
-    color: Colors.primary,
+    color: colors.primary,
     fontWeight: "600",
     marginLeft: 4,
   },
@@ -58,7 +58,7 @@ const styles = StyleSheet.create({
     width: "100%",
     marginTop: 8,
     borderTopWidth: 1,
-    borderTopColor: "#F0F0F0",
+    borderTopColor: colors.borderGrey + "20",
     paddingTop: 20,
   },
   statBox: {
@@ -67,7 +67,7 @@ const styles = StyleSheet.create({
   },
   statLabel: {
     fontSize: 11,
-    color: "#888",
+    color: colors.grey, // Static grey usually fine, or update to colors.grey
     marginBottom: 6,
     fontWeight: "600",
     letterSpacing: 1,
@@ -76,11 +76,11 @@ const styles = StyleSheet.create({
   statNumber: {
     fontSize: 22,
     fontWeight: "800",
-    color: Colors.primary,
+    color: colors.primary,
   },
   statSubLabel: {
     fontSize: 11,
-    color: "#666",
+    color: colors.subGrey,
     marginTop: 4,
     fontWeight: "500",
   },
@@ -93,12 +93,12 @@ const styles = StyleSheet.create({
   },
   separator: {
     width: 1,
-    backgroundColor: "#E0E0E0",
+    backgroundColor: "#E0E0E0", // Could be colors.border
     height: "100%",
     alignSelf: "center",
   },
   dropdown: {
-    backgroundColor: Colors.white,
+    backgroundColor: colors.white,
     borderRadius: 16,
     padding: 16,
     flexDirection: "row",
@@ -112,20 +112,20 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 2,
     borderWidth: 1,
-    borderColor: "#F0F0F0",
+    borderColor: colors.border,
   },
   dropdownText: {
     fontSize: 16,
     fontWeight: "600",
-    color: Colors.black,
+    color: colors.black,
   },
   dropdownDetail: {
     fontSize: 14,
-    color: "#555",
+    color: colors.subGrey,
     marginBottom: 8,
   },
   reviewContainer: {
-    backgroundColor: Colors.white,
+    backgroundColor: colors.white,
     borderRadius: 16,
     padding: 16,
     marginHorizontal: 16,
@@ -136,7 +136,7 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 2,
     borderWidth: 1,
-    borderColor: "#F0F0F0",
+    borderColor: colors.border,
   },
   reviewerInfo: {
     flexDirection: "row",
@@ -158,7 +158,7 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     fontSize: 16,
     marginBottom: 2,
-    color: Colors.black,
+    color: colors.black,
   },
   stars: {
     flexDirection: "row",
@@ -168,17 +168,17 @@ const styles = StyleSheet.create({
   },
   reviewDate: {
     fontSize: 12,
-    color: "#888",
+    color: colors.grey,
     alignSelf: "flex-start",
     marginTop: 4,
   },
   reviewText: {
     fontSize: 14,
     lineHeight: 22,
-    color: "#444",
+    color: colors.black, // Maybe colors.subGrey
   },
   seeAllButton: {
-    backgroundColor: Colors.categoryBox, // Light primary
+    backgroundColor: colors.categoryBox, // Light primary
     borderRadius: 14,
     paddingVertical: 14,
     alignItems: "center",
@@ -187,12 +187,12 @@ const styles = StyleSheet.create({
     marginBottom: 30,
   },
   seeAllText: {
-    color: Colors.primary,
+    color: colors.primary,
     fontSize: 16,
     fontWeight: "700",
   },
   experienceContainer: {
-    backgroundColor: Colors.white,
+    backgroundColor: colors.white,
     borderRadius: 16,
     marginHorizontal: 16,
     marginBottom: 16,
@@ -212,7 +212,7 @@ const styles = StyleSheet.create({
   dropdownTitle: {
     fontSize: 16,
     fontWeight: "600",
-    color: Colors.black,
+    color: colors.black,
   },
   dropdownContent: {
     paddingTop: 12,
@@ -225,7 +225,7 @@ const styles = StyleSheet.create({
   imagePlaceholder: {
     width: 92 * DeviceDimensions.widthRatio,
     height: 67 * DeviceDimensions.heightRatio,
-    backgroundColor: "#F5F5F5",
+    backgroundColor: colors.address2,
     borderRadius: 8,
     marginRight: 8,
   },
@@ -241,12 +241,12 @@ const styles = StyleSheet.create({
     zIndex: 10,
   },
   bankDetailsCard: {
-    backgroundColor: Colors.white,
+    backgroundColor: colors.white,
     borderRadius: 16,
     marginHorizontal: 16,
     marginTop: 16,
     padding: 20,
-    shadowColor: Colors.primary,
+    shadowColor: colors.primary,
     shadowOpacity: 0.08,
     shadowRadius: 10,
     shadowOffset: { width: 0, height: 4 },
@@ -267,12 +267,12 @@ const styles = StyleSheet.create({
   bankDetailsTitle: {
     fontSize: 18,
     fontWeight: "700",
-    color: Colors.black,
+    color: colors.black,
   },
   editIconButton: {
     padding: 8,
     borderRadius: 10,
-    backgroundColor: Colors.categoryBox,
+    backgroundColor: colors.categoryBox,
   },
   bankDetailsRow: {
     flexDirection: "row",
@@ -280,16 +280,16 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingVertical: 14,
     borderBottomWidth: 1,
-    borderBottomColor: "#F5F5F5",
+    borderBottomColor: colors.address2,
   },
   bankDetailsLabel: {
     fontSize: 14,
-    color: Colors.grey,
+    color: colors.grey,
     fontWeight: "500",
   },
   bankDetailsValue: {
     fontSize: 15,
-    color: Colors.black,
+    color: colors.black,
     fontWeight: "600",
     flex: 1,
     textAlign: "right",
@@ -302,22 +302,22 @@ const styles = StyleSheet.create({
     marginTop: 16,
     paddingVertical: 12,
     gap: 8,
-    backgroundColor: Colors.categoryBox,
+    backgroundColor: colors.categoryBox,
     borderRadius: 12,
   },
   editBankButtonText: {
     fontSize: 15,
-    color: Colors.primary,
+    color: colors.primary,
     fontWeight: "700",
   },
   addBankCard: {
-    backgroundColor: Colors.white,
+    backgroundColor: colors.white,
     borderRadius: 16,
     marginHorizontal: 16,
     marginTop: 16,
     padding: 24,
     alignItems: "center",
-    shadowColor: Colors.primary,
+    shadowColor: colors.primary,
     shadowOpacity: 0.08,
     shadowRadius: 10,
     shadowOffset: { width: 0, height: 4 },
@@ -328,33 +328,33 @@ const styles = StyleSheet.create({
   addBankTitle: {
     fontSize: 18,
     fontWeight: "700",
-    color: Colors.black,
+    color: colors.black,
     marginTop: 16,
     marginBottom: 8,
   },
   addBankText: {
     fontSize: 14,
-    color: Colors.grey,
+    color: colors.grey,
     textAlign: "center",
     marginBottom: 20,
     lineHeight: 20,
   },
   addBankButton: {
-    backgroundColor: Colors.primary,
+    backgroundColor: colors.primary,
     paddingVertical: 14,
     paddingHorizontal: 32,
     borderRadius: 12,
-    shadowColor: Colors.primary,
+    shadowColor: colors.primary,
     shadowOpacity: 0.3,
     shadowRadius: 8,
     shadowOffset: { width: 0, height: 4 },
     elevation: 4,
   },
   addBankButtonText: {
-    color: Colors.white,
+    color: colors.white,
     fontSize: 16,
     fontWeight: "700",
   },
 });
 
-export default styles;
+

@@ -1,11 +1,11 @@
 import { StyleSheet } from "react-native";
-import { Colors } from "../../../constants/Colors";
+import { ThemeColors } from "../../../constants/Colors";
 import DeviceDimensions from "../../../constants/DeviceDimenions";
 
-const styles = StyleSheet.create({
+export const createStyles = (colors: ThemeColors) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: colors.background,
     padding: 16 * DeviceDimensions.widthRatio,
   },
   header: {
@@ -17,7 +17,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 18,
     fontFamily: 'bold',
-    color: Colors.black,
+    color: colors.black,
   },
   progressContainer: {
     flexDirection: 'row',
@@ -32,10 +32,10 @@ const styles = StyleSheet.create({
     borderRadius: 2,
   },
   progressStepCompleted: {
-    backgroundColor: Colors.primary,
+    backgroundColor: colors.primary,
   },
   progressStepCurrent: {
-    backgroundColor: Colors.primary,
+    backgroundColor: colors.primary,
   },
   scrollContainer: {
     flex: 1,
@@ -46,19 +46,19 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 16,
     fontFamily: 'bold',
-    color: Colors.black,
+    color: colors.black,
     marginBottom: 8 * DeviceDimensions.heightRatio,
   },
   sectionTitle2: {
     fontSize: 16,
     fontFamily: 'bold',
-    color: Colors.subGrey,
+    color: colors.subGrey,
     marginBottom: 8 * DeviceDimensions.heightRatio,
   },
   vaccancyTitle: {
     fontSize: 16,
     fontFamily: 'regular',
-    color: Colors.subGrey,
+    color: colors.subGrey,
     marginBottom: 8 * DeviceDimensions.heightRatio,
   },
   categoryGrid: {
@@ -86,18 +86,18 @@ const styles = StyleSheet.create({
   categoryItem: {
     width: 71 * DeviceDimensions.widthRatio,
     height: 71 * DeviceDimensions.heightRatio,
-    backgroundColor: Colors.categoryBox,
+    backgroundColor: colors.categoryBox,
     borderRadius: 16,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 8
   },
   categoryItemHighlighted: {
-    borderColor: Colors.primary,
+    borderColor: colors.primary,
     borderWidth: 0,
   },
   selectedCategory: {
-    backgroundColor: Colors.selected,
+    backgroundColor: colors.selected,
   },
   categoryIcon: {
     width: 32 * DeviceDimensions.widthRatio,
@@ -106,36 +106,36 @@ const styles = StyleSheet.create({
   categoryText: {
     fontSize: 16,
     fontFamily: 'medium',
-    color: Colors.black,
+    color: colors.black,
     marginBottom: 26,
   },
   categoryName: {
     fontSize: 14,
     fontFamily: 'regular',
-    color: Colors.black,
+    color: colors.black,
     textAlign: 'center',
   },
   inputContainer: {
     marginBottom: 24 * DeviceDimensions.heightRatio,
   },
   input: {
-    backgroundColor: Colors.white,
+    backgroundColor: colors.white,
     borderRadius: 8,
     paddingHorizontal: 12 * DeviceDimensions.widthRatio,
     paddingVertical: 12 * DeviceDimensions.heightRatio,
     fontSize: 16,
     fontFamily: 'regular',
-    color: Colors.black,
+    color: colors.black,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: colors.border,
   },
   textArea: {
-    backgroundColor: Colors.white,
+    backgroundColor: colors.white,
     borderRadius: 8,
     padding: 12 * DeviceDimensions.widthRatio,
     fontSize: 16,
     fontFamily: 'regular',
-    color: Colors.black,
+    color: colors.black,
     borderWidth: 1,
     borderColor: '#E0E0E0',
     height: 120 * DeviceDimensions.heightRatio,
@@ -144,14 +144,14 @@ const styles = StyleSheet.create({
   inputHelper: {
     fontSize: 12,
     fontFamily: 'regular',
-    color: Colors.subGrey,
+    color: colors.subGrey,
     marginTop: 4 * DeviceDimensions.heightRatio,
     textAlign: 'right',
   },
   optionContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.white,
+    backgroundColor: colors.white,
     borderRadius: 8,
     padding: 16 * DeviceDimensions.widthRatio,
     //marginBottom: 16 * DeviceDimensions.heightRatio,
@@ -161,7 +161,7 @@ const styles = StyleSheet.create({
   optionText: {
     fontSize: 16,
     fontFamily: 'regular',
-    color: Colors.black,
+    color: colors.black,
     marginLeft: 8 * DeviceDimensions.widthRatio,
     flex: 1,
   },
@@ -178,7 +178,7 @@ const styles = StyleSheet.create({
   switchLabel: {
     fontSize: 16,
     fontFamily: 'medium',
-    color: Colors.black,
+    color: colors.black,
     flex: 1,
 
   },
@@ -189,12 +189,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 12 * DeviceDimensions.widthRatio,
-    backgroundColor: Colors.white,
+    backgroundColor: colors.white,
     borderRadius: 8,
     flex: 1,
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: colors.border,
     height: 50 * DeviceDimensions.heightRatio,
 
   },
@@ -205,7 +205,7 @@ const styles = StyleSheet.create({
   counterButtonText: {
     fontSize: 24,
     fontFamily: 'bold',
-    color: Colors.black,
+    color: colors.black,
     marginLeft: 30 * DeviceDimensions.widthRatio,
   },
   counterValueContainer: {
@@ -216,13 +216,13 @@ const styles = StyleSheet.create({
   counterValue: {
     fontSize: 16,
     fontFamily: 'regular',
-    color: Colors.black,
+    color: colors.black,
     marginLeft: 12 * DeviceDimensions.widthRatio,
   },
   addressContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.addressGrey,
+    backgroundColor: colors.addressGrey,
     borderRadius: 8,
     padding: 12 * DeviceDimensions.widthRatio,
     marginBottom: 8 * DeviceDimensions.heightRatio,
@@ -231,27 +231,27 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 16,
     fontFamily: 'regular',
-    color: Colors.black,
+    color: colors.black,
     marginLeft: 8 * DeviceDimensions.widthRatio,
   },
   addressHelperText: {
     fontSize: 12,
     fontFamily: 'regular',
-    color: Colors.grey,
+    color: colors.grey,
   },
   dateText: {
     fontSize: 14,
     fontFamily: 'medium',
-    color: Colors.black,
+    color: colors.black,
     marginBottom: 8,
   },
   selectedDateContainer: {
-    backgroundColor: Colors.white,
+    backgroundColor: colors.white,
     borderRadius: 8,
     padding: 12,
     marginVertical: 8,
     borderWidth: 1,
-    borderColor: Colors.primary || '#000',
+    borderColor: colors.primary || '#000',
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
@@ -270,20 +270,20 @@ const styles = StyleSheet.create({
     padding: 12 * DeviceDimensions.widthRatio,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: Colors.grey,
+    borderColor: colors.grey,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 8 * DeviceDimensions.widthRatio,
     flexDirection: 'row',
   },
   selectedTimeOption: {
-    borderColor: Colors.primary,
-    backgroundColor: Colors.white,
+    borderColor: colors.primary,
+    backgroundColor: colors.white,
   },
   timeOptionText: {
     fontSize: 14,
     fontFamily: 'regular',
-    color: Colors.black,
+    color: colors.black,
     flex: 1,
     textAlign: 'center',
   },
@@ -299,7 +299,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: 16 * DeviceDimensions.widthRatio,
-    backgroundColor: Colors.white,
+    backgroundColor: colors.white,
 
     // Shadow for iOS
     shadowColor: '#000',
@@ -312,7 +312,7 @@ const styles = StyleSheet.create({
   },
 
   selectedTimeSlot: {
-    backgroundColor: Colors.primary,
+    backgroundColor: colors.primary,
   },
   timeSlotIcon: {
     width: 50 * DeviceDimensions.widthRatio,
@@ -333,7 +333,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: 12,
-    backgroundColor: Colors.white,
+    backgroundColor: colors.white,
     shadowColor: '#000',
     shadowOffset: { width: 2, height: 2 },
     shadowOpacity: 0.12,
@@ -351,13 +351,13 @@ const styles = StyleSheet.create({
   timePickerValue: {
     fontSize: 24,
     fontFamily: 'bold',
-    color: Colors.black,
+    color: colors.black,
     marginVertical: 8 * DeviceDimensions.heightRatio,
   },
   timePickerSeparator: {
     fontSize: 24,
     fontFamily: 'bold',
-    color: Colors.black,
+    color: colors.black,
     marginHorizontal: 16 * DeviceDimensions.widthRatio,
   },
   amPmContainer: {
@@ -371,36 +371,36 @@ const styles = StyleSheet.create({
     marginLeft: 30 * DeviceDimensions.widthRatio,
   },
   selectedAmPm: {
-    backgroundColor: Colors.primary,
+    backgroundColor: colors.primary,
   },
   amPmText: {
     fontSize: 16,
     fontFamily: 'medium',
-    color: Colors.black,
+    color: colors.black,
   },
   amPmText2: {
     fontSize: 16,
     fontFamily: 'medium',
-    color: Colors.white,
+    color: colors.white,
   },
   budgetContainer: {
     alignItems: 'center',
     justifyContent: 'center',
     marginVertical: 24 * DeviceDimensions.heightRatio,
     flexDirection: 'row',
-    backgroundColor: Colors.switchGrey,
+    backgroundColor: colors.switchGrey,
     padding: 20,
     borderRadius: 12,
   },
   currencySymbol: {
     fontSize: 36,
     fontFamily: 'bold',
-    color: Colors.black,
+    color: colors.black,
   },
   currencyText: {
     fontSize: 36,
     fontFamily: 'bold',
-    color: Colors.black,
+    color: colors.black,
   },
   numpadContainer: {
     marginTop: 16 * DeviceDimensions.heightRatio,
@@ -414,10 +414,10 @@ const styles = StyleSheet.create({
     width: 80 * DeviceDimensions.widthRatio,
     height: 80 * DeviceDimensions.heightRatio,
     borderRadius: 40,
-    backgroundColor: Colors.white,
+    backgroundColor: colors.white,
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: Colors.black,
+    shadowColor: colors.black,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
@@ -426,10 +426,10 @@ const styles = StyleSheet.create({
   numpadButtonText: {
     fontSize: 24,
     fontFamily: 'bold',
-    color: Colors.black,
+    color: colors.black,
   },
   nextButton: {
-    backgroundColor: Colors.primary,
+    backgroundColor: colors.primary,
     borderRadius: 8,
     padding: 16 * DeviceDimensions.widthRatio,
     alignItems: 'center',
@@ -438,16 +438,16 @@ const styles = StyleSheet.create({
   nextButtonText: {
     fontSize: 16,
     fontFamily: 'bold',
-    color: Colors.white,
+    color: colors.white,
   },
   dropContainer: {
-    backgroundColor: Colors.white,
+    backgroundColor: colors.white,
     borderRadius: 8,
     fontSize: 16,
     fontFamily: 'regular',
-    color: Colors.black,
+    color: colors.black,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: colors.border,
     overflow: 'hidden', // Important for picker border radius
     marginBottom: 19 * DeviceDimensions.heightRatio,
     paddingHorizontal: 12 * DeviceDimensions.widthRatio,
@@ -455,8 +455,8 @@ const styles = StyleSheet.create({
   },
   picker: {
     width: '100%',
-    color: Colors.black,
-    backgroundColor: 'white',
+    color: colors.black,
+    backgroundColor: colors.white,
   },
   row: {
     flexDirection: 'row',
@@ -469,7 +469,7 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   expandedSection: {
-    backgroundColor: Colors.white,
+    backgroundColor: colors.white,
     borderRadius: 8,
     padding: 12 * DeviceDimensions.widthRatio,
     marginBottom: 12 * DeviceDimensions.heightRatio,
@@ -486,7 +486,7 @@ const styles = StyleSheet.create({
   requirementText: {
     fontSize: 14,
     fontFamily: 'regular',
-    color: Colors.black,
+    color: colors.black,
     marginLeft: 8 * DeviceDimensions.widthRatio,
     flex: 1,
   },
@@ -508,7 +508,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.5)',
   },
   modalContent: {
-    backgroundColor: Colors.white,
+    backgroundColor: colors.white,
     borderTopLeftRadius: 16,
     borderTopRightRadius: 16,
     padding: 16 * DeviceDimensions.widthRatio,
@@ -523,7 +523,7 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 18,
     fontFamily: 'medium',
-    color: Colors.black,
+    color: colors.black,
   },
   modalInputContainer: {
     flexDirection: 'row',
@@ -532,13 +532,13 @@ const styles = StyleSheet.create({
   },
   modalInput: {
     flex: 1,
-    backgroundColor: Colors.white,
+    backgroundColor: colors.white,
     borderRadius: 8,
     paddingHorizontal: 12 * DeviceDimensions.widthRatio,
     paddingVertical: 12 * DeviceDimensions.heightRatio,
     fontSize: 16,
     fontFamily: 'regular',
-    color: Colors.black,
+    color: colors.black,
     borderWidth: 1,
     borderColor: '#E0E0E0',
   },
@@ -560,13 +560,13 @@ const styles = StyleSheet.create({
   selectedTimeText: {
     fontSize: 16,
     fontWeight: '500',
-    color: Colors.primary,
+    color: colors.primary,
     textAlign: 'center',
     marginBottom: 10,
   },
   address2: {
     width: '100%',
-    backgroundColor: Colors.address2,
+    backgroundColor: colors.address2,
     borderRadius: 12,
     padding: 10,
     marginBottom: 30 * DeviceDimensions.heightRatio,
@@ -597,7 +597,7 @@ const styles = StyleSheet.create({
   previewTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: Colors.black,
+    color: colors.black,
   },
   previewActions: {
     flexDirection: 'row',
@@ -606,14 +606,14 @@ const styles = StyleSheet.create({
   statusBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.green,
+    backgroundColor: colors.green,
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 16,
     marginRight: 10,
   },
   statusText: {
-    color: Colors.darkGreen,
+    color: colors.darkGreen,
     fontSize: 14,
     fontWeight: '500',
     marginRight: 4,
@@ -622,10 +622,10 @@ const styles = StyleSheet.create({
     position: 'absolute',
     right: 0,
     top: 40,
-    backgroundColor: Colors.white,
+    backgroundColor: colors.white,
     borderRadius: 8,
     padding: 8,
-    shadowColor: '#000',
+    shadowColor: colors.black,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
     shadowRadius: 4,
@@ -641,7 +641,7 @@ const styles = StyleSheet.create({
   menuText: {
     marginLeft: 12,
     fontSize: 16,
-    color: Colors.black,
+    color: colors.black,
   },
   profileSection: {
     flexDirection: 'row',
@@ -656,22 +656,22 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginRight: 8,
     resizeMode: 'contain',
-    backgroundColor: Colors.categoryBox
+    backgroundColor: colors.categoryBox
   },
   avatarText: {
-    color: Colors.white,
+    color: colors.white,
     fontWeight: '600',
     fontSize: 14,
   },
   userName: {
     fontSize: 16,
-    color: Colors.black,
+    color: colors.black,
     fontWeight: '500',
   },
   jobTitlePreview: {
     fontSize: 32,
     fontWeight: 'bold',
-    color: Colors.grey,
+    color: colors.grey,
     marginTop: 20 * DeviceDimensions.heightRatio,
   },
   categoryBadge: {
@@ -685,14 +685,14 @@ const styles = StyleSheet.create({
   },
 
   categoryBadgeText: {
-    color: Colors.primary,
+    color: colors.primary,
     marginLeft: 4,
     fontSize: 14,
     fontFamily: 'medium'
   },
   separator: {
     height: 1,
-    backgroundColor: Colors.grey,
+    backgroundColor: colors.grey,
     justifyContent: 'flex-end'
 
 
@@ -705,23 +705,23 @@ const styles = StyleSheet.create({
   },
   detailLabel: {
     fontSize: 14,
-    color: Colors.grey,
+    color: colors.grey,
     fontWeight: 'medium',
     marginBottom: 4,
   },
   detailValue: {
     fontSize: 18,
-    color: Colors.black,
+    color: colors.black,
     fontWeight: 'bold'
   },
   budget: {
     fontSize: 24,
-    color: Colors.black,
+    color: colors.black,
     fontWeight: 'bold'
   },
   descriptionValue: {
     fontSize: 16,
-    color: Colors.black,
+    color: colors.black,
     fontWeight: 'bold',
     marginBottom: 20 * DeviceDimensions.heightRatio
   },
@@ -738,7 +738,7 @@ const styles = StyleSheet.create({
     width: 150,
     height: 150,
     borderRadius: 8,
-    backgroundColor: Colors.grey,
+    backgroundColor: colors.grey,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 10,
@@ -754,7 +754,7 @@ const styles = StyleSheet.create({
   requirementTextPreview: {
     marginLeft: 8,
     fontSize: 16,
-    color: Colors.black,
+    color: colors.black,
   },
   bottomActions: {
     flexDirection: 'row',
@@ -770,7 +770,7 @@ const styles = StyleSheet.create({
   editButtonText: {
     marginLeft: 8,
     fontSize: 16,
-    color: Colors.grey,
+    color: colors.grey,
     fontWeight: '500',
   },
   removeButton: {
@@ -797,7 +797,7 @@ const styles = StyleSheet.create({
   },
   nameContainer2: {
     flex: 1,
-    backgroundColor: Colors.subGrey,
+    backgroundColor: colors.subGrey,
     borderTopLeftRadius: 20,
     borderBottomLeftRadius: 20,
     justifyContent: 'center',
@@ -817,9 +817,8 @@ const styles = StyleSheet.create({
   timeRangeLabel: {
     fontSize: 16,
     fontFamily: 'medium',
-    color: Colors.black,
+    color: colors.black,
     marginBottom: 8 * DeviceDimensions.heightRatio,
   },
 
 });
-export default styles;

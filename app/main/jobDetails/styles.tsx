@@ -1,12 +1,12 @@
 import { StyleSheet } from "react-native";
-import { Colors } from "../../../constants/Colors";
+import { ThemeColors } from "../../../constants/Colors";
 
-const styles = StyleSheet.create({
+export const createStyles = (colors: ThemeColors) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#fff",
+    backgroundColor: colors.background,
   },
-  
+
   // Header
   header: {
     flexDirection: "row",
@@ -15,8 +15,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 16,
     borderBottomWidth: 1,
-    borderBottomColor: "#f0f0f0",
-    backgroundColor: "#fff",
+    borderBottomColor: colors.border,
+    backgroundColor: colors.white,
   },
   backButton: {
     padding: 8,
@@ -24,7 +24,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 18,
     fontWeight: "600",
-    color: Colors.black,
+    color: colors.black,
   },
   shareButton: {
     padding: 8,
@@ -47,7 +47,7 @@ const styles = StyleSheet.create({
   categoryContainer: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: Colors.primary + "20",
+    backgroundColor: colors.primary + "20",
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 20,
@@ -60,10 +60,10 @@ const styles = StyleSheet.create({
   categoryText: {
     fontSize: 12,
     fontWeight: "600",
-    color: Colors.primary,
+    color: colors.primary,
   },
   statusContainer: {
-    backgroundColor: "#E8F5E8",
+    backgroundColor: "#E8F5E8", // Keep fixed or map to theme?
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 20,
@@ -82,14 +82,14 @@ const styles = StyleSheet.create({
   jobTitle: {
     fontSize: 24,
     fontWeight: "700",
-    color: Colors.black,
+    color: colors.black,
     marginBottom: 8,
     lineHeight: 32,
   },
   budgetText: {
     fontSize: 20,
     fontWeight: "600",
-    color: Colors.primary,
+    color: colors.primary,
   },
 
   // Sections
@@ -99,12 +99,12 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 16,
     fontWeight: "600",
-    color: Colors.black,
+    color: colors.black,
     marginBottom: 12,
   },
   descriptionText: {
     fontSize: 16,
-    color: Colors.grey,
+    color: colors.grey,
     lineHeight: 24,
   },
 
@@ -115,7 +115,7 @@ const styles = StyleSheet.create({
   },
   locationText: {
     fontSize: 16,
-    color: Colors.grey,
+    color: colors.grey,
     marginLeft: 12,
     flex: 1,
   },
@@ -127,14 +127,14 @@ const styles = StyleSheet.create({
   },
   timeText: {
     fontSize: 16,
-    color: Colors.grey,
+    color: colors.grey,
     marginLeft: 12,
   },
 
   // Requirements
   requirementsText: {
     fontSize: 16,
-    color: Colors.grey,
+    color: colors.grey,
     lineHeight: 24,
   },
 
@@ -149,21 +149,21 @@ const styles = StyleSheet.create({
   },
   detailLabel: {
     fontSize: 12,
-    color: Colors.grey,
+    color: colors.grey,
     marginTop: 8,
     marginBottom: 4,
   },
   detailValue: {
     fontSize: 16,
     fontWeight: "600",
-    color: Colors.black,
+    color: colors.black,
   },
 
   // Employer
   employerContainer: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#f8f9fa",
+    backgroundColor: colors.address2, // Was #f8f9fa
     padding: 16,
     borderRadius: 12,
   },
@@ -171,7 +171,7 @@ const styles = StyleSheet.create({
     width: 50,
     height: 50,
     borderRadius: 25,
-    backgroundColor: Colors.primary,
+    backgroundColor: colors.primary,
     alignItems: "center",
     justifyContent: "center",
     marginRight: 16,
@@ -179,7 +179,7 @@ const styles = StyleSheet.create({
   employerInitials: {
     fontSize: 18,
     fontWeight: "600",
-    color: "#fff",
+    color: "#fff", // Text inside avatar always white?
   },
   employerInfo: {
     flex: 1,
@@ -187,19 +187,19 @@ const styles = StyleSheet.create({
   employerName: {
     fontSize: 16,
     fontWeight: "600",
-    color: Colors.black,
+    color: colors.black,
     marginBottom: 4,
   },
   employerPhone: {
     fontSize: 14,
-    color: Colors.grey,
+    color: colors.grey,
   },
   contactButton: {
     padding: 12,
-    backgroundColor: "#fff",
+    backgroundColor: colors.white,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: Colors.primary,
+    borderColor: colors.primary,
   },
 
   // Action Container
@@ -208,12 +208,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 16,
     borderTopWidth: 1,
-    borderTopColor: "#f0f0f0",
-    backgroundColor: "#fff",
+    borderTopColor: colors.border,
+    backgroundColor: colors.white,
   },
   applyButton: {
     flex: 1,
-    backgroundColor: Colors.primary,
+    backgroundColor: colors.primary,
     paddingVertical: 16,
     borderRadius: 12,
     alignItems: "center",
@@ -232,13 +232,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: Colors.primary,
-    backgroundColor: "#fff",
+    borderColor: colors.primary,
+    backgroundColor: colors.white,
   },
   saveButtonText: {
     fontSize: 16,
     fontWeight: "600",
-    color: Colors.primary,
+    color: colors.primary,
     marginLeft: 8,
   },
 
@@ -247,29 +247,29 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#fff",
+    backgroundColor: colors.background,
   },
   loadingText: {
     fontSize: 16,
-    color: Colors.grey,
+    color: colors.grey,
     marginTop: 16,
   },
   errorContainer: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#fff",
+    backgroundColor: colors.background,
     padding: 20,
   },
   errorText: {
     fontSize: 18,
-    color: Colors.grey,
+    color: colors.grey,
     marginTop: 16,
     textAlign: "center",
     marginBottom: 24,
   },
   retryButton: {
-    backgroundColor: Colors.primary,
+    backgroundColor: colors.primary,
     paddingHorizontal: 24,
     paddingVertical: 12,
     borderRadius: 8,
@@ -288,7 +288,7 @@ const styles = StyleSheet.create({
   },
   verificationLoadingText: {
     fontSize: 14,
-    color: Colors.grey,
+    color: colors.grey,
     marginLeft: 8,
   },
   verificationStatusContainer: {
@@ -310,7 +310,7 @@ const styles = StyleSheet.create({
   },
   verificationMessageText: {
     fontSize: 14,
-    color: Colors.grey,
+    color: colors.grey,
     lineHeight: 20,
   },
   verificationSuccessContainer: {
@@ -342,7 +342,7 @@ const styles = StyleSheet.create({
   },
   verificationNotAssignedText: {
     fontSize: 14,
-    color: Colors.grey,
+    color: colors.grey,
     marginLeft: 8,
     flex: 1,
     lineHeight: 20,
@@ -362,7 +362,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   verificationCodeBox: {
-    backgroundColor: "#fff",
+    backgroundColor: colors.white,
     padding: 16,
     borderRadius: 8,
     borderWidth: 2,
@@ -385,7 +385,7 @@ const styles = StyleSheet.create({
   },
   verificationCodeExpiry: {
     fontSize: 12,
-    color: "#666",
+    color: colors.grey,
     textAlign: "center",
     fontStyle: "italic",
   },
@@ -400,12 +400,12 @@ const styles = StyleSheet.create({
   refreshCodeButton: {
     padding: 8,
     borderRadius: 6,
-    backgroundColor: "#fff",
+    backgroundColor: colors.white,
     borderWidth: 1,
-    borderColor: Colors.primary,
+    borderColor: colors.primary,
   },
   noCodeContainer: {
-    backgroundColor: "#f8f9fa",
+    backgroundColor: colors.address2,
     padding: 16,
     borderRadius: 8,
     marginTop: 16,
@@ -413,12 +413,12 @@ const styles = StyleSheet.create({
   },
   noCodeText: {
     fontSize: 14,
-    color: "#666",
+    color: colors.grey,
     textAlign: "center",
     marginBottom: 12,
   },
   refreshCodeButtonLarge: {
-    backgroundColor: Colors.primary,
+    backgroundColor: colors.primary,
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 6,
@@ -436,5 +436,3 @@ const styles = StyleSheet.create({
     fontStyle: "italic",
   },
 });
-
-export default styles;

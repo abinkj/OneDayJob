@@ -1,15 +1,15 @@
 import { StyleSheet } from "react-native";
-import { Colors } from "../../../constants/Colors";
+import { ThemeColors } from "../../../constants/Colors";
 import DeviceDimensions from "../../../constants/DeviceDimenions";
 
-const styles = StyleSheet.create({
+export const createStyles = (colors: ThemeColors) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.white,
+    backgroundColor: colors.white,
   },
   tabContainer: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: colors.background,
   },
   listContainer: {
     paddingHorizontal: 16,
@@ -24,20 +24,20 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingHorizontal: 12,
     paddingVertical: 4,
-    backgroundColor: Colors.addressGrey,
+    backgroundColor: colors.addressGrey,
     borderBottomWidth: 1,
-    borderBottomColor: "#E5E5E5",
+    borderBottomColor: colors.border,
     borderRadius: 20,
     marginTop: 3,
   },
   requestCount: {
     fontSize: 12,
     fontWeight: "600",
-    color: "#000",
+    color: colors.black,
   },
   statusText: {
     fontSize: 14,
-    color: "#666",
+    color: colors.grey,
     fontWeight: "500",
   },
 
@@ -143,7 +143,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#F5F5F5",
     marginRight: 8,
     borderWidth: 1,
-    borderColor: Colors.black,
+    borderColor: colors.black,
   },
   activeFilterButton: {
     backgroundColor: "#000",
@@ -176,7 +176,7 @@ const styles = StyleSheet.create({
     position: "absolute",
     top: 60,
     right: 16,
-    backgroundColor: Colors.white,
+    backgroundColor: colors.white,
     borderRadius: 8,
     paddingVertical: 8,
     shadowColor: "#000",
@@ -204,7 +204,7 @@ const styles = StyleSheet.create({
   selectionInfo: {
     paddingHorizontal: 16,
     paddingVertical: 8,
-    backgroundColor: Colors.addressGrey,
+    backgroundColor: colors.addressGrey,
   },
   selectionText: {
     fontSize: 12,
@@ -214,7 +214,7 @@ const styles = StyleSheet.create({
 
   // Request Card Styles
   requestCard: {
-    backgroundColor: Colors.white,
+    backgroundColor: colors.white,
     borderRadius: 12,
     padding: 10,
     marginTop: 12 * DeviceDimensions.heightRatio,
@@ -282,11 +282,11 @@ const styles = StyleSheet.create({
   },
   available: {
     fontSize: 12,
-    color: Colors.grey,
+    color: colors.grey,
   },
   requestDescription: {
     fontSize: 14,
-    color: Colors.black,
+    color: colors.black,
     lineHeight: 20,
     marginBottom: 12,
   },
@@ -331,7 +331,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     flexDirection: "row",
-    backgroundColor: Colors.white,
+    backgroundColor: colors.white,
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderTopWidth: 1,
@@ -369,7 +369,7 @@ const styles = StyleSheet.create({
 
   // Verification Card Styles
   verificationCard: {
-    backgroundColor: Colors.white,
+    backgroundColor: colors.white,
     borderRadius: 12,
     padding: 16,
     marginTop: 12,
@@ -407,12 +407,12 @@ const styles = StyleSheet.create({
   verificationName: {
     fontSize: 18,
     fontWeight: "400",
-    color: Colors.black,
+    color: colors.black,
     marginBottom: 4,
   },
   verificationPhone: {
     fontSize: 15,
-    color: Colors.grey,
+    color: colors.grey,
     fontFamily: "medium",
   },
   statusBadge: {
@@ -436,12 +436,12 @@ const styles = StyleSheet.create({
 
   // Verification Code Section
   verificationCodeSection: {
-    backgroundColor: Colors.white,
+    backgroundColor: colors.white,
     paddingHorizontal: 16,
     paddingVertical: 8,
     marginHorizontal: 16,
     borderRadius: 12,
-    shadowColor: Colors.black,
+    shadowColor: colors.black,
     shadowOffset: {
       width: 0,
       height: -15,
@@ -467,7 +467,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   verifyButton: {
-    backgroundColor: Colors.grey,
+    backgroundColor: colors.grey,
     borderRadius: 8,
     paddingVertical: 14,
     alignItems: "center",
@@ -498,7 +498,7 @@ const styles = StyleSheet.create({
     paddingTop: 12,
     paddingBottom: 8,
     position: "relative",
-    backgroundColor: Colors.white,
+    backgroundColor: colors.white,
   },
   tab: {
     flex: 1,
@@ -518,7 +518,7 @@ const styles = StyleSheet.create({
     position: "absolute",
     bottom: 0,
     height: 3,
-    backgroundColor: Colors.blue,
+    backgroundColor: colors.blue,
     borderBottomEndRadius: 10,
     borderBottomStartRadius: 10,
     left: 28 * DeviceDimensions.widthRatio,
@@ -547,7 +547,7 @@ const styles = StyleSheet.create({
   },
   selectedAcceptedCard: {
     borderWidth: 2,
-    borderColor: Colors.primary || '#000',
+    borderColor: colors.primary,
   },
   acceptedRightSection: {
     alignItems: 'flex-end',
@@ -634,11 +634,11 @@ const styles = StyleSheet.create({
 
   // Verification Status Header Styles
   verificationStatusHeader: {
-    backgroundColor: Colors.white,
+    backgroundColor: colors.white,
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: "#E5E5E5",
+    borderBottomColor: colors.border,
     marginBottom: 8,
   },
   verificationProgressContainer: {
@@ -647,19 +647,19 @@ const styles = StyleSheet.create({
   verificationProgressText: {
     fontSize: 14,
     fontWeight: "600",
-    color: "#333",
+    color: colors.black,
     marginBottom: 8,
   },
   syncWarningText: {
     fontSize: 12,
-    color: "#FF9800",
+    color: colors.primary, // Using primary as warning color or keep standard
     fontWeight: "500",
     marginBottom: 8,
     fontStyle: "italic",
   },
   progressBar: {
     height: 6,
-    backgroundColor: "#E5E5E5",
+    backgroundColor: colors.border,
     borderRadius: 3,
     overflow: "hidden",
   },
@@ -707,7 +707,7 @@ const styles = StyleSheet.create({
 
   // Start Job Button Styles
   startJobContainer: {
-    backgroundColor: "#E8F5E8",
+    backgroundColor: colors.green,
     padding: 16,
     borderRadius: 12,
     marginTop: 16,
@@ -735,14 +735,14 @@ const styles = StyleSheet.create({
   },
   startJobDescription: {
     fontSize: 14,
-    color: "#2E7D32",
+    color: colors.darkGreen,
     textAlign: "center",
     lineHeight: 20,
   },
 
   // Job Started Status Styles
   jobStartedContainer: {
-    backgroundColor: "#E8F5E8",
+    backgroundColor: colors.green,
     padding: 16,
     borderRadius: 12,
     marginTop: 16,
@@ -758,12 +758,12 @@ const styles = StyleSheet.create({
   jobStartedTitle: {
     fontSize: 16,
     fontWeight: "700",
-    color: "#2E7D32",
+    color: colors.darkGreen,
     marginLeft: 8,
   },
   jobStartedDescription: {
     fontSize: 14,
-    color: "#2E7D32",
+    color: colors.darkGreen,
     lineHeight: 20,
   },
   loadingContainer: {
@@ -775,9 +775,8 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: 16,
     fontSize: 16,
-    color: "#666",
+    color: colors.grey,
     textAlign: "center",
   },
 });
 
-export default styles;

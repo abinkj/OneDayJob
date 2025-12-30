@@ -12,10 +12,13 @@ import BankAccountScreen from "@/main/bankAccount";
 import PaymentHistoryScreen from "@/main/paymentHistory";
 import Settings from "@/main/settings";
 import PrivacyPolicy from "@/main/privacyPolicy";
+import { useTheme } from "../../contexts/ThemeContext";
 
 const Stack = createNativeStackNavigator();
 
 const MainStack = () => {
+  const { colors } = useTheme();
+
   return (
     <Stack.Navigator
       id={undefined}
@@ -23,6 +26,7 @@ const MainStack = () => {
         headerShown: false,
         animation: "slide_from_right",
         gestureEnabled: true,
+        contentStyle: { backgroundColor: colors.background },
       }}
     >
       <Stack.Screen name="MainHome" component={TabLayout} />

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import {
   View,
   Text,
@@ -11,10 +11,10 @@ import {
 } from "react-native";
 import { requestOtp } from "../../../services/api";
 import { useNavigation } from "@react-navigation/native";
-import styles from "./styles";
+import { createStyles } from "./styles";
 import Animated, { FadeInDown, FadeInUp } from "react-native-reanimated";
 import { Ionicons } from "@expo/vector-icons";
-import { Colors } from "../../../constants/Colors";
+import { useTheme } from "../../../contexts/ThemeContext";
 import CustomButton from "../../../components/CustomButton";
 import { useAlert } from "../../../components/CustomAlert/AlertProvider";
 import { validatePhone } from "../../../utilities/formValidation";
@@ -25,6 +25,9 @@ const Login = () => {
   const [isFocused, setIsFocused] = useState(false);
   const navigation = useNavigation<any>();
   const { showAlert } = useAlert();
+
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
 
   const handleGetOtp = async () => {
     const phoneValidation = validatePhone(phone);
@@ -77,7 +80,8 @@ const Login = () => {
           style={styles.headerContainer}
         >
           <Image
-            source={require("../../../assets/placeholder-image.png")}
+            //source={require("../../../assets/placeholder-image.png")}
+            source={require("../../../assets/images/onboarding/ob1.png")}
             style={styles.image}
           />
           <Text style={styles.title}>Welcome Back</Text>
@@ -100,7 +104,7 @@ const Login = () => {
             <Ionicons
               name="call-outline"
               size={20}
-              color={isFocused ? Colors.primary : Colors.grey}
+              color={isFocused ? colors.primary : colors.grey}
               style={{ marginRight: 8 }}
             />
             <Text style={styles.countryCode}>+91</Text>
@@ -110,7 +114,7 @@ const Login = () => {
               keyboardType="number-pad"
               maxLength={10}
               placeholder="Enter 10-digit number"
-              placeholderTextColor={Colors.grey}
+              placeholderTextColor={colors.grey}
               value={phone}
               onChangeText={setPhone}
               onFocus={() => setIsFocused(true)}
@@ -122,7 +126,7 @@ const Login = () => {
               text={"Send OTP"}
               onPress={handleGetOtp}
               isLoading={isLoading}
-              color={Colors.primary}
+              color={colors.primary}
             />
           </View>{" "}
         </Animated.View>

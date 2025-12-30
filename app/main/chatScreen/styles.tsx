@@ -1,21 +1,22 @@
 import { StyleSheet } from "react-native";
-import { Colors } from "../../../constants/Colors";
+import { ThemeColors } from "../../../constants/Colors";
 
-const styles = StyleSheet.create({
+export const createStyles = (colors: ThemeColors) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: colors.background,
   },
   dateLabel: {
     alignSelf: "center",
     fontSize: 12,
     marginVertical: 10,
-    color: "#888",
+    color: colors.grey,
   },
   messagesContainer: {
     paddingHorizontal: 16,
     paddingBottom: 10,
   },
+  // Legacy/Unused styles kept for safety but updated for theme
   messageBubble: {
     height: "auto",
     padding: 10,
@@ -23,27 +24,27 @@ const styles = StyleSheet.create({
     maxWidth: "80%",
   },
   myMessage: {
-    backgroundColor: Colors.subGrey,
+    backgroundColor: colors.subGrey,
     alignSelf: "flex-end",
     borderBottomStartRadius: 21,
     borderBottomEndRadius: 21,
     borderTopStartRadius: 21,
   },
   otherMessage: {
-    backgroundColor: Colors.messagageBubble,
+    backgroundColor: colors.messagageBubble,
     alignSelf: "flex-start",
     borderBottomStartRadius: 21,
     borderBottomEndRadius: 21,
     borderTopEndRadius: 21,
   },
   messageText: {
-    color: "#fff",
+    color: colors.white,
     fontWeight: "400",
     fontSize: 16,
   },
   messageTime: {
     fontSize: 10,
-    color: "#ccc",
+    color: colors.grey,
     alignSelf: "flex-end",
   },
   timeContainer: {
@@ -56,6 +57,7 @@ const styles = StyleSheet.create({
   tickIcon: {
     marginLeft: 1,
   },
+  // End Legacy
   inputContainer: {
     flexDirection: "row",
     alignItems: "center",
@@ -73,17 +75,17 @@ const styles = StyleSheet.create({
     paddingLeft: 16,
     paddingRight: 12,
     borderWidth: 0.15,
-    borderColor: Colors.borderGrey,
-    backgroundColor: "white",
+    borderColor: colors.borderGrey,
+    backgroundColor: colors.white,
   },
   input: {
     flex: 1,
+    color: colors.black,
   },
   sendIcon: {
     justifyContent: "center",
     alignItems: "center",
-
-    backgroundColor: Colors.primary,
+    backgroundColor: colors.primary,
     padding: 8,
     borderRadius: 1234,
     marginLeft: 8,
@@ -95,10 +97,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   typingText: {
-    color: Colors.grey,
+    color: colors.grey,
     fontSize: 14,
     fontStyle: 'italic',
   },
 });
-
-export default styles;

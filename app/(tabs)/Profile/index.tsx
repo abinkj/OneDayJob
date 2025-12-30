@@ -11,13 +11,13 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import styles from "./styles";
 import { Header } from "../../../components/header";
 import Images from "../../../utilities/images";
 import { ProfileSkeleton } from "../../../components/Shimmer/Skeletons";
 import DeviceDimensions from "../../../constants/DeviceDimenions";
 import CustomButton from "../../../components/CustomButton";
-import { Colors } from "../../../constants/Colors";
+import { useTheme } from "../../../contexts/ThemeContext";
+import { createStyles } from "./styles";
 import JobApplicationStatus from "../../../components/jobApplicationStatus";
 import ratingStars from "../../../components/ratingStars";
 import { useNavigation } from "@react-navigation/native";
@@ -50,6 +50,9 @@ const Profile: React.FC = () => {
 
   const navigation = useNavigation<any>();
   const { showAlert } = useAlert();
+  const { colors } = useTheme();
+  // const styles = createStyles(colors); // Using useMemo is better for performance if styles are complex or re-renders frequent
+  const styles = React.useMemo(() => createStyles(colors), [colors]);
 
   useEffect(() => {
     const fetchUserAndRatings = async () => {
@@ -216,7 +219,7 @@ const Profile: React.FC = () => {
           </Text>
 
           <View style={styles.locationContainer}>
-            <Ionicons name="location-sharp" size={16} color={Colors.primary} />
+            <Ionicons name="location-sharp" size={16} color={colors.primary} />
             <Text style={styles.locationText}>
               {user?.locationText || user?.location?.address || "Not specified"}
             </Text>
@@ -239,7 +242,7 @@ const Profile: React.FC = () => {
                 <Ionicons
                   name="information-circle"
                   size={18}
-                  color={Colors.primary}
+                  color={colors.primary}
                   style={styles.infoIcon}
                 />
               </View>
@@ -254,7 +257,7 @@ const Profile: React.FC = () => {
         {reviews.length > 0 && (
           <View >
             <Text
-              style={{ fontSize: 18, fontWeight: "bold", marginBottom: 15, marginTop: 15, paddingHorizontal: 20 }}
+              style={{ fontSize: 18, fontWeight: "bold", marginBottom: 15, marginTop: 15, paddingHorizontal: 20, color: colors.black }}
             >
               Recent Reviews
             </Text>

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import {
   View,
   Text,
@@ -9,13 +9,13 @@ import {
   ScrollView,
   Platform,
 } from "react-native";
-import styles from "./styles";
+import { createStyles } from "./styles";
 import { router } from "expo-router";
 import { requestOtp } from "../../../services/api";
 import { useNavigation } from "@react-navigation/native";
 import Animated, { FadeInDown, FadeInUp } from "react-native-reanimated";
 import { Ionicons } from "@expo/vector-icons";
-import { Colors } from "../../../constants/Colors";
+import { useTheme } from "../../../contexts/ThemeContext";
 import CustomButton from "../../../components/CustomButton";
 import { useAlert } from "../../../components/CustomAlert/AlertProvider";
 import { validateName, validatePhone } from "../../../utilities/formValidation";
@@ -27,6 +27,9 @@ const SignUp = () => {
   const [focusedInput, setFocusedInput] = useState<string | null>(null);
   const navigation = useNavigation<any>();
   const { showAlert } = useAlert();
+
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
 
   const handleGetOtp = async () => {
     const nameValidation = validateName(name.trim(), "firstname");
@@ -79,7 +82,7 @@ const SignUp = () => {
   return (
     <KeyboardAvoidingView
       style={styles.container}
-      //behavior={Platform.OS === "ios" ? "padding" : undefined}
+    //behavior={Platform.OS === "ios" ? "padding" : undefined}
     >
       <ScrollView
         automaticallyAdjustKeyboardInsets={true}
@@ -92,7 +95,8 @@ const SignUp = () => {
           style={styles.headerContainer}
         >
           <Image
-            source={require("../../../assets/placeholder-image.png")}
+            //source={require("../../../assets/placeholder-image.png")}
+            source={require("../../../assets/images/onboarding/ob4.png")}
             style={styles.image}
           />
           <Text style={styles.title}>Create Account</Text>
@@ -115,13 +119,13 @@ const SignUp = () => {
               <Ionicons
                 name="person-outline"
                 size={20}
-                color={focusedInput === "name" ? Colors.primary : Colors.grey}
+                color={focusedInput === "name" ? colors.primary : colors.grey}
                 style={{ marginRight: 12 }}
               />
               <TextInput
                 style={styles.input}
                 placeholder="Enter your name"
-                placeholderTextColor={Colors.grey}
+                placeholderTextColor={colors.grey}
                 value={name}
                 onChangeText={setName}
                 onFocus={() => setFocusedInput("name")}
@@ -141,7 +145,7 @@ const SignUp = () => {
               <Ionicons
                 name="call-outline"
                 size={20}
-                color={focusedInput === "phone" ? Colors.primary : Colors.grey}
+                color={focusedInput === "phone" ? colors.primary : colors.grey}
                 style={{ marginRight: 8 }}
               />
               <Text style={styles.countryCode}>+91</Text>
@@ -150,7 +154,7 @@ const SignUp = () => {
                 keyboardType="number-pad"
                 maxLength={10}
                 placeholder="Enter 10-digit number"
-                placeholderTextColor={Colors.grey}
+                placeholderTextColor={colors.grey}
                 value={phone}
                 onChangeText={setPhone}
                 onFocus={() => setFocusedInput("phone")}

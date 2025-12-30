@@ -1,14 +1,17 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { View, StyleSheet, ActivityIndicator } from "react-native";
 import { useRoute } from "@react-navigation/native";
 import { Header } from "../../../components/header";
 import { ListSkeleton } from "../../../components/Shimmer/Skeletons";
-import { Colors } from "../../../constants/Colors";
+import { Colors, ThemeColors } from "../../../constants/Colors";
 import WebView from "react-native-webview";
+import { useTheme } from "../../../contexts/ThemeContext";
 
 const PrivacyPolicy = () => {
   const route = useRoute<any>();
   const { url, title } = route.params || {};
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
 
   const displayUrl = url || "https://www.google.com";
   const displayTitle = title || "Privacy Policy";
@@ -31,9 +34,9 @@ const PrivacyPolicy = () => {
   );
 };
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#fff" },
-  webview: { flex: 1 },
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
+  container: { flex: 1, backgroundColor: colors.background },
+  webview: { flex: 1, backgroundColor: colors.background },
   loadingContainer: {
     position: "absolute",
     top: 0,
@@ -42,7 +45,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#fff",
+    backgroundColor: colors.background,
   },
 });
 

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   View,
   Text,
@@ -9,16 +9,16 @@ import {
   Modal,
   Platform,
   KeyboardAvoidingView,
+  FlatList,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { useSelector } from "react-redux";
 import { Ionicons } from "@expo/vector-icons";
-import { Colors } from "../../../constants/Colors";
+import { useTheme } from "../../../contexts/ThemeContext";
 import CustomButton from "../../../components/CustomButton";
-import { Picker } from "@react-native-picker/picker";
 import * as ImagePicker from "expo-image-picker";
 import { Calendar } from "react-native-calendars";
-import styles from "./styles";
+import { createStyles } from "./styles";
 import CustomSwitch from "../../../components/CustomSwich";
 import JobDescriptionSection from "../../../components/JobDescription";
 import LocationSearch from "../../../components/LocationSearch";
@@ -126,6 +126,8 @@ const timeSlots = [
 ];
 
 const PostJobScreen = ({ navigation: navProp }) => {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const navigation = useNavigation();
   const { kycStatus } = useSelector((state) => state.authentication);
   const { showAlert } = useAlert();
@@ -1185,7 +1187,7 @@ const PostJobScreen = ({ navigation: navProp }) => {
   // Render Step 1: Select Category
   const renderStep1 = () => (
     <View style={{ paddingBottom: 20 }}>
-      <Text style={styles.categoryText}>Select Category</Text>
+      <Text style={styles.sectionTitle}>Select Category</Text>
       <View style={styles.categoryContainer}>
         {jobCategories.map((category) => (
           <View style={styles.CategoryView} key={category.id}>
@@ -1217,110 +1219,97 @@ const PostJobScreen = ({ navigation: navProp }) => {
     <View style={styles.stepContainer}>
       <Text style={styles.sectionTitle}>Category</Text>
       <View style={styles.dropContainer}>
-        {Platform.OS === "ios" ? (
-          <>
-            <TouchableOpacity
-              style={{ paddingVertical: 12 }}
-              onPress={() => setShowCategoryPicker(true)}
-            >
-              <Text style={{ fontSize: 16, color: Colors.black }}>
-                {selectedValue || "Select Category"}
-              </Text>
-            </TouchableOpacity>
+        <>
+          <TouchableOpacity
+            style={{ paddingVertical: 12 }}
+            onPress={() => setShowCategoryPicker(true)}
+          >
+            <Text style={{ fontSize: 16, color: colors.black }}>
+              {selectedValue || "Select Category"}
+            </Text>
+          </TouchableOpacity>
 
-            <Modal
-              visible={showCategoryPicker}
-              transparent={true}
-              animationType="slide"
-              onRequestClose={() => setShowCategoryPicker(false)}
+          <Modal
+            visible={showCategoryPicker}
+            transparent={true}
+            animationType="slide"
+            onRequestClose={() => setShowCategoryPicker(false)}
+          >
+            <View
+              style={{
+                flex: 1,
+                justifyContent: "flex-end",
+                backgroundColor: "rgba(0,0,0,0.5)",
+              }}
             >
               <View
                 style={{
-                  flex: 1,
-                  justifyContent: "flex-end",
-                  backgroundColor: "rgba(0,0,0,0.5)",
+                  backgroundColor: colors.white,
+                  borderTopLeftRadius: 20,
+                  borderTopRightRadius: 20,
+                  maxHeight: '70%',
                 }}
               >
                 <View
                   style={{
-                    backgroundColor: "white",
-                    borderTopLeftRadius: 20,
-                    borderTopRightRadius: 20,
+                    flexDirection: "row",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    padding: 16,
+                    borderBottomWidth: 1,
+                    borderBottomColor: colors.border,
                   }}
                 >
-                  <View
-                    style={{
-                      flexDirection: "row",
-                      justifyContent: "flex-end",
-                      padding: 16,
-                      borderBottomWidth: 1,
-                      borderBottomColor: "#eee",
-                    }}
+                  <Text style={{ fontSize: 18, fontWeight: "600", color: colors.black }}>
+                    Select Category
+                  </Text>
+                  <TouchableOpacity
+                    onPress={() => setShowCategoryPicker(false)}
                   >
-                    <TouchableOpacity
-                      onPress={() => setShowCategoryPicker(false)}
+                    <Text
+                      style={{
+                        color: colors.primary,
+                        fontSize: 16,
+                        fontWeight: "600",
+                      }}
                     >
-                      <Text
-                        style={{
-                          color: Colors.primary,
-                          fontSize: 16,
-                          fontWeight: "600",
-                        }}
-                      >
-                        Done
-                      </Text>
-                    </TouchableOpacity>
-                  </View>
-                  <Picker
-                    selectedValue={selectedValue}
-                    onValueChange={(itemValue, itemIndex) => {
-                      setSelectedValue(itemValue);
-                      const category = jobCategories.find(
-                        (cat) => cat.name === itemValue
-                      );
-                      if (category) {
-                        setSelectedCategory(category.id);
-                      }
-                    }}
-                    style={{ width: "100%", height: 200 }}
-                  >
-                    {jobCategories.map((option) => (
-                      <Picker.Item
-                        key={option.id}
-                        label={option.name}
-                        value={option.name}
-                      />
-                    ))}
-                  </Picker>
+                      Done
+                    </Text>
+                  </TouchableOpacity>
                 </View>
+
+                <FlatList
+                  data={jobCategories}
+                  keyExtractor={(item) => item.id.toString()}
+                  renderItem={({ item }) => (
+                    <TouchableOpacity
+                      style={{
+                        padding: 16,
+                        borderBottomWidth: 1,
+                        borderBottomColor: colors.border,
+                        flexDirection: 'row',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        backgroundColor: selectedValue === item.name ? colors.categoryBox : 'transparent'
+                      }}
+                      onPress={() => {
+                        setSelectedValue(item.name);
+                        setSelectedCategory(item.id);
+                        setShowCategoryPicker(false);
+                      }}
+                    >
+                      <Text style={{ fontSize: 16, color: colors.black }}>{item.name}</Text>
+                      {selectedValue === item.name && (
+                        <Ionicons name="checkmark" size={20} color={colors.primary} />
+                      )}
+                    </TouchableOpacity>
+                  )}
+                  style={{ maxHeight: 400 }}
+                />
               </View>
-            </Modal>
-          </>
-        ) : (
-          <Picker
-            selectedValue={selectedValue}
-            onValueChange={(itemValue, itemIndex) => {
-              setSelectedValue(itemValue);
-              const category = jobCategories.find(
-                (cat) => cat.name === itemValue
-              );
-              if (category) {
-                setSelectedCategory(category.id);
-              }
-            }}
-            style={styles.picker}
-            dropdownIconColor={Colors.border}
-            mode="dropdown"
-          >
-            {jobCategories.map((option) => (
-              <Picker.Item
-                key={option.id}
-                label={option.name}
-                value={option.name}
-              />
-            ))}
-          </Picker>
-        )}
+            </View>
+          </Modal>
+        </>
       </View>
 
       <View style={styles.row}>
@@ -1333,25 +1322,26 @@ const PostJobScreen = ({ navigation: navProp }) => {
           value={jobName}
           onChangeText={setJobName}
           placeholder="Name"
-          placeholderTextColor={Colors.subGrey}
+          placeholderTextColor={colors.grey}
         />
       </View>
       <View style={styles.row}>
         <Text style={styles.sectionTitle}>Describe Your Job</Text>
       </View>
 
-      {/* Unified Job Description Section */}
       <JobDescriptionSection
         jobDescription={jobDescription}
         setJobDescription={setJobDescription}
         requirements={requirements}
-        // photos={photos}
+        photos={photos}
         toggleRequirementsList={toggleRequirementsList}
         showRequirementsList={showRequirementsList}
         openEditRequirements={openEditRequirements}
-      // togglePhotosList={togglePhotosList}
-      // showPhotosList={showPhotosList}
-      // handlePickImage={handlePickImage}
+        togglePhotosList={togglePhotosList}
+        showPhotosList={showPhotosList}
+        handlePickImage={handlePickImage}
+        onRemovePhoto={removePhoto}
+        viewMode={false}
       />
 
       <View style={styles.switchContainer}>
@@ -1367,7 +1357,7 @@ const PostJobScreen = ({ navigation: navProp }) => {
           <Text style={styles.vaccancyTitle}>Number of Vacancies</Text>
           <View style={styles.counterContainer}>
             <View style={styles.counterValueContainer}>
-              <Ionicons name="person-outline" size={24} color={Colors.grey} />
+              <Ionicons name="person-outline" size={24} color={colors.grey} />
               <TextInput
                 style={styles.counterValue}
                 value={String(vacancyCount)}
@@ -1382,6 +1372,7 @@ const PostJobScreen = ({ navigation: navProp }) => {
                 keyboardType="number-pad"
                 maxLength={3}
                 placeholder="0"
+                placeholderTextColor={colors.grey}
               />
             </View>
             <TouchableOpacity
@@ -1407,7 +1398,6 @@ const PostJobScreen = ({ navigation: navProp }) => {
           value={canBeDoneRemotely}
           onValueChange={(value) => {
             setCanBeDoneRemotely(value);
-            // Clear location data when switching to remote
             if (value) {
               setSelectedLocation(null);
               setTaskAddress("");
@@ -1415,16 +1405,13 @@ const PostJobScreen = ({ navigation: navProp }) => {
           }}
         />
       </View>
+
       {!canBeDoneRemotely && (
         <View>
           <Text style={styles.sectionTitle2}>Add Task Location</Text>
           <LocationSearch
             value={selectedLocation?.address || taskAddress}
             onLocationSelect={(location) => {
-              console.log(
-                "Location selected:",
-                JSON.stringify(location, null, 2)
-              );
               setSelectedLocation(location);
               setTaskAddress(
                 location.address || `${location.city}, ${location.state}`
@@ -1464,7 +1451,7 @@ const PostJobScreen = ({ navigation: navProp }) => {
           <Text style={styles.timeOptionText}>
             On Date {onDate ? `(${new Date(onDate).toLocaleDateString()})` : ""}
           </Text>
-          <Ionicons name="chevron-down" size={16} color={Colors.black} />
+          <Ionicons name="chevron-down" size={16} color={colors.black} />
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -1481,7 +1468,7 @@ const PostJobScreen = ({ navigation: navProp }) => {
             Before date{" "}
             {beforeDate ? `(${new Date(beforeDate).toLocaleDateString()})` : ""}
           </Text>
-          <Ionicons name="chevron-down" size={16} color={Colors.black} />
+          <Ionicons name="chevron-down" size={16} color={colors.black} />
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -1588,8 +1575,8 @@ const PostJobScreen = ({ navigation: navProp }) => {
                   style={[
                     styles.timeSlotName,
                     selectedTimePreferences.includes(slot.id)
-                      ? { color: Colors.white }
-                      : { color: Colors.black },
+                      ? { color: colors.white }
+                      : { color: colors.black },
                   ]}
                 >
                   {slot.name}
@@ -1598,8 +1585,8 @@ const PostJobScreen = ({ navigation: navProp }) => {
                   style={[
                     styles.timeSlotTime,
                     selectedTimePreferences.includes(slot.id)
-                      ? { color: Colors.white }
-                      : { color: Colors.grey },
+                      ? { color: colors.white }
+                      : { color: colors.grey },
                   ]}
                 >
                   {slot.time}
@@ -1632,8 +1619,8 @@ const PostJobScreen = ({ navigation: navProp }) => {
                   style={[
                     styles.timeSlotName,
                     selectedTimePreferences.includes(slot.id)
-                      ? { color: Colors.white }
-                      : { color: Colors.black },
+                      ? { color: colors.white }
+                      : { color: colors.black },
                   ]}
                 >
                   {slot.name}
@@ -1642,8 +1629,8 @@ const PostJobScreen = ({ navigation: navProp }) => {
                   style={[
                     styles.timeSlotTime,
                     selectedTimePreferences.includes(slot.id)
-                      ? { color: Colors.white }
-                      : { color: Colors.grey },
+                      ? { color: colors.white }
+                      : { color: colors.grey },
                   ]}
                 >
                   {slot.time}
@@ -1668,7 +1655,7 @@ const PostJobScreen = ({ navigation: navProp }) => {
                   onPress={incrementFromHour}
                   style={styles.timePickerArrow}
                 >
-                  <Ionicons name="chevron-up" size={24} color={Colors.grey} />
+                  <Ionicons name="chevron-up" size={24} color={colors.grey} />
                 </TouchableOpacity>
                 <Text style={styles.timePickerValue}>
                   {String(fromHour).padStart(2, "0")}
@@ -1677,7 +1664,7 @@ const PostJobScreen = ({ navigation: navProp }) => {
                   onPress={decrementFromHour}
                   style={styles.timePickerArrow}
                 >
-                  <Ionicons name="chevron-down" size={24} color={Colors.grey} />
+                  <Ionicons name="chevron-down" size={24} color={colors.grey} />
                 </TouchableOpacity>
               </View>
 
@@ -1688,7 +1675,7 @@ const PostJobScreen = ({ navigation: navProp }) => {
                   onPress={incrementFromMinute}
                   style={styles.timePickerArrow}
                 >
-                  <Ionicons name="chevron-up" size={24} color={Colors.grey} />
+                  <Ionicons name="chevron-up" size={24} color={colors.grey} />
                 </TouchableOpacity>
                 <Text style={styles.timePickerValue}>
                   {String(fromMinute).padStart(2, "0")}
@@ -1697,7 +1684,7 @@ const PostJobScreen = ({ navigation: navProp }) => {
                   onPress={decrementFromMinute}
                   style={styles.timePickerArrow}
                 >
-                  <Ionicons name="chevron-down" size={24} color={Colors.grey} />
+                  <Ionicons name="chevron-down" size={24} color={colors.grey} />
                 </TouchableOpacity>
               </View>
 
@@ -1745,7 +1732,7 @@ const PostJobScreen = ({ navigation: navProp }) => {
                   onPress={incrementToHour}
                   style={styles.timePickerArrow}
                 >
-                  <Ionicons name="chevron-up" size={24} color={Colors.grey} />
+                  <Ionicons name="chevron-up" size={24} color={colors.grey} />
                 </TouchableOpacity>
                 <Text style={styles.timePickerValue}>
                   {String(toHour).padStart(2, "0")}
@@ -1754,7 +1741,7 @@ const PostJobScreen = ({ navigation: navProp }) => {
                   onPress={decrementToHour}
                   style={styles.timePickerArrow}
                 >
-                  <Ionicons name="chevron-down" size={24} color={Colors.grey} />
+                  <Ionicons name="chevron-down" size={24} color={colors.grey} />
                 </TouchableOpacity>
               </View>
 
@@ -1765,7 +1752,7 @@ const PostJobScreen = ({ navigation: navProp }) => {
                   onPress={incrementToMinute}
                   style={styles.timePickerArrow}
                 >
-                  <Ionicons name="chevron-up" size={24} color={Colors.grey} />
+                  <Ionicons name="chevron-up" size={24} color={colors.grey} />
                 </TouchableOpacity>
                 <Text style={styles.timePickerValue}>
                   {String(toMinute).padStart(2, "0")}
@@ -1774,7 +1761,7 @@ const PostJobScreen = ({ navigation: navProp }) => {
                   onPress={decrementToMinute}
                   style={styles.timePickerArrow}
                 >
-                  <Ionicons name="chevron-down" size={24} color={Colors.grey} />
+                  <Ionicons name="chevron-down" size={24} color={colors.grey} />
                 </TouchableOpacity>
               </View>
 
@@ -1944,14 +1931,14 @@ const PostJobScreen = ({ navigation: navProp }) => {
               <Ionicons
                 name="chevron-down"
                 size={16}
-                color={Colors.darkGreen}
+                color={colors.darkGreen}
               />
             </View>
             <TouchableOpacity onPress={toggleMenu}>
               <Ionicons
                 name="ellipsis-vertical"
                 size={20}
-                color={Colors.black}
+                color={colors.black}
               />
             </TouchableOpacity>
           </View>
@@ -1964,19 +1951,19 @@ const PostJobScreen = ({ navigation: navProp }) => {
               <Ionicons
                 name="share-social-outline"
                 size={20}
-                color={Colors.black}
+                color={colors.black}
               />
               <Text style={styles.menuText}>Share</Text>
             </TouchableOpacity>
             <TouchableOpacity style={styles.menuItem} onPress={handleEdit}>
-              <Ionicons name="create-outline" size={20} color={Colors.black} />
+              <Ionicons name="create-outline" size={20} color={colors.black} />
               <Text style={styles.menuText}>Edit</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.menuItem}
               onPress={handlePostSimilar}
             >
-              <Ionicons name="copy-outline" size={20} color={Colors.black} />
+              <Ionicons name="copy-outline" size={20} color={colors.black} />
               <Text style={styles.menuText}>Post Similar Job</Text>
             </TouchableOpacity>
             <TouchableOpacity style={styles.menuItem} onPress={handleRemoveJob}>
@@ -2115,7 +2102,7 @@ const PostJobScreen = ({ navigation: navProp }) => {
                     <Ionicons
                       name="checkmark"
                       size={16}
-                      color={Colors.primary}
+                      color={colors.primary}
                     />
                     <Text style={styles.requirementTextPreview}>{req}</Text>
                   </View>
@@ -2129,7 +2116,7 @@ const PostJobScreen = ({ navigation: navProp }) => {
         {/* Edit and Remove buttons at bottom */}
         <View style={styles.bottomActions}>
           <TouchableOpacity style={styles.editButton123} onPress={handleEdit}>
-            <Ionicons name="create-outline" size={20} color={Colors.grey} />
+            <Ionicons name="create-outline" size={20} color={colors.grey} />
             <Text style={styles.editButtonText}>Edit</Text>
           </TouchableOpacity>
 
@@ -2170,7 +2157,7 @@ const PostJobScreen = ({ navigation: navProp }) => {
     <View style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity onPress={handleBack}>
-          <Ionicons name="chevron-back" size={24} color={Colors.black} />
+          <Ionicons name="chevron-back" size={24} color={colors.black} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Post a Job</Text>
         <View style={{ width: 24 }} />
@@ -2202,13 +2189,13 @@ const PostJobScreen = ({ navigation: navProp }) => {
         {currentStep === 5 ? (
           <CustomButton
             text={"Post"}
-            color={Colors.primary}
+            color={colors.primary}
             onPress={handlePost}
           />
         ) : (
           <CustomButton
             text={"Next"}
-            color={Colors.primary}
+            color={colors.primary}
             onPress={handleNext}
           />
         )}
@@ -2226,7 +2213,7 @@ const PostJobScreen = ({ navigation: navProp }) => {
                   Add Requirements for the Job
                 </Text>
                 <TouchableOpacity onPress={() => setShowRequirementsModal(false)}>
-                  <Ionicons name="close" size={24} color={Colors.grey} />
+                  <Ionicons name="close" size={24} color={colors.grey} />
                 </TouchableOpacity>
               </View>
 
@@ -2236,19 +2223,19 @@ const PostJobScreen = ({ navigation: navProp }) => {
                   value={newRequirement}
                   onChangeText={setNewRequirement}
                   placeholder="Eg - Tools or Vehicles"
-                  placeholderTextColor={Colors.subGrey}
+                  placeholderTextColor={colors.subGrey}
                 />
                 <TouchableOpacity
                   onPress={handleAddRequirement}
                   style={styles.addButton}
                 >
-                  <Ionicons name="add-circle" size={24} color={Colors.primary} />
+                  <Ionicons name="add-circle" size={24} color={colors.primary} />
                 </TouchableOpacity>
               </View>
 
               <CustomButton
                 text="Add"
-                color={Colors.primary}
+                color={colors.primary}
                 onPress={handleAddRequirement}
               />
             </View>
@@ -2266,7 +2253,7 @@ const PostJobScreen = ({ navigation: navProp }) => {
               <View style={styles.modalHeader}>
                 <Text style={styles.modalTitle}>Edit Requirements</Text>
                 <TouchableOpacity onPress={() => setEditingRequirements(false)}>
-                  <Ionicons name="close" size={24} color={Colors.grey} />
+                  <Ionicons name="close" size={24} color={colors.grey} />
                 </TouchableOpacity>
               </View>
 
@@ -2286,7 +2273,7 @@ const PostJobScreen = ({ navigation: navProp }) => {
                     value={newRequirement}
                     onChangeText={setNewRequirement}
                     placeholder="Add new requirement"
-                    placeholderTextColor={Colors.subGrey}
+                    placeholderTextColor={colors.subGrey}
                   />
                   <TouchableOpacity
                     onPress={handleAddRequirement}
@@ -2295,7 +2282,7 @@ const PostJobScreen = ({ navigation: navProp }) => {
                     <Ionicons
                       name="add-circle"
                       size={24}
-                      color={Colors.primary}
+                      color={colors.primary}
                     />
                   </TouchableOpacity>
                 </View>
@@ -2303,7 +2290,7 @@ const PostJobScreen = ({ navigation: navProp }) => {
 
               <CustomButton
                 text="Update"
-                color={Colors.primary}
+                color={colors.primary}
                 onPress={() => setEditingRequirements(false)}
               />
             </View>

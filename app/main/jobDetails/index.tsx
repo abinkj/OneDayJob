@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   View,
   Text,
@@ -10,8 +10,8 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { useSelector } from "react-redux";
-import { Colors } from "../../../constants/Colors";
-import styles from "./styles";
+import { useTheme } from "../../../contexts/ThemeContext";
+import { createStyles } from "./styles";
 import { JobPost } from "../../../types";
 import { Header } from "../../../components/header";
 import { openMap } from "../../../utilities/mapUtils";
@@ -29,6 +29,8 @@ import { useNotifications } from "../../../contexts/NotificationContext";
 import { JobDetailsSkeleton } from "../../../components/Shimmer/Skeletons";
 
 const JobDetails = () => {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const navigation = useNavigation<any>();
   const route = useRoute<any>();
   const { kycStatus } = useSelector((state: any) => state.authentication);
@@ -329,7 +331,7 @@ const JobDetails = () => {
   if (error || !job) {
     return (
       <View style={styles.errorContainer}>
-        <Ionicons name="alert-circle-outline" size={64} color={Colors.grey} />
+        <Ionicons name="alert-circle-outline" size={64} color={colors.grey} />
         <Text style={styles.errorText}>{error || "Job not found"}</Text>
         <TouchableOpacity
           style={styles.retryButton}
@@ -346,11 +348,11 @@ const JobDetails = () => {
       {/* Header */}
       {/* <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color={Colors.black} />
+          <Ionicons name="arrow-back" size={24} color={colors.black} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Job Details</Text>
         <TouchableOpacity style={styles.shareButton}>
-          <Ionicons name="share-outline" size={24} color={Colors.black} />
+          <Ionicons name="share-outline" size={24} color={colors.black} />
         </TouchableOpacity>
       </View> */}
       <Header
@@ -411,27 +413,25 @@ const JobDetails = () => {
             <Ionicons
               name="location-outline"
               size={20}
-              color={Colors.primary}
+              color={colors.primary}
             />
             <Text
               style={[
                 styles.locationText,
                 !job.isRemote &&
-                  !(
-                    job.jobStatus === "completed" || job.status === "completed"
-                  ) && {
-                    color: Colors.primary,
-                    textDecorationLine: "underline",
-                  },
+                !(
+                  job.jobStatus === "completed" || job.status === "completed"
+                ) && {
+                  color: colors.primary,
+                  textDecorationLine: "underline",
+                },
               ]}
             >
               {job.isRemote
                 ? "Remote Work"
-                : `${job.location?.address || ""}${
-                    job.location?.city ? ", " + job.location.city : ""
-                  }${job.location?.state ? ", " + job.location.state : ""}${
-                    job.location?.country ? ", " + job.location.country : ""
-                  }`}
+                : `${job.location?.address || ""}${job.location?.city ? ", " + job.location.city : ""
+                }${job.location?.state ? ", " + job.location.state : ""}${job.location?.country ? ", " + job.location.country : ""
+                }`}
             </Text>
           </TouchableOpacity>
         </View>
@@ -440,12 +440,12 @@ const JobDetails = () => {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Time Preference</Text>
           <View style={styles.timeContainer}>
-            <Ionicons name="time-outline" size={20} color={Colors.grey} />
+            <Ionicons name="time-outline" size={20} color={colors.grey} />
             <Text style={styles.timeText}>
               {formatTimePreference(job.timePreference)}
               {job.isFlexible && " (Flexible)"}
               {job.fromTime && job.toTime && (
-                <Text style={{ fontWeight: "600", color: Colors.black }}>
+                <Text style={{ fontWeight: "600", color: colors.black }}>
                   {`\nExact Time: ${format24to12h(
                     job.fromTime
                   )} - ${format24to12h(job.toTime)}`}
@@ -470,7 +470,7 @@ const JobDetails = () => {
           <Text style={styles.sectionTitle}>Job Details</Text>
           <View style={styles.detailsGrid}>
             <View style={styles.detailItem}>
-              <Ionicons name="people-outline" size={20} color={Colors.grey} />
+              <Ionicons name="people-outline" size={20} color={colors.grey} />
               <Text style={styles.detailLabel}>Vacancies</Text>
               <Text style={styles.detailValue}>{job.participantsNumber}</Text>
             </View>
@@ -478,13 +478,13 @@ const JobDetails = () => {
               <Ionicons
                 name="person-add-outline"
                 size={20}
-                color={Colors.grey}
+                color={colors.grey}
               />
               <Text style={styles.detailLabel}>Applicants</Text>
               <Text style={styles.detailValue}>{job.applicantCount}</Text>
             </View>
             <View style={styles.detailItem}>
-              <Ionicons name="calendar-outline" size={20} color={Colors.grey} />
+              <Ionicons name="calendar-outline" size={20} color={colors.grey} />
               <Text style={styles.detailLabel}>Posted</Text>
               <Text style={styles.detailValue}>
                 {job.createdAt
@@ -521,7 +521,7 @@ const JobDetails = () => {
               </View>
             ) : checkingVerification ? (
               <View style={styles.verificationLoadingContainer}>
-                <ActivityIndicator size="small" color={Colors.primary} />
+                <ActivityIndicator size="small" color={colors.primary} />
                 <Text style={styles.verificationLoadingText}>
                   Checking verification status...
                 </Text>
@@ -576,13 +576,13 @@ const JobDetails = () => {
                         {loadingCode ? (
                           <ActivityIndicator
                             size="small"
-                            color={Colors.primary}
+                            color={colors.primary}
                           />
                         ) : (
                           <Ionicons
                             name="refresh"
                             size={20}
-                            color={Colors.primary}
+                            color={colors.primary}
                           />
                         )}
                       </TouchableOpacity>
@@ -663,7 +663,7 @@ const JobDetails = () => {
                 <Ionicons
                   name="information-circle-outline"
                   size={24}
-                  color={Colors.grey}
+                  color={colors.grey}
                 />
                 <Text style={styles.verificationNotAssignedText}>
                   Verification status will be available after you apply and are
@@ -692,8 +692,8 @@ const JobDetails = () => {
                 {job.userId?.phoneNumber}
               </Text>
             </View>
-            <TouchableOpacity style={styles.contactButton} onPress={() => {}}>
-              <Ionicons name="call-outline" size={20} color={Colors.primary} />
+            <TouchableOpacity style={styles.contactButton} onPress={() => { }}>
+              <Ionicons name="call-outline" size={20} color={colors.primary} />
             </TouchableOpacity>
           </View>
         </View>

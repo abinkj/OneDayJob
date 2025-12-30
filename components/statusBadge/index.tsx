@@ -1,7 +1,9 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { StatusInfo } from '../../utilities/statusUtils';
+import { useTheme } from '../../contexts/ThemeContext';
+import { ThemeColors } from '../../constants/Colors';
 
 interface StatusBadgeProps {
   statusInfo: StatusInfo;
@@ -16,6 +18,9 @@ const StatusBadge: React.FC<StatusBadgeProps> = ({
   showIcon = true,
   showDescription = false
 }) => {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
+
   const getSizeStyles = () => {
     switch (size) {
       case 'small':
@@ -73,7 +78,7 @@ const StatusBadge: React.FC<StatusBadgeProps> = ({
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   wrapper: {
     alignItems: 'flex-start',
   },
@@ -117,7 +122,7 @@ const styles = StyleSheet.create({
   },
   description: {
     fontSize: 10,
-    color: '#666',
+    color: colors.grey,
     marginTop: 2,
     fontStyle: 'italic',
   },

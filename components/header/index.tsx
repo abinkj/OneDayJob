@@ -1,8 +1,9 @@
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
-import React from "react";
+import React, { useMemo } from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { useRouter } from "expo-router";
-
+import { useTheme } from "../../contexts/ThemeContext";
+import { ThemeColors } from "../../constants/Colors";
 
 interface HeaderProps {
   title?: string;
@@ -28,6 +29,8 @@ export const Header: React.FC<HeaderProps> = ({
   showMessageIcon = false,
 }) => {
   const router = useRouter();
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
 
   const handleBack = () => {
     router.back();
@@ -37,7 +40,7 @@ export const Header: React.FC<HeaderProps> = ({
     <View style={styles.container}>
       {showBackButton && (
         <TouchableOpacity style={styles.backIcon} onPress={handleBack}>
-          <Ionicons name="chevron-back" size={24} color="black" />
+          <Ionicons name="chevron-back" size={24} color={colors.black} />
         </TouchableOpacity>
       )}
 
@@ -51,20 +54,20 @@ export const Header: React.FC<HeaderProps> = ({
 
       {showEditButton && (
         <TouchableOpacity style={styles.editIcon} onPress={onEditPress}>
-          <MaterialIcons name="settings" size={22} color="black" />
+          <MaterialIcons name="settings" size={22} color={colors.black} />
         </TouchableOpacity>
       )}
 
       {(showChatButton || showMessageIcon) && (
         <TouchableOpacity style={styles.chatIcon} onPress={onChatPress}>
-          <Ionicons name="chatbubble-outline" size={22} color="black" />
+          <Ionicons name="chatbubble-outline" size={22} color={colors.black} />
         </TouchableOpacity>
       )}
     </View>
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   container: {
     flexDirection: "row",
     alignItems: "center",
@@ -109,10 +112,11 @@ const styles = StyleSheet.create({
   skipText: {
     fontSize: 16,
     fontWeight: "600",
-    color: "#666",
+    color: colors.grey,
   },
   title: {
     fontSize: 20,
     fontWeight: "600",
+    color: colors.black,
   },
 });

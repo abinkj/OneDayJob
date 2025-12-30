@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useMemo } from "react";
 import {
   View,
   Text,
@@ -13,10 +13,10 @@ import {
 import AntDesign from "@expo/vector-icons/AntDesign";
 import * as ImagePicker from "expo-image-picker";
 import { Ionicons } from "@expo/vector-icons";
-import styles from "./styles";
 import { Header } from "../../../components/header";
 import { ChatScreenSkeleton } from "../../../components/Shimmer/Skeletons";
-import { Colors } from "../../../constants/Colors";
+import { useTheme } from "../../../contexts/ThemeContext";
+import { createStyles } from "./styles";
 import { useRoute } from "@react-navigation/native";
 import MessageBubble from "../../../components/messageBubble";
 import socketService from "../../../services/socketService";
@@ -29,6 +29,8 @@ import { getCurrentUser } from "../../../services/api";
 import Toast from "react-native-toast-message";
 
 export default function ChatScreen() {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const route = useRoute();
   const { conversationId, participant } = (route.params as any) || {};
   const [messages, setMessages] = useState([]);
@@ -515,7 +517,7 @@ export default function ChatScreen() {
             <View style={{ padding: 10, alignItems: "center" }}>
               <Text
                 style={{
-                  color: Colors.grey,
+                  color: colors.grey,
                   fontSize: 14,
                   fontStyle: "italic",
                 }}
@@ -531,7 +533,7 @@ export default function ChatScreen() {
         <AntDesign
           name="plus"
           size={24}
-          color={Colors.tabBlue}
+          color={colors.tabBlue}
           style={{ marginLeft: 12 }}
           onPress={handleAttachmentSelect}
         />
@@ -545,6 +547,7 @@ export default function ChatScreen() {
             returnKeyType="default"
             multiline
             editable={!sending}
+            placeholderTextColor={colors.grey}
           />
           <TouchableOpacity
             onPress={sendMessage}
@@ -560,7 +563,7 @@ export default function ChatScreen() {
               <Ionicons
                 name="send"
                 size={24}
-                color={input.trim() ? "white" : Colors.grey}
+                color={input.trim() ? "white" : colors.grey}
                 style={styles.sendIcon}
               />
             )}

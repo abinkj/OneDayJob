@@ -16,6 +16,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "../services/queryClient";
 import AppLayout from "../components/ui/layout";
 import { AlertProvider } from "../components/CustomAlert/AlertProvider";
+import { ThemeProvider } from "../contexts/ThemeContext";
 
 export default function RootLayout() {
   useEffect(() => {
@@ -47,10 +48,12 @@ export default function RootLayout() {
       <QueryClientProvider client={queryClient}>
         <NotificationProvider>
           <AlertProvider>
-            <AppLayout>
-              <Stack screenOptions={{ headerShown: false }} />
-              <Toast config={toastConfig} />
-            </AppLayout>
+            <ThemeProvider>
+              <AppLayout>
+                <Stack screenOptions={{ headerShown: false }} />
+                <Toast config={toastConfig} />
+              </AppLayout>
+            </ThemeProvider>
           </AlertProvider>
         </NotificationProvider>
       </QueryClientProvider>

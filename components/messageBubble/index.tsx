@@ -1,9 +1,13 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { View, Text, StyleSheet } from "react-native";
 import { AntDesign } from "@expo/vector-icons";
-import { Colors } from "../../constants/Colors";
+import { ThemeColors } from "../../constants/Colors";
+import { useTheme } from "../../contexts/ThemeContext";
 
 const MessageBubble = ({ text, time, type }) => {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
+
   return (
     <View
       style={[
@@ -34,13 +38,13 @@ const MessageBubble = ({ text, time, type }) => {
             <AntDesign
               name="check"
               size={12}
-              color="#ccc"
+              color="rgba(255, 255, 255, 0.7)"
               style={styles.tickIcon}
             />
             <AntDesign
               name="check"
               size={12}
-              color="#ccc"
+              color="rgba(255, 255, 255, 0.7)"
               style={styles.tickIcon2}
             />
           </>
@@ -52,7 +56,7 @@ const MessageBubble = ({ text, time, type }) => {
 
 export default MessageBubble;
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   messageBubble: {
     paddingVertical: 14,
     paddingHorizontal: 16,
@@ -71,7 +75,7 @@ const styles = StyleSheet.create({
     elevation: 1,
   },
   myMessage: {
-    backgroundColor: Colors.primary,
+    backgroundColor: colors.primary,
     alignSelf: "flex-end",
     borderBottomStartRadius: 21,
     borderBottomEndRadius: 4, // Make it look like a bubble
@@ -79,7 +83,7 @@ const styles = StyleSheet.create({
     borderTopEndRadius: 21,
   },
   otherMessage: {
-    backgroundColor: Colors.white,
+    backgroundColor: colors.white,
     alignSelf: "flex-start",
     borderBottomStartRadius: 4, // Make it look like a bubble
     borderBottomEndRadius: 21,
@@ -88,13 +92,13 @@ const styles = StyleSheet.create({
     borderWidth: 0,
   },
   messageText: {
-    color: Colors.white,
+    color: colors.white, // Text on primary color
     fontWeight: "400",
     fontSize: 16,
     paddingRight: 55, // Increased padding to avoid overlap with time
   },
   otherMessageText: {
-    color: Colors.black,
+    color: colors.black, // Text on white/dark background
   },
   timeContainer: {
     flexDirection: "row",
@@ -109,7 +113,7 @@ const styles = StyleSheet.create({
     marginRight: 4,
   },
   otherMessageTime: {
-    color: Colors.grey,
+    color: colors.grey,
   },
   tickIcon: {
     marginLeft: 1,

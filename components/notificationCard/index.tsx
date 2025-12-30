@@ -1,40 +1,47 @@
 // components/NotificationCard.js
-import React from "react";
-import { View, Text, StyleSheet } from "react-native";
+import React, { useMemo } from "react";
+import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { useTheme } from "../../contexts/ThemeContext";
+import { ThemeColors } from "../../constants/Colors";
 
-const NotificationCard = ({ title, subtitle, time, count }) => {
+const NotificationCard = ({ title, subtitle, time, count, onPress }) => {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
+
   return (
-    <View style={styles.card}>
-      <View style={styles.left}>
-        <MaterialCommunityIcons name="bell-outline" size={24} color="#006B40" />
-      </View>
-      <View style={styles.content}>
-        <View style={styles.header}>
-          <Text style={styles.title}>{title}</Text>
-          <Text style={styles.time}>{time}</Text>
+    <TouchableOpacity onPress={onPress}>
+      <View style={styles.card}>
+        <View style={styles.left}>
+          <MaterialCommunityIcons name="bell-outline" size={24} color={colors.primary} />
         </View>
-        <Text style={styles.subtitle}>{subtitle}</Text>
-      </View>
-      {count > 0 && (
-        <View style={styles.badge}>
-          <Text style={styles.badgeText}>{count}</Text>
+        <View style={styles.content}>
+          <View style={styles.header}>
+            <Text style={styles.title}>{title}</Text>
+            <Text style={styles.time}>{time}</Text>
+          </View>
+          <Text style={styles.subtitle}>{subtitle}</Text>
         </View>
-      )}
-    </View>
+        {count > 0 && (
+          <View style={styles.badge}>
+            <Text style={styles.badgeText}>{count}</Text>
+          </View>
+        )}
+      </View>
+    </TouchableOpacity>
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   card: {
     flexDirection: "row",
-    backgroundColor: "#fff",
+    backgroundColor: colors.white,
     paddingVertical: 14,
     paddingHorizontal: 16,
     borderRadius: 16,
     alignItems: "flex-start",
     // iOS shadow
-    shadowColor: "#000",
+    shadowColor: colors.black,
     shadowOffset: {
       width: 0,
       height: 4,
@@ -44,6 +51,7 @@ const styles = StyleSheet.create({
 
     // Android shadow
     elevation: 2,
+    marginBottom: 8,
   },
   left: {
     marginRight: 12,
@@ -60,18 +68,18 @@ const styles = StyleSheet.create({
   title: {
     fontWeight: "600",
     fontSize: 16,
-    color: "#2D3748",
+    color: colors.black,
   },
   time: {
     fontSize: 12,
-    color: "#718096",
+    color: colors.grey,
   },
   subtitle: {
     fontSize: 14,
-    color: "#A0AEC0",
+    color: colors.subGrey,
   },
   badge: {
-    backgroundColor: "#2F855A",
+    backgroundColor: colors.primary,
     position: "absolute",
     right: 10,
     bottom: 10,
