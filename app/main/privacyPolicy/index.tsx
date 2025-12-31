@@ -1,11 +1,11 @@
-import React, { useMemo } from "react";
+import { useMemo } from "react";
 import { View, StyleSheet, ActivityIndicator } from "react-native";
 import { useRoute } from "@react-navigation/native";
 import { Header } from "../../../components/header";
-import { ListSkeleton } from "../../../components/Shimmer/Skeletons";
-import { Colors, ThemeColors } from "../../../constants/Colors";
+import { ThemeColors } from "../../../constants/Colors";
 import WebView from "react-native-webview";
 import { useTheme } from "../../../contexts/ThemeContext";
+
 
 const PrivacyPolicy = () => {
   const route = useRoute<any>();
@@ -24,9 +24,10 @@ const PrivacyPolicy = () => {
         style={styles.webview}
         startInLoadingState
         originWhitelist={["*"]}
+        bounces={false}
         renderLoading={() => (
           <View style={styles.loadingContainer}>
-            <ListSkeleton />
+            <ActivityIndicator size="large" color={colors.primary} />
           </View>
         )}
       />
