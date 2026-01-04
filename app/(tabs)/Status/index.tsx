@@ -78,7 +78,7 @@ const MyPostTab = () => {
   const [filteredPosts, setFilteredPosts] = useState<JobPost[]>([]);
 
   const handleNext = (jobId: string) => {
-    navigation.navigate("RequestVerification", { jobId: jobId });
+    navigation.navigate("NewRequest", { jobId: jobId });
   };
 
   // const handlePayment = (job: JobPost) => {
@@ -162,7 +162,7 @@ const MyPostTab = () => {
       onDelete={() => handleDelete(item._id)}
       // onPayment={() => handlePayment(item)}
       isEmployer={true}
-    // showPaymentButton={true}
+      // showPaymentButton={true}
     />
   );
 
