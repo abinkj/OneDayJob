@@ -1,12 +1,12 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import { View, TouchableOpacity, ScrollView } from "react-native";
 import { Image } from "expo-image";
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation, useRoute } from "@react-navigation/native";
-import styles from "./styles";
+import createStyles from "./styles";
 
 import CustomButton from "../../../components/CustomButton";
-import { Colors } from "../../../constants/Colors";
+import { useTheme } from "../../../contexts/ThemeContext";
 import Images from "../../../utilities/images";
 import { Header } from "../../../components/header";
 import LabeledInput from "../../../components/labeledTextInput";
@@ -21,6 +21,8 @@ import ImagePickerActionSheet, {
 import { validateName } from "../../../utilities/formValidation";
 
 const EditProfile: React.FC = () => {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const dispatch = useDispatch();
   const navigation = useNavigation<any>();
   const route = useRoute();
@@ -206,7 +208,7 @@ const EditProfile: React.FC = () => {
         onImageSelected={handleImageSelected}
         onError={handleImageError}
         title="Change Profile Picture"
-        primaryColor={Colors.primary}
+        primaryColor={colors.primary}
       />
     </View>
   );

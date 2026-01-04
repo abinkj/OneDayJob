@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 import {
   TouchableOpacity,
   Text,
@@ -9,10 +9,10 @@ import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withSpring,
-  withTiming,
 } from "react-native-reanimated";
 import { fontSizes } from "../themes/fonts";
-import { Colors } from "../constants/Colors";
+import { useTheme } from "../contexts/ThemeContext";
+import { ThemeColors } from "../constants/Colors";
 
 interface CustomButtonProps {
   color?: string;
@@ -23,12 +23,16 @@ interface CustomButtonProps {
 }
 
 const CustomButton: React.FC<CustomButtonProps> = ({
-  color = Colors.primary,
+  color,
   text,
   onPress,
   disabled = false,
   isLoading = false,
 }) => {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
+  const buttonColor = color || colors.primary;
+
   const scale = useSharedValue(1);
 
   const animatedStyle = useAnimatedStyle(() => {
@@ -56,7 +60,7 @@ const CustomButton: React.FC<CustomButtonProps> = ({
         style={[
           styles.button,
           {
-            backgroundColor: color,
+            backgroundColor: buttonColor,
             opacity: disabled && !isLoading ? 0.6 : 1,
           },
         ]}
@@ -71,21 +75,22 @@ const CustomButton: React.FC<CustomButtonProps> = ({
   );
 };
 
-const styles = StyleSheet.create({
-  button: {
-    padding: 12,
-    borderRadius: 12,
-    alignItems: "center",
-    justifyContent: "center",
-    minWidth: 120,
-    height: 48, // Fixed height to prevent layout shift during loading
-  },
-  buttonText: {
-    fontSize: fontSizes.size16,
-    lineHeight: fontSizes.size16,
-    fontFamily: "bold",
-    color: "white",
-  },
-});
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    button: {
+      padding: 12,
+      borderRadius: 12,
+      alignItems: "center",
+      justifyContent: "center",
+      minWidth: 120,
+      height: 48, // Fixed height to prevent layout shift during loading
+    },
+    buttonText: {
+      fontSize: fontSizes.size16,
+      lineHeight: fontSizes.size16,
+      fontFamily: "bold",
+      color: "white",
+    },
+  });
 
 export default CustomButton;
