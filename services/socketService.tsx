@@ -4,8 +4,8 @@ import { getAccessToken } from "../utilities/secureStore";
 // Socket.IO configuration
 const API_URL =
   process.env.EXPO_PUBLIC_API_URL || "http://192.168.1.5:8000/api";
-// Remove /api from the URL for socket connection
-const SOCKET_URL = API_URL.replace("/api", "");
+// Remove /api from the URL for socket connection, handling trailing slashes
+const SOCKET_URL = API_URL.replace(/\/api\/?$/, "");
 let socket: Socket | null = null;
 
 // Socket event types
@@ -138,13 +138,15 @@ class SocketService {
     });
 
     this.socket.on("connect_error", (error) => {
-      console.error("Socket connection error:", error);
+      console.error("🔌 Socket connection error:", {
+        message: error.message,
+        socketUrl: SOCKET_URL,
+        reconnectAttempts: this.reconnectAttempts,
+      });
       this.isConnected = false;
 
-      // Only attempt reconnect if it's not a manual disconnect
-      if (error.message !== "xhr poll error") {
-        this.attemptReconnect();
-      }
+      // Retry on xhr poll error as well, as it might be transient
+      this.attemptReconnect();
     });
 
     this.socket.on("error", (error) => {

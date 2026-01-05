@@ -25,6 +25,7 @@ export const createStyles = (colors: ThemeColors) =>
       color: colors.black,
       marginBottom: 12,
       textAlign: "center",
+      lineHeight: 40,
     },
     subtitle: {
       fontSize: 16,

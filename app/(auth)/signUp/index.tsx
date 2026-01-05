@@ -175,7 +175,7 @@ const SignUp = () => {
           style={styles.footer}
         >
           <Text style={styles.footerText}>Already have an account?</Text>
-          <TouchableOpacity onPress={() => navigation.back()}>
+          <TouchableOpacity onPress={() => navigation.goBack()}>
             <Text style={styles.createAccount}>Login</Text>
           </TouchableOpacity>
         </Animated.View>
