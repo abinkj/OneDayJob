@@ -1,9 +1,9 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { View, Text, StyleSheet } from "react-native";
 import LottieView from "lottie-react-native";
 
 import DeviceDimensions from "../../constants/DeviceDimenions";
-import { Colors } from "../../constants/Colors";
+import { useTheme } from "../../contexts/ThemeContext";
 
 type SuccessAnimationProps = {
   message?: string;
@@ -12,6 +12,9 @@ type SuccessAnimationProps = {
 const SuccessAnimation: React.FC<SuccessAnimationProps> = ({
   message = "Verified Successfully",
 }) => {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
+
   return (
     <View style={[styles.container, styles.center]}>
       <LottieView
@@ -29,25 +32,27 @@ const SuccessAnimation: React.FC<SuccessAnimationProps> = ({
 };
 
 export default SuccessAnimation;
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    alignItems: "center",
-    backgroundColor: Colors.white,
-  },
-  center: {
-    alignItems: "center",
-    paddingTop: 150 * DeviceDimensions.heightRatio,
-  },
-  animationContainer: {
-    width: 200 * DeviceDimensions.widthRatio,
-    height: 200 * DeviceDimensions.heightRatio,
-  },
-  text: {
-    paddingTop: 5,
-    fontSize: 26,
-    color: Colors.grey,
-    fontWeight: "600",
-    textAlign: "center",
-  },
-});
+
+const createStyles = (colors: any) =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      alignItems: "center",
+      backgroundColor: colors.white,
+    },
+    center: {
+      alignItems: "center",
+      paddingTop: 150 * DeviceDimensions.heightRatio,
+    },
+    animationContainer: {
+      width: 200 * DeviceDimensions.widthRatio,
+      height: 200 * DeviceDimensions.heightRatio,
+    },
+    text: {
+      paddingTop: 5,
+      fontSize: 26,
+      color: colors.grey,
+      fontWeight: "600",
+      textAlign: "center",
+    },
+  });
