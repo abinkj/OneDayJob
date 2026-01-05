@@ -16,6 +16,7 @@ import Animated, {
   interpolate,
   Extrapolate,
   interpolateColor,
+  Extrapolation,
 } from "react-native-reanimated";
 import { setHasSeenOnboarding } from "../../redux/reducers/authReducers";
 import { saveHasSeenOnboarding } from "../../utilities/mmkvStore";
@@ -55,7 +56,7 @@ const PaginationDot = ({ index, scrollX }: { index: number; scrollX: any }) => {
       scrollX.value,
       [(index - 1) * width, index * width, (index + 1) * width],
       [8, 20, 8],
-      Extrapolate.CLAMP
+      Extrapolation.CLAMP
     );
 
     const opacity = interpolate(

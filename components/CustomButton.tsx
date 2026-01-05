@@ -20,6 +20,7 @@ interface CustomButtonProps {
   onPress: () => void;
   disabled?: boolean;
   isLoading?: boolean;
+  style?: any;
 }
 
 const CustomButton: React.FC<CustomButtonProps> = ({
@@ -28,6 +29,7 @@ const CustomButton: React.FC<CustomButtonProps> = ({
   onPress,
   disabled = false,
   isLoading = false,
+  style,
 }) => {
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
@@ -50,7 +52,7 @@ const CustomButton: React.FC<CustomButtonProps> = ({
   };
 
   return (
-    <Animated.View style={animatedStyle}>
+    <Animated.View style={[animatedStyle, style]}>
       <TouchableOpacity
         onPress={onPress}
         onPressIn={handlePressIn}
@@ -61,7 +63,7 @@ const CustomButton: React.FC<CustomButtonProps> = ({
           styles.button,
           {
             backgroundColor: buttonColor,
-            opacity: disabled && !isLoading ? 0.6 : 1,
+            opacity: (disabled || isLoading) && !isLoading ? 0.6 : 1,
           },
         ]}
       >

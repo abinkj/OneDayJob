@@ -12,7 +12,6 @@ import {
   Animated,
   Modal,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "../../../contexts/ThemeContext";
 import { createStyles } from "./styles";
@@ -55,7 +54,6 @@ const getCategoryIcon = (categoryName?: string) => {
   const key = categoryName.toLowerCase();
   return categoryIcons[key] || categoryIcons.default;
 };
-
 
 const HomeScreen = () => {
   const { sendVerificationCodeNotification } = useNotifications();
@@ -133,56 +131,53 @@ const HomeScreen = () => {
     const a =
       Math.sin(dLat / 2) * Math.sin(dLat / 2) +
       Math.cos((lat1 * Math.PI) / 180) *
-      Math.cos((lat2 * Math.PI) / 180) *
-      Math.sin(dLon / 2) *
-      Math.sin(dLon / 2);
+        Math.cos((lat2 * Math.PI) / 180) *
+        Math.sin(dLon / 2) *
+        Math.sin(dLon / 2);
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     const distance = R * c;
     return Math.round(distance * 10) / 10;
   };
 
-  const categorizeJobsByDistance = (jobs: JobPost[], userLocation: any) => {
-    if (!userLocation || !jobs.length) {
-      return jobs;
-    }
-
-    const jobsWithDistance = [];
-
-    jobs.forEach((job) => {
+  const processAndSortJobs = (
+    jobs: JobPost[],
+    userLocation: any,
+    priceSort: string | null
+  ) => {
+    // 1. Map jobs with distance if location is available
+    const jobsWithMeta = jobs.map((job) => {
       const loc = job.location as any;
+      let distance = null;
+
       if (
-        loc?.coordinates?.coordinates ||
-        (loc?.coordinates?.latitude && loc?.coordinates?.longitude)
+        userLocation &&
+        (loc?.coordinates?.coordinates ||
+          (loc?.coordinates?.latitude && loc?.coordinates?.longitude))
       ) {
         let jobLat, jobLng;
 
-        // Handle both GeoJSON format and lat/lng format
         if (loc.coordinates.coordinates) {
-          // GeoJSON format [lng, lat]
           jobLng = loc.coordinates.coordinates[0];
           jobLat = loc.coordinates.coordinates[1];
         } else {
-          // Regular lat/lng format
           jobLat = loc.coordinates.latitude;
           jobLng = loc.coordinates.longitude;
         }
 
-        const distance = calculateDistance(
+        distance = calculateDistance(
           userLocation.latitude,
           userLocation.longitude,
           jobLat,
           jobLng
         );
-
-        jobsWithDistance.push({ ...job, distance });
-      } else {
-        // Jobs without location
-        jobsWithDistance.push({ ...job, distance: null });
       }
+
+      return { ...job, distance };
     });
 
-    // Sort jobs: In-Progress first, then by distance (if no price sort)
-    return jobsWithDistance.sort((a, b) => {
+    // 2. Multi-tier Sorting
+    return jobsWithMeta.sort((a, b) => {
+      // Tier 1: "In Progress" jobs always at the top
       const aStatus = (a.jobStatus || a.status || "").toLowerCase();
       const bStatus = (b.jobStatus || b.status || "").toLowerCase();
       const aInProgress = aStatus === "in_progress";
@@ -191,15 +186,36 @@ const HomeScreen = () => {
       if (aInProgress && !bInProgress) return -1;
       if (!aInProgress && bInProgress) return 1;
 
-      // If both are in-progress or both are not, sort by distance if no price sort is selected
-      if (!selectedPriceSort) {
-        if (a.distance === null && b.distance === null) return 0;
-        if (a.distance === null) return 1;
-        if (b.distance === null) return -1;
-        return a.distance - b.distance;
+      // Tier 2: Selected Price Sort (if active)
+      if (priceSort === "low-to-high") {
+        const diff = (a.budget || 0) - (b.budget || 0);
+        if (diff !== 0) return diff;
+      } else if (priceSort === "high-to-low") {
+        const diff = (b.budget || 0) - (a.budget || 0);
+        if (diff !== 0) return diff;
       }
 
-      return 0;
+      // Tier 3 & 4: Nearby > Remote
+      const aHasDistance = a.distance !== null && a.distance !== undefined;
+      const bHasDistance = b.distance !== null && b.distance !== undefined;
+      const aIsRemote = !!a.isRemote;
+      const bIsRemote = !!b.isRemote;
+
+      // Nearby first
+      if (aHasDistance && !bHasDistance) return -1;
+      if (!aHasDistance && bHasDistance) return 1;
+      if (aHasDistance && bHasDistance) {
+        if (a.distance !== b.distance) return a.distance - b.distance;
+      }
+
+      // Remote next
+      if (aIsRemote && !bIsRemote) return -1;
+      if (!aIsRemote && bIsRemote) return 1;
+
+      // Tier 5: Recency Fallback (Newest first)
+      const aDate = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+      const bDate = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+      return bDate - aDate;
     });
   };
 
@@ -310,9 +326,9 @@ const HomeScreen = () => {
       userLocation:
         selectedDistance && location
           ? {
-            latitude: location.latitude,
-            longitude: location.longitude,
-          }
+              latitude: location.latitude,
+              longitude: location.longitude,
+            }
           : undefined,
     };
   }, [
@@ -340,8 +356,7 @@ const HomeScreen = () => {
 
   const jobsWithDistance = useMemo(() => {
     if (!jobs) return [];
-    // include selectedPriceSort since it affects categorizeJobsByDistance behavior
-    return location ? categorizeJobsByDistance(jobs, location) : jobs;
+    return processAndSortJobs(jobs, location, selectedPriceSort);
   }, [jobs, location, selectedPriceSort]);
 
   const allJobs = jobsWithDistance;
@@ -534,7 +549,7 @@ const HomeScreen = () => {
         style={[
           styles.jobCard,
           isInProgress && { borderLeftColor: "#FF9800" },
-          isCompleted && { borderLeftColor: "#4CAF50" }
+          isCompleted && { borderLeftColor: "#4CAF50" },
         ]}
         onPress={handleJobPress}
       >
@@ -575,8 +590,8 @@ const HomeScreen = () => {
               {isInProgress
                 ? "In Progress"
                 : isCompleted
-                  ? "Completed"
-                  : item.status || "Active"}
+                ? "Completed"
+                : item.status || "Active"}
             </Text>
           </View>
         </View>
@@ -588,9 +603,9 @@ const HomeScreen = () => {
               {item.isRemote
                 ? "Remote Work"
                 : item.location?.address ||
-                item.location?.city ||
-                item.location?.state ||
-                "Location not specified"}
+                  item.location?.city ||
+                  item.location?.state ||
+                  "Location not specified"}
             </Text>
           </View>
         </View>
@@ -739,7 +754,7 @@ const HomeScreen = () => {
                 style={[
                   styles.modalOption,
                   selectedValue === (item.id || item._id) &&
-                  styles.selectedOption,
+                    styles.selectedOption,
                 ]}
                 onPress={() => onSelect(item.id || item._id)}
               >
@@ -747,7 +762,7 @@ const HomeScreen = () => {
                   style={[
                     styles.modalOptionText,
                     selectedValue === (item.id || item._id) &&
-                    styles.selectedOptionText,
+                      styles.selectedOptionText,
                   ]}
                 >
                   {item.name}
