@@ -163,7 +163,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-around",
   },
   tabItem: { alignItems: "center", justifyContent: "center", flex: 1 },
-  tabText: { fontSize: 12, fontWeight: "400", marginTop: 5 },
+  tabText: { fontSize: 12, fontWeight: "500", marginTop: 5 },
   JobPostText: { fontSize: 12, fontWeight: "500", marginTop: 5 },
   centerButtonContainer: {
     alignItems: "center",
