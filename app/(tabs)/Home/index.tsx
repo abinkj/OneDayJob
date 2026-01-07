@@ -35,7 +35,7 @@ import { restoreSession } from "../../../utilities/authentication";
 import { JobPost } from "../../../types";
 import { useJobPostings } from "../../../hooks/useJobs";
 import { JobCardSkeleton } from "../../../components/Shimmer/Skeletons";
-import NotificationTester from '../../../components/NotificationTester';
+// import NotificationTester from '../../../components/NotificationTester';
 
 
 const categoryIcons: Record<string, any> = {
@@ -936,7 +936,7 @@ const HomeScreen = () => {
             <NotificationBadge />
           </TouchableOpacity>
         </View>
-        <NotificationTester />
+        {/* <NotificationTester /> */}
         {/* Search Bar */}
         <View style={styles.searchContainer}>
           <Ionicons
