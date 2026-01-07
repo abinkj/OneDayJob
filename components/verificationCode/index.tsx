@@ -99,7 +99,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   verifyButton: {
-    backgroundColor: Colors.grey || '#666',
+    backgroundColor: Colors.primary,
     borderRadius: 8,
     paddingVertical: 14,
     alignItems: 'center',

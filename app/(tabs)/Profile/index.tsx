@@ -203,7 +203,7 @@ const Profile: React.FC = () => {
   return (
     <View style={styles.container}>
       <Header title="Profile" showEditButton onEditPress={handleEdit} />
-      <ScrollView bounces={false}>
+      <ScrollView bounces={false} contentContainerStyle={{ paddingBottom: 100 }}>
         {/* Profile Card */}
         <View style={styles.profileCard}>
           {/* <Image source={profileImageSrc} style={styles.profileImage} /> */}

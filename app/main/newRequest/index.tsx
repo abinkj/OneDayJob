@@ -11,6 +11,8 @@ import {
   StatusBar,
   Linking,
   ScrollView,
+  KeyboardAvoidingView,
+  Platform,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import {
@@ -70,31 +72,31 @@ const NewRequest = () => {
 
         const appliedUsers = Array.isArray(appliedResponse?.data)
           ? appliedResponse.data
-              .filter((item: any) => item.status === "accepted")
-              .map((item: any) => {
-                const vStatus =
-                  verificationResponse.data?.data?.participants?.find(
-                    (p: any) => p.employeeId === item.user.id
-                  );
-                return {
-                  _id: item._id,
-                  appliedAt: item.appliedAt,
-                  status: item.status,
-                  isVerified: vStatus?.isVerified || false,
-                  verificationStatus: vStatus,
-                  user: {
-                    id: item.user.id,
-                    name: `${item.user.firstName} ${item.user.lastName}`,
-                    avatar: item.user.profilePicture,
-                    rating: item.user.rating ?? 0,
-                    rate: item.user.rate ?? "$0/hr",
-                    description:
-                      item.user.description ?? "No description provided",
-                    availability: item.user.availability ?? "Not specified",
-                    phoneNumber: item.user.phoneNumber || item.user.phone,
-                  },
-                };
-              })
+            .filter((item: any) => item.status === "accepted")
+            .map((item: any) => {
+              const vStatus =
+                verificationResponse.data?.data?.participants?.find(
+                  (p: any) => p.employeeId === item.user.id
+                );
+              return {
+                _id: item._id,
+                appliedAt: item.appliedAt,
+                status: item.status,
+                isVerified: vStatus?.isVerified || false,
+                verificationStatus: vStatus,
+                user: {
+                  id: item.user.id,
+                  name: `${item.user.firstName} ${item.user.lastName}`,
+                  avatar: item.user.profilePicture,
+                  rating: item.user.rating ?? 0,
+                  rate: item.user.rate ?? "$0/hr",
+                  description:
+                    item.user.description ?? "No description provided",
+                  availability: item.user.availability ?? "Not specified",
+                  phoneNumber: item.user.phoneNumber || item.user.phone,
+                },
+              };
+            })
           : [];
 
         setRequests(appliedUsers);
@@ -198,7 +200,7 @@ const NewRequest = () => {
           await fetchRequests();
           return;
         }
-      } catch (err) {}
+      } catch (err) { }
 
       const response = await scheduleVerification(jobId);
       if (response.data.success) {
@@ -341,109 +343,115 @@ const NewRequest = () => {
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle={isDark ? "light-content" : "dark-content"} />
-      <Header showBackButton={true} title="Verification" />
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
+      >
+        <Header showBackButton={true} title="Verification" />
 
-      {verificationStatus && (
-        <View style={styles.verificationProgressContainer}>
-          <View
-            style={{
-              flexDirection: "row",
-              justifyContent: "space-between",
-              alignItems: "center",
-              marginBottom: 10,
-            }}
-          >
-            <Text style={styles.progressText}>
-              Progress: {verificationStatus.verifiedCount || 0} /{" "}
-              {verificationStatus.totalParticipants || 0}
-            </Text>
-            {verificationStatus.sessionStatus === "pending" && (
-              <TouchableOpacity
-                style={[styles.miniButton, scheduling && { opacity: 0.5 }]}
-                onPress={handleScheduleVerification}
-                disabled={scheduling}
-              >
-                {scheduling ? (
-                  <ActivityIndicator size="small" color="#fff" />
-                ) : (
-                  <Text style={styles.miniButtonText}>Generate Codes</Text>
-                )}
-              </TouchableOpacity>
-            )}
-          </View>
-          <View style={styles.progressBar}>
+        {verificationStatus && (
+          <View style={styles.verificationProgressContainer}>
             <View
-              style={[
-                styles.progressFill,
-                { width: `${verificationStatus.verificationProgress || 0}%` },
-              ]}
-            />
-          </View>
-        </View>
-      )}
-
-      {verificationStatus &&
-        verifiedCount > 0 &&
-        verifiedCount === verificationStatus.totalParticipants &&
-        !jobInitiated && (
-          <View style={styles.startJobWrapper}>
-            <TouchableOpacity
-              style={styles.startJobBtn}
-              onPress={handleStartJob}
-              disabled={initiatingJob}
+              style={{
+                flexDirection: "row",
+                justifyContent: "space-between",
+                alignItems: "center",
+                marginBottom: 10,
+              }}
             >
-              {initiatingJob ? (
-                <ActivityIndicator color="#fff" />
-              ) : (
-                <Text style={styles.startJobText}>Start Job</Text>
+              <Text style={styles.progressText}>
+                Progress: {verificationStatus.verifiedCount || 0} /{" "}
+                {verificationStatus.totalParticipants || 0}
+              </Text>
+              {verificationStatus.sessionStatus === "pending" && (
+                <TouchableOpacity
+                  style={[styles.miniButton, scheduling && { opacity: 0.5 }]}
+                  onPress={handleScheduleVerification}
+                  disabled={scheduling}
+                >
+                  {scheduling ? (
+                    <ActivityIndicator size="small" color="#fff" />
+                  ) : (
+                    <Text style={styles.miniButtonText}>Generate Codes</Text>
+                  )}
+                </TouchableOpacity>
               )}
-            </TouchableOpacity>
+            </View>
+            <View style={styles.progressBar}>
+              <View
+                style={[
+                  styles.progressFill,
+                  { width: `${verificationStatus.verificationProgress || 0}%` },
+                ]}
+              />
+            </View>
           </View>
         )}
 
-      {jobInitiated && (
-        <View style={styles.jobStartedInfo}>
-          <Ionicons name="checkmark-circle" size={20} color="#4CAF50" />
-          <Text style={styles.jobStartedMsg}>Job is in progress</Text>
-        </View>
-      )}
+        {verificationStatus &&
+          verifiedCount > 0 &&
+          verifiedCount === verificationStatus.totalParticipants &&
+          !jobInitiated && (
+            <View style={styles.startJobWrapper}>
+              <TouchableOpacity
+                style={styles.startJobBtn}
+                onPress={handleStartJob}
+                disabled={initiatingJob}
+              >
+                {initiatingJob ? (
+                  <ActivityIndicator color="#fff" />
+                ) : (
+                  <Text style={styles.startJobText}>Start Job</Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          )}
 
-      <FlatList
-        data={requests}
-        renderItem={renderItem}
-        keyExtractor={(item) => item._id}
-        contentContainerStyle={styles.listContainer}
-        showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={() => fetchRequests(true)}
-            tintColor={colors.primary}
-          />
-        }
-        ListEmptyComponent={
-          <View style={styles.emptyContainer}>
-            <Ionicons
-              name="document-text-outline"
-              size={80}
-              color={colors.border}
-            />
-            <Text style={styles.emptyText}>No Accepted Workers</Text>
-            <Text style={styles.emptySubtext}>
-              Once you accept workers for this job, they will show up here.
-            </Text>
+        {jobInitiated && (
+          <View style={styles.jobStartedInfo}>
+            <Ionicons name="checkmark-circle" size={20} color="#4CAF50" />
+            <Text style={styles.jobStartedMsg}>Job is in progress</Text>
           </View>
-        }
-      />
+        )}
 
-      {selectedUser && (
-        <VerificationCode
-          userName={selectedUser.user.name}
-          onVerify={handleVerifyCode}
-          onResendCode={handleResendCode}
-          loading={verifying}
+        <FlatList
+          data={requests}
+          renderItem={renderItem}
+          keyExtractor={(item) => item._id}
+          contentContainerStyle={styles.listContainer}
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={() => fetchRequests(true)}
+              tintColor={colors.primary}
+            />
+          }
+          ListEmptyComponent={
+            <View style={styles.emptyContainer}>
+              <Ionicons
+                name="document-text-outline"
+                size={80}
+                color={colors.border}
+              />
+              <Text style={styles.emptyText}>No Accepted Workers</Text>
+              <Text style={styles.emptySubtext}>
+                Once you accept workers for this job, they will show up here.
+              </Text>
+            </View>
+          }
         />
-      )}
+
+        {selectedUser && (
+          <VerificationCode
+            userName={selectedUser.user.name}
+            onVerify={handleVerifyCode}
+            onResendCode={handleResendCode}
+            loading={verifying}
+          />
+        )}
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 };

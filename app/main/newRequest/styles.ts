@@ -41,7 +41,12 @@ export const createStyles = (colors: any) =>
     },
     selectedCard: {
       borderColor: colors.primary,
-      backgroundColor: colors.primary + "10",
+      borderWidth: 2,
+      backgroundColor: colors.primary + "15",
+      shadowColor: colors.primary,
+      shadowOpacity: 0.2,
+      shadowRadius: 10,
+      elevation: 8,
     },
     cardHeader: {
       flexDirection: "row",

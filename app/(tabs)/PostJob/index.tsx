@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import {
   View,
   Text,
@@ -131,6 +131,7 @@ const PostJobScreen = ({ navigation: navProp }) => {
   const navigation = useNavigation();
   const { kycStatus } = useSelector((state) => state.authentication);
   const { showAlert } = useAlert();
+  const scrollViewRef = useRef<ScrollView>(null);
 
   // State variables
   const [currentStep, setCurrentStep] = useState(1);
@@ -1079,12 +1080,16 @@ const PostJobScreen = ({ navigation: navProp }) => {
     }
 
     setCurrentStep(currentStep + 1);
+    // Scroll to top when moving to next step
+    scrollViewRef.current?.scrollTo({ y: 0, animated: true });
   };
 
   // Navigate to previous step
   const handleBack = () => {
     if (currentStep > 1) {
       setCurrentStep(currentStep - 1);
+      // Scroll to top when moving to previous step
+      scrollViewRef.current?.scrollTo({ y: 0, animated: true });
     } else {
       navigation.goBack();
     }
@@ -2171,6 +2176,7 @@ const PostJobScreen = ({ navigation: navProp }) => {
         keyboardVerticalOffset={Platform.OS === "ios" ? 100 : 0}
       >
         <ScrollView
+          ref={scrollViewRef}
           style={styles.scrollContainer}
           contentContainerStyle={{ paddingBottom: 300 }}
           showsVerticalScrollIndicator={false}

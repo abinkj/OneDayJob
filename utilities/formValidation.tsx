@@ -498,9 +498,9 @@ export const validateJobDescription = (
     };
   }
 
-  if (!isValidLength(description, 10, 1000)) {
+  if (!isValidLength(description, 1, 1000)) {
     const errorMessage =
-      description.length < 10
+      description.length < 1
         ? "Job description must be at least 10 characters long."
         : "Job description cannot exceed 1000 characters.";
     return {
