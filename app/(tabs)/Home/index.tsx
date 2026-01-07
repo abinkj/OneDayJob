@@ -133,9 +133,9 @@ const HomeScreen = () => {
     const a =
       Math.sin(dLat / 2) * Math.sin(dLat / 2) +
       Math.cos((lat1 * Math.PI) / 180) *
-        Math.cos((lat2 * Math.PI) / 180) *
-        Math.sin(dLon / 2) *
-        Math.sin(dLon / 2);
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     const distance = R * c;
     return Math.round(distance * 10) / 10;
@@ -146,12 +146,18 @@ const HomeScreen = () => {
     userLocation: any,
     priceSort: string | null
   ) => {
-    // 1. Map jobs with distance if location is available
+    const NOW = Date.now();
+    const ONE_DAY = 24 * 60 * 60 * 1000;
+    const SEVEN_DAYS = 7 * ONE_DAY;
+
+    // 1. Map jobs with distance, recency score, and proximity score
     const jobsWithMeta = jobs.map((job) => {
       const loc = job.location as any;
       let distance = null;
 
+      // Calculate distance for non-remote jobs
       if (
+        !job.isRemote &&
         userLocation &&
         (loc?.coordinates?.coordinates ||
           (loc?.coordinates?.latitude && loc?.coordinates?.longitude))
@@ -174,7 +180,39 @@ const HomeScreen = () => {
         );
       }
 
-      return { ...job, distance };
+      // Calculate recency score (0-100)
+      const jobAge = NOW - new Date(job.createdAt || NOW).getTime();
+      let recencyScore = 100;
+      if (jobAge < ONE_DAY) {
+        recencyScore = 100; // Posted today
+      } else if (jobAge < 3 * ONE_DAY) {
+        recencyScore = 80; // Posted within 3 days
+      } else if (jobAge < SEVEN_DAYS) {
+        recencyScore = 60; // Posted within a week
+      } else if (jobAge < 14 * ONE_DAY) {
+        recencyScore = 40; // Posted within 2 weeks
+      } else {
+        recencyScore = 20; // Older than 2 weeks
+      }
+
+      // Calculate proximity score (0-100)
+      let proximityScore = 0;
+      if (job.isRemote) {
+        proximityScore = 50; // Remote jobs get medium proximity score
+      } else if (distance !== null) {
+        if (distance <= 5) proximityScore = 100;
+        else if (distance <= 10) proximityScore = 80;
+        else if (distance <= 20) proximityScore = 60;
+        else if (distance <= 50) proximityScore = 40;
+        else proximityScore = 20;
+      } else {
+        proximityScore = 30; // Jobs without location data
+      }
+
+      // Combined score: 60% recency + 40% proximity
+      const combinedScore = recencyScore * 0.6 + proximityScore * 0.4;
+
+      return { ...job, distance, recencyScore, proximityScore, combinedScore };
     });
 
     // 2. Multi-tier Sorting
@@ -197,27 +235,8 @@ const HomeScreen = () => {
         if (diff !== 0) return diff;
       }
 
-      // Tier 3 & 4: Nearby > Remote
-      const aHasDistance = a.distance !== null && a.distance !== undefined;
-      const bHasDistance = b.distance !== null && b.distance !== undefined;
-      const aIsRemote = !!a.isRemote;
-      const bIsRemote = !!b.isRemote;
-
-      // Nearby first
-      if (aHasDistance && !bHasDistance) return -1;
-      if (!aHasDistance && bHasDistance) return 1;
-      if (aHasDistance && bHasDistance) {
-        if (a.distance !== b.distance) return a.distance - b.distance;
-      }
-
-      // Remote next
-      if (aIsRemote && !bIsRemote) return -1;
-      if (!aIsRemote && bIsRemote) return 1;
-
-      // Tier 5: Recency Fallback (Newest first)
-      const aDate = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-      const bDate = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-      return bDate - aDate;
+      // Tier 3: Smart Hybrid Score (60% recency + 40% proximity)
+      return b.combinedScore - a.combinedScore;
     });
   };
 
@@ -328,9 +347,9 @@ const HomeScreen = () => {
       userLocation:
         selectedDistance && location
           ? {
-              latitude: location.latitude,
-              longitude: location.longitude,
-            }
+            latitude: location.latitude,
+            longitude: location.longitude,
+          }
           : undefined,
     };
   }, [
@@ -592,8 +611,8 @@ const HomeScreen = () => {
               {isInProgress
                 ? "In Progress"
                 : isCompleted
-                ? "Completed"
-                : item.status || "Active"}
+                  ? "Completed"
+                  : item.status || "Active"}
             </Text>
           </View>
         </View>
@@ -605,9 +624,9 @@ const HomeScreen = () => {
               {item.isRemote
                 ? "Remote Work"
                 : item.location?.address ||
-                  item.location?.city ||
-                  item.location?.state ||
-                  "Location not specified"}
+                item.location?.city ||
+                item.location?.state ||
+                "Location not specified"}
             </Text>
           </View>
         </View>
@@ -756,7 +775,7 @@ const HomeScreen = () => {
                 style={[
                   styles.modalOption,
                   selectedValue === (item.id || item._id) &&
-                    styles.selectedOption,
+                  styles.selectedOption,
                 ]}
                 onPress={() => onSelect(item.id || item._id)}
               >
@@ -764,7 +783,7 @@ const HomeScreen = () => {
                   style={[
                     styles.modalOptionText,
                     selectedValue === (item.id || item._id) &&
-                      styles.selectedOptionText,
+                    styles.selectedOptionText,
                   ]}
                 >
                   {item.name}
