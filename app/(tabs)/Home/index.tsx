@@ -1014,12 +1014,12 @@ const HomeScreen = () => {
             </View>
           </ImageBackground>
         </View>
-        <TouchableOpacity
+        {/* <TouchableOpacity
           onPress={testNotification}
           style={{ backgroundColor: "green" }}
         >
           <Text>Test Notification</Text>
-        </TouchableOpacity>
+        </TouchableOpacity> */}
 
         {/* Filter Row (normal position) */}
         {!isFilterSticky && renderFilterRow()}

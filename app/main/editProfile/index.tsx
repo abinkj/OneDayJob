@@ -12,7 +12,7 @@ import { Header } from "../../../components/header";
 import LabeledInput from "../../../components/labeledTextInput";
 import { User } from "../../../types";
 import { saveUserData } from "../../../utilities/mmkvStore";
-import { updateProfile } from "../../../services/api";
+import { updateProfile, uploadProfilePicture } from "../../../services/api";
 import { useDispatch } from "react-redux";
 import Toast from "react-native-toast-message";
 import ImagePickerActionSheet, {
@@ -118,6 +118,35 @@ const EditProfile: React.FC = () => {
     try {
       setIsSaving(true);
 
+      // Upload profile picture if it's a local URI
+      let profilePictureUrl = user.profilePicture;
+      const imageUri = typeof profileImage === "string" ? profileImage : profileImage?.uri;
+
+      if (imageUri && imageUri.startsWith('file://')) {
+        Toast.show({
+          type: "info",
+          text1: "Uploading Image",
+          text2: "Please wait...",
+        });
+
+        try {
+          const uploadResponse = await uploadProfilePicture(imageUri);
+          console.log('Upload response:', uploadResponse);
+
+          if (uploadResponse.success && uploadResponse.data?.url) {
+            profilePictureUrl = uploadResponse.data.url;
+            console.log('Profile picture uploaded successfully:', profilePictureUrl);
+          } else {
+            throw new Error("Failed to upload profile picture");
+          }
+        } catch (uploadError) {
+          console.error('Upload error:', uploadError);
+          throw new Error("Failed to upload profile picture. Please try again.");
+        }
+      } else if (imageUri) {
+        profilePictureUrl = imageUri;
+      }
+
       const updatedUser: User = {
         ...user,
         firstName: firstName.trim(),
@@ -126,8 +155,7 @@ const EditProfile: React.FC = () => {
           ...(typeof user.location === "object" ? user.location : {}),
           address: location.trim(),
         },
-        profilePicture:
-          typeof profileImage === "string" ? profileImage : profileImage?.uri,
+        profilePicture: profilePictureUrl,
         updatedAt: new Date().toISOString(),
       };
 
@@ -151,7 +179,7 @@ const EditProfile: React.FC = () => {
         type: "error",
         text1: "Error",
         text2:
-          error?.response?.data?.message || "Failed to save profile changes",
+          error?.response?.data?.message || error?.message || "Failed to save profile changes",
       });
     } finally {
       setIsSaving(false);

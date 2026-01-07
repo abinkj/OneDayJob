@@ -598,6 +598,39 @@ export const getCurrentUser = async () => {
 // Update user profile
 export const updateProfile = (id, data) => api.put(`/users/${id}`, data);
 
+// Upload profile picture
+export const uploadProfilePicture = async (imageUri: string) => {
+  try {
+    const formData = new FormData();
+
+    // Extract filename from URI
+    const filename = imageUri.split('/').pop() || 'profile.jpg';
+    const match = /\.(\w+)$/.exec(filename);
+    const type = match ? `image/${match[1]}` : 'image/jpeg';
+
+    // Append image to FormData
+    formData.append('profilePicture', {
+      uri: imageUri,
+      name: filename,
+      type: type,
+    } as any);
+
+    console.log('Uploading profile picture:', { filename, type });
+
+    const response = await api.post('/upload/profile-picture', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+
+    console.log('Profile picture upload response:', response.data);
+    return response.data;
+  } catch (error) {
+    console.error('Error uploading profile picture:', error);
+    throw error;
+  }
+};
+
 // Delete user account
 export const deleteUser = (id) => api.delete(`/users/${id}`);
 

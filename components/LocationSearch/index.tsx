@@ -135,23 +135,29 @@ const LocationSearch: React.FC<LocationSearchProps> = ({
   };
 
   // Render suggestion item
-  const renderSuggestion = ({ item }: { item: LocationData }) => (
+  const renderSuggestion = ({ item, index }: { item: LocationData; index: number }) => (
     <TouchableOpacity
-      style={styles.suggestionItem}
+      style={[
+        styles.suggestionItem,
+        index === suggestions.length - 1 && styles.lastSuggestionItem,
+      ]}
       onPress={() => handleSuggestionSelect(item)}
-      activeOpacity={0.7}
+      activeOpacity={0.6}
     >
-      <Ionicons name="location-outline" size={20} color={colors.grey} />
+      <View style={styles.suggestionIconContainer}>
+        <Ionicons name="location" size={18} color={colors.primary} />
+      </View>
       <View style={styles.suggestionTextContainer}>
-        <Text style={styles.suggestionMainText}>
+        <Text style={styles.suggestionMainText} numberOfLines={1}>
           {item.address || `${item.city}, ${item.state}`}
         </Text>
-        {item.city && item.state && (
-          <Text style={styles.suggestionSubText}>
-            {item.city}, {item.state} {item.zipCode}
+        {item.city && item.state && item.address && (
+          <Text style={styles.suggestionSubText} numberOfLines={1}>
+            {item.city}, {item.state}
           </Text>
         )}
       </View>
+      <Ionicons name="arrow-forward" size={16} color={colors.border} />
     </TouchableOpacity>
   );
 
@@ -173,13 +179,11 @@ const LocationSearch: React.FC<LocationSearchProps> = ({
               }
             }}
             onBlur={() => {
-              setIsInputFocused(false);
-              // Only hide suggestions after a longer delay to allow for selection
+              // Delay to allow suggestion tap to register
               setTimeout(() => {
-                if (!isInputFocused) {
-                  setShowSuggestions(false);
-                }
-              }, 300);
+                setIsInputFocused(false);
+                setShowSuggestions(false);
+              }, 200);
             }}
           />
           {isLoading && (
@@ -203,13 +207,15 @@ const LocationSearch: React.FC<LocationSearchProps> = ({
       {showSuggestions && (suggestions.length > 0 || isLoading) && (
         <View style={styles.suggestionsContainer}>
           {isLoading && suggestions.length === 0 ? (
-            <View style={styles.loadingContainer}>
+            <View style={styles.emptyStateContainer}>
               <ActivityIndicator size="small" color={colors.primary} />
-              <Text style={styles.loadingText}>Searching...</Text>
+              <Text style={styles.emptyStateText}>Searching locations...</Text>
             </View>
           ) : suggestions.length === 0 && searchText.trim().length >= 2 ? (
-            <View style={styles.loadingContainer}>
-              <Text style={styles.loadingText}>No results found</Text>
+            <View style={styles.emptyStateContainer}>
+              <Ionicons name="search-outline" size={32} color={colors.border} />
+              <Text style={styles.emptyStateText}>No locations found</Text>
+              <Text style={styles.emptyStateSubText}>Try a different search term</Text>
             </View>
           ) : (
             <FlatList
@@ -221,6 +227,7 @@ const LocationSearch: React.FC<LocationSearchProps> = ({
               style={styles.suggestionsList}
               keyboardShouldPersistTaps="handled"
               nestedScrollEnabled={true}
+              showsVerticalScrollIndicator={false}
             />
           )}
         </View>
@@ -272,17 +279,18 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     backgroundColor: colors.white,
     borderWidth: 1,
     borderColor: colors.border,
-    borderRadius: 8,
-    marginTop: 4,
-    maxHeight: 200,
+    borderRadius: 12,
+    marginTop: 8,
+    maxHeight: 240,
+    overflow: "hidden",
     shadowColor: "#000",
     shadowOffset: {
       width: 0,
-      height: 2,
+      height: 4,
     },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 8,
   },
   suggestionsList: {
     flex: 1,
@@ -291,33 +299,50 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingVertical: 14,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
     gap: 12,
+    backgroundColor: colors.white,
+  },
+  lastSuggestionItem: {
+    borderBottomWidth: 0,
+  },
+  suggestionIconContainer: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: colors.categoryBox,
+    justifyContent: "center",
+    alignItems: "center",
   },
   suggestionTextContainer: {
     flex: 1,
   },
   suggestionMainText: {
-    fontSize: 16,
+    fontSize: 15,
+    color: colors.black,
+    fontWeight: "600",
+    marginBottom: 2,
+  },
+  suggestionSubText: {
+    fontSize: 13,
+    color: colors.grey,
+  },
+  emptyStateContainer: {
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 32,
+    paddingHorizontal: 20,
+    gap: 8,
+  },
+  emptyStateText: {
+    fontSize: 15,
     color: colors.black,
     fontWeight: "500",
   },
-  suggestionSubText: {
-    fontSize: 14,
-    color: colors.grey,
-    marginTop: 2,
-  },
-  loadingContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    paddingVertical: 20,
-    gap: 10,
-  },
-  loadingText: {
-    fontSize: 14,
+  emptyStateSubText: {
+    fontSize: 13,
     color: colors.grey,
   },
 });

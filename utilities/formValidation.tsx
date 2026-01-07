@@ -533,12 +533,7 @@ export const validateHourlyRate = (
     };
   }
 
-  if (numericRate > 500) {
-    return {
-      rateError: "Hourly rate cannot exceed $500.",
-      status: false,
-    };
-  }
+
 
   return {
     rateError: "",

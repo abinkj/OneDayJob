@@ -227,6 +227,13 @@ const JobDetails = () => {
     try {
       const res = await applyJob(jobId);
       if (res.data.success) {
+        // Update local job state to reflect that user has applied
+        setJob((prevJob) => ({
+          ...prevJob!,
+          hasApplied: true,
+          applicantCount: (prevJob?.applicantCount || 0) + 1,
+        }));
+
         setApplied(true); // ✅ show success animation
         setTimeout(() => {
           navigation.goBack(); // ✅ go back after animation
@@ -243,6 +250,17 @@ const JobDetails = () => {
           type: "error",
           text1: "Application Failed",
           text2: errorMessage,
+        });
+      } else if (errorMessage.includes("already applied")) {
+        // User has already applied - update local state
+        setJob((prevJob) => ({
+          ...prevJob!,
+          hasApplied: true,
+        }));
+        Toast.show({
+          type: "info",
+          text1: "Already Applied",
+          text2: "You have already applied for this job",
         });
       } else {
         Toast.show({
@@ -427,21 +445,19 @@ const JobDetails = () => {
               style={[
                 styles.locationText,
                 !job.isRemote &&
-                  !(
-                    job.jobStatus === "completed" || job.status === "completed"
-                  ) && {
-                    color: colors.primary,
-                    textDecorationLine: "underline",
-                  },
+                !(
+                  job.jobStatus === "completed" || job.status === "completed"
+                ) && {
+                  color: colors.primary,
+                  textDecorationLine: "underline",
+                },
               ]}
             >
               {job.isRemote
                 ? "Remote Work"
-                : `${job.location?.address || ""}${
-                    job.location?.city ? ", " + job.location.city : ""
-                  }${job.location?.state ? ", " + job.location.state : ""}${
-                    job.location?.country ? ", " + job.location.country : ""
-                  }`}
+                : `${job.location?.address || ""}${job.location?.city ? ", " + job.location.city : ""
+                }${job.location?.state ? ", " + job.location.state : ""}${job.location?.country ? ", " + job.location.country : ""
+                }`}
             </Text>
           </TouchableOpacity>
         </View>
@@ -702,7 +718,7 @@ const JobDetails = () => {
                 {job.userId?.phoneNumber}
               </Text>
             </View>
-            <TouchableOpacity style={styles.contactButton} onPress={() => {}}>
+            <TouchableOpacity style={styles.contactButton} onPress={() => { }}>
               <Ionicons name="call-outline" size={20} color={colors.primary} />
             </TouchableOpacity>
           </View>
@@ -719,17 +735,22 @@ const JobDetails = () => {
         {jobData.jobStatus === "completed" ? (
           <CustomButton
             text="Job Completed"
-            onPress={() => {}}
+            onPress={() => { }}
             disabled={true}
             color="#ccc"
             style={{ flex: 1 }}
           />
-        ) : verificationStatus?.employeeId &&
-          (userData?.id === verificationStatus.employeeId ||
-            userData?._id === verificationStatus.employeeId) ? (
+        ) : jobData.hasApplied ||
+          (jobData.applicants && Array.isArray(jobData.applicants) &&
+            jobData.applicants.some((applicant: any) =>
+              applicant === userData?.id ||
+              applicant === userData?._id ||
+              applicant?.id === userData?.id ||
+              applicant?._id === userData?._id
+            )) ? (
           <CustomButton
             text="Applied"
-            onPress={() => {}}
+            onPress={() => { }}
             disabled={true}
             color="#ccc"
             style={{ flex: 1 }}

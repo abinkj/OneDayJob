@@ -66,6 +66,7 @@ const Profile: React.FC = () => {
         }
 
         if (userData) {
+          console.log('Profile screen - User profile picture:', userData.profilePicture);
           setUser(userData);
           // Fetch ratings for this user (as an employee)
           try {
@@ -94,14 +95,21 @@ const Profile: React.FC = () => {
       try {
         const currentUser = await getCurrentUser();
         if (currentUser) {
+          console.log('Profile screen (focus) - User profile picture:', currentUser.profilePicture);
           setUser(currentUser);
         } else {
           const userData = await getUserData();
-          if (userData) setUser(userData);
+          if (userData) {
+            console.log('Profile screen (focus fallback) - User profile picture:', userData.profilePicture);
+            setUser(userData);
+          }
         }
       } catch (error) {
         const userData = await getUserData();
-        if (userData) setUser(userData);
+        if (userData) {
+          console.log('Profile screen (focus error) - User profile picture:', userData.profilePicture);
+          setUser(userData);
+        }
       }
     });
 
@@ -208,11 +216,14 @@ const Profile: React.FC = () => {
         <View style={styles.profileCard}>
           {/* <Image source={profileImageSrc} style={styles.profileImage} /> */}
           <Image
+            key={typeof user?.profilePicture === 'string' ? user.profilePicture : 'default'}
             source={user?.profilePicture}
             style={styles.profileImage}
             placeholder={Images.profile.profileImage}
             placeholderContentFit="cover"
             contentFit="fill"
+            cachePolicy="none"
+            recyclingKey={typeof user?.profilePicture === 'string' ? user.profilePicture : 'default'}
           />
           <Text style={styles.name}>
             {user?.firstName} {user?.lastName}
