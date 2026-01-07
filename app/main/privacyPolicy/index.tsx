@@ -52,21 +52,23 @@ const PrivacyPolicy = () => {
     <View style={styles.container}>
       <Header title={displayTitle} showBackButton />
 
-      <WebView
-        source={{ uri: displayUrl }}
-        style={styles.webview}
-        originWhitelist={["*"]}
-        bounces={false}
-        decelerationRate="fast"
-        onLoadStart={() => setLoading(true)}
-        onLoadEnd={() => setLoading(false)}
-      />
+      <View style={{ flex: 1 }}>
+        <WebView
+          source={{ uri: displayUrl }}
+          style={styles.webview}
+          originWhitelist={["*"]}
+          bounces={false}
+          decelerationRate="fast"
+          onLoadStart={() => setLoading(true)}
+          onLoadEnd={() => setLoading(false)}
+        />
 
-      {loading && (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={colors.primary} />
-        </View>
-      )}
+        {loading && (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color={colors.primary} />
+          </View>
+        )}
+      </View>
     </View>
   );
 };

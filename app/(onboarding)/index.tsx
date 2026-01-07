@@ -16,6 +16,7 @@ import Animated, {
   interpolate,
   Extrapolate,
   interpolateColor,
+  Extrapolation,
 } from "react-native-reanimated";
 import { setHasSeenOnboarding } from "../../redux/reducers/authReducers";
 import { saveHasSeenOnboarding } from "../../utilities/mmkvStore";
@@ -55,7 +56,7 @@ const PaginationDot = ({ index, scrollX }: { index: number; scrollX: any }) => {
       scrollX.value,
       [(index - 1) * width, index * width, (index + 1) * width],
       [8, 20, 8],
-      Extrapolate.CLAMP
+      Extrapolation.CLAMP
     );
 
     const opacity = interpolate(
@@ -125,7 +126,7 @@ const Onboarding = () => {
 
   return (
     <LinearGradient
-      colors={["#96a6ff", "#7e8eff"]} // Soft purple/blue gradient
+      colors={[Colors.primary, "#7e8eff"]} // Soft purple/blue gradient
       style={styles.container}
     >
       <SafeAreaView style={{ flex: 1 }}>
@@ -194,12 +195,9 @@ const styles = StyleSheet.create({
     marginTop: -60, // Pull up slightly to balance layout
   },
   imageContainer: {
+    justifyContent: "center",
+    alignItems: "center",
     marginBottom: 40,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.2,
-    shadowRadius: 20,
-    elevation: 8,
   },
   image: {
     width: width,
@@ -211,7 +209,7 @@ const styles = StyleSheet.create({
     color: "#2C2C2C",
     textAlign: "center",
     marginBottom: 10,
-    lineHeight: 40,
+    lineHeight: 50,
   },
   footer: {
     paddingHorizontal: 30,

@@ -1,8 +1,9 @@
-import React, { forwardRef, useImperativeHandle, useRef } from "react";
+import React, { forwardRef, useImperativeHandle, useRef, useMemo } from "react";
 import { View, Text, TouchableOpacity } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import ActionSheet, { ActionSheetRef } from "react-native-actions-sheet";
 import * as ImagePicker from "expo-image-picker";
+import { useTheme } from "../../contexts/ThemeContext";
 
 export interface ImagePickerActionSheetRef {
   show: () => void;
@@ -31,7 +32,7 @@ const ImagePickerActionSheet = forwardRef<
       onImageSelected,
       onError,
       title = "Change Profile Picture",
-      primaryColor = "#007AFF",
+      primaryColor,
       containerStyle,
       titleStyle,
       buttonStyle,
@@ -42,6 +43,8 @@ const ImagePickerActionSheet = forwardRef<
     ref
   ) => {
     const actionSheetRef = useRef<ActionSheetRef>(null);
+    const { colors } = useTheme();
+    const activePrimaryColor = primaryColor || colors.primary;
 
     useImperativeHandle(ref, () => ({
       show: () => actionSheetRef.current?.show(),
@@ -52,7 +55,8 @@ const ImagePickerActionSheet = forwardRef<
       actionSheetRef.current?.hide();
       try {
         // Request camera permissions
-        const cameraPermission = await ImagePicker.requestCameraPermissionsAsync();
+        const cameraPermission =
+          await ImagePicker.requestCameraPermissionsAsync();
         if (cameraPermission.status !== "granted") {
           onError?.("Camera permission is required to take photos");
           return;
@@ -77,7 +81,8 @@ const ImagePickerActionSheet = forwardRef<
       actionSheetRef.current?.hide();
       try {
         // Request media library permissions
-        const libraryPermission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+        const libraryPermission =
+          await ImagePicker.requestMediaLibraryPermissionsAsync();
         if (libraryPermission.status !== "granted") {
           onError?.("Photo library permission is required to choose images");
           return;
@@ -102,53 +107,71 @@ const ImagePickerActionSheet = forwardRef<
       }
     };
 
-    const defaultContainerStyle = {
-      backgroundColor: "#fff",
-      borderTopLeftRadius: 20,
-      borderTopRightRadius: 20,
-      ...containerStyle,
-    };
+    const defaultContainerStyle = useMemo(
+      () => ({
+        backgroundColor: colors.white,
+        borderTopLeftRadius: 20,
+        borderTopRightRadius: 20,
+        ...containerStyle,
+      }),
+      [colors.white, containerStyle]
+    );
 
-    const defaultTitleStyle = {
-      fontSize: 18,
-      fontWeight: "600" as const,
-      textAlign: "center" as const,
-      marginBottom: 20,
-      color: "#333",
-      ...titleStyle,
-    };
+    const defaultTitleStyle = useMemo(
+      () => ({
+        fontSize: 18,
+        fontWeight: "600" as const,
+        textAlign: "center" as const,
+        marginBottom: 20,
+        color: colors.black,
+        ...titleStyle,
+      }),
+      [colors.black, titleStyle]
+    );
 
-    const defaultButtonStyle = {
-      flexDirection: "row" as const,
-      alignItems: "center" as const,
-      paddingVertical: 15,
-      paddingHorizontal: 10,
-      borderRadius: 8,
-      marginBottom: 10,
-      ...buttonStyle,
-    };
+    const defaultButtonStyle = useMemo(
+      () => ({
+        flexDirection: "row" as const,
+        alignItems: "center" as const,
+        paddingVertical: 15,
+        paddingHorizontal: 10,
+        borderRadius: 8,
+        marginBottom: 10,
+        ...buttonStyle,
+      }),
+      [buttonStyle]
+    );
 
-    const defaultButtonTextStyle = {
-      fontSize: 16,
-      marginLeft: 15,
-      color: "#333",
-      ...buttonTextStyle,
-    };
+    const defaultButtonTextStyle = useMemo(
+      () => ({
+        fontSize: 16,
+        marginLeft: 15,
+        color: colors.black,
+        ...buttonTextStyle,
+      }),
+      [colors.black, buttonTextStyle]
+    );
 
-    const defaultCancelButtonStyle = {
-      backgroundColor: "#f0f0f0",
-      paddingVertical: 15,
-      borderRadius: 8,
-      alignItems: "center" as const,
-      ...cancelButtonStyle,
-    };
+    const defaultCancelButtonStyle = useMemo(
+      () => ({
+        backgroundColor: colors.address2,
+        paddingVertical: 15,
+        borderRadius: 8,
+        alignItems: "center" as const,
+        ...cancelButtonStyle,
+      }),
+      [colors.address2, cancelButtonStyle]
+    );
 
-    const defaultCancelTextStyle = {
-      fontSize: 16,
-      color: "#666",
-      fontWeight: "500" as const,
-      ...cancelTextStyle,
-    };
+    const defaultCancelTextStyle = useMemo(
+      () => ({
+        fontSize: 16,
+        color: colors.grey,
+        fontWeight: "500" as const,
+        ...cancelTextStyle,
+      }),
+      [colors.grey, cancelTextStyle]
+    );
 
     return (
       <ActionSheet
@@ -156,7 +179,7 @@ const ImagePickerActionSheet = forwardRef<
         containerStyle={defaultContainerStyle}
         indicatorStyle={{
           width: 40,
-          backgroundColor: "#ccc",
+          backgroundColor: colors.border,
         }}
         gestureEnabled={true}
         defaultOverlayOpacity={0.7}
@@ -173,7 +196,7 @@ const ImagePickerActionSheet = forwardRef<
             onPress={handleTakePhoto}
             activeOpacity={0.7}
           >
-            <Ionicons name="camera" size={24} color={primaryColor} />
+            <Ionicons name="camera" size={24} color={activePrimaryColor} />
             <Text style={defaultButtonTextStyle}>Take Photo</Text>
           </TouchableOpacity>
 
@@ -182,7 +205,7 @@ const ImagePickerActionSheet = forwardRef<
             onPress={handleChooseFromGallery}
             activeOpacity={0.7}
           >
-            <Ionicons name="images" size={24} color={primaryColor} />
+            <Ionicons name="images" size={24} color={activePrimaryColor} />
             <Text style={defaultButtonTextStyle}>Choose from Gallery</Text>
           </TouchableOpacity>
 

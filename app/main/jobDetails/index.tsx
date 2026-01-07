@@ -13,6 +13,10 @@ import { useSelector } from "react-redux";
 import { useTheme } from "../../../contexts/ThemeContext";
 import { createStyles } from "./styles";
 import { JobPost } from "../../../types";
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
 import { Header } from "../../../components/header";
 import { openMap } from "../../../utilities/mapUtils";
 import {
@@ -27,13 +31,17 @@ import SuccessAnimation from "../../../components/successAnimation";
 import Toast from "react-native-toast-message";
 import { useNotifications } from "../../../contexts/NotificationContext";
 import { JobDetailsSkeleton } from "../../../components/Shimmer/Skeletons";
+import CustomButton from "../../../components/CustomButton";
 
 const JobDetails = () => {
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const navigation = useNavigation<any>();
   const route = useRoute<any>();
-  const { kycStatus } = useSelector((state: any) => state.authentication);
+  const insets = useSafeAreaInsets();
+  const { kycStatus, userData } = useSelector(
+    (state: any) => state.authentication
+  );
   const { jobId, jobData } = route.params || {};
 
   const [job, setJob] = useState<JobPost | null>(null);
@@ -419,19 +427,21 @@ const JobDetails = () => {
               style={[
                 styles.locationText,
                 !job.isRemote &&
-                !(
-                  job.jobStatus === "completed" || job.status === "completed"
-                ) && {
-                  color: colors.primary,
-                  textDecorationLine: "underline",
-                },
+                  !(
+                    job.jobStatus === "completed" || job.status === "completed"
+                  ) && {
+                    color: colors.primary,
+                    textDecorationLine: "underline",
+                  },
               ]}
             >
               {job.isRemote
                 ? "Remote Work"
-                : `${job.location?.address || ""}${job.location?.city ? ", " + job.location.city : ""
-                }${job.location?.state ? ", " + job.location.state : ""}${job.location?.country ? ", " + job.location.country : ""
-                }`}
+                : `${job.location?.address || ""}${
+                    job.location?.city ? ", " + job.location.city : ""
+                  }${job.location?.state ? ", " + job.location.state : ""}${
+                    job.location?.country ? ", " + job.location.country : ""
+                  }`}
             </Text>
           </TouchableOpacity>
         </View>
@@ -692,7 +702,7 @@ const JobDetails = () => {
                 {job.userId?.phoneNumber}
               </Text>
             </View>
-            <TouchableOpacity style={styles.contactButton} onPress={() => { }}>
+            <TouchableOpacity style={styles.contactButton} onPress={() => {}}>
               <Ionicons name="call-outline" size={20} color={colors.primary} />
             </TouchableOpacity>
           </View>
@@ -700,20 +710,37 @@ const JobDetails = () => {
       </ScrollView>
 
       {/* Action Buttons */}
-      <View style={styles.actionContainer}>
+      <View
+        style={[
+          styles.actionContainer,
+          { paddingBottom: Math.max(insets.bottom, 16) },
+        ]}
+      >
         {jobData.jobStatus === "completed" ? (
-          <TouchableOpacity
-            style={[styles.applyButton, { backgroundColor: "#ccc" }]} // gray out the button
+          <CustomButton
+            text="Job Completed"
+            onPress={() => {}}
             disabled={true}
-          >
-            <Text style={[styles.applyButtonText, { color: "#666" }]}>
-              Job Completed
-            </Text>
-          </TouchableOpacity>
+            color="#ccc"
+            style={{ flex: 1 }}
+          />
+        ) : verificationStatus?.employeeId &&
+          (userData?.id === verificationStatus.employeeId ||
+            userData?._id === verificationStatus.employeeId) ? (
+          <CustomButton
+            text="Applied"
+            onPress={() => {}}
+            disabled={true}
+            color="#ccc"
+            style={{ flex: 1 }}
+          />
         ) : (
-          <TouchableOpacity style={styles.applyButton} onPress={handleApply}>
-            <Text style={styles.applyButtonText}>Apply</Text>
-          </TouchableOpacity>
+          <CustomButton
+            text="Apply"
+            onPress={handleApply}
+            isLoading={loading}
+            style={{ flex: 1 }}
+          />
         )}
       </View>
     </View>

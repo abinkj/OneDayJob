@@ -6,26 +6,30 @@ import {
   Text,
   RefreshControl,
 } from "react-native";
+import { useSelector } from "react-redux";
 import ChatItem from "../../../components/chatItem";
 import { Header } from "../../../components/header";
 import { ChatListSkeleton } from "../../../components/Shimmer/Skeletons";
 
 import { Ionicons } from "@expo/vector-icons";
-import { router } from "expo-router";
 import { useNavigation } from "@react-navigation/native";
-import { getConversations } from "../../../services/api";
-import { Colors } from "../../../constants/Colors";
-import Toast from "react-native-toast-message";
+import { useConversations } from "../../../hooks/useChat";
 import { useTheme } from "../../../contexts/ThemeContext";
 import { createStyles } from "./styles";
 
 export default function Chat() {
-  const navigation = useNavigation();
+  const navigation = useNavigation<any>();
   const { colors } = useTheme();
   const styles = React.useMemo(() => createStyles(colors), [colors]);
-  const [conversations, setConversations] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
+  const userData = useSelector((state: any) => state.authentication.userData);
+  const currentUserId = userData?.id || userData?._id;
+
+  const {
+    data: rawConversations,
+    isLoading,
+    refetch,
+    isRefetching,
+  } = useConversations();
 
   const formatTime = (dateString: string) => {
     if (!dateString) return "";
@@ -46,68 +50,40 @@ export default function Chat() {
     }
   };
 
-  const fetchConversations = async () => {
-    try {
-      const response = await getConversations();
-      console.log("Conversations fetched:", response);
+  const transformedConversations = React.useMemo(() => {
+    return (rawConversations || []).map((conv: any) => {
+      // Find the other participant (not the current user)
+      const otherParticipant = conv.participants?.find(
+        (p: any) => (p.id || p._id) !== currentUserId
+      );
 
-      // Transform the response to match ChatItem expected format
-      const conversations = response.data?.conversations || [];
-      const transformedConversations = conversations.map((conv: any) => {
-        // Find the other participant (not the current user)
-        const otherParticipant = conv.participants?.find(
-          (p: any) => p.id !== conv.createdBy
-        );
-
-        return {
-          id: conv._id,
-          name: otherParticipant
-            ? `${otherParticipant.firstName} ${otherParticipant.lastName}`
-            : "Unknown User",
-          message: conv.lastMessage?.content?.text || "No messages yet",
-          avatar: otherParticipant?.profilePicture || "",
-          unread: conv.unreadCount || 0,
-          conversationId: conv._id,
-          participant: otherParticipant,
-          time: formatTime(conv.lastMessage?.createdAt || conv.updatedAt),
-        };
-      });
-
-      setConversations(transformedConversations);
-    } catch (error) {
-      console.error("Error fetching conversations:", error);
-      Toast.show({
-        type: "error",
-        text1: "Error",
-        text2: "Failed to load conversations",
-      });
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchConversations();
-  }, []);
-
-  const onRefresh = () => {
-    setRefreshing(true);
-    fetchConversations();
-  };
+      return {
+        id: conv._id,
+        name: otherParticipant
+          ? `${otherParticipant.firstName} ${otherParticipant.lastName}`
+          : "Unknown User",
+        message: conv.lastMessage?.content?.text || "No messages yet",
+        avatar: otherParticipant?.profilePicture || "",
+        unread: conv.unreadCount || 0,
+        conversationId: conv._id,
+        participant: otherParticipant,
+        time: formatTime(conv.lastMessage?.createdAt || conv.updatedAt),
+      };
+    });
+  }, [rawConversations, currentUserId]);
 
   const handleChatPress = (item: any) => {
     navigation.navigate("ChatScreen", {
       conversationId: item.conversationId,
       participant: {
-        id: item.participant?._id,
+        id: item.participant?._id || item.participant?.id,
         name: item.name,
         avatar: item.avatar,
       },
     });
   };
 
-  if (loading) {
+  if (isLoading && !isRefetching) {
     return <ChatListSkeleton />;
   }
 
@@ -116,7 +92,7 @@ export default function Chat() {
       <Header title="Chats" />
       <View style={styles.chatHeader} />
       <FlatList
-        data={conversations}
+        data={transformedConversations}
         keyExtractor={(item) => item.id}
         bounces={true}
         contentContainerStyle={{ paddingBottom: 100, paddingTop: 10 }}
@@ -126,8 +102,8 @@ export default function Chat() {
         )}
         refreshControl={
           <RefreshControl
-            refreshing={refreshing}
-            onRefresh={onRefresh}
+            refreshing={isRefetching}
+            onRefresh={() => refetch()}
             colors={[colors.primary]}
             tintColor={colors.primary}
           />

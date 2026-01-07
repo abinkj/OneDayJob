@@ -6,8 +6,10 @@ import {
   getRefreshToken,
 } from "../utilities/secureStore";
 import { normalizeUser, storage } from "../utilities/mmkvStore";
+import { store } from "../redux/store";
+import { logout as logoutAction } from "../redux/reducers/authReducers";
 
-const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL; // Uses your .env EXPO_PUBLIC_API_URL
+const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL;
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -112,26 +114,20 @@ api.interceptors.response.use(
         }
       } catch (refreshError) {
         console.error("Token refresh failed:", refreshError);
-        // Refresh failed, clear auth data
+        // Refresh failed, clear auth data and logout
         await clearAuthData();
+        store.dispatch(logoutAction());
         console.log("Session expired, please login again");
         return Promise.reject(refreshError);
       }
     }
 
-    // Handle 403 errors specifically
+    // Handle 403 errors specifically - Force Logout
     if (error.response?.status === 403) {
       console.error("Access forbidden (403):", error.response?.data);
-      // Check if token exists and is valid format
-      const token = await getAccessToken();
-      if (!token) {
-        console.error("No token found for 403 error");
-      } else {
-        console.error(
-          "Token exists but access denied. Token preview:",
-          token.substring(0, 20) + "..."
-        );
-      }
+      console.error("Forcing logout due to 403 error");
+      await clearAuthData();
+      store.dispatch(logoutAction());
     }
 
     return Promise.reject(error);
@@ -395,8 +391,7 @@ export const getJobsByLocation = async (radius = 10, categoryId = null) => {
       error.response?.status === 403 ||
       error.response?.status === 401
     ) {
-      console.log("Authentication error - clearing auth data");
-      await clearAuthData();
+      console.log("Authentication error - already handled by interceptor");
     } else {
       console.log("Network or other error - will fallback in caller");
     }
