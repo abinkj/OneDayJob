@@ -35,6 +35,8 @@ import { restoreSession } from "../../../utilities/authentication";
 import { JobPost } from "../../../types";
 import { useJobPostings } from "../../../hooks/useJobs";
 import { JobCardSkeleton } from "../../../components/Shimmer/Skeletons";
+import NotificationTester from '../../../components/NotificationTester';
+
 
 const categoryIcons: Record<string, any> = {
   assembly: require("../../../assets/images/assembly.png"),
@@ -773,6 +775,7 @@ const HomeScreen = () => {
         minHeight: 400,
       }}
     >
+
       <View
         style={{
           width: 120,
@@ -933,7 +936,7 @@ const HomeScreen = () => {
             <NotificationBadge />
           </TouchableOpacity>
         </View>
-
+        <NotificationTester />
         {/* Search Bar */}
         <View style={styles.searchContainer}>
           <Ionicons

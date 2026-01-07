@@ -62,6 +62,10 @@ export interface SocketEvents {
     status: any;
     timestamp: string;
   }) => void;
+  // Missing events used in NotificationContext
+  "new_application": (data: any) => void;
+  "application_status_update": (data: any) => void;
+  "verification-codes-generated": (data: any) => void;
 }
 
 // Socket service class

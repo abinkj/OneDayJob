@@ -102,6 +102,14 @@ class NotificationService {
     return token;
   }
 
+  // Ensure we have a token (safe to call multiple times)
+  async ensureToken(): Promise<string | null> {
+    if (this.expoPushToken) {
+      return this.expoPushToken;
+    }
+    return await this.registerForPushNotificationsAsync();
+  }
+
   // Set up notification listeners
   private setupNotificationListeners(): void {
     // Listener for notifications received while app is running

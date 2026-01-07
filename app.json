@@ -29,7 +29,8 @@
         "android.permission.ACCESS_FINE_LOCATION",
         "android.permission.INTERNET",
         "android.permission.WAKE_LOCK",
-        "android.permission.VIBRATE"
+        "android.permission.VIBRATE",
+        "android.permission.POST_NOTIFICATIONS"
       ]
     },
     "web": {

@@ -22,6 +22,7 @@ import Animated, { FadeInDown } from "react-native-reanimated";
 import CustomButton from "../../../components/CustomButton";
 import { useAlert } from "../../../components/CustomAlert/AlertProvider";
 import { validateOtpCode } from "../../../utilities/formValidation";
+import { useNotifications } from "../../../contexts/NotificationContext";
 
 interface RouteParams {
   phoneNumber: string;
@@ -40,6 +41,7 @@ const Otp = () => {
 
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
+  const { requestPermission } = useNotifications();
 
   const handleVerifyOtp = async () => {
     const otpValidation = validateOtpCode(otp);
@@ -83,6 +85,7 @@ const Otp = () => {
             await saveKycStatus("completed");
             dispatch(completeKyc());
           }
+          await requestPermission(); // Request notification permissions after login
           dispatch(loginUser(userData, accessToken, refreshToken) as any);
         }, 2000);
       } else {
@@ -114,6 +117,7 @@ const Otp = () => {
       setIsLoading(false);
     }
   };
+
 
   const handleResendOtp = async () => {
     if (isResending) return;

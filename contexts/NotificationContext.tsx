@@ -48,6 +48,7 @@ interface NotificationContextType {
   clearAllNotifications: () => Promise<void>;
   markAsRead: (notificationId: string) => void;
   refreshNotifications: () => Promise<void>;
+  registerDevice: () => Promise<void>;
 }
 
 const NotificationContext = createContext<NotificationContextType | undefined>(
@@ -201,6 +202,30 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({
     } catch (error) {
       console.error("Error requesting notification permissions:", error);
       return false;
+    }
+  };
+
+  // Explicitly register device (e.g. after login)
+  const registerDevice = async (): Promise<void> => {
+    try {
+      console.log("📱 Registering device for notifications...");
+      // Ensure we have a token first
+      const token = await notificationService.ensureToken();
+
+      if (token) {
+        // Register with backend
+        const success = await notificationService.registerDeviceWithBackend();
+        if (success) {
+          console.log("✅ Device successfully registered for notifications");
+          // Update permission state
+          const newPermission = await notificationService.getNotificationPermissions();
+          setPermission(newPermission);
+        }
+      } else {
+        console.log("⚠️ Could not get push token for registration");
+      }
+    } catch (error) {
+      console.error("❌ Error registering device:", error);
     }
   };
 
@@ -363,6 +388,7 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({
     clearAllNotifications,
     markAsRead,
     refreshNotifications,
+    registerDevice,
   };
 
   return (
