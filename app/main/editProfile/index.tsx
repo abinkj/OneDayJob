@@ -39,22 +39,44 @@ const EditProfile: React.FC = () => {
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
-    const init =
-      initialUser ||
-      ({
-        firstName: "",
-        lastName: "",
-        email: "",
-        profilePicture: Images.profile.profileImage,
-      } as unknown as User);
+    const fetchAndInitUser = async () => {
+      let init = initialUser;
 
-    setUser(init);
-    setFirstName(init.firstName || "");
-    setLastName(init.lastName || "");
-    setLocation((init.locationText || init.location?.address || "") as string);
-    setProfileImage(
-      (init.profilePicture || Images.profile.profileImage) as any
-    );
+      // If we have initialUser, try to fetch fresh data from backend for profilePictureUrl
+      if (init && (init.id || init._id)) {
+        try {
+          const { getUserProfile } = require("../../../services/api");
+          const userId = init.id || init._id;
+          const profileResponse = await getUserProfile(userId);
+          if (profileResponse.success && profileResponse.data) {
+            console.log('EditProfile - Fetched user from backend with CloudFront URL');
+            init = profileResponse.data;
+          }
+        } catch (error) {
+          console.error('Error fetching user profile from backend:', error);
+        }
+      }
+
+      if (!init) {
+        init = {
+          firstName: "",
+          lastName: "",
+          email: "",
+          profilePicture: Images.profile.profileImage,
+        } as unknown as User;
+      }
+
+      setUser(init);
+      setFirstName(init.firstName || "");
+      setLastName(init.lastName || "");
+      setLocation((init.locationText || init.location?.address || "") as string);
+
+      // Use profilePictureUrl (CloudFront) if available, fallback to profilePicture
+      const imageSource = init.profilePictureUrl || init.profilePicture || Images.profile.profileImage;
+      setProfileImage(imageSource as any);
+    };
+
+    fetchAndInitUser();
   }, []);
 
   const showImagePicker = () => {
@@ -98,15 +120,29 @@ const EditProfile: React.FC = () => {
   };
 
   const handleSave = async () => {
-    if (!validateForm() || !user?._id) return;
+    console.log('=== SAVE CHANGES CLICKED ===');
+    const userId = user?.id || user?._id;
+    console.log('User ID:', userId);
+    if (!validateForm() || !userId) {
+      console.log('Validation failed or no user ID');
+      return;
+    }
+
+    const imageUri = typeof profileImage === "string" ? profileImage : profileImage?.uri;
+    const isNewImage = imageUri && imageUri.startsWith('file://');
+
+    console.log('Image check:', { profileImage, imageUri, isNewImage });
 
     const hasChanges =
       user.firstName !== firstName.trim() ||
       user.lastName !== lastName.trim() ||
       (user.locationText || user.location?.address || "") !== location.trim() ||
-      user.profilePicture !== profileImage;
+      isNewImage; // If it's a local file, it's definitely a new image
+
+    console.log('Has changes:', hasChanges);
 
     if (!hasChanges) {
+      console.log('No changes detected, showing toast');
       Toast.show({
         type: "info",
         text1: "No Changes",
@@ -114,6 +150,8 @@ const EditProfile: React.FC = () => {
       });
       return;
     }
+
+    console.log('Proceeding with save...');
 
     try {
       setIsSaving(true);
@@ -133,9 +171,11 @@ const EditProfile: React.FC = () => {
           const uploadResponse = await uploadProfilePicture(imageUri);
           console.log('Upload response:', uploadResponse);
 
-          if (uploadResponse.success && uploadResponse.data?.url) {
-            profilePictureUrl = uploadResponse.data.url;
-            console.log('Profile picture uploaded successfully:', profilePictureUrl);
+          // IMPORTANT: Use the S3 key, not the full URL
+          // The backend will convert the key to CloudFront URL via getCdnUrl()
+          if (uploadResponse.success && uploadResponse.data?.key) {
+            profilePictureUrl = uploadResponse.data.key; // Store only the S3 key
+            console.log('Profile picture uploaded successfully. S3 key:', profilePictureUrl);
           } else {
             throw new Error("Failed to upload profile picture");
           }
@@ -159,7 +199,7 @@ const EditProfile: React.FC = () => {
         updatedAt: new Date().toISOString(),
       };
 
-      const { data, status } = await updateProfile(user._id, updatedUser);
+      const { data, status } = await updateProfile(userId, updatedUser);
       console.log("Profile update response------------------------->", data);
 
       if (status >= 200 && status < 300 && data) {
@@ -193,11 +233,21 @@ const EditProfile: React.FC = () => {
         {/* Profile Image */}
         <View style={styles.imageWrapper}>
           <Image
-            source={profileImage}
+            key={`edit-profile-${typeof profileImage === 'string' ? profileImage : profileImage?.uri}`}
+            source={
+              typeof profileImage === 'string' && profileImage.startsWith('http')
+                ? { uri: profileImage }
+                : profileImage?.uri && (typeof profileImage.uri === 'string') && profileImage.uri.startsWith('http')
+                  ? { uri: profileImage.uri }
+                  : profileImage?.uri && (typeof profileImage.uri === 'string') && profileImage.uri.startsWith('file://')
+                    ? { uri: profileImage.uri }
+                    : Images.profile.profileImage
+            }
             style={styles.profileImage}
             placeholder={Images.profile.profileImage}
             placeholderContentFit="cover"
             contentFit="cover"
+            cachePolicy="none"
           />
           <TouchableOpacity onPress={showImagePicker} style={styles.editIcon}>
             <Ionicons name="camera" size={16} color="#fff" />

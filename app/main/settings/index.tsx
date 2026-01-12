@@ -141,6 +141,22 @@ const Settings: React.FC = () => {
       setIsLoading(true);
       const currentUser = await getCurrentUser();
       if (currentUser) {
+        const userId = currentUser.id || currentUser._id;
+
+        // Fetch fresh user data from backend to get profilePictureUrl
+        try {
+          const { getUserProfile } = require("../../../services/api");
+          const profileResponse = await getUserProfile(userId);
+          if (profileResponse.success && profileResponse.data) {
+            console.log('Settings - Fetched user from backend with CloudFront URL');
+            setUser(profileResponse.data);
+            return;
+          }
+        } catch (error) {
+          console.error('Error fetching user profile from backend:', error);
+        }
+
+        // Fallback to local storage
         setUser(currentUser);
       }
     } catch (error) {
@@ -262,11 +278,28 @@ const Settings: React.FC = () => {
           activeOpacity={0.7}
         >
           <Image
-            source={user?.profilePicture}
+            key={`settings-${user?.profilePictureUrl || user?.profilePicture}`}
+            source={
+              // Use CloudFront URL (profilePictureUrl) if available, fallback to profilePicture
+              (user?.profilePictureUrl && typeof user.profilePictureUrl === 'string' && user.profilePictureUrl.startsWith('http'))
+                ? { uri: user.profilePictureUrl }
+                : (user?.profilePicture && typeof user.profilePicture === 'string' && user.profilePicture.startsWith('http'))
+                  ? { uri: user.profilePicture }
+                  : Images.profile.profileImage
+            }
             style={[styles.profileImage, { backgroundColor: colors.categoryBox }]}
             placeholder={Images.profile.profileImage}
             placeholderContentFit="cover"
             contentFit="cover"
+            cachePolicy="none"
+            transition={300}
+            onError={(error) => {
+              console.error('Settings image load error:', error);
+              console.error('Failed to load image URL:', user?.profilePictureUrl || user?.profilePicture);
+            }}
+            onLoad={() => {
+              console.log('Settings image loaded successfully:', user?.profilePictureUrl || user?.profilePicture);
+            }}
           />
           <View style={styles.profileInfo}>
             <Text style={[styles.profileName, { color: colors.black }]}>

@@ -63,7 +63,8 @@ export default function Chat() {
           ? `${otherParticipant.firstName} ${otherParticipant.lastName}`
           : "Unknown User",
         message: conv.lastMessage?.content?.text || "No messages yet",
-        avatar: otherParticipant?.profilePicture || "",
+        // Use CloudFront URL (profilePictureUrl) if available, fallback to profilePicture
+        avatar: otherParticipant?.profilePictureUrl || otherParticipant?.profilePicture || "",
         unread: conv.unreadCount || 0,
         conversationId: conv._id,
         participant: otherParticipant,

@@ -250,14 +250,28 @@ const Profile: React.FC = () => {
         <View style={styles.profileCard}>
           {/* <Image source={profileImageSrc} style={styles.profileImage} /> */}
           <Image
-            key={typeof user?.profilePicture === 'string' ? user.profilePicture : 'default'}
-            source={user?.profilePicture}
+            key={`profile-${user?.profilePictureUrl || user?.profilePicture}`}
+            source={
+              // Use CloudFront URL (profilePictureUrl) if available, fallback to profilePicture
+              (user?.profilePictureUrl && typeof user.profilePictureUrl === 'string' && user.profilePictureUrl.startsWith('http'))
+                ? { uri: user.profilePictureUrl }
+                : (user?.profilePicture && typeof user.profilePicture === 'string' && user.profilePicture.startsWith('http'))
+                  ? { uri: user.profilePicture }
+                  : Images.profile.profileImage
+            }
             style={styles.profileImage}
             placeholder={Images.profile.profileImage}
             placeholderContentFit="cover"
-            contentFit="fill"
+            contentFit="cover"
             cachePolicy="none"
-            recyclingKey={typeof user?.profilePicture === 'string' ? user.profilePicture : 'default'}
+            transition={300}
+            onError={(error) => {
+              console.error('Profile image load error:', error);
+              console.error('Failed to load image URL:', user?.profilePictureUrl || user?.profilePicture);
+            }}
+            onLoad={() => {
+              console.log('Profile image loaded successfully:', user?.profilePictureUrl || user?.profilePicture);
+            }}
           />
           <Text style={styles.name}>
             {user?.firstName} {user?.lastName}
