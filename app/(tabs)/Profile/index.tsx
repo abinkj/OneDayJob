@@ -27,6 +27,7 @@ import {
   createConversation,
   getCurrentUser,
   getUserRatings,
+  getUserProfile,
 } from "../../../services/api";
 import Toast from "react-native-toast-message";
 import { Image } from "expo-image";
@@ -58,16 +59,31 @@ const Profile: React.FC = () => {
     const fetchUserAndRatings = async () => {
       try {
         setIsLoading(true);
-        const currentUser = await getCurrentUser();
-        let userData = currentUser;
 
-        if (!userData) {
-          userData = await getUserData();
-        }
+        // Get user ID from local storage first
+        let userData = await getUserData();
 
         if (userData) {
+          const userId = userData.id || userData._id;
+
+          // Fetch fresh user data from backend (includes savedAddresses)
+          try {
+            const profileResponse = await getUserProfile(userId);
+            if (profileResponse.success && profileResponse.data) {
+              userData = profileResponse.data;
+              console.log('Profile screen - Fetched user from backend:', {
+                hasSavedAddresses: !!userData.savedAddresses,
+                savedAddressesCount: userData.savedAddresses?.length || 0
+              });
+            }
+          } catch (error) {
+            console.error('Error fetching user profile from backend:', error);
+            // Continue with local storage data as fallback
+          }
+
           console.log('Profile screen - User profile picture:', userData.profilePicture);
           setUser(userData);
+
           // Fetch ratings for this user (as an employee)
           try {
             const userId = userData.id || userData._id;
@@ -93,23 +109,28 @@ const Profile: React.FC = () => {
   useEffect(() => {
     const unsubscribe = navigation.addListener("focus", async () => {
       try {
-        const currentUser = await getCurrentUser();
-        if (currentUser) {
-          console.log('Profile screen (focus) - User profile picture:', currentUser.profilePicture);
-          setUser(currentUser);
-        } else {
-          const userData = await getUserData();
-          if (userData) {
-            console.log('Profile screen (focus fallback) - User profile picture:', userData.profilePicture);
-            setUser(userData);
-          }
-        }
-      } catch (error) {
         const userData = await getUserData();
         if (userData) {
-          console.log('Profile screen (focus error) - User profile picture:', userData.profilePicture);
+          const userId = userData.id || userData._id;
+
+          // Fetch fresh data from backend
+          try {
+            const profileResponse = await getUserProfile(userId);
+            if (profileResponse.success && profileResponse.data) {
+              console.log('Profile screen (focus) - Fetched from backend');
+              setUser(profileResponse.data);
+              return;
+            }
+          } catch (error) {
+            console.error('Error fetching profile on focus:', error);
+          }
+
+          // Fallback to local storage
+          console.log('Profile screen (focus fallback) - User profile picture:', userData.profilePicture);
           setUser(userData);
         }
+      } catch (error) {
+        console.error('Error in focus listener:', error);
       }
     });
 
@@ -197,6 +218,19 @@ const Profile: React.FC = () => {
     outputRange: [0, experiencedHeight],
   });
 
+  // Helper function to get display address from saved addresses
+  const getDisplayAddress = () => {
+    if (!user?.savedAddresses || user.savedAddresses.length === 0) {
+      return "No address saved";
+    }
+
+    // Find default address or use first one
+    const defaultAddr = user.savedAddresses.find(addr => addr.isDefault);
+    const address = defaultAddr || user.savedAddresses[0];
+
+    return `${address.city}, ${address.state}`;
+  };
+
   if (isLoading) {
     return <ProfileSkeleton />;
   }
@@ -232,7 +266,7 @@ const Profile: React.FC = () => {
           <View style={styles.locationContainer}>
             <Ionicons name="location-sharp" size={16} color={colors.primary} />
             <Text style={styles.locationText}>
-              {user?.locationText || user?.location?.address || "Not specified"}
+              {getDisplayAddress()}
             </Text>
           </View>
 
