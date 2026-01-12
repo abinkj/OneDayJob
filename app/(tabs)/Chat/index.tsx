@@ -57,6 +57,15 @@ export default function Chat() {
         (p: any) => (p.id || p._id) !== currentUserId
       );
 
+      const avatarUrl = otherParticipant?.profilePictureUrl || otherParticipant?.profilePicture || "";
+
+      console.log('Chat item avatar:', {
+        name: otherParticipant?.firstName,
+        profilePictureUrl: otherParticipant?.profilePictureUrl,
+        profilePicture: otherParticipant?.profilePicture,
+        finalAvatar: avatarUrl
+      });
+
       return {
         id: conv._id,
         name: otherParticipant
@@ -64,7 +73,7 @@ export default function Chat() {
           : "Unknown User",
         message: conv.lastMessage?.content?.text || "No messages yet",
         // Use CloudFront URL (profilePictureUrl) if available, fallback to profilePicture
-        avatar: otherParticipant?.profilePictureUrl || otherParticipant?.profilePicture || "",
+        avatar: avatarUrl,
         unread: conv.unreadCount || 0,
         conversationId: conv._id,
         participant: otherParticipant,

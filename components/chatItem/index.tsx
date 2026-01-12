@@ -1,5 +1,6 @@
 import React, { useMemo } from "react";
-import { View, Text, StyleSheet, Image, TouchableOpacity } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
+import { Image } from "expo-image";
 import { ThemeColors } from "../../constants/Colors";
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "../../contexts/ThemeContext";
@@ -28,8 +29,13 @@ export default function ChatItem({ item, onPress }: ChatItemProps) {
       activeOpacity={0.9}
     >
       <View style={styles.avatarContainer}>
-        {item.avatar ? (
-          <Image source={{ uri: item.avatar }} style={styles.avatar} />
+        {item.avatar && item.avatar.startsWith('http') ? (
+          <Image
+            source={{ uri: item.avatar }}
+            style={styles.avatar}
+            contentFit="cover"
+            transition={200}
+          />
         ) : (
           <View style={[styles.avatar, styles.placeholderAvatar]}>
             <Text style={styles.placeholderText}>
