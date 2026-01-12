@@ -324,10 +324,16 @@ const Profile: React.FC = () => {
               <View key={review._id || index} style={styles.reviewContainer}>
                 <View style={styles.reviewerInfo}>
                   <Image
-                    source={review.raterUser?.profilePicture}
+                    source={
+                      review.raterUser?.profilePictureUrl || review.raterUser?.profilePicture
+                        ? { uri: review.raterUser?.profilePictureUrl || review.raterUser?.profilePicture }
+                        : Images.profile.profileImage
+                    }
                     style={styles.reviewerImage}
                     placeholder={Images.profile.profileImage}
                     placeholderContentFit="cover"
+                    contentFit="cover"
+                    transition={200}
                   />
                   <View style={styles.reviewerNameContainer}>
                     <Text style={styles.reviewerName}>
