@@ -405,7 +405,11 @@ export const getJobPostings = async (filters: any = {}) => {
   try {
     const params = new URLSearchParams();
 
-    // Add filters to query parameters - REMOVED pagination
+    // Add pagination parameters
+    if (filters.page) params.append("page", filters.page.toString());
+    if (filters.limit) params.append("limit", filters.limit.toString());
+
+    // Add filters to query parameters
     if (filters.category) params.append("category", filters.category);
     if (filters.priceSort) params.append("priceSort", filters.priceSort);
     if (filters.distance) params.append("distance", filters.distance);
@@ -424,14 +428,12 @@ export const getJobPostings = async (filters: any = {}) => {
 
     const response = await api.get(url);
 
-    // FIXED: Log the actual response structure for debugging
+    // Log the actual response structure for debugging
     console.log("Backend response structure:", {
       hasData: !!response.data?.data,
-      hasJobs: !!response.data?.jobs,
+      hasPagination: !!response.data?.pagination,
       isArray: Array.isArray(response.data),
       dataType: typeof response.data,
-      keysInResponse: Object.keys(response.data || {}),
-      actualStructure: response.data,
     });
 
     return response;

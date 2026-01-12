@@ -25,26 +25,43 @@ interface JobFilters {
 }
 
 export const useJobPostings = (filters: JobFilters) => {
-  return useQuery({
+  return useInfiniteQuery({
     queryKey: ["jobs", filters],
-    queryFn: async () => {
-      const response = await getJobPostings(filters);
+    queryFn: async ({ pageParam = 1 }) => {
+      const response = await getJobPostings({
+        ...filters,
+        page: pageParam,
+        limit: 20
+      });
 
-      // Handle different response structures based on existing api.tsx logic
+      // Handle different response structures
       let jobs: JobPost[] = [];
+      let hasMore = false;
+
       if (response.data?.data) {
         jobs = Array.isArray(response.data.data) ? response.data.data : [];
+        hasMore = response.data.pagination?.hasMore || false;
       } else if (response.data?.jobs) {
         jobs = Array.isArray(response.data.jobs) ? response.data.jobs : [];
+        hasMore = response.data.pagination?.hasMore || false;
       } else if (Array.isArray(response.data)) {
         jobs = response.data;
+        hasMore = false;
       }
 
-      return jobs;
+      return {
+        jobs,
+        page: pageParam,
+        hasMore
+      };
     },
-    staleTime: 1000 * 60, // 1 minute - data is fresh for 1 minute
-    refetchOnWindowFocus: true, // Refetch when app comes to foreground
-    refetchOnMount: true, // Refetch when component mounts
+    initialPageParam: 1,
+    getNextPageParam: (lastPage) => {
+      return lastPage.hasMore ? lastPage.page + 1 : undefined;
+    },
+    staleTime: 1000 * 60, // 1 minute
+    refetchOnWindowFocus: true,
+    refetchOnMount: true,
   });
 };
 

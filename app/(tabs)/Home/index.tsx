@@ -361,20 +361,31 @@ const HomeScreen = () => {
     location?.longitude,
   ]);
 
-  // Use TanStack Query hook
+  // Use TanStack Query infinite hook
   const {
-    data: jobs = [],
+    data,
     isLoading: isJobsLoading,
     isError: isJobsError,
     refetch: refetchJobs,
     isRefetching: isJobsRefetching,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
   } = useJobPostings(filters);
+
+  // Flatten paginated data
+  const jobs = useMemo(() => {
+    if (!data?.pages) return [];
+    return data.pages.flatMap(page => page.jobs);
+  }, [data]);
 
   // Sync loading state
   useEffect(() => {
     setLoading(isJobsLoading);
   }, [isJobsLoading]);
 
+  // Process jobs with distance calculation (backend already sorted by priority)
+  // We only add distance info here, NOT filter by location
   const jobsWithDistance = useMemo(() => {
     if (!jobs) return [];
     return processAndSortJobs(jobs, location, selectedPriceSort);
@@ -461,19 +472,15 @@ const HomeScreen = () => {
     setSearchQuery("");
   };
 
-  const debounceTimer = useRef<NodeJS.Timeout | null>(null);
-
-  // Handle scroll to determine when filter row should be sticky
-  const handleScroll = Animated.event(
-    [{ nativeEvent: { contentOffset: { y: scrollY } } }],
-    {
-      useNativeDriver: false,
-      listener: (event: any) => {
-        const offsetY = event.nativeEvent.contentOffset.y;
-        setIsFilterSticky(offsetY >= STICKY_OFFSET);
-      },
+  // Handle infinite scroll - load more jobs
+  const handleLoadMore = () => {
+    if (hasNextPage && !isFetchingNextPage) {
+      console.log('Loading more jobs...');
+      fetchNextPage();
     }
-  );
+  };
+
+  const debounceTimer = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     const initializeApp = async () => {
@@ -927,7 +934,25 @@ const HomeScreen = () => {
         ]}
         showsVerticalScrollIndicator={false}
         bounces={false}
-        onScroll={handleScroll}
+        onScroll={Animated.event(
+          [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+          {
+            useNativeDriver: false,
+            listener: (event: any) => {
+              const offsetY = event.nativeEvent.contentOffset.y;
+              setIsFilterSticky(offsetY >= STICKY_OFFSET);
+
+              // Trigger load more when near bottom
+              const { layoutMeasurement, contentOffset, contentSize } = event.nativeEvent;
+              const paddingToBottom = 20;
+              const isNearBottom = layoutMeasurement.height + contentOffset.y >= contentSize.height - paddingToBottom;
+
+              if (isNearBottom) {
+                handleLoadMore();
+              }
+            },
+          }
+        )}
         scrollEventThrottle={16}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
@@ -1046,6 +1071,15 @@ const HomeScreen = () => {
               {isJobsRefetching && (
                 <View style={{ padding: 10, alignItems: "center" }}>
                   <ActivityIndicator size="small" color={colors.primary} />
+                </View>
+              )}
+              {/* Loading indicator for pagination */}
+              {isFetchingNextPage && (
+                <View style={{ padding: 20, alignItems: "center" }}>
+                  <ActivityIndicator size="large" color={colors.primary} />
+                  <Text style={{ marginTop: 10, color: colors.grey }}>
+                    Loading more jobs...
+                  </Text>
                 </View>
               )}
             </>
