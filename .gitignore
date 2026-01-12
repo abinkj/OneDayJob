@@ -47,6 +47,7 @@ ios/oneday.xcworkspace/xcuserdata/
 ios/oneday.xcodeproj/project.xcworkspace/xcuserdata/
 
 
-
-
-build-1766139334851.apk
+# Android build outputs
+*.apk
+*.aab
+build-*.apk
