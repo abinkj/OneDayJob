@@ -1424,6 +1424,8 @@ const PostJobScreen = ({ navigation: navProp }) => {
             }}
             placeholder="Search for a location..."
             style={{ marginBottom: 10 }}
+            showSavedAddresses={true}
+            showCurrentLocation={true}
           />
           <View style={styles.address2}>
             <Text style={styles.addressHelperText}>

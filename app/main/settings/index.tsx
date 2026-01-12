@@ -285,6 +285,12 @@ const Settings: React.FC = () => {
             subtitle="Update your personal information"
             onPress={handleEditProfile}
           />
+          <SettingsItem
+            icon="location-outline"
+            title="Saved Addresses"
+            subtitle="Manage your saved locations"
+            onPress={() => navigation.navigate("SavedAddresses")}
+          />
           {/* <SettingsItem
             icon="card-outline"
             title="Bank Account"

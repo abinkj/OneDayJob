@@ -12,6 +12,22 @@ export interface UserLocation {
   };
 }
 
+export interface SavedAddress {
+  _id?: string;
+  label: 'Home' | 'Work' | 'Other';
+  address: string;
+  city: string;
+  state: string;
+  country: string;
+  zipCode?: string;
+  coordinates: {
+    latitude: number;
+    longitude: number;
+  };
+  isDefault: boolean;
+  createdAt?: Date | string;
+}
+
 export interface User {
   // Identifiers
   id?: string; // Derived from _id for convenience across app
@@ -69,6 +85,9 @@ export interface User {
     isVerified?: boolean;
     verifiedAt?: string | null;
   };
+
+  // Saved addresses for quick location selection
+  savedAddresses?: SavedAddress[];
 }
 
 export interface EditProfileParams {

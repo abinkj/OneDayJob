@@ -1,7 +1,7 @@
 import * as Location from "expo-location";
 
-// Google Places API key - you'll need to replace this with your actual API key
-const GOOGLE_PLACES_API_KEY = "YOUR_GOOGLE_PLACES_API_KEY"; // Replace with your actual API key
+// Google Places API key from environment variable
+const GOOGLE_PLACES_API_KEY = process.env.EXPO_PUBLIC_GOOGLE_PLACES_API_KEY || "";
 
 export interface LocationData {
   address: string;
@@ -90,7 +90,7 @@ export const searchPlaces = async (query: string): Promise<PlacePrediction[]> =>
     );
 
     const data = await response.json();
-    
+
     if (data.status === "OK") {
       return data.predictions || [];
     } else {
@@ -100,6 +100,42 @@ export const searchPlaces = async (query: string): Promise<PlacePrediction[]> =>
   } catch (error) {
     console.error("Error searching places:", error);
     return [];
+  }
+};
+
+// Search places using Google Places API and return LocationData
+export const searchPlacesWithGoogle = async (query: string): Promise<LocationData[]> => {
+  try {
+    if (!GOOGLE_PLACES_API_KEY) {
+      console.log("Google Places API key not configured, using fallback");
+      return searchPlacesFallback(query);
+    }
+
+    // Get predictions from Google Places
+    const predictions = await searchPlaces(query);
+
+    if (predictions.length === 0) {
+      console.log("No Google Places results, using fallback");
+      return searchPlacesFallback(query);
+    }
+
+    // Get details for each prediction (limit to 5)
+    const detailsPromises = predictions.slice(0, 5).map(pred =>
+      getPlaceDetails(pred.place_id)
+    );
+
+    const results = await Promise.all(detailsPromises);
+    const validResults = results.filter(Boolean) as LocationData[];
+
+    if (validResults.length === 0) {
+      console.log("No valid Google Places details, using fallback");
+      return searchPlacesFallback(query);
+    }
+
+    return validResults;
+  } catch (error) {
+    console.error("Google Places search failed, using fallback:", error);
+    return searchPlacesFallback(query);
   }
 };
 
@@ -116,11 +152,11 @@ export const getPlaceDetails = async (placeId: string): Promise<LocationData | n
     );
 
     const data = await response.json();
-    
+
     if (data.status === "OK" && data.result) {
       const result = data.result;
       const addressComponents = result.address_components || [];
-      
+
       // Parse address components
       const addressData = {
         address: "",
@@ -164,12 +200,12 @@ export const getPlaceDetails = async (placeId: string): Promise<LocationData | n
 export const searchPlacesFallback = async (query: string): Promise<LocationData[]> => {
   try {
     console.log("Searching for places with query:", query);
-    
+
     // Don't search if query is too short
     if (query.trim().length < 2) {
       return [];
     }
-    
+
     const results = await Location.geocodeAsync(query);
     console.log("Geocoding results:", results);
 
@@ -180,7 +216,7 @@ export const searchPlacesFallback = async (query: string): Promise<LocationData[
 
     // Limit to first 5 results for better performance
     const limitedResults = results.slice(0, 5);
-    
+
     // For each geocoded result, get detailed address information
     const detailedResults = await Promise.all(
       limitedResults.map(async (result, index) => {
@@ -261,23 +297,23 @@ export const searchPlacesFallback = async (query: string): Promise<LocationData[
     console.error("Error in fallback location search:", error);
     return [];
   }
-}; 
+};
 
 // Test function to verify location service
 export const testLocationService = async () => {
   console.log("Testing location service...");
-  
+
   try {
     // Test current location
     console.log("Testing getCurrentLocation...");
     const currentLocation = await getCurrentLocation();
     console.log("Current location result:", currentLocation);
-    
+
     // Test search
     console.log("Testing searchPlacesFallback...");
     const searchResults = await searchPlacesFallback("New York");
     console.log("Search results:", searchResults);
-    
+
     return { currentLocation, searchResults };
   } catch (error) {
     console.error("Location service test failed:", error);

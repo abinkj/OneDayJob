@@ -10,19 +10,24 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "../../contexts/ThemeContext";
+import { useNavigation } from "@react-navigation/native";
 import { ThemeColors } from "../../constants/Colors";
 import {
   getCurrentLocation,
-  searchPlacesFallback,
+  searchPlacesWithGoogle,
   LocationData,
 } from "../../services/locationService";
 import { useAlert } from "../CustomAlert/AlertProvider";
+import { SavedAddress } from "../../types";
+import SavedAddressSelector from "../SavedAddressSelector";
 
 interface LocationSearchProps {
   value: string;
   onLocationSelect: (location: LocationData) => void;
   placeholder?: string;
   style?: any;
+  showSavedAddresses?: boolean; // Show saved addresses button
+  showCurrentLocation?: boolean; // Show current location button
 }
 
 const LocationSearch: React.FC<LocationSearchProps> = ({
@@ -30,8 +35,11 @@ const LocationSearch: React.FC<LocationSearchProps> = ({
   onLocationSelect,
   placeholder = "Search for a location...",
   style,
+  showSavedAddresses = true,
+  showCurrentLocation = true,
 }) => {
   const { colors } = useTheme();
+  const navigation = useNavigation();
   const styles = useMemo(() => createStyles(colors), [colors]);
 
   const [searchText, setSearchText] = useState(value);
@@ -43,6 +51,7 @@ const LocationSearch: React.FC<LocationSearchProps> = ({
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [isInputFocused, setIsInputFocused] = useState(false);
   const { showAlert } = useAlert();
+  const [showSavedAddressModal, setShowSavedAddressModal] = useState(false);
 
   useEffect(() => {
     setSearchText(value);
@@ -58,7 +67,7 @@ const LocationSearch: React.FC<LocationSearchProps> = ({
 
     setIsLoading(true);
     try {
-      const results = await searchPlacesFallback(query);
+      const results = await searchPlacesWithGoogle(query);
       setSuggestions(results);
       setShowSuggestions(true);
     } catch (error) {
@@ -126,9 +135,11 @@ const LocationSearch: React.FC<LocationSearchProps> = ({
 
   // Handle suggestion selection
   const handleSuggestionSelect = (suggestion: LocationData) => {
-    setSearchText(
-      suggestion.address || `${suggestion.city}, ${suggestion.state}`
-    );
+    console.log('Suggestion selected:', suggestion);
+    const displayText = suggestion.address || `${suggestion.city}, ${suggestion.state}`;
+    console.log('Setting search text to:', displayText);
+    setSearchText(displayText);
+    console.log('Calling onLocationSelect with:', suggestion);
     onLocationSelect(suggestion);
     setShowSuggestions(false);
     setIsInputFocused(false);
@@ -183,7 +194,7 @@ const LocationSearch: React.FC<LocationSearchProps> = ({
               setTimeout(() => {
                 setIsInputFocused(false);
                 setShowSuggestions(false);
-              }, 200);
+              }, 300);
             }}
           />
           {isLoading && (
@@ -203,6 +214,37 @@ const LocationSearch: React.FC<LocationSearchProps> = ({
           )}
         </TouchableOpacity>
       </View>
+
+      {/* Quick Select Buttons */}
+      {(showCurrentLocation || showSavedAddresses) && (
+        <View style={styles.quickSelectContainer}>
+          {showCurrentLocation && (
+            <TouchableOpacity
+              style={styles.quickSelectButton}
+              onPress={handleCurrentLocation}
+              disabled={isGettingCurrentLocation}
+            >
+              <Ionicons
+                name="locate"
+                size={16}
+                color={isGettingCurrentLocation ? colors.grey : colors.primary}
+              />
+              <Text style={styles.quickSelectText}>
+                {isGettingCurrentLocation ? 'Getting...' : 'Current'}
+              </Text>
+            </TouchableOpacity>
+          )}
+          {showSavedAddresses && (
+            <TouchableOpacity
+              style={styles.quickSelectButton}
+              onPress={() => setShowSavedAddressModal(true)}
+            >
+              <Ionicons name="bookmark" size={16} color={colors.primary} />
+              <Text style={styles.quickSelectText}>Saved</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+      )}
 
       {showSuggestions && (suggestions.length > 0 || isLoading) && (
         <View style={styles.suggestionsContainer}>
@@ -225,12 +267,42 @@ const LocationSearch: React.FC<LocationSearchProps> = ({
                 `${item.coordinates.latitude}-${item.coordinates.longitude}-${index}`
               }
               style={styles.suggestionsList}
-              keyboardShouldPersistTaps="handled"
+              keyboardShouldPersistTaps="always"
               nestedScrollEnabled={true}
               showsVerticalScrollIndicator={false}
             />
           )}
         </View>
+      )}
+
+      {/* Saved Address Selector Modal */}
+      {showSavedAddresses && (
+        <SavedAddressSelector
+          visible={showSavedAddressModal}
+          onClose={() => setShowSavedAddressModal(false)}
+          onSelect={(address: SavedAddress) => {
+            // Convert SavedAddress to LocationData
+            const locationData: LocationData = {
+              address: address.address,
+              city: address.city,
+              state: address.state,
+              country: address.country,
+              zipCode: address.zipCode || '',
+              coordinates: {
+                latitude: address.coordinates.latitude,
+                longitude: address.coordinates.longitude,
+              },
+            };
+            setSearchText(address.address);
+            onLocationSelect(locationData);
+            setShowSuggestions(false);
+          }}
+          onAddNew={() => {
+            setShowSavedAddressModal(false);
+            // Navigate to AddEditAddress screen
+            (navigation as any).navigate('AddEditAddress');
+          }}
+        />
       )}
     </View>
   );
@@ -344,6 +416,29 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   emptyStateSubText: {
     fontSize: 13,
     color: colors.grey,
+  },
+  quickSelectContainer: {
+    flexDirection: "row",
+    gap: 8,
+    marginTop: 12,
+  },
+  quickSelectButton: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: colors.categoryBox,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    gap: 6,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  quickSelectText: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: colors.primary,
   },
 });
 

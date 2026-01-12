@@ -13,6 +13,8 @@ import BankAccountScreen from "@/main/bankAccount";
 import PaymentHistoryScreen from "@/main/paymentHistory";
 import Settings from "@/main/settings";
 import PrivacyPolicy from "@/main/privacyPolicy";
+import SavedAddressesScreen from "@/main/savedAddresses";
+import AddEditAddressScreen from "@/main/addEditAddress";
 import { useTheme } from "../../contexts/ThemeContext";
 
 const Stack = createNativeStackNavigator();
@@ -46,6 +48,8 @@ const MainStack = () => {
       <Stack.Screen name="BankAccount" component={BankAccountScreen} />
       <Stack.Screen name="PaymentHistory" component={PaymentHistoryScreen} />
       <Stack.Screen name="Settings" component={Settings} />
+      <Stack.Screen name="SavedAddresses" component={SavedAddressesScreen} />
+      <Stack.Screen name="AddEditAddress" component={AddEditAddressScreen} />
       <Stack.Screen name="PrivacyPolicy" component={PrivacyPolicy} />
     </Stack.Navigator>
   );

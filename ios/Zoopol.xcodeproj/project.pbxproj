@@ -7,12 +7,12 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		0E358D50F20BFB612D211FB0 /* libPods-Zoopol.a in Frameworks */ = {isa = PBXBuildFile; fileRef = EA71BAAF948E370CB01B8FE1 /* libPods-Zoopol.a */; };
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
-		2A25CF38626C0F5E9CC771E1 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 1DAC0FD6CFED4F8C6A7AE0C3 /* PrivacyInfo.xcprivacy */; };
-		30CFA5094551D48EEEA88CF5 /* libPods-Zoopol.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 95253E980CB47D682C496013 /* libPods-Zoopol.a */; };
 		3E461D99554A48A4959DE609 /* SplashScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */; };
-		A4CD09F232AE5F940FB3F1AA /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = E4DE25BDFDCFC13A93F96B09 /* ExpoModulesProvider.swift */; };
+		4BE9AA92DF3CB849AA0FF3DB /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E70BD578E12FC5F3C6CE6E8 /* ExpoModulesProvider.swift */; };
 		BB2F792D24A3F905000567C9 /* Expo.plist in Resources */ = {isa = PBXBuildFile; fileRef = BB2F792C24A3F905000567C9 /* Expo.plist */; };
+		CBD9AE4B41F96F451AA498DB /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = B8E8996BC104C6D012C8DF01 /* PrivacyInfo.xcprivacy */; };
 		F11748422D0307B40044C1D9 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F11748412D0307B40044C1D9 /* AppDelegate.swift */; };
 /* End PBXBuildFile section */
 
@@ -20,13 +20,13 @@
 		13B07F961A680F5B00A75B9A /* Zoopol.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Zoopol.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = Zoopol/Images.xcassets; sourceTree = "<group>"; };
 		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = Zoopol/Info.plist; sourceTree = "<group>"; };
-		1DAC0FD6CFED4F8C6A7AE0C3 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; name = PrivacyInfo.xcprivacy; path = Zoopol/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
-		23D769295C84B40FBE1A1C32 /* Pods-Zoopol.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Zoopol.debug.xcconfig"; path = "Target Support Files/Pods-Zoopol/Pods-Zoopol.debug.xcconfig"; sourceTree = "<group>"; };
-		8E55474EB471B5EF96D1ABC6 /* Pods-Zoopol.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Zoopol.release.xcconfig"; path = "Target Support Files/Pods-Zoopol/Pods-Zoopol.release.xcconfig"; sourceTree = "<group>"; };
-		95253E980CB47D682C496013 /* libPods-Zoopol.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-Zoopol.a"; sourceTree = BUILT_PRODUCTS_DIR; };
+		3E608D8D8CACA092888F4FAC /* Pods-Zoopol.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Zoopol.release.xcconfig"; path = "Target Support Files/Pods-Zoopol/Pods-Zoopol.release.xcconfig"; sourceTree = "<group>"; };
+		3E70BD578E12FC5F3C6CE6E8 /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-Zoopol/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
 		AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = SplashScreen.storyboard; path = Zoopol/SplashScreen.storyboard; sourceTree = "<group>"; };
+		B8E8996BC104C6D012C8DF01 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; name = PrivacyInfo.xcprivacy; path = Zoopol/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		BB2F792C24A3F905000567C9 /* Expo.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Expo.plist; sourceTree = "<group>"; };
-		E4DE25BDFDCFC13A93F96B09 /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-Zoopol/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
+		C07BC9D250FE61086AED8B1A /* Pods-Zoopol.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Zoopol.debug.xcconfig"; path = "Target Support Files/Pods-Zoopol/Pods-Zoopol.debug.xcconfig"; sourceTree = "<group>"; };
+		EA71BAAF948E370CB01B8FE1 /* libPods-Zoopol.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-Zoopol.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
 		F11748412D0307B40044C1D9 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = Zoopol/AppDelegate.swift; sourceTree = "<group>"; };
 		F11748442D0722820044C1D9 /* Zoopol-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "Zoopol-Bridging-Header.h"; path = "Zoopol/Zoopol-Bridging-Header.h"; sourceTree = "<group>"; };
@@ -37,13 +37,21 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				30CFA5094551D48EEEA88CF5 /* libPods-Zoopol.a in Frameworks */,
+				0E358D50F20BFB612D211FB0 /* libPods-Zoopol.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		0C116F010978D96C0D15DA7C /* Zoopol */ = {
+			isa = PBXGroup;
+			children = (
+				3E70BD578E12FC5F3C6CE6E8 /* ExpoModulesProvider.swift */,
+			);
+			name = Zoopol;
+			sourceTree = "<group>";
+		};
 		13B07FAE1A68108700A75B9A /* Zoopol */ = {
 			isa = PBXGroup;
 			children = (
@@ -53,34 +61,28 @@
 				13B07FB51A68108700A75B9A /* Images.xcassets */,
 				13B07FB61A68108700A75B9A /* Info.plist */,
 				AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */,
-				1DAC0FD6CFED4F8C6A7AE0C3 /* PrivacyInfo.xcprivacy */,
+				B8E8996BC104C6D012C8DF01 /* PrivacyInfo.xcprivacy */,
 			);
 			name = Zoopol;
+			sourceTree = "<group>";
+		};
+		169580259FD5D7512F6A2DB3 /* Pods */ = {
+			isa = PBXGroup;
+			children = (
+				C07BC9D250FE61086AED8B1A /* Pods-Zoopol.debug.xcconfig */,
+				3E608D8D8CACA092888F4FAC /* Pods-Zoopol.release.xcconfig */,
+			);
+			name = Pods;
+			path = Pods;
 			sourceTree = "<group>";
 		};
 		2D16E6871FA4F8E400B85C8A /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
 				ED297162215061F000B7C4FE /* JavaScriptCore.framework */,
-				95253E980CB47D682C496013 /* libPods-Zoopol.a */,
+				EA71BAAF948E370CB01B8FE1 /* libPods-Zoopol.a */,
 			);
 			name = Frameworks;
-			sourceTree = "<group>";
-		};
-		33DCCF5C175486E9AF29078E /* ExpoModulesProviders */ = {
-			isa = PBXGroup;
-			children = (
-				561B8AA700FFD2B813D8C574 /* Zoopol */,
-			);
-			name = ExpoModulesProviders;
-			sourceTree = "<group>";
-		};
-		561B8AA700FFD2B813D8C574 /* Zoopol */ = {
-			isa = PBXGroup;
-			children = (
-				E4DE25BDFDCFC13A93F96B09 /* ExpoModulesProvider.swift */,
-			);
-			name = Zoopol;
 			sourceTree = "<group>";
 		};
 		832341AE1AAA6A7D00B99B32 /* Libraries */ = {
@@ -97,8 +99,8 @@
 				832341AE1AAA6A7D00B99B32 /* Libraries */,
 				83CBBA001A601CBA00E9B192 /* Products */,
 				2D16E6871FA4F8E400B85C8A /* Frameworks */,
-				CD6EA3323AD57964C2149CC5 /* Pods */,
-				33DCCF5C175486E9AF29078E /* ExpoModulesProviders */,
+				169580259FD5D7512F6A2DB3 /* Pods */,
+				C68E591200BE63A2C227118D /* ExpoModulesProviders */,
 			);
 			indentWidth = 2;
 			sourceTree = "<group>";
@@ -122,14 +124,12 @@
 			path = Zoopol/Supporting;
 			sourceTree = "<group>";
 		};
-		CD6EA3323AD57964C2149CC5 /* Pods */ = {
+		C68E591200BE63A2C227118D /* ExpoModulesProviders */ = {
 			isa = PBXGroup;
 			children = (
-				23D769295C84B40FBE1A1C32 /* Pods-Zoopol.debug.xcconfig */,
-				8E55474EB471B5EF96D1ABC6 /* Pods-Zoopol.release.xcconfig */,
+				0C116F010978D96C0D15DA7C /* Zoopol */,
 			);
-			name = Pods;
-			path = Pods;
+			name = ExpoModulesProviders;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -140,13 +140,13 @@
 			buildConfigurationList = 13B07F931A680F5B00A75B9A /* Build configuration list for PBXNativeTarget "Zoopol" */;
 			buildPhases = (
 				08A4A3CD28434E44B6B9DE2E /* [CP] Check Pods Manifest.lock */,
-				F5726BF01C997B0942E4E26D /* [Expo] Configure project */,
+				AB8831B2E64C96862EE7DBD7 /* [Expo] Configure project */,
 				13B07F871A680F5B00A75B9A /* Sources */,
 				13B07F8C1A680F5B00A75B9A /* Frameworks */,
 				13B07F8E1A680F5B00A75B9A /* Resources */,
 				00DD1BFF1BD5951E006B06BC /* Bundle React Native code and images */,
 				800E24972A6A228C8D4807E9 /* [CP] Copy Pods Resources */,
-				C5FB07E91E5468A651B2B30C /* [CP] Embed Pods Frameworks */,
+				7EE80A266B81A6D6FD6F5C7F /* [CP] Embed Pods Frameworks */,
 			);
 			buildRules = (
 			);
@@ -196,7 +196,7 @@
 				BB2F792D24A3F905000567C9 /* Expo.plist in Resources */,
 				13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */,
 				3E461D99554A48A4959DE609 /* SplashScreen.storyboard in Resources */,
-				2A25CF38626C0F5E9CC771E1 /* PrivacyInfo.xcprivacy in Resources */,
+				CBD9AE4B41F96F451AA498DB /* PrivacyInfo.xcprivacy in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -240,6 +240,34 @@
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
 			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
+			showEnvVarsInLog = 0;
+		};
+		7EE80A266B81A6D6FD6F5C7F /* [CP] Embed Pods Frameworks */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-Zoopol/Pods-Zoopol-frameworks.sh",
+				"${PODS_XCFRAMEWORKS_BUILD_DIR}/React-Core-prebuilt/React.framework/React",
+				"${PODS_XCFRAMEWORKS_BUILD_DIR}/ReactNativeDependencies/ReactNativeDependencies.framework/ReactNativeDependencies",
+				"${PODS_XCFRAMEWORKS_BUILD_DIR}/hermes-engine/Pre-built/hermes.framework/hermes",
+				"${PODS_XCFRAMEWORKS_BUILD_DIR}/razorpay-core-pod/Razorpay.framework/Razorpay",
+				"${PODS_XCFRAMEWORKS_BUILD_DIR}/razorpay-core-pod/RazorpayCore.framework/RazorpayCore",
+				"${PODS_XCFRAMEWORKS_BUILD_DIR}/razorpay-pod/RazorpayStandard.framework/RazorpayStandard",
+			);
+			name = "[CP] Embed Pods Frameworks";
+			outputPaths = (
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/React.framework",
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/ReactNativeDependencies.framework",
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/hermes.framework",
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/Razorpay.framework",
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/RazorpayCore.framework",
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/RazorpayStandard.framework",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-Zoopol/Pods-Zoopol-frameworks.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
 		800E24972A6A228C8D4807E9 /* [CP] Copy Pods Resources */ = {
@@ -326,35 +354,7 @@
 			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-Zoopol/Pods-Zoopol-resources.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
-		C5FB07E91E5468A651B2B30C /* [CP] Embed Pods Frameworks */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-Zoopol/Pods-Zoopol-frameworks.sh",
-				"${PODS_XCFRAMEWORKS_BUILD_DIR}/React-Core-prebuilt/React.framework/React",
-				"${PODS_XCFRAMEWORKS_BUILD_DIR}/ReactNativeDependencies/ReactNativeDependencies.framework/ReactNativeDependencies",
-				"${PODS_XCFRAMEWORKS_BUILD_DIR}/hermes-engine/Pre-built/hermes.framework/hermes",
-				"${PODS_XCFRAMEWORKS_BUILD_DIR}/razorpay-core-pod/Razorpay.framework/Razorpay",
-				"${PODS_XCFRAMEWORKS_BUILD_DIR}/razorpay-core-pod/RazorpayCore.framework/RazorpayCore",
-				"${PODS_XCFRAMEWORKS_BUILD_DIR}/razorpay-pod/RazorpayStandard.framework/RazorpayStandard",
-			);
-			name = "[CP] Embed Pods Frameworks";
-			outputPaths = (
-				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/React.framework",
-				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/ReactNativeDependencies.framework",
-				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/hermes.framework",
-				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/Razorpay.framework",
-				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/RazorpayCore.framework",
-				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/RazorpayStandard.framework",
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-Zoopol/Pods-Zoopol-frameworks.sh\"\n";
-			showEnvVarsInLog = 0;
-		};
-		F5726BF01C997B0942E4E26D /* [Expo] Configure project */ = {
+		AB8831B2E64C96862EE7DBD7 /* [Expo] Configure project */ = {
 			isa = PBXShellScriptBuildPhase;
 			alwaysOutOfDate = 1;
 			buildActionMask = 2147483647;
@@ -386,7 +386,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				F11748422D0307B40044C1D9 /* AppDelegate.swift in Sources */,
-				A4CD09F232AE5F940FB3F1AA /* ExpoModulesProvider.swift in Sources */,
+				4BE9AA92DF3CB849AA0FF3DB /* ExpoModulesProvider.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -395,7 +395,7 @@
 /* Begin XCBuildConfiguration section */
 		13B07F941A680F5B00A75B9A /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 23D769295C84B40FBE1A1C32 /* Pods-Zoopol.debug.xcconfig */;
+			baseConfigurationReference = C07BC9D250FE61086AED8B1A /* Pods-Zoopol.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
@@ -431,7 +431,7 @@
 		};
 		13B07F951A680F5B00A75B9A /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 8E55474EB471B5EF96D1ABC6 /* Pods-Zoopol.release.xcconfig */;
+			baseConfigurationReference = 3E608D8D8CACA092888F4FAC /* Pods-Zoopol.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
