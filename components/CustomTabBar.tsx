@@ -5,6 +5,7 @@ import {
   TouchableOpacity,
   StyleSheet,
   Animated,
+  DeviceEventEmitter,
 } from "react-native";
 import { useSelector } from "react-redux";
 import DeviceDimensions from "../constants/DeviceDimenions";
@@ -78,11 +79,24 @@ const CustomTabBar = ({ state, descriptors, navigation }) => {
     //}
   };
 
+  const handleTabPress = (index, route) => {
+    // If already on this tab, emit scroll to top event
+    if (state.index === index) {
+      if (route.name === "Home") {
+        DeviceEventEmitter.emit("scrollToTop_Home");
+      } else if (route.name === "Status") {
+        DeviceEventEmitter.emit("scrollToTop_Status");
+      }
+    } else {
+      navigation.navigate(route.name);
+    }
+  };
+
   const renderTab = (index, route, iconName, label) => (
     <TouchableOpacity
       key={route.key}
       style={styles.tabItem}
-      onPress={() => navigation.navigate(route.name)}
+      onPress={() => handleTabPress(index, route)}
       activeOpacity={0.7}
     >
       <Animated.View style={{ transform: [{ scale: scales[index] }] }}>

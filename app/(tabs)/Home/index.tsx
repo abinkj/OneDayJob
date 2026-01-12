@@ -11,6 +11,7 @@ import {
   RefreshControl,
   Animated,
   Modal,
+  DeviceEventEmitter,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "../../../contexts/ThemeContext";
@@ -94,12 +95,22 @@ const HomeScreen = () => {
   const styles = useMemo(() => createStyles(colors), [colors]);
 
   const scrollY = useRef(new Animated.Value(0)).current;
+  const scrollViewRef = useRef<any>(null);
   const filterRowRef = useRef(null);
   const [filterRowHeight, setFilterRowHeight] = useState(0);
   const HEADER_HEIGHT = 70;
   const SEARCH_HEIGHT = 66;
   const BANNER_HEIGHT = 156;
   const STICKY_OFFSET = HEADER_HEIGHT + SEARCH_HEIGHT + BANNER_HEIGHT;
+
+  // Scroll to top when Home tab is tapped while already on Home
+  useEffect(() => {
+    const subscription = DeviceEventEmitter.addListener('scrollToTop_Home', () => {
+      scrollViewRef.current?.scrollTo({ y: 0, animated: true });
+    });
+
+    return () => subscription.remove();
+  }, []);
 
   // Filter options
   const priceOptions = [
@@ -928,6 +939,7 @@ const HomeScreen = () => {
 
       {/* Main Scrollable Content */}
       <Animated.ScrollView
+        ref={scrollViewRef}
         style={[
           styles.scrollContainer,
           isFilterSticky && { paddingTop: filterRowHeight },
