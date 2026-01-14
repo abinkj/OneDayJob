@@ -7,6 +7,7 @@ import {
 } from "react-native";
 import { useTheme } from "../../contexts/ThemeContext";
 import { SafeAreaView } from "react-native-safe-area-context";
+import OfflineIndicator from "../OfflineIndicator";
 
 const AppLayout = ({ children }) => {
   const { theme, colors } = useTheme();
@@ -23,6 +24,8 @@ const AppLayout = ({ children }) => {
         backgroundColor="transparent"
         barStyle={theme === "dark" ? "light-content" : "dark-content"}
       />
+
+      <OfflineIndicator />
 
       {children}
     </SafeAreaView>
