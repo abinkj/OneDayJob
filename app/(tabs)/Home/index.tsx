@@ -1032,6 +1032,7 @@ const HomeScreen = () => {
           )}
         </View>
 
+
         {/* Banner */}
         <View style={styles.bannerContainer}>
           <ImageBackground
