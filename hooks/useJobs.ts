@@ -27,12 +27,12 @@ interface JobFilters {
 export const useJobPostings = (filters: JobFilters) => {
   return useInfiniteQuery({
     queryKey: ["jobs", filters],
-    queryFn: async ({ pageParam = 1 }) => {
+    queryFn: async ({ pageParam = 1, signal }) => {
       const response = await getJobPostings({
         ...filters,
         page: pageParam,
         limit: 20
-      });
+      }, signal);
 
       // Handle different response structures
       let jobs: JobPost[] = [];
@@ -59,18 +59,24 @@ export const useJobPostings = (filters: JobFilters) => {
     getNextPageParam: (lastPage) => {
       return lastPage.hasMore ? lastPage.page + 1 : undefined;
     },
-    staleTime: 1000 * 60, // 1 minute
+    staleTime: 1000 * 60,
     refetchOnWindowFocus: true,
     refetchOnMount: true,
+    retry: (failureCount, error: any) => {
+      if (error.name === 'CanceledError' || error.code === 'ERR_CANCELED') {
+        return false;
+      }
+      return failureCount < 3;
+    },
   });
 };
 
 export const useUserJobPostings = (userId: string | undefined) => {
   return useInfiniteQuery({
     queryKey: ["userJobs", userId],
-    queryFn: async ({ pageParam = 1 }) => {
+    queryFn: async ({ pageParam = 1, signal }) => {
       if (!userId) return { data: [], hasMore: false };
-      const response = await getJobPostingsByUserId(userId, pageParam, 10);
+      const response = await getJobPostingsByUserId(userId, pageParam, 10, signal);
       return response;
     },
     initialPageParam: 1,
@@ -78,18 +84,24 @@ export const useUserJobPostings = (userId: string | undefined) => {
       return lastPage.hasMore ? allPages.length + 1 : undefined;
     },
     enabled: !!userId,
-    staleTime: 1000 * 60, // 1 minute - data is fresh for 1 minute
-    refetchOnWindowFocus: true, // Refetch when app comes to foreground
-    refetchOnMount: true, // Refetch when component mounts
+    staleTime: 1000 * 60,
+    refetchOnWindowFocus: true,
+    refetchOnMount: true,
+    retry: (failureCount, error: any) => {
+      if (error.name === 'CanceledError' || error.code === 'ERR_CANCELED') {
+        return false;
+      }
+      return failureCount < 3;
+    },
   });
 };
 
 export const useUserAppliedJobs = (userId: string | undefined) => {
   return useInfiniteQuery({
     queryKey: ["userAppliedJobs", userId],
-    queryFn: async ({ pageParam = 1 }) => {
+    queryFn: async ({ pageParam = 1, signal }) => {
       if (!userId) return { data: [], hasMore: false };
-      const response = await getAppliedJobsByUserId(userId, pageParam, 10);
+      const response = await getAppliedJobsByUserId(userId, pageParam, 10, signal);
       return response;
     },
     initialPageParam: 1,
@@ -97,9 +109,15 @@ export const useUserAppliedJobs = (userId: string | undefined) => {
       return lastPage.hasMore ? allPages.length + 1 : undefined;
     },
     enabled: !!userId,
-    staleTime: 1000 * 60, // 1 minute - data is fresh for 1 minute
-    refetchOnWindowFocus: true, // Refetch when app comes to foreground
-    refetchOnMount: true, // Refetch when component mounts
+    staleTime: 1000 * 60,
+    refetchOnWindowFocus: true,
+    refetchOnMount: true,
+    retry: (failureCount, error: any) => {
+      if (error.name === 'CanceledError' || error.code === 'ERR_CANCELED') {
+        return false;
+      }
+      return failureCount < 3;
+    },
   });
 };
 
@@ -123,3 +141,4 @@ export const useWithdrawApplication = () => {
     },
   });
 };
+

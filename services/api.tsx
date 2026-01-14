@@ -401,7 +401,7 @@ export const getJobsByLocation = async (radius = 10, categoryId = null) => {
   }
 };
 
-export const getJobPostings = async (filters: any = {}) => {
+export const getJobPostings = async (filters: any = {}, signal?: AbortSignal) => {
   try {
     const params = new URLSearchParams();
 
@@ -426,7 +426,7 @@ export const getJobPostings = async (filters: any = {}) => {
 
     console.log("Fetching jobs with filters:", url, filters);
 
-    const response = await api.get(url);
+    const response = await api.get(url, { signal });
 
     // Log the actual response structure for debugging
     console.log("Backend response structure:", {
@@ -437,7 +437,11 @@ export const getJobPostings = async (filters: any = {}) => {
     });
 
     return response;
-  } catch (error) {
+  } catch (error: any) {
+    if (error.name === 'CanceledError' || error.code === 'ERR_CANCELED') {
+      console.log("Request canceled:", filters);
+      throw error;
+    }
     console.error("Error fetching jobs with filters:", error);
     throw error;
   }
@@ -456,10 +460,12 @@ export const getCategoriesForFilter = async () => {
 export const getJobPostingsByUserId = async (
   userId: string,
   page: number = 1,
-  limit: number = 10
+  limit: number = 10,
+  signal?: AbortSignal
 ) => {
   const res = await api.get(
-    `jobs/user-posts/${userId}?page=${page}&limit=${limit}`
+    `jobs/user-posts/${userId}?page=${page}&limit=${limit}`,
+    { signal }
   );
   return res.data;
 };
@@ -467,10 +473,12 @@ export const getJobPostingsByUserId = async (
 export const getAppliedJobsByUserId = async (
   userId: string,
   page: number = 1,
-  limit: number = 10
+  limit: number = 10,
+  signal?: AbortSignal
 ) => {
   const res = await api.get(
-    `applications/user/${userId}/applied-jobs?page=${page}&limit=${limit}`
+    `applications/user/${userId}/applied-jobs?page=${page}&limit=${limit}`,
+    { signal }
   );
   return res.data;
 };
