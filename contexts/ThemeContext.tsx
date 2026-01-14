@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useColorScheme } from 'react-native';
-import { storage } from '../utilities/mmkvStore';
+import { initializeStorage, storage } from '../utilities/mmkvStore';
 import { LightColors, DarkColors, ThemeColors } from '../constants/Colors';
 
 type ThemeType = 'light' | 'dark';
@@ -19,26 +19,48 @@ const THEME_KEY = 'user_theme_preference';
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const systemScheme = useColorScheme();
     const [theme, setThemeState] = useState<ThemeType>('light');
+    const [isStorageReady, setIsStorageReady] = useState(false);
 
     useEffect(() => {
         // Load saved theme or fallback to system
-        try {
-            const savedTheme = storage.getString(THEME_KEY);
-            if (savedTheme === 'dark' || savedTheme === 'light') {
-                setThemeState(savedTheme);
-            } else {
-                // Default to light if no preference, or could follow system:
-                // setThemeState(systemScheme === 'dark' ? 'dark' : 'light');
-                setThemeState('light'); // Defaulting to light as per current app style
+        const loadTheme = async () => {
+            try {
+                // Ensure storage is initialized first
+                await initializeStorage();
+                setIsStorageReady(true);
+
+                const savedTheme = storage.getString(THEME_KEY);
+                if (savedTheme === 'dark' || savedTheme === 'light') {
+                    setThemeState(savedTheme);
+                } else {
+                    // Default to light if no preference
+                    setThemeState('light');
+                }
+            } catch (error) {
+                console.error('Failed to load theme preference:', error);
+                // Fallback to light theme on error
+                setThemeState('light');
             }
-        } catch (error) {
-            console.error('Failed to load theme preference:', error);
-        }
+        };
+
+        loadTheme();
     }, []);
 
-    const setTheme = (newTheme: ThemeType) => {
+
+    const setTheme = async (newTheme: ThemeType) => {
         setThemeState(newTheme);
-        storage.set(THEME_KEY, newTheme);
+        try {
+            // Ensure storage is ready before saving
+            if (isStorageReady) {
+                storage.set(THEME_KEY, newTheme);
+            } else {
+                // If storage isn't ready yet, wait for it
+                await initializeStorage();
+                storage.set(THEME_KEY, newTheme);
+            }
+        } catch (error) {
+            console.error('Failed to save theme preference:', error);
+        }
     };
 
     const toggleTheme = () => {
