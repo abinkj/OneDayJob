@@ -103,6 +103,10 @@ export const createStyles = (colors: ThemeColors) => StyleSheet.create({
     width: 32 * DeviceDimensions.widthRatio,
     height: 32 * DeviceDimensions.heightRatio,
   },
+  categoryIconSmall: {
+    width: 20 * DeviceDimensions.widthRatio,
+    height: 20 * DeviceDimensions.heightRatio,
+  },
   categoryText: {
     fontSize: 16,
     fontFamily: 'medium',
@@ -669,26 +673,29 @@ export const createStyles = (colors: ThemeColors) => StyleSheet.create({
     fontWeight: '500',
   },
   jobTitlePreview: {
-    fontSize: 32,
+    fontSize: 26,
     fontWeight: 'bold',
-    color: colors.grey,
-    marginTop: 20 * DeviceDimensions.heightRatio,
+    color: colors.black,
+    marginTop: 12 * DeviceDimensions.heightRatio,
+    marginBottom: 4 * DeviceDimensions.heightRatio,
+    lineHeight: 32,
   },
   categoryBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 16,
+    backgroundColor: colors.categoryBox,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
     alignSelf: 'flex-start',
-    marginTop: 10 * DeviceDimensions.heightRatio
+    marginTop: 12 * DeviceDimensions.heightRatio,
   },
 
   categoryBadgeText: {
-    color: colors.primary,
-    marginLeft: 4,
-    fontSize: 14,
-    fontFamily: 'medium'
+    color: colors.black,
+    marginLeft: 6,
+    fontSize: 12,
+    fontFamily: 'medium',
   },
   separator: {
     height: 1,
@@ -806,6 +813,39 @@ export const createStyles = (colors: ThemeColors) => StyleSheet.create({
   nameContainer1: {
     flex: 1,
     justifyContent: 'space-between'
+  },
+  previewCard: {
+    flexDirection: 'row',
+    minHeight: 200 * DeviceDimensions.heightRatio,
+    marginBottom: 16 * DeviceDimensions.heightRatio,
+  },
+  previewLeftSection: {
+    flex: 1.5,
+    paddingRight: 16 * DeviceDimensions.widthRatio,
+    justifyContent: 'space-between',
+  },
+  previewRightSection: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: colors.categoryBox1,
+    borderRadius: 20,
+    padding: 20 * DeviceDimensions.widthRatio,
+    shadowColor: colors.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 3,
+  },
+  categoryIconContainer: {
+    width: '100%',
+    aspectRatio: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  categoryIconLarge: {
+    width: '80%',
+    height: '80%',
   },
   timeRangeContainer: {
     marginTop: 20 * DeviceDimensions.heightRatio,

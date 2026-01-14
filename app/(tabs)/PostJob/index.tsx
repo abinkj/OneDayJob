@@ -1328,6 +1328,7 @@ const PostJobScreen = ({ navigation: navProp }) => {
           onChangeText={setJobName}
           placeholder="Name"
           placeholderTextColor={colors.grey}
+          maxLength={100}
         />
       </View>
       <View style={styles.row}>
@@ -1820,6 +1821,7 @@ const PostJobScreen = ({ navigation: navProp }) => {
           onChangeText={setBudget}
           placeholder="200"
           keyboardType="number-pad"
+          maxLength={6}
         />
       </View>
     </View>
@@ -1983,45 +1985,55 @@ const PostJobScreen = ({ navigation: navProp }) => {
         )}
 
         {/* User Profile */}
-        <View style={styles.nameContainer}>
-          <View style={styles.nameContainer1}>
-            <View>
-              <View style={styles.profileSection}>
-                {user?.profilePicture || user?.profileImage ? (
-                  <Image
-                    style={styles.avatarContainer}
-                    source={{ uri: user.profilePicture || user.profileImage }}
-                  />
-                ) : (
-                  <Image
-                    style={styles.avatarContainer}
-                    source={require("../../../assets/images/profile/profile.png")}
-                  />
-                )}
-                <Text style={styles.userName}>
-                  {user?.name || user?.fullName || "John Doe"}
-                </Text>
-              </View>
-              <Text style={styles.jobTitlePreview}>
-                {jobName || "Furniture Lifting Help Needed"}
-              </Text>
-              <View style={styles.categoryBadge}>
+        <View style={styles.previewCard}>
+          <View style={styles.previewLeftSection}>
+            <View style={styles.profileSection}>
+              {user?.profilePicture || user?.profileImage ? (
                 <Image
                   style={styles.avatarContainer}
-                  source={getCategoryIcon()}
-                  resizeMode="center"
+                  source={{ uri: user.profilePicture || user.profileImage }}
                 />
-                <Text style={styles.categoryBadgeText}>
-                  {getCategoryName().toUpperCase()}
-                </Text>
-              </View>
+              ) : (
+                <Image
+                  style={styles.avatarContainer}
+                  source={require("../../../assets/images/profile/profile.png")}
+                />
+              )}
+              <Text style={styles.userName}>
+                {user?.firstName && user?.lastName
+                  ? `${user.firstName} ${user.lastName}`
+                  : user?.name || user?.fullName || "User"}
+              </Text>
             </View>
-            <View style={styles.separator} />
+
+            <Text style={styles.jobTitlePreview}>
+              {jobName || "Furniture Lifting Help Needed"}
+            </Text>
+
+            <View style={styles.categoryBadge}>
+              <Image
+                style={styles.categoryIconSmall}
+                source={getCategoryIcon()}
+                resizeMode="contain"
+              />
+              <Text style={styles.categoryBadgeText}>
+                {getCategoryName().toUpperCase()}
+              </Text>
+            </View>
           </View>
-          <View style={styles.nameContainer2}>
-            <Image source={getCategoryIcon()} style={styles.userImage} />
+
+          <View style={styles.previewRightSection}>
+            <View style={styles.categoryIconContainer}>
+              <Image
+                source={getCategoryIcon()}
+                style={styles.categoryIconLarge}
+                resizeMode="contain"
+              />
+            </View>
           </View>
         </View>
+
+        <View style={styles.separator} />
 
         {/* Job Details */}
         <View style={styles.detailsSection}>
@@ -2232,6 +2244,7 @@ const PostJobScreen = ({ navigation: navProp }) => {
                   onChangeText={setNewRequirement}
                   placeholder="Eg - Tools or Vehicles"
                   placeholderTextColor={colors.subGrey}
+                  maxLength={100}
                 />
                 <TouchableOpacity
                   onPress={handleAddRequirement}
@@ -2282,6 +2295,7 @@ const PostJobScreen = ({ navigation: navProp }) => {
                     onChangeText={setNewRequirement}
                     placeholder="Add new requirement"
                     placeholderTextColor={colors.subGrey}
+                    maxLength={100}
                   />
                   <TouchableOpacity
                     onPress={handleAddRequirement}

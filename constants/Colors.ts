@@ -9,6 +9,7 @@ export const LightColors = {
     background: '#F9F5FF',
     primary: '#4F46E5', // Vibrant Indigo
     categoryBox: '#E0E8FD',
+    categoryBox1: '#aec0eeff',
     selected: '#A6BEFF',
     subGrey: '#4A4A4A',
     switchBlue: '#65558F',
@@ -38,6 +39,7 @@ export const DarkColors = {
     background: '#121212',   // Dark background
     primary: '#6366F1',      // Slightly lighter indigo for dark mode
     categoryBox: '#2C2C2C',
+    categoryBox1: '#2C2C2C',
     selected: '#3F4259',
     subGrey: '#CCCCCC',
     switchBlue: '#D0BCFF',

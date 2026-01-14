@@ -48,6 +48,7 @@ const JobDescriptionSection = ({
         placeholderTextColor={colors.grey}
         multiline
         numberOfLines={4}
+        maxLength={150}
       />
 
       {/* Separator */}
