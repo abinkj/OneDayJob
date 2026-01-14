@@ -26,6 +26,7 @@ import {
   getEmployeeVerificationStatus,
   getEmployeeVerificationCode,
 } from "../../../services/api";
+import { applyJobOffline } from "../../../services/offlineQueueExamples";
 import socketService from "../../../services/socketService";
 import SuccessAnimation from "../../../components/successAnimation";
 import Toast from "react-native-toast-message";
@@ -225,19 +226,45 @@ const JobDetails = () => {
 
     setLoading(true);
     try {
-      const res = await applyJob(jobId);
-      if (res.data.success) {
-        // Update local job state to reflect that user has applied
+      const result = await applyJobOffline(jobId);
+
+      // Check if request was queued (offline) or succeeded immediately (online)
+      if ('queued' in result && result.queued) {
+        // Request was queued - user is offline
+        Toast.show({
+          type: "info",
+          text1: "Application Queued",
+          text2: "You are offline. Your application will be submitted when you reconnect.",
+          visibilityTime: 4000,
+        });
+
+        // Still update local state optimistically
         setJob((prevJob) => ({
           ...prevJob!,
           hasApplied: true,
           applicantCount: (prevJob?.applicantCount || 0) + 1,
         }));
 
-        setApplied(true); // ✅ show success animation
+        // Go back after showing message
         setTimeout(() => {
-          navigation.goBack(); // ✅ go back after animation
-        }, 3000); // Adjust delay based on animation length
+          navigation.goBack();
+        }, 2000);
+      } else {
+        // Request succeeded immediately - user is online
+        const res = result as any; // Type assertion since we know it's the API response
+        if (res.data.success) {
+          // Update local job state to reflect that user has applied
+          setJob((prevJob) => ({
+            ...prevJob!,
+            hasApplied: true,
+            applicantCount: (prevJob?.applicantCount || 0) + 1,
+          }));
+
+          setApplied(true); // ✅ show success animation
+          setTimeout(() => {
+            navigation.goBack(); // ✅ go back after animation
+          }, 3000); // Adjust delay based on animation length
+        }
       }
     } catch (err: any) {
       const errorMessage =
@@ -261,6 +288,13 @@ const JobDetails = () => {
           type: "info",
           text1: "Already Applied",
           text2: "You have already applied for this job",
+        });
+      } else if (errorMessage.includes("already processed")) {
+        // Duplicate request prevented by queue
+        Toast.show({
+          type: "info",
+          text1: "Already Queued",
+          text2: "This application is already queued for submission",
         });
       } else {
         Toast.show({
