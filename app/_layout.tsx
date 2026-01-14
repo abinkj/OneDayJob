@@ -11,6 +11,7 @@ import Toast from "react-native-toast-message";
 import toastConfig from "../components/customToast";
 import { NotificationProvider } from "../contexts/NotificationContext";
 import socketService from "../services/socketService";
+import { initializeStorage } from "../utilities/mmkvStore";
 
 import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "../services/queryClient";
@@ -20,21 +21,24 @@ import { ThemeProvider } from "../contexts/ThemeContext";
 
 export default function RootLayout() {
   useEffect(() => {
-    // Initialize socket connection when app starts
-    const initializeSocket = async () => {
+    // Initialize app services
+    const initializeApp = async () => {
       try {
+        // Initialize MMKV storage with secure encryption key
+        console.log("🔐 Initializing secure storage...");
+        await initializeStorage();
+        console.log("✅ Secure storage initialized");
+
+        // Initialize socket connection
         console.log("🔌 Initializing global socket connection...");
         await socketService.connect();
         console.log("✅ Global socket connection initialized");
       } catch (error) {
-        console.error(
-          "❌ Failed to initialize global socket connection:",
-          error
-        );
+        console.error("❌ Failed to initialize app services:", error);
       }
     };
 
-    initializeSocket();
+    initializeApp();
 
     // Cleanup on unmount
     return () => {
