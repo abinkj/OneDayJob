@@ -371,29 +371,52 @@ class NotificationService {
         return false;
       }
 
+      // Ensure deviceId is always a string
+      const deviceId = Device.osInternalBuildId || Device.modelId || 'unknown-device';
+
+      const requestBody = {
+        expoPushToken: this.expoPushToken,
+        platform: Platform.OS,
+        deviceId: deviceId,
+      };
+
+      console.log('📱 Registering device with backend:', {
+        platform: Platform.OS,
+        deviceId: deviceId,
+        tokenPreview: this.expoPushToken.substring(0, 30) + '...'
+      });
+
+      // Remove trailing slash from API URL to prevent double slashes
+      const apiUrl = process.env.EXPO_PUBLIC_API_URL?.replace(/\/$/, '') || '';
+      const endpoint = `${apiUrl}/notifications/register-device`;
+
+      console.log('🌐 Registration endpoint:', endpoint);
+
       // Send push token to backend
-      const response = await fetch(`${process.env.EXPO_PUBLIC_API_URL}/notifications/register-device`, {
+      const response = await fetch(endpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
         },
-        body: JSON.stringify({
-          expoPushToken: this.expoPushToken,
-          platform: Platform.OS,
-          deviceId: Device.osInternalBuildId,
-        }),
+        body: JSON.stringify(requestBody),
       });
 
       if (response.ok) {
-        console.log('Device registered with backend');
+        const data = await response.json();
+        console.log('✅ Device registered with backend successfully:', data);
         return true;
       } else {
-        console.error('Failed to register device with backend');
+        const errorText = await response.text();
+        console.error('❌ Failed to register device with backend:', {
+          status: response.status,
+          statusText: response.statusText,
+          error: errorText
+        });
         return false;
       }
     } catch (error) {
-      console.error('Error registering device with backend:', error);
+      console.error('❌ Error registering device with backend:', error);
       return false;
     }
   }

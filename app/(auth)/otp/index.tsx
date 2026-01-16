@@ -41,7 +41,7 @@ const Otp = () => {
 
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
-  const { requestPermission } = useNotifications();
+  const { requestPermission, registerDevice } = useNotifications();
 
   const handleVerifyOtp = async () => {
     const otpValidation = validateOtpCode(otp);
@@ -85,8 +85,16 @@ const Otp = () => {
             await saveKycStatus("completed");
             dispatch(completeKyc());
           }
-          await requestPermission(); // Request notification permissions after login
-          dispatch(loginUser(userData, accessToken, refreshToken) as any);
+
+          // Request notification permissions and register device
+          await requestPermission();
+
+          // Login user (saves tokens)
+          await dispatch(loginUser(userData, accessToken, refreshToken) as any);
+
+          // Register device with backend after tokens are saved
+          console.log("📱 Registering device with backend after login...");
+          await registerDevice();
         }, 2000);
       } else {
         showAlert({
