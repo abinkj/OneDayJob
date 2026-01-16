@@ -1984,13 +1984,13 @@ const PostJobScreen = ({ navigation: navProp }) => {
 
       <KeyboardAvoidingView
         style={{ flex: 1 }}
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-        keyboardVerticalOffset={Platform.OS === "ios" ? 100 : 0}
+        behavior={Platform.OS === "ios" ? "padding" : "padding"}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 100 : 30}
       >
         <ScrollView
           ref={scrollViewRef}
           style={styles.scrollContainer}
-          contentContainerStyle={{ paddingBottom: 300 }}
+          contentContainerStyle={{ paddingBottom: 100 }}
           showsVerticalScrollIndicator={false}
           bounces={false}
           keyboardShouldPersistTaps="handled"
@@ -2001,22 +2001,30 @@ const PostJobScreen = ({ navigation: navProp }) => {
           {currentStep === 4 && renderStep4()}
           {currentStep === 5 && renderStep5()}
         </ScrollView>
-        {/* <TouchableOpacity style={styles.nextButton} onPress={handleNext}>
-        <Text style={styles.nextButtonText}>Next</Text>
-      </TouchableOpacity> */}
-        {currentStep === 5 ? (
-          <CustomButton
-            text={"Post"}
-            color={colors.primary}
-            onPress={handlePost}
-          />
-        ) : (
-          <CustomButton
-            text={"Next"}
-            color={colors.primary}
-            onPress={handleNext}
-          />
-        )}
+
+        {/* Fixed button container - always visible above keyboard */}
+        <View style={{
+          paddingHorizontal: 20,
+          paddingVertical: 16,
+          paddingBottom: Platform.OS === "ios" ? 20 : 16,
+          backgroundColor: colors.background,
+          borderTopWidth: 1,
+          borderTopColor: colors.border,
+        }}>
+          {currentStep === 5 ? (
+            <CustomButton
+              text={"Post"}
+              color={colors.primary}
+              onPress={handlePost}
+            />
+          ) : (
+            <CustomButton
+              text={"Next"}
+              color={colors.primary}
+              onPress={handleNext}
+            />
+          )}
+        </View>
 
         <Modal
           animationType="slide"
