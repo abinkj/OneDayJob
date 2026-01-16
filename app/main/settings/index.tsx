@@ -118,6 +118,7 @@ const Settings: React.FC = () => {
   const [pushNotifications, setPushNotifications] = useState(true);
   const [emailNotifications, setEmailNotifications] = useState(true);
   const [jobAlerts, setJobAlerts] = useState(true);
+  const [isTogglingTheme, setIsTogglingTheme] = useState(false);
 
   const { theme, colors, toggleTheme } = useTheme();
   const darkMode = theme === 'dark';
@@ -383,12 +384,27 @@ const Settings: React.FC = () => {
             subtitle="Enable dark theme"
             showArrow={false}
             rightComponent={
-              <CustomSwitch
-                value={darkMode}
-                onValueChange={(value) => {
-                  toggleTheme();
-                }}
-              />
+              isTogglingTheme ? (
+                <ActivityIndicator size="small" color={colors.primary} />
+              ) : (
+                <CustomSwitch
+                  value={darkMode}
+                  onValueChange={async (value) => {
+                    setIsTogglingTheme(true);
+                    // Use requestAnimationFrame to defer the theme change
+                    // This prevents UI freeze by allowing the loading state to render first
+                    requestAnimationFrame(() => {
+                      setTimeout(() => {
+                        toggleTheme();
+                        // Reset loading state after theme has changed
+                        setTimeout(() => {
+                          setIsTogglingTheme(false);
+                        }, 100);
+                      }, 50);
+                    });
+                  }}
+                />
+              )
             }
           />
           <SettingsItem
