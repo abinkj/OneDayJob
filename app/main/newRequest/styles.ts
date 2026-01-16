@@ -125,8 +125,9 @@ export const createStyles = (colors: any) =>
     },
     verifiedBadge: {
       paddingHorizontal: 10,
-      paddingVertical: 4,
+      paddingVertical: 6,
       borderRadius: 12,
+      flexDirection: "row",
     },
     badgeText: {
       color: "#FFF",

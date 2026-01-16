@@ -1,14 +1,9 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
   Image,
-  TouchableOpacity,
   ScrollView,
-  Animated,
-  LayoutAnimation,
-  Platform,
-  UIManager,
   Alert,
   ActivityIndicator,
   RefreshControl,
@@ -27,37 +22,16 @@ import { useNavigation, useRoute } from "@react-navigation/native";
 import { User, Review } from "../../../types";
 import { getUserProfile } from "../../../services/api";
 
-if (
-  Platform.OS === "android" &&
-  UIManager.setLayoutAnimationEnabledExperimental
-) {
-  UIManager.setLayoutAnimationEnabledExperimental(true);
-}
+
 
 const RequestProfile: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [isDropdownVisible, setIsDropdownVisible] = useState(false);
-  const dropdownHeight = useRef(new Animated.Value(0)).current;
-  const dropdownOpacity = useRef(new Animated.Value(0)).current;
 
   const navigation = useNavigation<any>();
   const route = useRoute<any>();
-  const { userId } = route.params as { userId: string }; // 👈 passed from navigation
-
-  // Dummy review list (replace with real API later)
-  const reviews: Review[] = [
-    {
-      id: "1",
-      reviewerName: "Jane Cooper",
-      date: "01/01/2021",
-      reviewerImage: Images.profile.profileImage,
-      rating: 5,
-      comment:
-        "Darell was very professional and punctual. He handled my furniture with care and completed the task efficiently. Highly recommended!",
-    },
-  ];
+  const { userId } = route.params as { userId: string };
 
   const fetchUser = async (isRefresh = false) => {
     try {
@@ -93,27 +67,7 @@ const RequestProfile: React.FC = () => {
     return unsubscribe;
   }, [navigation, userId]);
 
-  const handleNext = () => navigation.navigate("RequestDetails");
 
-  const toggleDropdown = () => {
-    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-    const isOpening = !isDropdownVisible;
-
-    setIsDropdownVisible(isOpening);
-
-    Animated.parallel([
-      Animated.timing(dropdownHeight, {
-        toValue: isOpening ? 206 * DeviceDimensions.heightRatio : 0,
-        duration: 300,
-        useNativeDriver: false,
-      }),
-      Animated.timing(dropdownOpacity, {
-        toValue: isOpening ? 1 : 0,
-        duration: 300,
-        useNativeDriver: false,
-      }),
-    ]).start();
-  };
 
   if (isLoading) {
     return (
@@ -124,11 +78,13 @@ const RequestProfile: React.FC = () => {
     );
   }
 
-  const profileImageSrc = user?.profilePicture
-    ? typeof user.profilePicture === "string"
-      ? { uri: user.profilePicture }
-      : user.profilePicture
-    : Images.profile.profileImage;
+  const profileImageSrc = user?.profilePictureUrl
+    ? { uri: user.profilePictureUrl }
+    : user?.profilePicture
+      ? typeof user.profilePicture === "string"
+        ? { uri: user.profilePicture }
+        : user.profilePicture
+      : Images.profile.profileImage;
 
   return (
     <View style={styles.container}>
@@ -138,6 +94,7 @@ const RequestProfile: React.FC = () => {
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
         }
+        contentContainerStyle={{ paddingBottom: 20 }}
       >
         {/* Profile Card */}
         <View style={styles.profileCard}>
@@ -149,7 +106,7 @@ const RequestProfile: React.FC = () => {
           <View style={styles.locationContainer}>
             <Ionicons name="location-outline" size={16} color="gray" />
             <Text style={styles.locationText}>
-              {user?.locationText || user?.location?.address || "Not specified"}
+              {user?.locationText || "Location not specified"}
             </Text>
           </View>
 
@@ -158,7 +115,9 @@ const RequestProfile: React.FC = () => {
             <View style={styles.statBox}>
               <Text style={styles.statLabel}>RATING</Text>
               <Text style={styles.statNumber}>
-                {user?.rating ? user.rating.toFixed(1) : "0.0"}
+                {user?.averageEmployeeRating
+                  ? user.averageEmployeeRating.toFixed(1)
+                  : "0.0"}
               </Text>
               <Text style={styles.statSubLabel}>
                 {user?.totalReviews || 0} Reviews
@@ -185,71 +144,54 @@ const RequestProfile: React.FC = () => {
           </View>
         </View>
 
-        {/* Experience/Skills Dropdown */}
-        <View style={styles.experienceContainer}>
-          <TouchableOpacity
-            style={styles.dropdownHeader}
-            onPress={toggleDropdown}
-            activeOpacity={0.7}
-          >
-            <Text style={styles.dropdownTitle}>Experience/Skills</Text>
-            <Ionicons
-              name={isDropdownVisible ? "chevron-up" : "chevron-down"}
-              size={20}
-              color="gray"
-            />
-          </TouchableOpacity>
-
-          <Animated.View
-            style={[
-              styles.dropdownContent,
-              {
-                height: dropdownHeight,
-                opacity: dropdownOpacity,
-              },
-            ]}
-          >
-            <Text style={styles.dropdownDetail}>
-              • 3+ years in moving & heavy lifting
+        {/* Reviews Section */}
+        {user?.ratings && user.ratings.length > 0 && (
+          <View style={{ paddingHorizontal: 20, marginTop: 20 }}>
+            <Text style={{
+              fontSize: 18,
+              fontWeight: "bold",
+              marginBottom: 15,
+              color: Colors.black
+            }}>
+              Recent Reviews
             </Text>
-            <Text style={styles.dropdownDetail}>
-              • Can disassemble & reassemble furniture if needed
-            </Text>
-            <Text style={styles.dropdownDetail}>
-              • Furniture moving, loading & unloading, safe lifting techniques
-            </Text>
-
-            <ScrollView
-              bounces={false}
-              horizontal
-              style={styles.imageRow}
-              contentContainerStyle={{ gap: 8 }}
-              showsHorizontalScrollIndicator={false}
-            >
-              {[1, 2, 3, 4].map((item) => (
-                <View key={item} style={styles.imagePlaceholder} />
-              ))}
-            </ScrollView>
-          </Animated.View>
-        </View>
-
-        {/* Reviews */}
-        {/* {reviews.map((review) => (
-          <View key={review.id} style={styles.reviewContainer}>
-            <View style={styles.reviewerInfo}>
-              <Image
-                source={review.reviewerImage}
-                style={styles.reviewerImage}
-              />
-              <View style={styles.reviewerNameContainer}>
-                <Text style={styles.reviewerName}>{review.reviewerName}</Text>
-                <View style={styles.stars}>{ratingStars(review.rating)}</View>
+            {user.ratings.map((review: any, index: number) => (
+              <View key={review._id || index} style={styles.reviewContainer}>
+                <View style={styles.reviewerInfo}>
+                  <Image
+                    source={
+                      review.raterUser?.profilePictureUrl
+                        ? { uri: review.raterUser.profilePictureUrl }
+                        : Images.profile.profileImage
+                    }
+                    style={styles.reviewerImage}
+                  />
+                  <View style={styles.reviewerNameContainer}>
+                    <Text style={styles.reviewerName}>
+                      {review.raterUser?.firstName} {review.raterUser?.lastName}
+                    </Text>
+                    <View style={styles.stars}>
+                      {ratingStars(review.rating)}
+                    </View>
+                  </View>
+                  <Text style={styles.reviewDate}>
+                    {new Date(review.createdAt).toLocaleDateString()}
+                  </Text>
+                </View>
+                {review.comment && (
+                  <Text style={styles.reviewText}>{review.comment}</Text>
+                )}
               </View>
-              <Text style={styles.reviewDate}>{review.date}</Text>
-            </View>
-            <Text style={styles.reviewText}>{review.comment}</Text>
+            ))}
           </View>
-        ))} */}
+        )}
+
+        {/* No Reviews Message */}
+        {(!user?.ratings || user.ratings.length === 0) && (
+          <View style={{ padding: 20, alignItems: "center" }}>
+            <Text style={{ color: "gray" }}>No reviews yet</Text>
+          </View>
+        )}
 
         {/* <View style={styles.buttonContainer}>
           <CustomButton

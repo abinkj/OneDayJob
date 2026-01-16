@@ -74,10 +74,14 @@ const NewRequest = () => {
           ? appliedResponse.data
             .filter((item: any) => item.status === "accepted")
             .map((item: any) => {
+              // Mongoose documents have actual data in _doc property
+              const userData = item.user._doc || item.user;
+
               const vStatus =
                 verificationResponse.data?.data?.participants?.find(
-                  (p: any) => p.employeeId === item.user.id
+                  (p: any) => p.employeeId === userData._id
                 );
+
               return {
                 _id: item._id,
                 appliedAt: item.appliedAt,
@@ -85,15 +89,16 @@ const NewRequest = () => {
                 isVerified: vStatus?.isVerified || false,
                 verificationStatus: vStatus,
                 user: {
-                  id: item.user.id,
-                  name: `${item.user.firstName} ${item.user.lastName}`,
-                  avatar: item.user.profilePicture,
-                  rating: item.user.rating ?? 0,
-                  rate: item.user.rate ?? "$0/hr",
-                  description:
-                    item.user.description ?? "No description provided",
-                  availability: item.user.availability ?? "Not specified",
-                  phoneNumber: item.user.phoneNumber || item.user.phone,
+                  // Access from _doc for Mongoose documents
+                  id: userData._id,
+                  name: `${userData.firstName} ${userData.lastName}`,
+                  // profilePictureUrl is added by controller at top level
+                  avatar: item.user.profilePictureUrl || userData.profilePicture,
+                  rating: userData.rating ?? 0,
+                  rate: userData.rate ?? "$0/hr",
+                  description: userData.description ?? "No description provided",
+                  availability: userData.availability ?? "Not specified",
+                  phoneNumber: userData.phoneNumber || userData.phone,
                 },
               };
             })
@@ -247,83 +252,148 @@ const NewRequest = () => {
       setInitiatingJob(false);
     }
   };
-
   const handleCall = (phoneNumber: string) => {
     if (phoneNumber) Linking.openURL(`tel:${phoneNumber}`);
   };
 
+  const handleNavigateToProfile = (userId: string) => {
+    console.log('Navigating to worker profile:', userId);
+    // Navigate to RequestProfile screen (note: capital R and P)
+    navigation.navigate('RequestProfile' as never, { userId } as never);
+  };
+
   const renderItem = ({ item }: { item: any }) => {
     const isSelected = selectedUser?._id === item._id;
+
+    // Debug logging
+    console.log('Rendering item:', {
+      name: item.user.name,
+      avatar: item.user.avatar,
+      userId: item.user.id,
+    });
+
+    // Get profile image URL - match the pattern from Profile screen
+    const getProfileImageUrl = () => {
+      const avatar = item.user.avatar;
+
+      if (!avatar) {
+        console.log('No avatar provided, using placeholder');
+        return "https://via.placeholder.com/60";
+      }
+
+      // If it's already a full URL (starts with http), use it directly
+      if (typeof avatar === 'string' && avatar.startsWith('http')) {
+        console.log('Avatar is full URL:', avatar);
+        return avatar;
+      }
+
+      // Otherwise use placeholder (backend should send full URLs)
+      console.log('Avatar is not a full URL, using placeholder. Avatar value:', avatar);
+      return "https://via.placeholder.com/60";
+    };
+
+    const profileImageUrl = getProfileImageUrl();
+
     return (
       <TouchableOpacity
-        style={[styles.card, isSelected && styles.selectedCard]}
+        style={[
+          styles.card,
+          isSelected && {
+            backgroundColor: isDark ? colors.categoryBox : colors.background,
+            borderColor: colors.primary,
+            borderWidth: 2,
+            elevation: 4,
+            shadowColor: colors.primary,
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.2,
+            shadowRadius: 4,
+          }
+        ]}
         onPress={() => setSelectedUser(item)}
+        activeOpacity={0.7}
       >
         <View style={styles.cardHeader}>
-          <Image
-            source={{
-              uri: item.user.avatar || "https://via.placeholder.com/60",
-            }}
-            style={styles.profileImage}
-          />
-          <View style={styles.profileInfo}>
-            <Text style={styles.name}>{item.user.name}</Text>
-            <View style={styles.ratingContainer}>
-              {ratingStars(item.user.rating)}
-              <Text style={styles.ratingText}>({item.user.rating})</Text>
-            </View>
-            <TouchableOpacity onPress={() => handleCall(item.user.phoneNumber)}>
-              <View
-                style={{
-                  flexDirection: "row",
-                  alignItems: "center",
-                  marginTop: 4,
-                }}
-              >
+          {/* Profile Image - Tappable to navigate */}
+          <TouchableOpacity
+            onPress={() => handleNavigateToProfile(item.user.id)}
+            activeOpacity={0.6}
+          >
+            <Image
+              source={{ uri: profileImageUrl }}
+              style={[
+                styles.profileImage,
+                isSelected && {
+                  borderWidth: 2,
+                  borderColor: colors.primary,
+                }
+              ]}
+              onError={(error) => {
+                console.error('Image load error:', error.nativeEvent.error);
+                console.error('Failed URL:', profileImageUrl);
+              }}
+              onLoad={() => {
+                console.log('Image loaded successfully:', profileImageUrl);
+              }}
+            />
+          </TouchableOpacity>
+
+          {/* User Info - Tappable to navigate */}
+          <TouchableOpacity
+            style={styles.profileInfo}
+            onPress={() => handleNavigateToProfile(item.user.id)}
+            activeOpacity={0.6}
+          >
+            <Text style={[styles.name, { marginBottom: 4 }]}>
+              {item.user.name}
+            </Text>
+
+            <TouchableOpacity
+              onPress={(e) => {
+                e.stopPropagation(); // Prevent parent TouchableOpacity from being triggered
+                handleCall(item.user.phoneNumber);
+              }}
+              activeOpacity={0.6}
+            >
+              <View style={{
+                flexDirection: "row",
+                alignItems: "center",
+              }}>
                 <Ionicons name="call" size={14} color={colors.primary} />
-                <Text
-                  style={{
-                    marginLeft: 4,
-                    color: colors.primary,
-                    fontSize: 13,
-                  }}
-                >
+                <Text style={{
+                  marginLeft: 4,
+                  color: colors.primary,
+                  fontSize: 13,
+                  fontFamily: "medium",
+                }}>
                   {item.user.phoneNumber}
                 </Text>
               </View>
             </TouchableOpacity>
-          </View>
+          </TouchableOpacity>
+
+          {/* Status Badge */}
           <View style={styles.statusBadgeContainer}>
             {item.isVerified ? (
-              <View
-                style={[styles.verifiedBadge, { backgroundColor: "#4CAF50" }]}
-              >
-                <Text style={styles.badgeText}>Verified</Text>
+              <View style={[styles.verifiedBadge, {
+                backgroundColor: "#4CAF50",
+                paddingHorizontal: 12,
+                paddingVertical: 6,
+                borderRadius: 12,
+              }]}>
+                <Ionicons name="checkmark-circle" size={14} color="#fff" style={{ marginRight: 4 }} />
+                <Text style={[styles.badgeText, { fontSize: 12 }]}>Verified</Text>
               </View>
             ) : (
-              <View
-                style={[styles.verifiedBadge, { backgroundColor: "#FF9800" }]}
-              >
-                <Text style={styles.badgeText}>Pending</Text>
+              <View style={[styles.verifiedBadge, {
+                backgroundColor: "#FF9800",
+                paddingHorizontal: 12,
+                paddingVertical: 6,
+                borderRadius: 12,
+              }]}>
+                <Ionicons name="time" size={14} color="#fff" style={{ marginRight: 4 }} />
+                <Text style={[styles.badgeText, { fontSize: 12 }]}>Pending</Text>
               </View>
             )}
-          </View>
-        </View>
-
-        <Text style={styles.description} numberOfLines={2}>
-          {item.user.description}
-        </Text>
-
-        <View style={styles.detailsRow}>
-          <View style={styles.detailItem}>
-            <Ionicons name="calendar-outline" size={16} color={colors.grey} />
-            <Text style={styles.detailText}>{item.user.availability}</Text>
-          </View>
-          <View style={styles.detailItem}>
-            <Ionicons name="time-outline" size={16} color={colors.grey} />
-            <Text style={styles.detailText}>
-              {new Date(item.appliedAt).toLocaleDateString()}
-            </Text>
           </View>
         </View>
       </TouchableOpacity>
