@@ -534,6 +534,12 @@ export const getUserProfile = async (userId: string) => {
   return res.data;
 };
 
+// Update user profile
+export const updateUserProfile = async (userId: string, profileData: any) => {
+  const res = await api.put(`/users/${userId}`, profileData);
+  return res.data;
+};
+
 // FIXED: Enhanced location update with retry logic
 export const updateUserLocationWithRetry = async (
   locationData,

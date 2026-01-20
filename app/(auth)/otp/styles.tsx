@@ -143,4 +143,61 @@ export const createStyles = (colors: ThemeColors) => StyleSheet.create({
     color: colors.black,
     fontFamily: "bold",
   },
+
+  // Custom loading animation styles
+  loadingContainer: {
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  logoCircle: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 24,
+  },
+  logoCircleInner: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    justifyContent: "center",
+    alignItems: "center",
+    shadowColor: colors.primary,
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  logoText: {
+    fontSize: 48,
+    fontFamily: "bold",
+    color: colors.white,
+  },
+  logoImage: {
+    width: 70,
+    height: 70,
+  },
+  brandName: {
+    fontSize: 32,
+    fontFamily: "bold",
+    marginBottom: 12,
+  },
+  loadingText: {
+    fontSize: 16,
+    fontFamily: "regular",
+    marginBottom: 24,
+  },
+  dotsContainer: {
+    flexDirection: "row",
+    gap: 8,
+  },
+  dot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+  },
 });

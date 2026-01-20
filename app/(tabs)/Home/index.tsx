@@ -611,7 +611,7 @@ const HomeScreen = () => {
         </View>
 
         <View style={styles.titleContainer}>
-          <Text style={styles.jobTitle}>{item.description}</Text>
+          <Text style={styles.jobTitle} numberOfLines={3}>{item.name}</Text>
           <View
             style={[
               styles.statusContainer,
