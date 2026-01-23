@@ -282,13 +282,13 @@ export default function ChatScreen() {
       />
 
       <View style={styles.inputContainer}>
-        <AntDesign
+        {/* <AntDesign
           name="plus"
           size={24}
           color={colors.tabBlue}
           style={{ marginLeft: 12 }}
           onPress={handleAttachmentSelect}
-        />
+        /> */}
         <View style={styles.subInputContainer}>
           <TextInput
             placeholder="Type a message"

@@ -122,20 +122,21 @@ api.interceptors.response.use(
       }
     }
 
-    // Handle 403 errors specifically - Force Logout
-    // BUT: Only clear auth data if we actually sent a token
-    // If there's no token, a 403 is expected and we shouldn't clear data
-    if (error.response?.status === 403) {
-      const hadToken = originalRequest?.headers?.Authorization;
+    // FIX 3: Handle 401 vs 403 correctly
+    // 401 = Unauthorized (token invalid/expired) → logout
+    // 403 = Forbidden (user not allowed) → show error, don't logout
 
-      if (hadToken) {
-        console.error("Access forbidden (403) with valid token:", error.response?.data);
-        console.error("Forcing logout due to 403 error");
-        await clearAuthData();
-        store.dispatch(logoutAction());
-      } else {
-        console.warn("Access forbidden (403) without token - this is expected, not clearing auth data");
-      }
+    if (error.response?.status === 401) {
+      console.error("Unauthorized (401) - Token invalid or expired, logging out");
+      await clearAuthData();
+      store.dispatch(logoutAction());
+      return Promise.reject(error);
+    }
+
+    if (error.response?.status === 403) {
+      console.warn("Forbidden (403):", error.response?.data?.error?.message || "Permission denied");
+      // DO NOT logout - user is authenticated but not authorized for this action
+      return Promise.reject(error);
     }
 
     return Promise.reject(error);
