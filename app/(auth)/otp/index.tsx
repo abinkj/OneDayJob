@@ -17,7 +17,7 @@ import { useRoute, useNavigation } from "@react-navigation/native";
 import { useDispatch } from "react-redux";
 import { loginUser } from "../../../utilities/authentication";
 import { createStyles } from "./styles";
-import { saveKycStatus, saveUserData } from "../../../utilities/mmkvStore";
+import { saveKycStatus, saveUserData, getUserData } from "../../../utilities/mmkvStore";
 import { saveToken } from "../../../utilities/secureStore";
 import { completeKyc } from "../../../redux/reducers/authReducers";
 import Animated, {
@@ -252,8 +252,18 @@ const Otp = () => {
             // For incomplete profiles, save tokens manually but DON'T dispatch login yet
             // This prevents Redux from navigating to MainStack
             console.log("Profile incomplete, saving tokens and navigating to ProfileCompletion");
+            console.log("📋 User data from API:", JSON.stringify(userData, null, 2));
+            console.log("🔍 User data has ID?", userData?.id || userData?._id);
+
             await saveToken(accessToken, refreshToken);
+            console.log("✅ Tokens saved successfully");
+
             await saveUserData(userData);
+            console.log("✅ User data saved successfully");
+
+            // Verify the data was saved
+            const savedData = await getUserData();
+            console.log("🔍 Verification - Retrieved user data after save:", JSON.stringify(savedData, null, 2));
 
             // Register device with backend
             console.log("📱 Registering device with backend...");

@@ -40,6 +40,24 @@ const ProfileCompletion = () => {
     const { showAlert } = useAlert();
     const { colors } = useTheme();
 
+    // Debug: Log user data on component mount
+    React.useEffect(() => {
+        const checkUserData = async () => {
+            try {
+                const userData = await getUserData();
+                console.log("📋 ProfileCompletion - User data on mount:", JSON.stringify(userData, null, 2));
+                if (userData) {
+                    console.log("✅ User ID found:", userData.id || userData._id);
+                } else {
+                    console.warn("⚠️ No user data found in storage");
+                }
+            } catch (error) {
+                console.error("❌ Error loading user data:", error);
+            }
+        };
+        checkUserData();
+    }, []);
+
     const showImagePicker = () => {
         imagePickerRef.current?.show();
     };
@@ -84,10 +102,28 @@ const ProfileCompletion = () => {
 
         try {
             const userData = await getUserData();
+            console.log("📋 ProfileCompletion - Retrieved user data:", JSON.stringify(userData, null, 2));
+
+            // Check if user data exists
+            if (!userData) {
+                console.error("❌ No user data found in storage");
+                throw new Error("User data not found. Please log in again.");
+            }
+
             const userId = userData?.id || userData?._id;
+            console.log("🔍 Extracted user ID:", userId);
+            console.log("🔍 User data keys:", Object.keys(userData));
 
             if (!userId) {
-                throw new Error("User ID not found");
+                console.error("❌ User ID not found in user data:", userData);
+                throw new Error(
+                    "User ID not found. User data structure: " +
+                    JSON.stringify({
+                        hasId: !!userData.id,
+                        has_id: !!userData._id,
+                        keys: Object.keys(userData)
+                    })
+                );
             }
 
             let profilePictureUrl = "";
