@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   ScrollView,
   ActivityIndicator,
+  Linking,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation, useRoute } from "@react-navigation/native";
@@ -356,6 +357,40 @@ const JobDetails = () => {
         type: "error",
         text1: "Error",
         text2: "Failed to start chat. Please try again.",
+      });
+    }
+  };
+
+  const handleCall = async () => {
+    if (!job?.userId?.phoneNumber) {
+      Toast.show({
+        type: "error",
+        title: "Error",
+        text2: "Phone number not available",
+      });
+      return;
+    }
+
+    const phoneNumber = job.userId.phoneNumber;
+    const phoneUrl = `tel:${phoneNumber}`;
+
+    try {
+      const supported = await Linking.canOpenURL(phoneUrl);
+      if (supported) {
+        await Linking.openURL(phoneUrl);
+      } else {
+        Toast.show({
+          type: "error",
+          title: "Error",
+          text2: "Unable to make phone calls on this device",
+        });
+      }
+    } catch (error) {
+      console.error("Error making phone call:", error);
+      Toast.show({
+        type: "error",
+        title: "Error",
+        text2: "Failed to initiate call. Please try again.",
       });
     }
   };
@@ -752,7 +787,7 @@ const JobDetails = () => {
                 {job.userId?.phoneNumber}
               </Text>
             </View>
-            <TouchableOpacity style={styles.contactButton} onPress={() => { }}>
+            <TouchableOpacity style={styles.contactButton} onPress={handleCall}>
               <Ionicons name="call-outline" size={20} color={colors.primary} />
             </TouchableOpacity>
           </View>
