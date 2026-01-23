@@ -16,6 +16,7 @@ export interface NotificationHistory {
   read: boolean;
   timestamp: string;
   data?: any;
+  jobId?: string;
 }
 
 // Register device for push notifications
@@ -57,10 +58,13 @@ export const updateNotificationSettings = async (settings: Partial<NotificationS
 
 // Get notification history
 export const getNotificationHistory = async (page: number = 1, limit: number = 20): Promise<{
-  notifications: NotificationHistory[];
-  total: number;
-  page: number;
-  hasMore: boolean;
+  success: boolean;
+  data: {
+    notifications: NotificationHistory[];
+    total: number;
+    page: number;
+    hasMore: boolean;
+  };
 }> => {
   try {
     const response = await api.get(`/notifications/history?page=${page}&limit=${limit}`);

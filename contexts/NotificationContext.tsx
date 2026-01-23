@@ -12,6 +12,7 @@ import notificationService, {
 } from "../services/notificationService";
 import { getUserData } from "../utilities/mmkvStore";
 import socketService from "../services/socketService";
+import * as notificationApi from "../services/notificationApi";
 
 interface NotificationContextType {
   // Permission state
@@ -46,6 +47,7 @@ interface NotificationContextType {
 
   // Utility
   clearAllNotifications: () => Promise<void>;
+  deleteNotification: (notificationId: string) => Promise<void>;
   markAsRead: (notificationId: string) => void;
   refreshNotifications: () => Promise<void>;
   registerDevice: () => Promise<void>;
@@ -95,6 +97,13 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({
 
     initializeNotifications();
   }, []);
+
+  // Fetch notifications from backend on initialization
+  useEffect(() => {
+    if (isInitialized) {
+      refreshNotifications();
+    }
+  }, [isInitialized]);
 
   // Handle app state changes
   useEffect(() => {
@@ -345,34 +354,94 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({
   // Clear all notifications
   const clearAllNotifications = async (): Promise<void> => {
     try {
+      // Call backend API
+      await notificationApi.clearAllNotifications();
+
+      // Clear local notifications
       await notificationService.clearAllNotifications();
+
+      // Update state
       setNotifications([]);
       setUnreadCount(0);
+
+      console.log('✅ All notifications cleared');
     } catch (error) {
       console.error("Error clearing notifications:", error);
     }
   };
 
+  // Delete a single notification
+  const deleteNotification = async (notificationId: string): Promise<void> => {
+    // Optimistic update
+    setNotifications((prev) => prev.filter((n) => n.id !== notificationId));
+    setUnreadCount((prev) => Math.max(0, prev - 1)); // Potentially inaccurate if deleting read note, but safe enough
+
+    try {
+      await notificationApi.deleteNotification(notificationId);
+    } catch (error) {
+      console.error('Failed to delete notification:', error);
+      // Could revert state here if needed, but low risk
+    }
+  };
+
   // Mark notification as read
   const markAsRead = (notificationId: string): void => {
+    // Update local state optimistically
     setNotifications((prev) =>
       prev.map((notification) =>
-        notification.jobId === notificationId
+        (notification.id === notificationId || notification.jobId === notificationId)
           ? { ...notification, read: true }
           : notification
       )
     );
     setUnreadCount((prev) => Math.max(0, prev - 1));
+
+    // Call backend API to persist the change
+    notificationApi.markNotificationAsRead(notificationId).catch(error => {
+      console.error('Failed to mark notification as read on backend:', error);
+    });
   };
 
   // Refresh notifications from backend
   const refreshNotifications = async (): Promise<void> => {
     try {
-      // This would typically fetch notifications from your backend
-      // For now, we'll just update the local state
-      console.log("Refreshing notifications...");
+      console.log('🔄 Refreshing notifications from backend...');
+      const response = await notificationApi.getNotificationHistory(1, 50);
+
+      console.log('API Response structure:', response ? Object.keys(response) : 'null', JSON.stringify(response, null, 2));
+
+      // The backend returns { success: true, data: { notifications, total, page, hasMore } }
+      // The api.tsx returns response.data, so we get { success, data: { notifications, ... } }
+      if (response && response.data && response.data.notifications && Array.isArray(response.data.notifications)) {
+        console.log(`Found ${response.data.notifications.length} notifications`);
+        const fetchedNotifications: NotificationData[] = response.data.notifications.map(n => ({
+          id: n.id,
+          type: n.type as any,
+          title: n.title,
+          body: n.body,
+          data: n.data,
+          jobId: n.jobId,
+          timestamp: n.timestamp,
+          read: n.read
+        }));
+
+        console.log('Parsed notifications count:', fetchedNotifications.length);
+        setNotifications(fetchedNotifications);
+
+        // Calculate unread count
+        const unread = fetchedNotifications.filter(n => !n.read).length;
+        setUnreadCount(unread);
+
+        console.log(`✅ Fetched ${fetchedNotifications.length} notifications (${unread} unread)`);
+      } else {
+        console.log('📭 No notifications array in response');
+        setNotifications([]);
+        setUnreadCount(0);
+      }
     } catch (error) {
-      console.error("Error refreshing notifications:", error);
+      console.error('Error refreshing notifications:', error);
+      setNotifications([]);
+      setUnreadCount(0);
     }
   };
 
@@ -386,6 +455,7 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({
     sendApplicationStatusNotification,
     sendMessageNotification,
     clearAllNotifications,
+    deleteNotification,
     markAsRead,
     refreshNotifications,
     registerDevice,

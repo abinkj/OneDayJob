@@ -32,6 +32,7 @@ const Notification = () => {
     notifications,
     unreadCount,
     clearAllNotifications,
+    deleteNotification,
     markAsRead,
     refreshNotifications
   } = useNotifications();
@@ -51,8 +52,9 @@ const Notification = () => {
   };
 
   const handleDelete = (id) => {
-    // This would typically call an API to delete the notification
-    console.log('Delete notification:', id);
+    if (id) {
+      deleteNotification(id);
+    }
   };
 
   const renderRightActions = (id) => (
@@ -63,7 +65,7 @@ const Notification = () => {
 
   const renderItem = ({ item }: { item: NotificationData }) => (
     <Swipeable
-      renderRightActions={() => renderRightActions(item.jobId || item.timestamp)}
+      renderRightActions={() => renderRightActions(item.id)}
       overshootRight={false}
     >
       <NotificationCard
@@ -72,9 +74,10 @@ const Notification = () => {
         time={item.timestamp ? new Date(item.timestamp).toLocaleString() : 'Now'}
         count={item.read ? 0 : 1}
         onPress={() => {
-          if (item.jobId) {
-            markAsRead(item.jobId);
+          if (item.id) {
+            markAsRead(item.id);
           }
+          // TODO: Add navigation logic here based on item.type and item.jobId if needed
         }}
       />
     </Swipeable>
@@ -117,7 +120,7 @@ const Notification = () => {
 
       <FlatList bounces={false}
         data={filteredNotifications}
-        keyExtractor={(item, index) => item.jobId || item.timestamp || index.toString()}
+        keyExtractor={(item, index) => item.id || item.jobId || item.timestamp || index.toString()}
         renderItem={renderItem}
         contentContainerStyle={{ paddingBottom: 20, paddingTop: 10 }}
         ItemSeparatorComponent={() => <View style={styles.separator} />}
@@ -134,7 +137,7 @@ const Notification = () => {
             <MaterialIcons name="notifications-none" size={64} color={colors.grey} />
             <Text style={styles.empty}>No notifications found.</Text>
             <Text style={styles.emptySubtitle}>
-              You'll receive notifications about job updates, applications, and messages here.
+              You'll receive notifications about job updates, applications, and messages here.ss
             </Text>
           </View>
         }

@@ -7,6 +7,7 @@ import Toast from 'react-native-toast-message';
 
 // Notification types
 export interface NotificationData {
+  id?: string;
   type: 'verification_code' | 'job_update' | 'application_status' | 'message' | 'system';
   title: string;
   body: string;
@@ -127,8 +128,16 @@ class NotificationService {
 
   // Handle incoming notifications
   private handleIncomingNotification(notification: Notifications.Notification): void {
-    const { data } = notification.request.content;
-    const notificationData = data as unknown as NotificationData;
+    const { title, body, data } = notification.request.content;
+
+    // Construct full notification data
+    const notificationData = {
+      ...(data as object),
+      title: title || '',
+      body: body || '',
+    } as NotificationData;
+
+    console.log('Processed incoming notification:', notificationData);
 
     // Show in-app toast based on notification type
     this.showInAppNotification(notificationData);
@@ -154,8 +163,16 @@ class NotificationService {
 
   // Handle notification tap responses
   private handleNotificationResponse(response: Notifications.NotificationResponse): void {
-    const { data } = response.notification.request.content;
-    const notificationData = data as unknown as NotificationData;
+    const { title, body, data } = response.notification.request.content;
+
+    // Construct full notification data
+    const notificationData = {
+      ...(data as object),
+      title: title || '',
+      body: body || '',
+    } as NotificationData;
+
+    console.log('Processed notification response:', notificationData);
 
     // Navigate based on notification type
     switch (notificationData.type) {
