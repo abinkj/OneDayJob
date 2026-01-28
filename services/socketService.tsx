@@ -66,6 +66,10 @@ export interface SocketEvents {
   "new_application": (data: any) => void;
   "application_status_update": (data: any) => void;
   "verification-codes-generated": (data: any) => void;
+  // Job events
+  "job_created": (data: any) => void;
+  "job_updated": (data: any) => void;
+  "job_deleted": (data: any) => void;
 }
 
 // Socket service class

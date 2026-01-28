@@ -12,6 +12,8 @@ import {
   withdrawApplication,
 } from "../services/api";
 import { JobPost } from "../types";
+import { useEffect } from "react";
+import socketService from "../services/socketService";
 
 interface JobFilters {
   category?: string | null;
@@ -25,6 +27,26 @@ interface JobFilters {
 }
 
 export const useJobPostings = (filters: JobFilters) => {
+  const queryClient = useQueryClient();
+
+  // Socket listener for real-time updates
+  useEffect(() => {
+    const handleJobUpdate = () => {
+      console.log("🔔 Socket: Job update received, invalidating queries...");
+      queryClient.invalidateQueries({ queryKey: ["jobs"] });
+    };
+
+    socketService.on("job_created", handleJobUpdate);
+    socketService.on("job_updated", handleJobUpdate);
+    socketService.on("job_deleted", handleJobUpdate);
+
+    return () => {
+      socketService.off("job_created", handleJobUpdate);
+      socketService.off("job_updated", handleJobUpdate);
+      socketService.off("job_deleted", handleJobUpdate);
+    };
+  }, [queryClient]);
+
   return useInfiniteQuery({
     queryKey: ["jobs", filters],
     queryFn: async ({ pageParam = 1, signal }) => {
@@ -59,8 +81,9 @@ export const useJobPostings = (filters: JobFilters) => {
     getNextPageParam: (lastPage) => {
       return lastPage.hasMore ? lastPage.page + 1 : undefined;
     },
-    staleTime: 1000 * 60,
-    refetchOnWindowFocus: true,
+    staleTime: 1000 * 30, // 30 seconds stale time
+    refetchInterval: 1000 * 30, // Poll every 30 seconds
+    refetchOnWindowFocus: true, // Refetch when app comes to foreground
     refetchOnMount: true,
     retry: (failureCount, error: any) => {
       if (error.name === 'CanceledError' || error.code === 'ERR_CANCELED') {

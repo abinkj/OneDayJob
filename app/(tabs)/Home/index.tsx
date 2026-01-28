@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef, useMemo } from "react";
+import { useEffect, useState, useRef, useMemo, useCallback } from "react";
 import {
   View,
   Text,
@@ -22,7 +22,7 @@ import {
 } from "../../../services/locationService";
 import { useDispatch, useSelector } from "react-redux";
 import Toast from "react-native-toast-message";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import { useNotifications } from "../../../contexts/NotificationContext";
 import NotificationBadge from "../../../components/notificationBadge";
 import {
@@ -106,7 +106,7 @@ const HomeScreen = () => {
   // Scroll to top when Home tab is tapped while already on Home
   useEffect(() => {
     const subscription = DeviceEventEmitter.addListener('scrollToTop_Home', () => {
-      scrollViewRef.current?.scrollTo({ y: 0, animated: true });
+      scrollViewRef.current?.scrollToOffset({ offset: 0, animated: true });
     });
 
     return () => subscription.remove();
@@ -515,18 +515,24 @@ const HomeScreen = () => {
   // TanStack Query automatically handles refetching on focus with refetchOnWindowFocus
   // No need for manual throttling - the staleTime configuration prevents excessive refetches
 
-  useEffect(() => {
-    const fetchLocationAndJobs = async () => {
-      if (!isInitialized) return;
-      try {
-        await fetchCurrentLocation();
-      } catch (error) {
-        console.error("Error fetching location:", error);
-      }
-    };
+  // Refetch jobs and location when screen comes into focus
+  useFocusEffect(
+    useCallback(() => {
+      const fetchLocationAndRefetch = async () => {
+        if (!isInitialized) return;
+        try {
+          console.log("📍 Home screen focused, refreshing location and jobs...");
+          await fetchCurrentLocation();
+          // Force a refetch of jobs to ensure fresh data
+          refetchJobs();
+        } catch (error) {
+          console.error("Error refreshing on focus:", error);
+        }
+      };
 
-    fetchLocationAndJobs();
-  }, [isInitialized, authStatus, currentUser]);
+      fetchLocationAndRefetch();
+    }, [isInitialized, authStatus, currentUser, refetchJobs])
+  );
 
   // OPTIMIZED: Debounce filter changes to avoid excessive API calls
   // Note: TanStack Query handles caching and deduping, but we can keep a small debounce if needed for the search input specifically.
@@ -937,13 +943,17 @@ const HomeScreen = () => {
         </View>
       )}
 
-      {/* Main Scrollable Content */}
-      <Animated.ScrollView
+      {/* Main List Content */}
+      <Animated.FlatList
         ref={scrollViewRef}
+        data={allJobs}
+        renderItem={renderJobCard}
+        keyExtractor={(item) => item._id}
         style={[
           styles.scrollContainer,
           isFilterSticky && { paddingTop: filterRowHeight },
         ]}
+        contentContainerStyle={{ paddingBottom: 20 }}
         showsVerticalScrollIndicator={false}
         bounces={false}
         onScroll={Animated.event(
@@ -953,15 +963,6 @@ const HomeScreen = () => {
             listener: (event: any) => {
               const offsetY = event.nativeEvent.contentOffset.y;
               setIsFilterSticky(offsetY >= STICKY_OFFSET);
-
-              // Trigger load more when near bottom
-              const { layoutMeasurement, contentOffset, contentSize } = event.nativeEvent;
-              const paddingToBottom = 20;
-              const isNearBottom = layoutMeasurement.height + contentOffset.y >= contentSize.height - paddingToBottom;
-
-              if (isNearBottom) {
-                handleLoadMore();
-              }
             },
           }
         )}
@@ -969,138 +970,124 @@ const HomeScreen = () => {
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
-      >
-        {/* Header */}
-        <View style={styles.header}>
-          <View style={styles.locationHeader}>
-            <Ionicons name="location" size={24} color={colors.primary} />
-            <View>
-              <TouchableOpacity style={styles.locationSelector} disabled>
-                <Text style={styles.locationTitle}>{locationAddress}</Text>
-                {/* <Ionicons name="chevron-down" size={16} color={colors.black} /> */}
-              </TouchableOpacity>
-              <Text style={styles.locationSubtitle}>
-                {/* {location
-                  ? `${location.latitude.toFixed(
-                      4
-                    )}, ${location.longitude.toFixed(4)}`
-                  : "Getting location..."} */}
-                {authStatus ? " • Authenticated" : " • Not logged in"}
-              </Text>
-            </View>
-            <TouchableOpacity
-              onPress={fetchCurrentLocation}
-              style={{ marginLeft: 8, padding: 4 }}
-            >
-              <Ionicons name="refresh" size={20} color={colors.primary} />
-            </TouchableOpacity>
-          </View>
-          <TouchableOpacity
-            onPress={handleNotificationPress}
-            style={{ position: "relative", marginRight: 10 }}
-          >
-            <Ionicons
-              name="notifications-outline"
-              size={22}
-              color={colors.black}
-            />
-            <NotificationBadge />
-          </TouchableOpacity>
-        </View>
-        {/* <NotificationTester /> */}
-        {/* Search Bar */}
-        <View style={styles.searchContainer}>
-          <Ionicons
-            name="search"
-            size={20}
-            color={colors.grey}
-            style={styles.searchIcon}
-          />
-          <TextInput
-            style={styles.searchInput}
-            placeholder="Search jobs or locations"
-            placeholderTextColor={colors.black}
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-            onSubmitEditing={handleSearch}
-            returnKeyType="search"
-          />
-          {searchQuery.length > 0 && (
-            <TouchableOpacity onPress={() => setSearchQuery("")}>
-              <Ionicons name="close-circle" size={20} color={colors.grey} />
-            </TouchableOpacity>
-          )}
-        </View>
-
-
-        {/* Banner */}
-        <View style={styles.bannerContainer}>
-          <ImageBackground
-            style={styles.banner}
-            source={require("../../../assets/images/banner.png")}
-            resizeMode="stretch"
-          >
-            <View style={styles.bannerTextContainer}>
-              <Text style={styles.bannerTitle}>Help Is One Click Away –</Text>
-              <Text style={styles.bannerSubtitle}>Post Your Task Now!</Text>
-              <TouchableOpacity
-                style={styles.postNowButton}
-                onPress={() => navigation.navigate("PostJob")}
-              >
-                <Text style={styles.postNowText}>Post Now</Text>
-              </TouchableOpacity>
-            </View>
-          </ImageBackground>
-        </View>
-        {/* <TouchableOpacity
-          onPress={testNotification}
-          style={{ backgroundColor: "green" }}
-        >
-          <Text>Test Notification</Text>
-        </TouchableOpacity> */}
-
-        {/* Filter Row (normal position) */}
-        {!isFilterSticky && renderFilterRow()}
-
-        {/* Job Results Summary */}
-        {!loading && allJobs.length > 0 && (
-          <View style={styles.resultsContainer}>
-            <Text style={styles.resultsText}>{allJobs.length} jobs found</Text>
-          </View>
-        )}
-
-        {/* Job Cards */}
-        <View style={{ paddingBottom: 20 }}>
-          {!loading && allJobs.length === 0 ? (
-            <View>
-              <JobCardSkeleton />
-              <JobCardSkeleton />
-            </View>
-          ) : allJobs.length > 0 ? (
-            <>
-              {allJobs.map((item, index) => (
-                <View key={item._id || index}>{renderJobCard({ item })}</View>
-              ))}
-              {isJobsRefetching && (
-                <View style={{ padding: 10, alignItems: "center" }}>
-                  <ActivityIndicator size="small" color={colors.primary} />
-                </View>
-              )}
-              {/* Loading indicator for pagination */}
-              {isFetchingNextPage && (
-                <View style={{ padding: 20, alignItems: "center" }}>
-                  <ActivityIndicator size="large" color={colors.primary} />
-                  <Text style={{ marginTop: 10, color: colors.grey }}>
-                    Loading more jobs...
+        onEndReached={handleLoadMore}
+        onEndReachedThreshold={0.5}
+        ListHeaderComponent={
+          <>
+            {/* Header */}
+            <View style={styles.header}>
+              <View style={styles.locationHeader}>
+                <Ionicons name="location" size={24} color={colors.primary} />
+                <View>
+                  <TouchableOpacity style={styles.locationSelector} disabled>
+                    <Text style={styles.locationTitle}>{locationAddress}</Text>
+                  </TouchableOpacity>
+                  <Text style={styles.locationSubtitle}>
+                    {authStatus ? " • Authenticated" : " • Not logged in"}
                   </Text>
                 </View>
+                <TouchableOpacity
+                  onPress={fetchCurrentLocation}
+                  style={{ marginLeft: 8, padding: 4 }}
+                >
+                  <Ionicons name="refresh" size={20} color={colors.primary} />
+                </TouchableOpacity>
+              </View>
+              <TouchableOpacity
+                onPress={handleNotificationPress}
+                style={{ position: "relative", marginRight: 10 }}
+              >
+                <Ionicons
+                  name="notifications-outline"
+                  size={22}
+                  color={colors.black}
+                />
+                <NotificationBadge />
+              </TouchableOpacity>
+            </View>
+
+            {/* Search Bar */}
+            <View style={styles.searchContainer}>
+              <Ionicons
+                name="search"
+                size={20}
+                color={colors.grey}
+                style={styles.searchIcon}
+              />
+              <TextInput
+                style={styles.searchInput}
+                placeholder="Search jobs or locations"
+                placeholderTextColor={colors.black}
+                value={searchQuery}
+                onChangeText={setSearchQuery}
+                onSubmitEditing={handleSearch}
+                returnKeyType="search"
+              />
+              {searchQuery.length > 0 && (
+                <TouchableOpacity onPress={() => setSearchQuery("")}>
+                  <Ionicons name="close-circle" size={20} color={colors.grey} />
+                </TouchableOpacity>
               )}
-            </>
-          ) : (
-            renderEmptyState()
-          )}
-        </View>
-      </Animated.ScrollView>
+            </View>
+
+            {/* Banner */}
+            <View style={styles.bannerContainer}>
+              <ImageBackground
+                style={styles.banner}
+                source={require("../../../assets/images/banner.png")}
+                resizeMode="stretch"
+              >
+                <View style={styles.bannerTextContainer}>
+                  <Text style={styles.bannerTitle}>Help Is One Click Away –</Text>
+                  <Text style={styles.bannerSubtitle}>Post Your Task Now!</Text>
+                  <TouchableOpacity
+                    style={styles.postNowButton}
+                    onPress={() => navigation.navigate("PostJob")}
+                  >
+                    <Text style={styles.postNowText}>Post Now</Text>
+                  </TouchableOpacity>
+                </View>
+              </ImageBackground>
+            </View>
+
+            {/* Filter Row (normal position) */}
+            {!isFilterSticky && renderFilterRow()}
+
+            {/* Job Results Summary */}
+            {!loading && allJobs.length > 0 && (
+              <View style={styles.resultsContainer}>
+                <Text style={styles.resultsText}>{allJobs.length} jobs found</Text>
+              </View>
+            )}
+
+            {/* Initial Shimmer Loading */}
+            {loading && allJobs.length === 0 && (
+              <View>
+                <JobCardSkeleton />
+                <JobCardSkeleton />
+              </View>
+            )}
+          </>
+        }
+        ListEmptyComponent={!loading ? renderEmptyState : null}
+        ListFooterComponent={
+          <>
+            {isJobsRefetching && allJobs.length > 0 && (
+              <View style={{ padding: 10, alignItems: "center" }}>
+                <ActivityIndicator size="small" color={colors.primary} />
+              </View>
+            )}
+            {isFetchingNextPage && (
+              <View style={{ padding: 20, alignItems: "center" }}>
+                <ActivityIndicator size="large" color={colors.primary} />
+                <Text style={{ marginTop: 10, color: colors.grey }}>
+                  Loading more jobs...
+                </Text>
+              </View>
+            )}
+          </>
+        }
+      />
     </View>
   );
 };

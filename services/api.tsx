@@ -65,6 +65,12 @@ api.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
+    // Check if the request was canceled
+    if (axios.isCancel(error) || error.message === 'canceled') {
+      console.log("API Request Canceled:", originalRequest?.url);
+      return Promise.reject(error);
+    }
+
     console.error("API Response Error:", {
       status: error.response?.status,
       statusText: error.response?.statusText,
