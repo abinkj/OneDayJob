@@ -34,6 +34,7 @@ const Notification = () => {
     clearAllNotifications,
     deleteNotification,
     markAsRead,
+    markAllAsRead,
     refreshNotifications
   } = useNotifications();
 
@@ -105,7 +106,17 @@ const Notification = () => {
 
   return (
     <View style={styles.container}>
-      <Header title="Notification" showBackButton />
+      <Header
+        title="Notification"
+        showBackButton
+        headerRight={
+          unreadCount > 0 ? (
+            <TouchableOpacity onPress={markAllAsRead}>
+              <MaterialIcons name="done-all" size={22} color={colors.primary} />
+            </TouchableOpacity>
+          ) : null
+        }
+      />
 
       {/* Segmented Control */}
       <SegmentedControl

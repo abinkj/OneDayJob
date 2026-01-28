@@ -15,6 +15,7 @@ interface HeaderProps {
   showSkipButton?: boolean;
   onSkipPress?: () => void;
   showMessageIcon?: boolean;
+  headerRight?: React.ReactNode;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -27,6 +28,7 @@ export const Header: React.FC<HeaderProps> = ({
   showSkipButton = false,
   onSkipPress,
   showMessageIcon = false,
+  headerRight,
 }) => {
   const router = useRouter();
   const { colors } = useTheme();
@@ -45,6 +47,12 @@ export const Header: React.FC<HeaderProps> = ({
       )}
 
       <Text style={styles.title}>{title}</Text>
+
+      {headerRight && (
+        <View style={styles.rightContainer}>
+          {headerRight}
+        </View>
+      )}
 
       {showSkipButton && (
         <TouchableOpacity style={styles.skipIcon} onPress={onSkipPress}>
@@ -118,5 +126,13 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     fontSize: 20,
     fontWeight: "600",
     color: colors.black,
+  },
+  rightContainer: {
+    position: "absolute",
+    right: 16,
+    top: 16,
+    zIndex: 1,
+    padding: 10,
+    margin: -10,
   },
 });

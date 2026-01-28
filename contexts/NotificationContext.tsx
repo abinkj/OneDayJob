@@ -49,6 +49,7 @@ interface NotificationContextType {
   clearAllNotifications: () => Promise<void>;
   deleteNotification: (notificationId: string) => Promise<void>;
   markAsRead: (notificationId: string) => void;
+  markAllAsRead: () => Promise<void>;
   refreshNotifications: () => Promise<void>;
   registerDevice: () => Promise<void>;
 }
@@ -402,6 +403,23 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({
     });
   };
 
+  // Mark all notifications as read
+  const markAllAsRead = async (): Promise<void> => {
+    // Update local state optimistically
+    setNotifications((prev) =>
+      prev.map((notification) => ({ ...notification, read: true }))
+    );
+    setUnreadCount(0);
+
+    try {
+      await notificationApi.markAllNotificationsAsRead();
+      console.log('✅ Marked all notifications as read');
+    } catch (error) {
+      console.error('Failed to mark all notifications as read on backend:', error);
+      // Could revert here, but re-fetching later will correct it
+    }
+  };
+
   // Refresh notifications from backend
   const refreshNotifications = async (): Promise<void> => {
     try {
@@ -457,6 +475,7 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({
     clearAllNotifications,
     deleteNotification,
     markAsRead,
+    markAllAsRead,
     refreshNotifications,
     registerDevice,
   };
