@@ -152,11 +152,10 @@ const PostJobScreen = ({ navigation: navProp }) => {
   const [selectedTimePreferences, setSelectedTimePreferences] = useState([]); // Changed to array
   const [budget, setBudget] = useState(null);
 
-  // Date/Time mode - only one should be active
-  const [dateMode, setDateMode] = useState("flexible"); // 'flexible', 'onDate', 'beforeDate'
-  const [onDate, setOnDate] = useState(null);
-  const [beforeDate, setBeforeDate] = useState(null);
-  const [isFlexible, setIsFlexible] = useState(true);
+  // Date/Time mode - simplified state
+  const [scheduleDate, setScheduleDate] = useState<Date | null>(null);
+  const [scheduleType, setScheduleType] = useState<"on" | "before">("on");
+  const [isFlexible, setIsFlexible] = useState(false);
 
   // Time range settings - fromTime and toTime are required for non-flexible jobs
   const [fromHour, setFromHour] = useState("00");
@@ -175,7 +174,6 @@ const PostJobScreen = ({ navigation: navProp }) => {
   const [showPhotosList, setShowPhotosList] = useState(false);
   const [editingRequirements, setEditingRequirements] = useState(false);
   const [time, setTime] = useState(new Date());
-  const [selectedDate, setSelectedDate] = useState(null);
   const [isCalendarVisible, setCalendarVisible] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -602,34 +600,33 @@ const PostJobScreen = ({ navigation: navProp }) => {
       );
     }
 
-    // Handle date/time based on mode
-    if (dateMode === "onDate" && onDate) {
-      // Combine date and time properly
+    // Handle simplified date/time
+    if (!isFlexible && scheduleDate) {
+      // If it's "On Date", we combine the date with the "From Time"
+      // Since specific type selection is removed/hidden, we default to treating it as "onDate"
       const dateTime = combineDateAndTime(
-        onDate,
+        scheduleDate.toISOString().split("T")[0],
         fromHour,
         fromMinute,
         fromAmPm as "AM" | "PM"
       );
       jobData.onDate = dateTime;
-      jobData.isFlexible = false;
-    } else if (dateMode === "beforeDate" && beforeDate) {
-      jobData.beforeDate = new Date(beforeDate);
+      // jobData.scheduleType = "on"; // Removed as backend doesn't support it anymore
+
       jobData.isFlexible = false;
     } else {
       jobData.isFlexible = true;
+      jobData.onDate = null;
     }
 
-    // Add time fields for non-flexible jobs OR Exact Time jobs
+    // Add time fields ONLY if Exact Time is set
     if (isExactTime) {
       jobData.fromTime = get24HourTime(fromHour, fromMinute, fromAmPm);
       jobData.toTime = get24HourTime(toHour, toMinute, toAmPm);
-      jobData.isFlexible = false; // Force non-flexible if exact time is set
-    } else if (!isFlexible) {
-      // Original logic for non-exact time but non-flexible Date Mode
-      jobData.fromTime = get24HourTime(fromHour, fromMinute, fromAmPm);
-      jobData.toTime = get24HourTime(toHour, toMinute, toAmPm);
+      jobData.isFlexible = false;
     }
+    // Else: we do not set fromTime/toTime, allowing for "Date Only" jobs
+    // Backend validation has been relaxed to allow this.
 
     return jobData;
   };
@@ -653,17 +650,15 @@ const PostJobScreen = ({ navigation: navProp }) => {
 
     // Reset time preferences
     setSelectedTimePreferences([]);
-    setDateMode("flexible");
-    setOnDate(null);
-    setBeforeDate(null);
-    setIsFlexible(true);
+    setScheduleDate(null);
+    setScheduleType("on");
+    setIsFlexible(false);
     setFromHour("00");
     setFromMinute("00");
     setFromAmPm("AM");
     setToHour("00");
     setToMinute("00");
     setToAmPm("AM");
-    setSelectedDate(null);
 
     // Reset budget
     setBudget("200");
@@ -777,44 +772,27 @@ const PostJobScreen = ({ navigation: navProp }) => {
       setIsLoading(false);
     }
   };
-  // Handle date mode selection
-  const handleDateModeChange = (mode) => {
-    setDateMode(mode);
-    if (mode === "flexible") {
-      setIsFlexible(true);
-      setOnDate(null);
-      setBeforeDate(null);
-    } else {
-      setIsFlexible(false);
-      if (mode !== "onDate") setOnDate(null);
-      if (mode !== "beforeDate") setBeforeDate(null);
-    }
+  // Handle date selection from calendar
+  const handleDateSelect = (day) => {
+    // day object from react-native-calendars
+    // { dateString: "2023-10-26", day: 26, month: 10, year: 2023, timestamp: ... }
+    const date = new Date(day.dateString); // simplified parsing
+    setScheduleDate(date);
+    setCalendarVisible(false);
+    setIsFlexible(false); // If they pick a date, it's not flexible by default
   };
 
-  // Format date for display
-  const formatDateForDisplay = (dateString) => {
-    if (!dateString) return "No date selected";
-    const date = new Date(dateString);
-    return date.toLocaleDateString("en-US", {
-      weekday: "long",
+  const formatDateForDisplay = (dateObj: Date | null) => {
+    if (!dateObj) return "Select a date";
+    return dateObj.toLocaleDateString("en-US", {
+      weekday: "short",
       year: "numeric",
-      month: "long",
+      month: "short",
       day: "numeric",
     });
   };
 
-  // Handle calendar date selection
-  const handleDateSelect = (day) => {
-    const selectedDateString = day.dateString;
 
-    if (dateMode === "onDate") {
-      setOnDate(selectedDateString);
-    } else if (dateMode === "beforeDate") {
-      setBeforeDate(selectedDateString);
-    }
-    setSelectedDate(selectedDateString);
-    setCalendarVisible(false);
-  };
 
   const [isExactTime, setIsExactTime] = useState(false);
 
@@ -987,38 +965,10 @@ const PostJobScreen = ({ navigation: navProp }) => {
           });
           return;
         }
-      } else if (!isFlexible) {
-        // Original validation for non-flexible date mode
-        if (!fromHour || !fromMinute || !fromAmPm) {
-          showAlert({
-            type: "info",
-            title: "Required",
-            message: "Please set the start time for the job",
-          });
-          return;
-        }
-        if (!toHour || !toMinute || !toAmPm) {
-          showAlert({
-            type: "info",
-            title: "Required",
-            message: "Please set the end time for the job",
-          });
-          return;
-        }
-
-        // Validate that end time is after start time
-        const fromTime24 = get24HourTime(fromHour, fromMinute, fromAmPm);
-        const toTime24 = get24HourTime(toHour, toMinute, toAmPm);
-
-        if (fromTime24 >= toTime24) {
-          showAlert({
-            type: "warning",
-            title: "Invalid Time",
-            message: "End time must be after start time",
-          });
-          return;
-        }
       }
+
+      // Removed strict validation block for (!isFlexible && !isExactTime)
+      // because we now support "Date Only" jobs without specific times.
 
       // Validate time selection when time preference is selected
       if (selectedTimePreferences.length > 0) {
@@ -1246,57 +1196,34 @@ const PostJobScreen = ({ navigation: navProp }) => {
     />
   );
 
-  // FIXED: Render Step 3: Time Preference
+  // FIXED: Render Step 3: Time Preference (Simplified)
   const renderStep3 = () => (
     <View style={styles.stepContainer}>
       <Text style={styles.sectionTitle}>
         When does the job need to be done?
       </Text>
 
-      <View style={styles.timeOptionContainer}>
-        <TouchableOpacity
-          style={[
-            styles.timeOption,
-            dateMode === "onDate" && styles.selectedTimeOption,
-          ]}
-          onPress={() => {
-            handleDateModeChange("onDate");
-            setCalendarVisible(true);
-          }}
-        >
-          <Text style={styles.timeOptionText}>
-            On Date {onDate ? `(${new Date(onDate).toLocaleDateString()})` : ""}
-          </Text>
-          <Ionicons name="chevron-down" size={16} color={colors.black} />
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[
-            styles.timeOption,
-            dateMode === "beforeDate" && styles.selectedTimeOption,
-          ]}
-          onPress={() => {
-            handleDateModeChange("beforeDate");
-            setCalendarVisible(true);
-          }}
-        >
-          <Text style={styles.timeOptionText}>
-            Before date{" "}
-            {beforeDate ? `(${new Date(beforeDate).toLocaleDateString()})` : ""}
-          </Text>
-          <Ionicons name="chevron-down" size={16} color={colors.black} />
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[
-            styles.timeOption,
-            dateMode === "flexible" && styles.selectedTimeOption,
-          ]}
-          onPress={() => handleDateModeChange("flexible")}
-        >
-          <Text style={styles.timeOptionText}>I am Flexible</Text>
-        </TouchableOpacity>
-      </View>
+      {/* Date Picker Input */}
+      <TouchableOpacity
+        style={[
+          styles.dropContainer,
+          { borderColor: colors.primary, borderWidth: 1 }
+        ]}
+        onPress={() => setCalendarVisible(true)}
+      >
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 4 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <Ionicons name="calendar-outline" size={24} color={colors.primary} style={{ marginRight: 12 }} />
+            <View>
+              <Text style={{ fontSize: 14, color: colors.grey }}>Select Date</Text>
+              <Text style={{ fontSize: 16, color: colors.black, fontWeight: '500' }}>
+                {scheduleDate ? formatDateForDisplay(scheduleDate) : "Choose a date"}
+              </Text>
+            </View>
+          </View>
+          <Ionicons name="chevron-down" size={20} color={colors.grey} />
+        </View>
+      </TouchableOpacity>
 
       <Modal
         visible={isCalendarVisible}
@@ -1309,61 +1236,49 @@ const PostJobScreen = ({ navigation: navProp }) => {
             <Calendar
               onDayPress={handleDateSelect}
               markedDates={{
-                [selectedDate]: {
+                [scheduleDate?.toISOString().split('T')[0] || '']: {
                   selected: true,
-                  selectedColor: "blue",
+                  selectedColor: colors.primary,
                 },
               }}
-              minDate={new Date().toISOString().split("T")[0]} // Prevent past dates
+              minDate={new Date().toISOString().split("T")[0]}
+              theme={{
+                todayTextColor: colors.primary,
+                arrowColor: colors.primary,
+                selectedDayBackgroundColor: colors.primary
+              }}
             />
-            <View style={styles.row}>
-              <TouchableOpacity onPress={() => setCalendarVisible(false)}>
-                <Text
-                  style={{ textAlign: "center", marginTop: 10, color: "blue" }}
-                >
-                  Cancel
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity onPress={() => setCalendarVisible(false)}>
-                <Text
-                  style={{ textAlign: "center", marginTop: 10, color: "blue" }}
-                >
-                  Save
-                </Text>
-              </TouchableOpacity>
-            </View>
+            <TouchableOpacity
+              style={{ marginTop: 16, padding: 12, alignItems: 'center' }}
+              onPress={() => setCalendarVisible(false)}
+            >
+              <Text style={{ color: colors.primary, fontWeight: 'bold' }}>Close</Text>
+            </TouchableOpacity>
           </View>
         </View>
       </Modal>
 
-      {dateMode !== "flexible" && (
-        <View style={styles.selectedDateContainer}>
-          <Text style={styles.dateText}>
-            {dateMode === "onDate" ? "On Date" : "Before Date"}:{" "}
-            {formatDateForDisplay(onDate || beforeDate)}
-          </Text>
+      {/* Only show Exact Time Toggle if Date is selected */}
+      {scheduleDate && (
+        <View style={styles.switchContainer}>
+          <Text style={styles.switchLabel}>Set Exact Time</Text>
+          <CustomSwitch
+            value={isExactTime}
+            onValueChange={(value) => {
+              setIsExactTime(value);
+              if (!value) {
+                if (selectedTimePreferences.length > 0) {
+                  const pref = selectedTimePreferences[0];
+                  handleTimePreferenceToggle(pref, false);
+                }
+              }
+            }}
+          />
         </View>
       )}
 
-      {/* Exact Time Toggle */}
-      <View style={styles.switchContainer}>
-        <Text style={styles.switchLabel}>Set Exact Time</Text>
-        <CustomSwitch
-          value={isExactTime}
-          onValueChange={(value) => {
-            setIsExactTime(value);
-            if (!value) {
-              // If turning off exact time, reset to default if a preference is selected
-              if (selectedTimePreferences.length > 0) {
-                const pref = selectedTimePreferences[0];
-                handleTimePreferenceToggle(pref, false); // Re-trigger logic without toggling off
-              }
-            }
-          }}
-        />
-      </View>
-
-      {!isExactTime && (
+      {/* Show Time Preferences / Time Slots */}
+      {(!isExactTime) && (
         <>
           <Text style={styles.sectionTitle}>Mention your time preference</Text>
 
@@ -1650,9 +1565,9 @@ const PostJobScreen = ({ navigation: navProp }) => {
     const getFormattedDateTime = () => {
       if (isFlexible) return "Flexible";
 
-      if (selectedDate) {
-        let result = selectedDate;
-        if (!isFlexible && fromHour && toHour) {
+      if (scheduleDate) {
+        let result = scheduleDate.toLocaleDateString();
+        if (fromHour && toHour && isExactTime) {
           const fromTime = `${fromHour}:${String(fromMinute).padStart(
             2,
             "0"
@@ -1700,9 +1615,8 @@ const PostJobScreen = ({ navigation: navProp }) => {
       setJobDescription("");
       setSelectedLocation(null);
       setTaskAddress("");
-      setSelectedDate(null);
-      setOnDate(null);
-      setBeforeDate(null);
+      setScheduleDate(null);
+      setScheduleType("on");
       setCurrentStep(2);
       setShowMenu(false);
     };
