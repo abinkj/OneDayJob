@@ -302,14 +302,17 @@ const HomeScreen = () => {
       }
 
       setLocation(locationData.coordinates);
-      const address = [
-        locationData.city,
-        locationData.state,
-        locationData.country,
-      ]
-        .filter(Boolean)
-        .join(", ");
-      setLocationAddress(address || "Current Location");
+      // Simplified address: just show City or Area (first part of address)
+      let displayAddress = locationData.city;
+
+      if (!displayAddress && locationData.address) {
+        // Fallback to first part of address if city is missing
+        displayAddress = locationData.address.split(',')[0];
+      }
+
+
+
+      setLocationAddress(displayAddress || "Current Location");
       console.log("Location fetched:", locationData);
 
       if (authStatus && currentUser?.id) {
@@ -418,7 +421,12 @@ const HomeScreen = () => {
       if (searchResults.length > 0) {
         const selectedLocation = searchResults[0];
         setLocation(selectedLocation.coordinates);
-        setLocationAddress(selectedLocation.address);
+        // Simplified address display for search results too
+        let searchDisplayAddress = selectedLocation.city;
+        if (!searchDisplayAddress && selectedLocation.address) {
+          searchDisplayAddress = selectedLocation.address.split(',')[0];
+        }
+        setLocationAddress(searchDisplayAddress || selectedLocation.address);
 
         if (authStatus && currentUser) {
           try {
@@ -982,9 +990,7 @@ const HomeScreen = () => {
                   <TouchableOpacity style={styles.locationSelector} disabled>
                     <Text style={styles.locationTitle}>{locationAddress}</Text>
                   </TouchableOpacity>
-                  <Text style={styles.locationSubtitle}>
-                    {authStatus ? " • Authenticated" : " • Not logged in"}
-                  </Text>
+
                 </View>
                 <TouchableOpacity
                   onPress={fetchCurrentLocation}
