@@ -59,6 +59,13 @@ const JobDetails = () => {
   // Notification context
   const { sendVerificationCodeNotification } = useNotifications();
 
+  // Helper variables for role-based logic
+  const isEmployer = job?.userId?._id === userData?.id || job?.userId?.id === userData?.id;
+  const isAccepted = job?.assignedUsers?.some(
+    (u: any) => (typeof u === 'string' ? u === userData?.id : (u._id === userData?.id || u.id === userData?.id))
+  ) || (job?.assignedUsers as any)?.includes(userData?.id);
+
+
   useEffect(() => {
     if (jobData) {
       console.log("Job data received:", JSON.stringify(jobData, null, 2));
@@ -603,174 +610,172 @@ const JobDetails = () => {
           </View>
         </View>
 
-        {/* Verification Section - Show if user is assigned or has applied (but NOT if they're the employer) */}
-        {job.requiresVerification &&
-          job.userId?.id !== userData?.id &&
-          verificationStatus?.userRole !== 'employer' &&
-          (applied || job.assignedUsers?.includes(userData?.id) || verificationStatus) && (
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>🔐 Verification</Text>
-              {job.isCompletedByWorker ? (
-                <View style={styles.verificationStatusContainer}>
-                  <View style={styles.verificationStatusRow}>
-                    <Ionicons name="checkmark-circle" size={24} color="#4CAF50" />
-                    <View style={styles.verificationStatusInfo}>
-                      <Text
-                        style={[
-                          styles.verificationStatusText,
-                          { color: "#4CAF50" },
-                        ]}
-                      >
-                        Job Completed
-                      </Text>
-                      <Text style={styles.verificationMessageText}>
-                        This job has been completed successfully
-                      </Text>
-                    </View>
+        {/* Verification Section - STRICT VISIBILITY RULES */}
+        {/* Case 1: Accepted Worker -> Show Verification UI */}
+        {job.requiresVerification && !isEmployer && isAccepted && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>🔐 Verification</Text>
+            {job.isCompletedByWorker ? (
+              <View style={styles.verificationStatusContainer}>
+                <View style={styles.verificationStatusRow}>
+                  <Ionicons name="checkmark-circle" size={24} color="#4CAF50" />
+                  <View style={styles.verificationStatusInfo}>
+                    <Text
+                      style={[
+                        styles.verificationStatusText,
+                        { color: "#4CAF50" },
+                      ]}
+                    >
+                      Job Completed
+                    </Text>
+                    <Text style={styles.verificationMessageText}>
+                      This job has been completed successfully
+                    </Text>
                   </View>
                 </View>
-              ) : checkingVerification ? (
-                <View style={styles.verificationLoadingContainer}>
-                  <ActivityIndicator size="small" color={colors.primary} />
-                  <Text style={styles.verificationLoadingText}>
-                    Checking verification status...
-                  </Text>
-                </View>
-              ) : verificationStatus ? (
-                <View style={styles.verificationStatusContainer}>
-                  <View style={styles.verificationStatusRow}>
-                    <Ionicons
-                      name={
-                        verificationStatus.isVerified
-                          ? "checkmark-circle"
-                          : "time-outline"
-                      }
-                      size={24}
-                      color={
-                        verificationStatus.isVerified ? "#4CAF50" : "#FF9800"
-                      }
-                    />
-                    <View style={styles.verificationStatusInfo}>
-                      <Text
-                        style={[
-                          styles.verificationStatusText,
-                          {
-                            color: verificationStatus.isVerified
-                              ? "#4CAF50"
-                              : "#FF9800",
-                          },
-                        ]}
-                      >
-                        {verificationStatus.isVerified
-                          ? "Verified"
-                          : "Pending Verification"}
-                      </Text>
-                      <Text style={styles.verificationMessageText}>
-                        {verificationStatus.message}
-                      </Text>
-                    </View>
+              </View>
+            ) : checkingVerification ? (
+              <View style={styles.verificationLoadingContainer}>
+                <ActivityIndicator size="small" color={colors.primary} />
+                <Text style={styles.verificationLoadingText}>
+                  Checking verification status...
+                </Text>
+              </View>
+            ) : verificationStatus ? (
+              <View style={styles.verificationStatusContainer}>
+                <View style={styles.verificationStatusRow}>
+                  <Ionicons
+                    name={
+                      verificationStatus.isVerified
+                        ? "checkmark-circle"
+                        : "time-outline"
+                    }
+                    size={24}
+                    color={
+                      verificationStatus.isVerified ? "#4CAF50" : "#FF9800"
+                    }
+                  />
+                  <View style={styles.verificationStatusInfo}>
+                    <Text
+                      style={[
+                        styles.verificationStatusText,
+                        {
+                          color: verificationStatus.isVerified
+                            ? "#4CAF50"
+                            : "#FF9800",
+                        },
+                      ]}
+                    >
+                      {verificationStatus.isVerified
+                        ? "Verified"
+                        : "Pending Verification"}
+                    </Text>
+                    <Text style={styles.verificationMessageText}>
+                      {verificationStatus.message}
+                    </Text>
                   </View>
+                </View>
 
-                  {/* Verification Code Display */}
-                  {verificationCode && !verificationStatus?.isVerified && (
-                    <View style={styles.verificationCodeContainer}>
-                      <View style={styles.verificationCodeHeader}>
-                        <Text style={styles.verificationCodeLabel}>
-                          🔑 Your Verification Code:
-                        </Text>
-                        <TouchableOpacity
-                          style={styles.refreshCodeButton}
-                          onPress={fetchVerificationCode}
-                          disabled={loadingCode}
-                        >
-                          {loadingCode ? (
-                            <ActivityIndicator
-                              size="small"
-                              color={colors.primary}
-                            />
-                          ) : (
-                            <Ionicons
-                              name="refresh"
-                              size={20}
-                              color={colors.primary}
-                            />
-                          )}
-                        </TouchableOpacity>
-                      </View>
-                      <View style={styles.verificationCodeBox}>
-                        <Text style={styles.verificationCodeText}>
-                          {verificationCode.code}
-                        </Text>
-                      </View>
-                      <Text style={styles.verificationCodeInstructions}>
-                        📱 Show this code to your employer when you arrive at the
-                        job location
+                {/* Verification Code Display */}
+                {verificationCode && !verificationStatus?.isVerified && (
+                  <View style={styles.verificationCodeContainer}>
+                    <View style={styles.verificationCodeHeader}>
+                      <Text style={styles.verificationCodeLabel}>
+                        🔑 Your Verification Code:
                       </Text>
-                      {verificationCode.expiresAt && (
-                        <Text style={styles.verificationCodeExpiry}>
-                          ⏰ Code expires:{" "}
-                          {new Date(verificationCode.expiresAt).toLocaleString()}
-                        </Text>
-                      )}
-                      {verificationCode.failedAttempts > 0 && (
-                        <Text style={styles.verificationCodeFailedAttempts}>
-                          ⚠️ {verificationCode.failedAttempts} failed verification
-                          attempts
-                        </Text>
-                      )}
+                      <TouchableOpacity
+                        style={styles.refreshCodeButton}
+                        onPress={fetchVerificationCode}
+                        disabled={loadingCode}
+                      >
+                        {loadingCode ? (
+                          <ActivityIndicator
+                            size="small"
+                            color={colors.primary}
+                          />
+                        ) : (
+                          <Ionicons
+                            name="refresh"
+                            size={20}
+                            color={colors.primary}
+                          />
+                        )}
+                      </TouchableOpacity>
                     </View>
-                  )}
-
-                  {/* No Code Available Message */}
-                  {!verificationCode &&
-                    !loadingCode &&
-                    verificationStatus &&
-                    !verificationStatus.isVerified && (
-                      <View style={styles.noCodeContainer}>
-                        <Text style={styles.noCodeText}>
-                          📋 Verification codes have not been generated yet
-                        </Text>
-                        <TouchableOpacity
-                          style={styles.refreshCodeButtonLarge}
-                          onPress={fetchVerificationCode}
-                          disabled={loadingCode}
-                        >
-                          <Text style={styles.refreshCodeButtonText}>
-                            Check for Code
-                          </Text>
-                        </TouchableOpacity>
-                      </View>
+                    <View style={styles.verificationCodeBox}>
+                      <Text style={styles.verificationCodeText}>
+                        {verificationCode.code}
+                      </Text>
+                    </View>
+                    <Text style={styles.verificationCodeInstructions}>
+                      📱 Show this code to your employer when you arrive at the
+                      job location
+                    </Text>
+                    {verificationCode.expiresAt && (
+                      <Text style={styles.verificationCodeExpiry}>
+                        ⏰ Code expires:{" "}
+                        {new Date(verificationCode.expiresAt).toLocaleString()}
+                      </Text>
                     )}
-
-                  {verificationStatus.isVerified && (
-                    <View style={styles.verificationSuccessContainer}>
-                      <Text style={styles.verificationSuccessText}>
-                        ✅ You can start working on this job!
+                    {verificationCode.failedAttempts > 0 && (
+                      <Text style={styles.verificationCodeFailedAttempts}>
+                        ⚠️ {verificationCode.failedAttempts} failed verification
+                        attempts
                       </Text>
+                    )}
+                  </View>
+                )}
+
+                {/* No Code Available Message */}
+                {!verificationCode &&
+                  !loadingCode &&
+                  verificationStatus &&
+                  !verificationStatus.isVerified && (
+                    <View style={styles.noCodeContainer}>
+                      <Text style={styles.noCodeText}>
+                        📋 Verification codes have not been generated yet
+                      </Text>
+                      <TouchableOpacity
+                        style={styles.refreshCodeButtonLarge}
+                        onPress={fetchVerificationCode}
+                        disabled={loadingCode}
+                      >
+                        <Text style={styles.refreshCodeButtonText}>
+                          Check for Code
+                        </Text>
+                      </TouchableOpacity>
                     </View>
                   )}
 
-                  {verificationStatus.isExpired && (
-                    <View style={styles.verificationErrorContainer}>
-                      <Text style={styles.verificationErrorText}>
-                        ⚠️ Your verification code has expired. Please contact your
-                        employer.
-                      </Text>
-                    </View>
-                  )}
+                {verificationStatus.isVerified && (
+                  <View style={styles.verificationSuccessContainer}>
+                    <Text style={styles.verificationSuccessText}>
+                      ✅ You can start working on this job!
+                    </Text>
+                  </View>
+                )}
 
-                  {verificationStatus.isLocked && (
-                    <View style={styles.verificationErrorContainer}>
-                      <Text style={styles.verificationErrorText}>
-                        🔒 Verification is temporarily locked due to failed
-                        attempts.
-                      </Text>
-                    </View>
-                  )}
-                </View>
-              ) : null}
-            </View>
-          )}
+                {verificationStatus.isExpired && (
+                  <View style={styles.verificationErrorContainer}>
+                    <Text style={styles.verificationErrorText}>
+                      ⚠️ Your verification code has expired. Please contact your
+                      employer.
+                    </Text>
+                  </View>
+                )}
+
+                {verificationStatus.isLocked && (
+                  <View style={styles.verificationErrorContainer}>
+                    <Text style={styles.verificationErrorText}>
+                      🔒 Verification is temporarily locked due to failed
+                      attempts.
+                    </Text>
+                  </View>
+                )}
+              </View>
+            ) : null}
+          </View>
+        )}
         {/* Message if verification is required but user hasn't applied/been assigned */}
         {job.requiresVerification && !applied && !job.assignedUsers?.includes(userData?.id) && !verificationStatus && (
           <View style={styles.section}>
@@ -813,45 +818,47 @@ const JobDetails = () => {
         </View>
       </ScrollView>
 
-      {/* Action Buttons */}
-      <View
-        style={[
-          styles.actionContainer,
-          { paddingBottom: Math.max(insets.bottom, 16) },
-        ]}
-      >
-        {jobData.jobStatus === "completed" ? (
-          <CustomButton
-            text="Job Completed"
-            onPress={() => { }}
-            disabled={true}
-            color="#ccc"
-            style={{ flex: 1 }}
-          />
-        ) : jobData.hasApplied ||
-          (jobData.applicants && Array.isArray(jobData.applicants) &&
-            jobData.applicants.some((applicant: any) =>
-              applicant === userData?.id ||
-              applicant === userData?._id ||
-              applicant?.id === userData?.id ||
-              applicant?._id === userData?._id
-            )) ? (
-          <CustomButton
-            text="Applied"
-            onPress={() => { }}
-            disabled={true}
-            color="#ccc"
-            style={{ flex: 1 }}
-          />
-        ) : (
-          <CustomButton
-            text="Apply"
-            onPress={handleApply}
-            isLoading={loading}
-            style={{ flex: 1 }}
-          />
-        )}
-      </View>
+      {/* Action Buttons - Hide for Employer */}
+      {!isEmployer && (
+        <View
+          style={[
+            styles.actionContainer,
+            { paddingBottom: Math.max(insets.bottom, 16) },
+          ]}
+        >
+          {jobData.jobStatus === "completed" ? (
+            <CustomButton
+              text="Job Completed"
+              onPress={() => { }}
+              disabled={true}
+              color="#ccc"
+              style={{ flex: 1 }}
+            />
+          ) : jobData.hasApplied ||
+            (jobData.applicants && Array.isArray(jobData.applicants) &&
+              jobData.applicants.some((applicant: any) =>
+                applicant === userData?.id ||
+                applicant === userData?._id ||
+                applicant?.id === userData?.id ||
+                applicant?._id === userData?._id
+              )) ? (
+            <CustomButton
+              text="Applied"
+              onPress={() => { }}
+              disabled={true}
+              color="#ccc"
+              style={{ flex: 1 }}
+            />
+          ) : (
+            <CustomButton
+              text="Apply"
+              onPress={handleApply}
+              isLoading={loading}
+              style={{ flex: 1 }}
+            />
+          )}
+        </View>
+      )}
     </View>
   );
 };
