@@ -107,6 +107,60 @@ export const createStyles = (colors: ThemeColors) => StyleSheet.create({
     width: 20 * DeviceDimensions.widthRatio,
     height: 20 * DeviceDimensions.heightRatio,
   },
+  // Custom Category Styles
+  customCategoryContainer: {
+    paddingHorizontal: 20,
+    marginTop: -20 * DeviceDimensions.heightRatio, // Pull up closer to grid
+    marginBottom: 30 * DeviceDimensions.heightRatio,
+  },
+  customCategoryCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.white,
+    borderRadius: 16,
+    padding: 16 * DeviceDimensions.widthRatio,
+    borderWidth: 1,
+    borderColor: colors.primary,
+    borderStyle: 'dashed', // visual cue for "custom/fill in"
+    shadowColor: colors.primary,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  customCategoryCardSelected: {
+    backgroundColor: colors.categoryBox1,
+    borderStyle: 'solid',
+    borderWidth: 2,
+  },
+  customCategoryIconContainer: {
+    width: 56 * DeviceDimensions.widthRatio,
+    height: 56 * DeviceDimensions.heightRatio,
+    borderRadius: 12,
+    backgroundColor: colors.categoryBox,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 16 * DeviceDimensions.widthRatio,
+  },
+  customCategoryIcon: {
+    width: 32 * DeviceDimensions.widthRatio,
+    height: 32 * DeviceDimensions.heightRatio,
+  },
+  customCategoryContent: {
+    flex: 1,
+  },
+  customCategoryTitle: {
+    fontSize: 16,
+    fontFamily: 'bold',
+    color: colors.black,
+    marginBottom: 4,
+  },
+  customCategorySubtitle: {
+    fontSize: 12,
+    fontFamily: 'regular',
+    color: colors.subGrey,
+    lineHeight: 16,
+  },
   categoryText: {
     fontSize: 16,
     fontFamily: 'medium',
