@@ -1,10 +1,10 @@
 import { StyleSheet } from 'react-native';
-import { Colors } from '../../../constants/Colors';
+import { ThemeColors } from '../../../constants/Colors';
 
-const styles = StyleSheet.create({
+export const createStyles = (colors: ThemeColors) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: colors.background,
   },
   content: {
     flex: 1,
@@ -18,12 +18,12 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: 16,
     fontSize: 16,
-    color: '#666',
+    color: colors.grey,
   },
 
   // Job Info Card
   jobInfoCard: {
-    backgroundColor: '#fff',
+    backgroundColor: colors.white,
     borderRadius: 12,
     padding: 16,
     marginBottom: 16,
@@ -32,27 +32,29 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   jobTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#333',
+    color: colors.black,
     marginBottom: 8,
   },
   employerName: {
     fontSize: 14,
-    color: '#666',
+    color: colors.grey,
     marginBottom: 8,
   },
   jobDescription: {
     fontSize: 14,
-    color: '#666',
+    color: colors.grey,
     lineHeight: 20,
   },
 
   // Timer Card
   timerCard: {
-    backgroundColor: '#fff',
+    backgroundColor: colors.white,
     borderRadius: 12,
     padding: 24,
     marginBottom: 16,
@@ -62,26 +64,28 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   timerLabel: {
     fontSize: 16,
-    color: '#666',
+    color: colors.grey,
     marginBottom: 8,
   },
   timerDisplay: {
     fontSize: 48,
     fontWeight: 'bold',
-    color: '#007AFF',
+    color: colors.primary,
     marginBottom: 8,
   },
   timerStatus: {
     fontSize: 16,
-    color: '#666',
+    color: colors.grey,
   },
 
   // Stats Card
   statsCard: {
-    backgroundColor: '#fff',
+    backgroundColor: colors.white,
     borderRadius: 12,
     padding: 16,
     marginBottom: 16,
@@ -90,11 +94,13 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   statsTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#333',
+    color: colors.black,
     marginBottom: 12,
   },
   statsRow: {
@@ -105,12 +111,12 @@ const styles = StyleSheet.create({
   },
   statsLabel: {
     fontSize: 14,
-    color: '#666',
+    color: colors.grey,
   },
   statsValue: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#333',
+    color: colors.black,
   },
 
   // Action Buttons
@@ -129,16 +135,16 @@ const styles = StyleSheet.create({
     minWidth: 120,
   },
   startButton: {
-    backgroundColor: '#4CAF50',
+    backgroundColor: colors.darkGreen,
   },
   pauseButton: {
-    backgroundColor: '#FF9800',
+    backgroundColor: '#FF9800', // Keep as specific emphasis color
   },
   resumeButton: {
-    backgroundColor: '#2196F3',
+    backgroundColor: colors.tabBlue,
   },
   completeButton: {
-    backgroundColor: '#F44336',
+    backgroundColor: colors.red,
   },
   actionButtonText: {
     color: '#fff',
@@ -149,7 +155,7 @@ const styles = StyleSheet.create({
 
   // Instructions Card
   instructionsCard: {
-    backgroundColor: '#fff',
+    backgroundColor: colors.white,
     borderRadius: 12,
     padding: 16,
     marginBottom: 16,
@@ -158,16 +164,18 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   instructionsTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#333',
+    color: colors.black,
     marginBottom: 12,
   },
   instructionsText: {
     fontSize: 14,
-    color: '#666',
+    color: colors.grey,
     marginBottom: 8,
     lineHeight: 20,
   },
@@ -176,12 +184,12 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#333',
+    color: colors.black,
     marginBottom: 12,
     marginTop: 8,
   },
   workerCardEnhanced: {
-    backgroundColor: '#fff',
+    backgroundColor: colors.categoryBox,
     borderRadius: 12,
     padding: 16,
     marginBottom: 12,
@@ -191,7 +199,7 @@ const styles = StyleSheet.create({
     shadowRadius: 2,
     elevation: 2,
     borderWidth: 1,
-    borderColor: '#f0f0f0',
+    borderColor: colors.border,
   },
   workerHeader: {
     flexDirection: 'row',
@@ -202,7 +210,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#E3F2FD',
+    backgroundColor: colors.categoryBox1,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
@@ -210,7 +218,7 @@ const styles = StyleSheet.create({
   workerAvatarText: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#1565C0',
+    color: colors.primary,
   },
   workerInfoEnhanced: {
     flex: 1,
@@ -218,12 +226,12 @@ const styles = StyleSheet.create({
   workerNameEnhanced: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#333',
+    color: colors.black,
     marginBottom: 2,
   },
   workerEmailEnhanced: {
     fontSize: 12,
-    color: '#666',
+    color: colors.grey,
   },
   statusBadge: {
     paddingHorizontal: 10,
@@ -240,7 +248,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingTop: 12,
     borderTopWidth: 1,
-    borderTopColor: '#f0f0f0',
+    borderTopColor: colors.border,
   },
   workerStatItem: {
     flexDirection: 'row',
@@ -249,9 +257,7 @@ const styles = StyleSheet.create({
   workerStatValue: {
     fontSize: 14,
     fontWeight: '500',
-    color: '#333',
+    color: colors.black,
     marginLeft: 6,
   },
 });
-
-export default styles;

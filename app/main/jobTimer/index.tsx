@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import {
   View,
   Text,
@@ -14,6 +14,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { Header } from "../../../components/header";
 import { JobDetailsSkeleton } from "../../../components/Shimmer/Skeletons";
+import { useTheme } from "../../../contexts/ThemeContext";
 import {
   getWorkerSession,
   getJobDashboard,
@@ -28,7 +29,7 @@ import {
   submitRating,
 } from "../../../services/api";
 import Toast from "react-native-toast-message";
-import styles from "./styles";
+import { createStyles } from "./styles";
 import RatingModal from "../../../components/RatingModal";
 
 interface JobTimerRouteParams {
@@ -45,6 +46,9 @@ const JobTimerScreen = () => {
     jobName,
     isEmployer = false,
   } = route.params as JobTimerRouteParams;
+
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
 
   // Timer states
   const [sessionData, setSessionData] = useState<any>(null);
@@ -485,7 +489,7 @@ const JobTimerScreen = () => {
         style={styles.content}
         showsVerticalScrollIndicator={false}
         refreshControl={
-          <RefreshControl refreshing={loading} onRefresh={onRefresh} />
+          <RefreshControl refreshing={loading} onRefresh={onRefresh} tintColor={colors.primary} />
         }
       >
         {/* Job Info */}
@@ -514,19 +518,19 @@ const JobTimerScreen = () => {
                 </View>
                 <View style={styles.statsRow}>
                   <Text style={styles.statsLabel}>Active Workers:</Text>
-                  <Text style={[styles.statsValue, { color: "#4CAF50" }]}>
+                  <Text style={[styles.statsValue, { color: colors.darkGreen }]}>
                     {summary.activeWorkers}
                   </Text>
                 </View>
                 <View style={styles.statsRow}>
                   <Text style={styles.statsLabel}>Paused Workers:</Text>
-                  <Text style={[styles.statsValue, { color: "#FF9800" }]}>
+                  <Text style={[styles.statsValue, { color: colors.orange }]}>
                     {summary.pausedWorkers}
                   </Text>
                 </View>
                 <View style={styles.statsRow}>
                   <Text style={styles.statsLabel}>Completed Workers:</Text>
-                  <Text style={[styles.statsValue, { color: "#2196F3" }]}>
+                  <Text style={[styles.statsValue, { color: colors.tabBlue }]}>
                     {summary.completedWorkers}
                   </Text>
                 </View>
@@ -554,10 +558,10 @@ const JobTimerScreen = () => {
                   disabled={actionLoading}
                 >
                   {actionLoading ? (
-                    <ActivityIndicator size="small" color="#fff" />
+                    <ActivityIndicator size="small" color={colors.white} />
                   ) : (
                     <>
-                      <Ionicons name="play" size={24} color="#fff" />
+                      <Ionicons name="play" size={24} color={colors.white} />
                       <Text style={styles.actionButtonText}>Initiate Job</Text>
                     </>
                   )}
@@ -596,12 +600,12 @@ const JobTimerScreen = () => {
                           {
                             backgroundColor:
                               worker.status === "active"
-                                ? "#E8F5E9"
+                                ? colors.green
                                 : worker.status === "paused"
-                                ? "#FFF3E0"
-                                : worker.status === "completed"
-                                ? "#E3F2FD"
-                                : "#F5F5F5",
+                                  ? colors.lightOrange
+                                  : worker.status === "completed"
+                                    ? colors.lightBlue
+                                    : colors.addressGrey,
                           },
                         ]}
                       >
@@ -611,36 +615,36 @@ const JobTimerScreen = () => {
                             {
                               color:
                                 worker.status === "active"
-                                  ? "#2E7D32"
+                                  ? colors.darkGreen
                                   : worker.status === "paused"
-                                  ? "#EF6C00"
-                                  : worker.status === "completed"
-                                  ? "#1565C0"
-                                  : "#757575",
+                                    ? colors.orange
+                                    : worker.status === "completed"
+                                      ? colors.tabBlue
+                                      : colors.grey,
                             },
                           ]}
                         >
                           {worker.status === "active"
                             ? "Active"
                             : worker.status === "paused"
-                            ? "Paused"
-                            : worker.status === "completed"
-                            ? "Done"
-                            : "Pending"}
+                              ? "Paused"
+                              : worker.status === "completed"
+                                ? "Done"
+                                : "Pending"}
                         </Text>
                       </View>
                     </View>
 
                     <View style={styles.workerStatsRow}>
                       <View style={styles.workerStatItem}>
-                        <Ionicons name="time-outline" size={16} color="#666" />
+                        <Ionicons name="time-outline" size={16} color={colors.grey} />
                         <Text style={styles.workerStatValue}>
                           {formatDuration(worker.timeSpent || 0)}
                         </Text>
                       </View>
                       {worker.status === "active" && (
                         <View style={styles.workerStatItem}>
-                          <ActivityIndicator size="small" color="#4CAF50" />
+                          <ActivityIndicator size="small" color={colors.darkGreen} />
                         </View>
                       )}
                     </View>
@@ -659,7 +663,7 @@ const JobTimerScreen = () => {
                             <Text
                               style={{
                                 marginLeft: 5,
-                                color: "#666",
+                                color: colors.grey,
                                 fontWeight: "500",
                               }}
                             >
@@ -669,7 +673,7 @@ const JobTimerScreen = () => {
                         ) : (
                           <TouchableOpacity
                             style={{
-                              backgroundColor: "#007AFF",
+                              backgroundColor: colors.primary,
                               paddingVertical: 8,
                               paddingHorizontal: 12,
                               borderRadius: 6,
@@ -682,12 +686,12 @@ const JobTimerScreen = () => {
                             <Ionicons
                               name="star-outline"
                               size={16}
-                              color="#fff"
+                              color={colors.white}
                               style={{ marginRight: 5 }}
                             />
                             <Text
                               style={{
-                                color: "#fff",
+                                color: colors.white,
                                 fontWeight: "600",
                                 fontSize: 12,
                               }}
@@ -749,10 +753,10 @@ const JobTimerScreen = () => {
                 {isActive
                   ? "⏱️ Active"
                   : session?.status === "paused"
-                  ? "⏸️ Paused"
-                  : session?.status === "not_started"
-                  ? "⏹️ Not Started"
-                  : "⏹️ Stopped"}
+                    ? "⏸️ Paused"
+                    : session?.status === "not_started"
+                      ? "⏹️ Not Started"
+                      : "⏹️ Stopped"}
               </Text>
             </View>
 

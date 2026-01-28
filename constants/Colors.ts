@@ -26,6 +26,9 @@ export const LightColors = {
     whiteBack: '#E5E7EB',       // Warm light grey
     iconBlack: '#374151',       // Softer icon color
     red: '#EF4444',             // Modern red
+    orange: '#F59E0B',          // Warning/Paused color
+    lightOrange: '#FFF7ED',     // Light orange background
+    lightBlue: '#E0F2FE',       // Light blue background
 };
 
 // Define the dark theme colors - Elevated dark palette (not pure black)
@@ -56,9 +59,19 @@ export const DarkColors = {
     whiteBack: '#374151',       // Elevated background
     iconBlack: '#F3F4F6',       // Light icon color
     red: '#F87171',             // Softer red for dark mode
+    orange: '#F59E0B',          // Warning/Paused color (keep visible)
+    lightOrange: '#451A03',     // Dark orange background
+    lightBlue: '#172E54',       // Dark blue background
 };
 
 // Export individual colors object for backward compatibility (defaults to light)
 export const Colors = LightColors;
 
 export type ThemeColors = typeof LightColors;
+
+// Extend the type to include the new keys if they weren't strictly inferred
+export interface ColorsType extends ThemeColors {
+    orange: string;
+    lightOrange: string;
+    lightBlue: string;
+}
