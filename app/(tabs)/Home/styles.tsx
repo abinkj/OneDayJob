@@ -19,21 +19,34 @@ export const createStyles = (colors: ThemeColors) => StyleSheet.create({
   locationHeader: {
     flexDirection: "row",
     alignItems: "center",
+    flex: 1, // Allow text to take available space
+    marginRight: 16, // Space before notification icon
+  },
+  iconContainer: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: colors.primary + "15", // 15% opacity primary color
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 10,
   },
   locationSelector: {
     flexDirection: "row",
     alignItems: "center",
   },
-  locationTitle: {
+  locationTitleHeader: {
     fontSize: 16,
     fontFamily: "bold",
     color: colors.black,
-    marginRight: 4 * DeviceDimensions.widthRatio,
+    lineHeight: 20,
   },
-  locationSubtitle: {
+  locationSubtitleHeader: {
     fontSize: 12,
-    fontFamily: "regular",
+    fontFamily: "medium",
     color: colors.grey,
+    marginTop: 0,
+    lineHeight: 16,
   },
   searchContainer: {
     flexDirection: "row",

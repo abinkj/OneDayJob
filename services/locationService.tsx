@@ -9,6 +9,9 @@ export interface LocationData {
   state: string;
   country: string;
   zipCode: string;
+  name?: string | null;
+  district?: string | null;
+  subregion?: string | null;
   coordinates: {
     latitude: number;
     longitude: number;
@@ -50,6 +53,9 @@ export const getCurrentLocation = async (): Promise<LocationData | null> => {
         state: address.region || "",
         country: address.country || "United States",
         zipCode: address.postalCode || "",
+        name: address.name,
+        district: address.district,
+        subregion: address.subregion,
         coordinates: {
           latitude: location.coords.latitude,
           longitude: location.coords.longitude,
@@ -158,12 +164,15 @@ export const getPlaceDetails = async (placeId: string): Promise<LocationData | n
       const addressComponents = result.address_components || [];
 
       // Parse address components
-      const addressData = {
+      const addressData: LocationData = {
         address: "",
         city: "",
         state: "",
         country: "United States",
         zipCode: "",
+        name: null,
+        district: null,
+        subregion: null,
         coordinates: {
           latitude: result.geometry?.location?.lat || 0,
           longitude: result.geometry?.location?.lng || 0,
@@ -176,12 +185,19 @@ export const getPlaceDetails = async (placeId: string): Promise<LocationData | n
           addressData.address += component.long_name + " ";
         } else if (types.includes("locality")) {
           addressData.city = component.long_name;
+        } else if (types.includes("sublocality") || types.includes("neighborhood") || types.includes("sublocality_level_1")) {
+          // Prioritize sublocality/neighborhood as district
+          if (!addressData.district) addressData.district = component.long_name;
         } else if (types.includes("administrative_area_level_1")) {
           addressData.state = component.long_name;
+        } else if (types.includes("administrative_area_level_2")) {
+          addressData.subregion = component.long_name;
         } else if (types.includes("country")) {
           addressData.country = component.long_name;
         } else if (types.includes("postal_code")) {
           addressData.zipCode = component.long_name;
+        } else if (types.includes("point_of_interest") || types.includes("premise") || types.includes("establishment")) {
+          addressData.name = component.long_name;
         }
       });
 
@@ -238,6 +254,9 @@ export const searchPlacesFallback = async (query: string): Promise<LocationData[
               state: address.region || "",
               country: address.country || "United States",
               zipCode: address.postalCode || "",
+              name: address.name,
+              district: address.district,
+              subregion: address.subregion,
               coordinates: {
                 latitude: result.latitude,
                 longitude: result.longitude,

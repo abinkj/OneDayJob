@@ -108,9 +108,10 @@ const LocationSearch: React.FC<LocationSearchProps> = ({
     try {
       const location = await getCurrentLocation();
       if (location) {
-        setSearchText(
-          location.address || `${location.city}, ${location.state}`
-        );
+        // Premium: Use specific name for the input display
+        const specific = location.district || location.name || location.city || location.address;
+        setSearchText(specific);
+
         onLocationSelect(location);
         setShowSuggestions(false);
       } else {
@@ -136,9 +137,12 @@ const LocationSearch: React.FC<LocationSearchProps> = ({
   // Handle suggestion selection
   const handleSuggestionSelect = (suggestion: LocationData) => {
     console.log('Suggestion selected:', suggestion);
-    const displayText = suggestion.address || `${suggestion.city}, ${suggestion.state}`;
-    console.log('Setting search text to:', displayText);
-    setSearchText(displayText);
+
+    // Premium: Use specific name for the input display
+    const specific = suggestion.district || suggestion.name || suggestion.city || suggestion.address;
+
+    console.log('Setting search text to:', specific);
+    setSearchText(specific);
     console.log('Calling onLocationSelect with:', suggestion);
     onLocationSelect(suggestion);
     setShowSuggestions(false);
@@ -146,31 +150,42 @@ const LocationSearch: React.FC<LocationSearchProps> = ({
   };
 
   // Render suggestion item
-  const renderSuggestion = ({ item, index }: { item: LocationData; index: number }) => (
-    <TouchableOpacity
-      style={[
-        styles.suggestionItem,
-        index === suggestions.length - 1 && styles.lastSuggestionItem,
-      ]}
-      onPress={() => handleSuggestionSelect(item)}
-      activeOpacity={0.6}
-    >
-      <View style={styles.suggestionIconContainer}>
-        <Ionicons name="location" size={18} color={colors.primary} />
-      </View>
-      <View style={styles.suggestionTextContainer}>
-        <Text style={styles.suggestionMainText} numberOfLines={1}>
-          {item.address || `${item.city}, ${item.state}`}
-        </Text>
-        {item.city && item.state && item.address && (
-          <Text style={styles.suggestionSubText} numberOfLines={1}>
-            {item.city}, {item.state}
+  const renderSuggestion = ({ item, index }: { item: LocationData; index: number }) => {
+    // Premium Display Logic
+    const specific = item.district || item.name || item.city || item.address;
+
+    // Construct broad address
+    let broadParts = [];
+    if (item.city && item.city !== specific) broadParts.push(item.city);
+    if (item.state) broadParts.push(item.state);
+    const broad = broadParts.join(', ') || item.country || "";
+
+    return (
+      <TouchableOpacity
+        style={[
+          styles.suggestionItem,
+          index === suggestions.length - 1 && styles.lastSuggestionItem,
+        ]}
+        onPress={() => handleSuggestionSelect(item)}
+        activeOpacity={0.6}
+      >
+        <View style={styles.suggestionIconContainer}>
+          <Ionicons name="location" size={18} color={colors.primary} />
+        </View>
+        <View style={styles.suggestionTextContainer}>
+          <Text style={styles.suggestionMainText} numberOfLines={1}>
+            {specific}
           </Text>
-        )}
-      </View>
-      <Ionicons name="arrow-forward" size={16} color={colors.border} />
-    </TouchableOpacity>
-  );
+          {!!broad && (
+            <Text style={styles.suggestionSubText} numberOfLines={1}>
+              {broad}
+            </Text>
+          )}
+        </View>
+        <Ionicons name="arrow-forward" size={16} color={colors.border} />
+      </TouchableOpacity>
+    );
+  };
 
   return (
     <View style={[styles.container, style]}>

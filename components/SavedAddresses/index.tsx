@@ -151,7 +151,7 @@ const SavedAddresses: React.FC<SavedAddressesProps> = ({
                             {item.address}
                         </Text>
                         <Text style={styles.addressSubText} numberOfLines={1}>
-                            {item.city}, {item.state} {item.zipCode}
+                            {item.city}, {item.state}
                         </Text>
                     </View>
                 </View>

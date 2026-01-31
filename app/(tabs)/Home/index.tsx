@@ -68,6 +68,7 @@ const HomeScreen = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [location, setLocation] = useState(null);
   const [locationAddress, setLocationAddress] = useState("Loading location...");
+  const [locationDetails, setLocationDetails] = useState({ specific: "Loading...", broad: "" });
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState(null);
@@ -302,17 +303,29 @@ const HomeScreen = () => {
       }
 
       setLocation(locationData.coordinates);
-      // Simplified address: just show City or Area (first part of address)
-      let displayAddress = locationData.city;
 
-      if (!displayAddress && locationData.address) {
-        // Fallback to first part of address if city is missing
-        displayAddress = locationData.address.split(',')[0];
+      // Premium Address Logic
+      const specific = locationData.district || locationData.name || locationData.city || "Current Location";
+
+      // Construct broad address (City/Area, State)
+      // If 'specific' is the city, don't repeat it in broad
+      let broadParts = [];
+      if (locationData.city && locationData.city !== specific) broadParts.push(locationData.city);
+      if (locationData.state) broadParts.push(locationData.state);
+
+      // Fallback strategies
+      if (broadParts.length === 0 && locationData.address) {
+        // Try to get some context from full address if broad is empty
+        const parts = locationData.address.split(',').map(p => p.trim());
+        // Filter out the specific part if present
+        const remainingParts = parts.filter(p => !p.toLowerCase().includes(specific.toLowerCase()));
+        if (remainingParts.length > 0) broadParts.push(remainingParts[0]);
       }
 
+      const broad = broadParts.join(', ') || locationData.country || "";
 
-
-      setLocationAddress(displayAddress || "Current Location");
+      setLocationDetails({ specific, broad });
+      setLocationAddress(specific); // Keep for legacy compatibility if needed
       console.log("Location fetched:", locationData);
 
       if (authStatus && currentUser?.id) {
@@ -421,12 +434,24 @@ const HomeScreen = () => {
       if (searchResults.length > 0) {
         const selectedLocation = searchResults[0];
         setLocation(selectedLocation.coordinates);
-        // Simplified address display for search results too
-        let searchDisplayAddress = selectedLocation.city;
-        if (!searchDisplayAddress && selectedLocation.address) {
-          searchDisplayAddress = selectedLocation.address.split(',')[0];
+
+        // Premium Address Logic for Search
+        const specific = selectedLocation.district || selectedLocation.name || selectedLocation.city || "Selected Location";
+
+        let broadParts = [];
+        if (selectedLocation.city && selectedLocation.city !== specific) broadParts.push(selectedLocation.city);
+        if (selectedLocation.state) broadParts.push(selectedLocation.state);
+
+        if (broadParts.length === 0 && selectedLocation.address) {
+          const parts = selectedLocation.address.split(',').map(p => p.trim());
+          const remainingParts = parts.filter(p => !p.toLowerCase().includes(specific.toLowerCase()));
+          if (remainingParts.length > 0) broadParts.push(remainingParts[0]);
         }
-        setLocationAddress(searchDisplayAddress || selectedLocation.address);
+
+        const broad = broadParts.join(', ') || selectedLocation.country || "";
+
+        setLocationDetails({ specific, broad });
+        setLocationAddress(specific);
 
         if (authStatus && currentUser) {
           try {
@@ -985,19 +1010,20 @@ const HomeScreen = () => {
             {/* Header */}
             <View style={styles.header}>
               <View style={styles.locationHeader}>
-                <Ionicons name="location" size={24} color={colors.primary} />
-                <View>
-                  <TouchableOpacity style={styles.locationSelector} disabled>
-                    <Text style={styles.locationTitle}>{locationAddress}</Text>
-                  </TouchableOpacity>
-
+                <View style={styles.iconContainer}>
+                  <Ionicons name="location" size={20} color={colors.primary} />
                 </View>
-                <TouchableOpacity
-                  onPress={fetchCurrentLocation}
-                  style={{ marginLeft: 8, padding: 4 }}
-                >
-                  <Ionicons name="refresh" size={20} color={colors.primary} />
-                </TouchableOpacity>
+                <View>
+                  <TouchableOpacity style={styles.locationSelector} onPress={fetchCurrentLocation}>
+                    <Text style={styles.locationTitleHeader}>{locationDetails.specific}</Text>
+                    <Ionicons name="chevron-down" size={14} color={colors.black} style={{ marginLeft: 4, marginTop: 2 }} />
+                  </TouchableOpacity>
+                  {!!locationDetails.broad && (
+                    <Text style={styles.locationSubtitleHeader} numberOfLines={1}>
+                      {locationDetails.broad}
+                    </Text>
+                  )}
+                </View>
               </View>
               <TouchableOpacity
                 onPress={handleNotificationPress}
