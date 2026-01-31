@@ -19,16 +19,20 @@ const BudgetInput: React.FC<BudgetInputProps> = ({
         <View style={styles.stepContainer}>
             <Text style={styles.sectionTitle}>Enter Your Budget</Text>
 
-            <View style={styles.budgetContainer}>
-                <Text style={styles.currencyText}>₹</Text>
-                <TextInput
-                    style={styles.currencySymbol}
-                    value={budget}
-                    onChangeText={setBudget}
-                    placeholder="200"
-                    keyboardType="number-pad"
-                    maxLength={6}
-                />
+            <View style={styles.premiumBudgetContainer}>
+                <View style={styles.budgetWrapper}>
+                    <Text style={styles.currencyPrefix}>₹</Text>
+                    <TextInput
+                        style={styles.budgetInput}
+                        value={budget}
+                        onChangeText={setBudget}
+                        placeholder="0"
+                        placeholderTextColor={colors.grey}
+                        keyboardType="number-pad"
+                        maxLength={7}
+                    />
+                </View>
+                <Text style={styles.budgetHelperText}>Budget mentioned is per person</Text>
             </View>
         </View>
     );

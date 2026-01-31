@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, TextInput, TouchableOpacity, Modal, FlatList } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, Modal, FlatList, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { ThemeColors } from '../../../../constants/Colors';
 import { LocationData } from '../../../../services/locationService';
@@ -14,12 +14,9 @@ interface Category {
 }
 
 interface JobDetailsFormProps {
-    // Category
-    categories: Category[];
     selectedValue: string;
-    showCategoryPicker: boolean;
-    setShowCategoryPicker: (show: boolean) => void;
-    onCategorySelect: (id: string, name: string) => void;
+    categoryIcon: any;
+
 
     // Job Name
     jobName: string;
@@ -59,11 +56,8 @@ interface JobDetailsFormProps {
 }
 
 const JobDetailsForm: React.FC<JobDetailsFormProps> = ({
-    categories,
     selectedValue,
-    showCategoryPicker,
-    setShowCategoryPicker,
-    onCategorySelect,
+    categoryIcon,
     jobName,
     setJobName,
     jobDescription,
@@ -95,109 +89,30 @@ const JobDetailsForm: React.FC<JobDetailsFormProps> = ({
     return (
         <View style={styles.stepContainer}>
             <Text style={styles.sectionTitle}>Category</Text>
-            <View style={styles.dropContainer}>
-                <>
-                    <TouchableOpacity
-                        style={{ paddingVertical: 12 }}
-                        onPress={() => setShowCategoryPicker(true)}
-                    >
-                        <Text style={{ fontSize: 16, color: colors.black }}>
-                            {selectedValue || "Select Category"}
-                        </Text>
-                    </TouchableOpacity>
 
-                    <Modal
-                        visible={showCategoryPicker}
-                        transparent={true}
-                        animationType="slide"
-                        onRequestClose={() => setShowCategoryPicker(false)}
-                    >
-                        <View
-                            style={{
-                                flex: 1,
-                                justifyContent: "flex-end",
-                                backgroundColor: "rgba(0,0,0,0.5)",
-                            }}
-                        >
-                            <View
-                                style={{
-                                    backgroundColor: colors.white,
-                                    borderTopLeftRadius: 20,
-                                    borderTopRightRadius: 20,
-                                    maxHeight: '70%',
-                                }}
-                            >
-                                <View
-                                    style={{
-                                        flexDirection: "row",
-                                        justifyContent: "space-between",
-                                        alignItems: "center",
-                                        padding: 16,
-                                        borderBottomWidth: 1,
-                                        borderBottomColor: colors.border,
-                                    }}
-                                >
-                                    <Text style={{ fontSize: 18, fontWeight: "600", color: colors.black }}>
-                                        Select Category
-                                    </Text>
-                                    <TouchableOpacity
-                                        onPress={() => setShowCategoryPicker(false)}
-                                    >
-                                        <Text
-                                            style={{
-                                                color: colors.primary,
-                                                fontSize: 16,
-                                                fontWeight: "600",
-                                            }}
-                                        >
-                                            Done
-                                        </Text>
-                                    </TouchableOpacity>
-                                </View>
-
-                                <FlatList
-                                    data={categories}
-                                    keyExtractor={(item) => item.id.toString()}
-                                    renderItem={({ item }) => (
-                                        <TouchableOpacity
-                                            style={{
-                                                padding: 16,
-                                                borderBottomWidth: 1,
-                                                borderBottomColor: colors.border,
-                                                flexDirection: 'row',
-                                                justifyContent: 'space-between',
-                                                alignItems: 'center',
-                                                backgroundColor: selectedValue === item.name ? colors.categoryBox : 'transparent'
-                                            }}
-                                            onPress={() => {
-                                                onCategorySelect(item.id, item.name);
-                                                setShowCategoryPicker(false);
-                                            }}
-                                        >
-                                            <Text style={{ fontSize: 16, color: colors.black }}>{item.name}</Text>
-                                            {selectedValue === item.name && (
-                                                <Ionicons name="checkmark" size={20} color={colors.primary} />
-                                            )}
-                                        </TouchableOpacity>
-                                    )}
-                                    style={{ maxHeight: 400 }}
-                                />
-                            </View>
-                        </View>
-                    </Modal>
-                </>
+            <View style={styles.selectedCategoryCard}>
+                <View style={styles.premiumCategoryIconContainer}>
+                    <Image source={categoryIcon} style={styles.categoryIconSmall} resizeMode="contain" />
+                </View>
+                <View style={styles.categoryTextContainer}>
+                    <Text style={styles.categoryLabel}>CATEGORY</Text>
+                    <Text style={styles.categoryValue}>{selectedValue || "Select Category"}</Text>
+                </View>
+                <View style={styles.editIconContainer}>
+                    <Ionicons name="lock-closed-outline" size={16} color={colors.grey} />
+                </View>
             </View>
 
             <View style={styles.row}>
                 <Text style={styles.sectionTitle}>Job Name</Text>
             </View>
 
-            <View style={styles.inputContainer}>
+            <View style={styles.premiumInputContainer}>
                 <TextInput
-                    style={styles.input}
+                    style={styles.premiumInput}
                     value={jobName}
                     onChangeText={setJobName}
-                    placeholder="Name"
+                    placeholder="e.g. Clean my apartment"
                     placeholderTextColor={colors.grey}
                     maxLength={100}
                 />
@@ -218,8 +133,6 @@ const JobDetailsForm: React.FC<JobDetailsFormProps> = ({
                 togglePhotosList={togglePhotosList}
                 showPhotosList={showPhotosList}
                 handlePickImage={handlePickImage}
-                onRemovePhoto={removePhoto}
-                viewMode={false}
             />
 
             <View style={styles.switchContainer}>

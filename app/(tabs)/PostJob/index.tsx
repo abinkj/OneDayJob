@@ -1142,6 +1142,13 @@ const PostJobScreen = ({ navigation: navProp }) => {
     hour12: true,
   });
 
+  const getCategoryIcon = () => {
+    const category = jobCategories.find((cat) => cat.id === selectedCategory);
+    return category
+      ? category.icon
+      : require("../../../assets/placeholder-image.png");
+  };
+
   // Render Step 1: Select Category
   const renderStep1 = () => (
     <CategorySelector
@@ -1158,14 +1165,8 @@ const PostJobScreen = ({ navigation: navProp }) => {
   // Render Step 2: Job Details
   const renderStep2 = () => (
     <JobDetailsForm
-      categories={jobCategories}
       selectedValue={selectedValue}
-      showCategoryPicker={showCategoryPicker}
-      setShowCategoryPicker={setShowCategoryPicker}
-      onCategorySelect={(id, name) => {
-        setSelectedValue(name);
-        setSelectedCategory(id);
-      }}
+      categoryIcon={getCategoryIcon()}
       jobName={jobName}
       setJobName={setJobName}
       jobDescription={jobDescription}
@@ -1204,25 +1205,21 @@ const PostJobScreen = ({ navigation: navProp }) => {
       </Text>
 
       {/* Date Picker Input */}
+      {/* Date Picker Input */}
       <TouchableOpacity
-        style={[
-          styles.dropContainer,
-          { borderColor: colors.primary, borderWidth: 1 }
-        ]}
+        style={styles.selectedCategoryCard}
         onPress={() => setCalendarVisible(true)}
       >
-        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 4 }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <Ionicons name="calendar-outline" size={24} color={colors.primary} style={{ marginRight: 12 }} />
-            <View>
-              <Text style={{ fontSize: 14, color: colors.grey }}>Select Date</Text>
-              <Text style={{ fontSize: 16, color: colors.black, fontWeight: '500' }}>
-                {scheduleDate ? formatDateForDisplay(scheduleDate) : "Choose a date"}
-              </Text>
-            </View>
-          </View>
-          <Ionicons name="chevron-down" size={20} color={colors.grey} />
+        <View style={styles.premiumCategoryIconContainer}>
+          <Ionicons name="calendar-outline" size={24} color={colors.primary} />
         </View>
+        <View style={styles.categoryTextContainer}>
+          <Text style={styles.categoryLabel}>SCHEDULE DATE</Text>
+          <Text style={styles.categoryValue}>
+            {scheduleDate ? formatDateForDisplay(scheduleDate) : "Select Date"}
+          </Text>
+        </View>
+        <Ionicons name="chevron-down" size={20} color={colors.grey} />
       </TouchableOpacity>
 
       <Modal
@@ -1299,7 +1296,14 @@ const PostJobScreen = ({ navigation: navProp }) => {
                       ? slot.false
                       : slot.true
                   }
-                  style={styles.timeSlotIcon}
+                  style={[
+                    styles.timeSlotIcon,
+                    {
+                      tintColor: selectedTimePreferences.includes(slot.id)
+                        ? colors.white
+                        : colors.black,
+                    },
+                  ]}
                   resizeMode="contain"
                 />
                 <Text
@@ -1343,7 +1347,14 @@ const PostJobScreen = ({ navigation: navProp }) => {
                       ? slot.false
                       : slot.true
                   }
-                  style={styles.timeSlotIcon}
+                  style={[
+                    styles.timeSlotIcon,
+                    {
+                      tintColor: selectedTimePreferences.includes(slot.id)
+                        ? colors.white
+                        : colors.black,
+                    },
+                  ]}
                   resizeMode="contain"
                 />
                 <Text
