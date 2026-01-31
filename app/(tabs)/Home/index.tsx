@@ -227,8 +227,16 @@ const HomeScreen = () => {
       return { ...job, distance, recencyScore, proximityScore, combinedScore };
     });
 
-    // 2. Multi-tier Sorting
-    return jobsWithMeta.sort((a, b) => {
+    // 2. Filter out non-open jobs (Completed, Cancelled, Expired)
+    const activeJobs = jobsWithMeta.filter((job) => {
+      const status = (job.jobStatus || job.status || "").toLowerCase();
+      // Keep only 'open', 'active', or 'in_progress' (for my jobs)
+      // Hide 'completed', 'cancelled', 'expired'
+      return !['completed', 'cancelled', 'expired', 'rejected'].includes(status);
+    });
+
+    // 3. Multi-tier Sorting
+    return activeJobs.sort((a, b) => {
       // Tier 1: "In Progress" jobs always at the top
       const aStatus = (a.jobStatus || a.status || "").toLowerCase();
       const bStatus = (b.jobStatus || b.status || "").toLowerCase();
@@ -626,8 +634,8 @@ const HomeScreen = () => {
       <TouchableOpacity
         style={[
           styles.jobCard,
-          isInProgress && { borderLeftColor: "#FF9800" },
-          isCompleted && { borderLeftColor: "#4CAF50" },
+          isInProgress && { borderLeftColor: "#FF9800" }, // Keep colored border for In Progress
+          // Default border color is Primary (Active jobs)
         ]}
         onPress={handleJobPress}
       >
@@ -643,41 +651,30 @@ const HomeScreen = () => {
           </View>
           <View style={{ alignItems: "flex-end" }}>
             <Text style={styles.priceText}>₹{item.budget || 0}</Text>
-            {item.distance !== null && item.distance !== undefined && (
-              <Text style={styles.distanceText}>{item.distance}km away</Text>
-            )}
           </View>
         </View>
 
         <View style={styles.titleContainer}>
-          <Text style={styles.jobTitle} numberOfLines={3}>{item.name}</Text>
-          <View
-            style={[
-              styles.statusContainer,
-              isInProgress && { backgroundColor: "#FF9800" },
-              isCompleted && { backgroundColor: "#4CAF50" },
-            ]}
-          >
-            <Text
-              style={[
-                styles.statusText,
-                isInProgress && { color: "#fff" },
-                isCompleted && { color: "#fff" },
-              ]}
-            >
-              {isInProgress
-                ? "In Progress"
-                : isCompleted
-                  ? "Completed"
-                  : item.status || "Active"}
-            </Text>
-          </View>
+          <Text style={styles.jobTitle} numberOfLines={2}>{item.name}</Text>
+          {isInProgress ? (
+            <View style={[styles.statusContainer, { backgroundColor: "#FF9800" }]}>
+              <Text style={[styles.statusText, { color: "#fff" }]}>In Progress</Text>
+            </View>
+          ) : null}
+          {/* Removed status badge for 'Active' jobs to clean up UI */}
         </View>
 
         <View style={styles.jobDetailsContainer}>
+          {item.distance !== null && item.distance !== undefined && (
+            <View style={styles.detailRow}>
+              <Ionicons name="navigate-circle-outline" size={14} color={colors.grey} />
+              <Text style={styles.distanceText}>{item.distance}km away</Text>
+            </View>
+          )}
+
           <View style={styles.locationContainer}>
-            <Ionicons name="location-sharp" size={16} color={colors.primary} />
-            <Text style={styles.locationText}>
+            {/* <Ionicons name="location-sharp" size={16} color={colors.primary} /> */}
+            <Text style={styles.locationText} numberOfLines={1}>
               {item.isRemote
                 ? "Remote Work"
                 : item.location?.address ||
@@ -690,10 +687,10 @@ const HomeScreen = () => {
 
         <View style={styles.jobFooter}>
           <View style={styles.vacanciesContainer}>
+            <Ionicons name="people-outline" size={14} color={colors.grey} />
             <Text style={styles.vacanciesText}>
-              Vacancies: {item.participantsNumber || 1}
+              {item.participantsNumber || 1} Needed
             </Text>
-            <Ionicons name="people" size={16} color={colors.primary} />
           </View>
           <Text style={styles.timeAgoText}>
             {item.createdAt

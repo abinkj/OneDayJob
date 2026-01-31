@@ -234,6 +234,17 @@ export const createStyles = (colors: ThemeColors) => StyleSheet.create({
     marginBottom: 16 * DeviceDimensions.heightRatio,
     flexWrap: "wrap",
     gap: 12,
+    alignItems: 'center',
+  },
+  detailRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  distanceText: {
+    fontSize: 12,
+    fontFamily: "medium",
+    color: colors.grey,
   },
   titleContainer: {
     flexDirection: "row",
@@ -244,16 +255,16 @@ export const createStyles = (colors: ThemeColors) => StyleSheet.create({
   locationContainer: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: colors.whiteBack, // Changed from #F8F8F8 for better dark mode support
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 8,
+    // REMOVED BACKGROUND COLOR: backgroundColor: colors.whiteBack, 
+    // paddingHorizontal: 10,
+    // paddingVertical: 4,
+    // borderRadius: 8,
   },
   locationText: {
     fontSize: 13,
     fontFamily: "medium",
     color: colors.grey,
-    marginLeft: 4 * DeviceDimensions.widthRatio,
+    // marginLeft: 4 * DeviceDimensions.widthRatio,
   },
   jobFooter: {
     flexDirection: "row",
@@ -276,7 +287,7 @@ export const createStyles = (colors: ThemeColors) => StyleSheet.create({
   vacanciesText: {
     fontSize: 12,
     fontFamily: "medium",
-    color: colors.primary,
+    color: colors.grey, // Changed to grey to be less distracting
   },
   timeAgoText: {
     fontSize: 12,
