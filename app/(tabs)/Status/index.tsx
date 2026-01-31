@@ -8,6 +8,7 @@ import {
   ActivityIndicator,
   Animated,
   RefreshControl,
+  DeviceEventEmitter,
 } from "react-native";
 import {
   TabView,
@@ -76,6 +77,16 @@ const MyPostTab = () => {
   }, [data]);
 
   const [filteredPosts, setFilteredPosts] = useState<JobPost[]>([]);
+  const flatListRef = React.useRef<FlatList<JobPost>>(null);
+
+  React.useEffect(() => {
+    const subscription = DeviceEventEmitter.addListener("scrollToTop_Status", () => {
+      flatListRef.current?.scrollToOffset({ offset: 0, animated: true });
+    });
+    return () => {
+      subscription.remove();
+    };
+  }, []);
 
   const handleNext = (jobId: string) => {
     navigation.navigate("NewRequest", { jobId: jobId });
@@ -145,11 +156,10 @@ const MyPostTab = () => {
   }
 
   // Get available statuses for filtering
+  // Get available statuses for filtering - SIMPLIFIED
   const availableStatuses = [
     getJobStatusInfo(JOB_STATUSES.POSTED),
-    getJobStatusInfo(JOB_STATUSES.FILLED),
     getJobStatusInfo(JOB_STATUSES.IN_PROGRESS),
-    getJobStatusInfo(JOB_STATUSES.WORK_COMPLETED),
     getJobStatusInfo(JOB_STATUSES.COMPLETED),
     getJobStatusInfo(JOB_STATUSES.CANCELLED),
   ];
@@ -162,7 +172,7 @@ const MyPostTab = () => {
       onDelete={() => handleDelete(item._id)}
       // onPayment={() => handlePayment(item)}
       isEmployer={true}
-      // showPaymentButton={true}
+    // showPaymentButton={true}
     />
   );
 
@@ -205,10 +215,15 @@ const MyPostTab = () => {
         />
       )}
       <FlatList
+        ref={flatListRef}
         data={filteredPosts}
         renderItem={renderItem}
         keyExtractor={(item) => item._id}
-        style={styles.scrollContainer}
+
+        contentContainerStyle={[
+          styles.listContent,
+          filteredPosts.length === 0 && { flexGrow: 1 }
+        ]}
         showsVerticalScrollIndicator={false}
         bounces={false}
         refreshControl={
@@ -221,9 +236,7 @@ const MyPostTab = () => {
         onEndReachedThreshold={0.5}
         ListEmptyComponent={renderEmpty}
         ListFooterComponent={renderFooter}
-        contentContainerStyle={
-          filteredPosts.length === 0 ? { flexGrow: 1 } : undefined
-        }
+
       />
       {/* {selectedJobForPayment && (
         <PaymentModal
@@ -275,6 +288,16 @@ const AppliedTab = () => {
   }, [data]);
 
   const [filteredJobs, setFilteredJobs] = React.useState<any[]>([]);
+  const flatListRef = React.useRef<FlatList<any>>(null);
+
+  React.useEffect(() => {
+    const subscription = DeviceEventEmitter.addListener("scrollToTop_Status", () => {
+      flatListRef.current?.scrollToOffset({ offset: 0, animated: true });
+    });
+    return () => {
+      subscription.remove();
+    };
+  }, []);
 
   const handleNext = (job: any) => {
     if (job && job._id) {
@@ -340,11 +363,11 @@ const AppliedTab = () => {
   }
 
   // Get available application statuses for filtering
+  // Get available application statuses for filtering - SIMPLIFIED
   const availableStatuses = [
     getApplicationStatusInfo(APPLICATION_STATUSES.APPLIED),
     getApplicationStatusInfo(APPLICATION_STATUSES.ACCEPTED),
     getApplicationStatusInfo(APPLICATION_STATUSES.REJECTED),
-    getApplicationStatusInfo(APPLICATION_STATUSES.WITHDRAWN),
   ];
 
   const renderItem = ({ item }: { item: any }) => {
@@ -407,10 +430,15 @@ const AppliedTab = () => {
         />
       )}
       <FlatList
+        ref={flatListRef}
         data={filteredJobs}
         renderItem={renderItem}
+
         keyExtractor={(item) => item.applicationId}
-        style={styles.scrollContainer}
+        contentContainerStyle={[
+          styles.listContent,
+          filteredJobs.length === 0 && { flexGrow: 1 }
+        ]}
         showsVerticalScrollIndicator={false}
         bounces={false}
         refreshControl={
@@ -423,9 +451,7 @@ const AppliedTab = () => {
         onEndReachedThreshold={0.5}
         ListEmptyComponent={renderEmpty}
         ListFooterComponent={renderFooter}
-        contentContainerStyle={
-          filteredJobs.length === 0 ? { flexGrow: 1 } : undefined
-        }
+
       />
     </View>
   );

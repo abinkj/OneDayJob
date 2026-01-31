@@ -3,12 +3,11 @@ import { ThemeColors } from "../../../constants/Colors";
 import DeviceDimensions from "../../../constants/DeviceDimenions";
 
 export const createStyles = (colors: ThemeColors) => StyleSheet.create({
-  scrollContainer: {
-
+  listContent: {
     paddingHorizontal: 16,
     paddingTop: 14,
+    paddingBottom: 100 * DeviceDimensions.heightRatio, // Extra padding for bottom tab bar
     backgroundColor: colors.background,
-    marginBottom: 75 * DeviceDimensions.heightRatio, // Adjusted for device height ratio
   },
   contentContainer: {
     justifyContent: "center",
