@@ -603,7 +603,13 @@ const JobDetails = () => {
               <Text style={styles.detailLabel}>Posted</Text>
               <Text style={styles.detailValue}>
                 {job.createdAt
-                  ? new Date(job.createdAt).toLocaleDateString()
+                  ? (() => {
+                    const date = new Date(job.createdAt);
+                    const day = String(date.getDate()).padStart(2, '0');
+                    const month = String(date.getMonth() + 1).padStart(2, '0');
+                    const year = date.getFullYear();
+                    return `${day}/${month}/${year}`;
+                  })()
                   : "N/A"}
               </Text>
             </View>

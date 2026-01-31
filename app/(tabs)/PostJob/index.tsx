@@ -1142,6 +1142,8 @@ const PostJobScreen = ({ navigation: navProp }) => {
     hour12: true,
   });
 
+
+
   const getCategoryIcon = () => {
     const category = jobCategories.find((cat) => cat.id === selectedCategory);
     return category
@@ -1577,7 +1579,11 @@ const PostJobScreen = ({ navigation: navProp }) => {
       if (isFlexible) return "Flexible";
 
       if (scheduleDate) {
-        let result = scheduleDate.toLocaleDateString();
+        // Format: DD/MM/YYYY
+        const day = String(scheduleDate.getDate()).padStart(2, '0');
+        const month = String(scheduleDate.getMonth() + 1).padStart(2, '0');
+        const year = scheduleDate.getFullYear();
+        let result = `${day}/${month}/${year}`;
         if (fromHour && toHour && isExactTime) {
           const fromTime = `${fromHour}:${String(fromMinute).padStart(
             2,
