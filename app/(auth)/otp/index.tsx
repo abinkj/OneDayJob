@@ -231,56 +231,66 @@ const Otp = () => {
         setIsOtpSuccess(true);
 
         setTimeout(async () => {
-          // Transition to setup state instead of showing OTP screen again
-          setIsOtpSuccess(false);
-          setIsSettingUp(true);
+          try {
+            // Transition to setup state instead of showing OTP screen again
+            setIsOtpSuccess(false);
+            setIsSettingUp(true);
 
-          console.log("User data:", userData);
-          console.log("Bank account details:", userData?.bankAccount);
-          if (userData?.bankAccount) {
-            await saveKycStatus("completed");
-            dispatch(completeKyc());
-          }
+            console.log("User data:", userData);
+            console.log("Bank account details:", userData?.bankAccount);
+            if (userData?.bankAccount) {
+              await saveKycStatus("completed");
+              dispatch(completeKyc());
+            }
 
-          // Request notification permissions
-          await requestPermission();
+            // Request notification permissions
+            await requestPermission();
 
-          // Check if profile is complete (has firstName and lastName)
-          const hasName = userData?.firstName && userData?.lastName;
+            // Check if profile is complete (has firstName and lastName)
+            const hasName = userData?.firstName && userData?.lastName;
 
-          if (!hasName) {
-            // For incomplete profiles, save tokens manually but DON'T dispatch login yet
-            // This prevents Redux from navigating to MainStack
-            console.log("Profile incomplete, saving tokens and navigating to ProfileCompletion");
-            console.log("📋 User data from API:", JSON.stringify(userData, null, 2));
-            console.log("🔍 User data has ID?", userData?.id || userData?._id);
+            if (!hasName) {
+              // For incomplete profiles, save tokens manually but DON'T dispatch login yet
+              // This prevents Redux from navigating to MainStack
+              console.log("Profile incomplete, saving tokens and navigating to ProfileCompletion");
+              console.log("📋 User data from API:", JSON.stringify(userData, null, 2));
+              console.log("🔍 User data has ID?", userData?.id || userData?._id);
 
-            await saveToken(accessToken, refreshToken);
-            console.log("✅ Tokens saved successfully");
+              await saveToken(accessToken, refreshToken);
+              console.log("✅ Tokens saved successfully");
 
-            await saveUserData(userData);
-            console.log("✅ User data saved successfully");
+              await saveUserData(userData);
+              console.log("✅ User data saved successfully");
 
-            // Verify the data was saved
-            const savedData = await getUserData();
-            console.log("🔍 Verification - Retrieved user data after save:", JSON.stringify(savedData, null, 2));
+              // Verify the data was saved
+              const savedData = await getUserData();
+              console.log("🔍 Verification - Retrieved user data after save:", JSON.stringify(savedData, null, 2));
 
-            // Register device with backend
-            console.log("📱 Registering device with backend...");
-            await registerDevice();
+              // Register device with backend
+              console.log("📱 Registering device with backend...");
+              await registerDevice();
 
-            // Navigate to ProfileCompletion for new users
-            navigation.replace("ProfileCompletion");
-          } else {
-            // Profile is complete, proceed with normal login flow
-            console.log("Profile complete, logging in user");
+              // Navigate to ProfileCompletion for new users
+              navigation.replace("ProfileCompletion");
+            } else {
+              // Profile is complete, proceed with normal login flow
+              console.log("Profile complete, logging in user");
 
-            // Login user (saves tokens and triggers navigation via Redux)
-            await dispatch(loginUser(userData, accessToken, refreshToken) as any);
+              // Login user (saves tokens and triggers navigation via Redux)
+              await dispatch(loginUser(userData, accessToken, refreshToken) as any);
 
-            // Register device with backend after tokens are saved
-            console.log("📱 Registering device with backend after login...");
-            await registerDevice();
+              // Register device with backend after tokens are saved
+              console.log("📱 Registering device with backend after login...");
+              await registerDevice();
+            }
+          } catch (error) {
+            console.error("Error during setup flow:", error);
+            setIsSettingUp(false);
+            showAlert({
+              type: "error",
+              title: "Setup Failed",
+              message: "An error occurred while setting up your account. Please try again.",
+            });
           }
         }, 1000); // Reduced to 1 second for better UX
       } else {

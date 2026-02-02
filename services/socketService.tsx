@@ -265,7 +265,7 @@ class SocketService {
   // Listen to socket events
   on<K extends keyof SocketEvents>(event: K, callback: SocketEvents[K]) {
     if (!this.socket) {
-      console.error("Socket not initialized");
+      // console.warn("Socket not initialized when adding listener for:", event);
       return;
     }
 
@@ -275,7 +275,7 @@ class SocketService {
   // Remove event listener
   off<K extends keyof SocketEvents>(event: K, callback?: SocketEvents[K]) {
     if (!this.socket) {
-      console.error("Socket not initialized");
+      // Socket already disconnected/not initialized, no need to error
       return;
     }
 

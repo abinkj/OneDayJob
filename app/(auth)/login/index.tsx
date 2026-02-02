@@ -128,7 +128,7 @@ const Login = () => {
               isLoading={isLoading}
               color={colors.primary}
             />
-          </View>{" "}
+          </View>
         </Animated.View>
 
         <Animated.View

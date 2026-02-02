@@ -32,7 +32,7 @@ export const initializeStorage = async (): Promise<void> => {
       // Get or create the encryption key from secure storage
       const encryptionKey = await getOrCreateEncryptionKey();
 
-      // Initialize MMKV with the secure key using createMMKV
+      // Use createMMKV factory
       storageInstance = createMMKV({
         id: 'mmkvStore',
         encryptionKey: encryptionKey,
@@ -123,7 +123,7 @@ export const getUserData = async (): Promise<User | null> => {
       if (legacy) {
         const parsedLegacy = normalizeUser(JSON.parse(legacy));
         getStorage().set(USER_DATA_KEY, JSON.stringify(parsedLegacy));
-        getStorage().delete("user");
+        getStorage().remove("user");
         return parsedLegacy;
       }
       return null;
@@ -139,7 +139,7 @@ export const getUserData = async (): Promise<User | null> => {
 export const clearUserData = async () => {
   try {
     await initializeStorage(); // Ensure storage is ready
-    getStorage().delete(USER_DATA_KEY);
+    getStorage().remove(USER_DATA_KEY);
   } catch (error) {
     console.error("Failed to clear user data:", error);
   }
@@ -171,7 +171,7 @@ export const getKycStatus = async (): Promise<string | null> => {
 export const clearKycStatus = async (): Promise<void> => {
   try {
     await initializeStorage(); // Ensure storage is ready
-    getStorage().delete(KYC_STATUS_KEY);
+    getStorage().remove(KYC_STATUS_KEY);
   } catch (error) {
     console.error("Failed to clear KYC status:", error);
   }

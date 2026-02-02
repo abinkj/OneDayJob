@@ -25,6 +25,7 @@ export const loginUser =
       dispatch(login(userData));
     } catch (error) {
       console.error("Login error:", error);
+      throw error;
     }
   };
 
