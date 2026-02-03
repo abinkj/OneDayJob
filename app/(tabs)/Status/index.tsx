@@ -126,6 +126,14 @@ const MyPostTab = () => {
     }
   };
 
+  const handleSummary = (jobId: string, jobName: string) => {
+    navigation.navigate("JobTimer", {
+      jobId,
+      jobName,
+      isEmployer: true,
+    });
+  };
+
   const handleLoadMore = () => {
     if (hasNextPage && !isFetchingNextPage) {
       fetchNextPage();
@@ -170,6 +178,7 @@ const MyPostTab = () => {
       data={item}
       onPress={() => handleNext(item._id)}
       onDelete={() => handleDelete(item._id)}
+      onSummary={() => handleSummary(item._id, item.name)}
       // onPayment={() => handlePayment(item)}
       isEmployer={true}
     // showPaymentButton={true}
@@ -333,6 +342,14 @@ const AppliedTab = () => {
     }
   };
 
+  const handleSummary = (jobId: string, jobName: string) => {
+    navigation.navigate("JobTimer", {
+      jobId,
+      jobName,
+      isEmployer: false,
+    });
+  };
+
   const handleLoadMore = () => {
     if (hasNextPage && !isFetchingNextPage) {
       fetchNextPage();
@@ -385,6 +402,7 @@ const AppliedTab = () => {
         onPress={() => handleNext(item.job)}
         withdraw={true}
         onWithdraw={() => handleWithdraw(item.applicationId, item.job._id)}
+        onSummary={() => handleSummary(item.job._id, item.job.name)}
         isEmployer={false}
         applicationStatus={item.status}
       />

@@ -19,6 +19,7 @@ const JobCard = ({
   onWithdraw,
   onDelete,
   onPayment,
+  onSummary,
   withdraw = false,
   isEmployer = false,
   applicationStatus,
@@ -29,6 +30,7 @@ const JobCard = ({
   onWithdraw?: Function;
   onDelete?: Function;
   onPayment?: Function;
+  onSummary?: Function;
   withdraw?: boolean;
   isEmployer?: boolean;
   applicationStatus?: string;
@@ -242,7 +244,15 @@ const JobCard = ({
               : `${applicantCount || 0} Requests`}
           </Text>
         </View>
-        {!isWorkFinished && (
+        {isWorkFinished ? (
+          <TouchableOpacity
+            style={[styles.button, styles.summaryButton]}
+            onPress={() => onSummary && onSummary()}
+          >
+            <Ionicons name="document-text-outline" size={16} color={colors.white} style={{ marginRight: 6 }} />
+            <Text style={styles.buttonText}>View Summary</Text>
+          </TouchableOpacity>
+        ) : (
           <View style={styles.bottomRow}>
             <TouchableOpacity style={styles.button} onPress={() => onPress()}>
               {withdraw ? (
@@ -425,6 +435,10 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 8,
     elevation: 4,
+  },
+  summaryButton: {
+    flexDirection: "row",
+    alignItems: "center",
   },
   buttonText: {
     fontSize: 12,
