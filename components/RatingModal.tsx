@@ -67,13 +67,14 @@ const RatingModal: React.FC<RatingModalProps> = ({
             animationType="fade"
             onRequestClose={handleClose}
         >
-            <TouchableWithoutFeedback onPress={handleClose}>
-                <View style={styles.overlay}>
-                    <KeyboardAvoidingView
-                        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-                        style={styles.keyboardView}
-                    >
-                        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+            <KeyboardAvoidingView
+                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                style={styles.overlay}
+                keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+            >
+                <TouchableWithoutFeedback onPress={handleClose}>
+                    <View style={styles.overlay}>
+                        <TouchableWithoutFeedback onPress={() => { }}>
                             <View style={styles.modalContainer}>
                                 <View style={styles.header}>
                                     <Text style={styles.title}>Rate Worker</Text>
@@ -135,9 +136,9 @@ const RatingModal: React.FC<RatingModalProps> = ({
                                 </TouchableOpacity>
                             </View>
                         </TouchableWithoutFeedback>
-                    </KeyboardAvoidingView>
-                </View>
-            </TouchableWithoutFeedback>
+                    </View>
+                </TouchableWithoutFeedback>
+            </KeyboardAvoidingView>
         </Modal>
     );
 };
@@ -149,12 +150,9 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
     },
-    keyboardView: {
-        width: '100%',
-        alignItems: 'center',
-    },
     modalContainer: {
         width: '90%',
+        maxHeight: '80%',
         backgroundColor: '#fff',
         borderRadius: 20,
         padding: 20,

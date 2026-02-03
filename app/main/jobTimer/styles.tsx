@@ -23,7 +23,7 @@ export const createStyles = (colors: ThemeColors) => StyleSheet.create({
 
   // Job Info Card
   jobInfoCard: {
-    backgroundColor: colors.white,
+    backgroundColor: colors.categoryBox,
     borderRadius: 12,
     padding: 16,
     marginBottom: 16,
@@ -54,7 +54,7 @@ export const createStyles = (colors: ThemeColors) => StyleSheet.create({
 
   // Timer Card
   timerCard: {
-    backgroundColor: colors.white,
+    backgroundColor: colors.categoryBox,
     borderRadius: 12,
     padding: 24,
     marginBottom: 16,
@@ -85,7 +85,7 @@ export const createStyles = (colors: ThemeColors) => StyleSheet.create({
 
   // Stats Card
   statsCard: {
-    backgroundColor: colors.white,
+    backgroundColor: colors.categoryBox,
     borderRadius: 12,
     padding: 16,
     marginBottom: 16,
@@ -138,7 +138,7 @@ export const createStyles = (colors: ThemeColors) => StyleSheet.create({
     backgroundColor: colors.darkGreen,
   },
   pauseButton: {
-    backgroundColor: '#FF9800', // Keep as specific emphasis color
+    backgroundColor: '#FF9800',
   },
   resumeButton: {
     backgroundColor: colors.tabBlue,
@@ -155,7 +155,7 @@ export const createStyles = (colors: ThemeColors) => StyleSheet.create({
 
   // Instructions Card
   instructionsCard: {
-    backgroundColor: colors.white,
+    backgroundColor: colors.categoryBox,
     borderRadius: 12,
     padding: 16,
     marginBottom: 16,
