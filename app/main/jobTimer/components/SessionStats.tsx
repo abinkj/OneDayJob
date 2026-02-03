@@ -5,23 +5,40 @@ import { formatTime } from '../../../../services/api';
 
 interface SessionStatsProps {
     totalWorkedSeconds: number;
-    sessionCount: number;
+    status: string;
+    targetHours?: number;
     colors: any;
 }
 
 const SessionStats: React.FC<SessionStatsProps> = ({
     totalWorkedSeconds,
-    sessionCount,
+    status,
+    targetHours,
     colors,
 }) => {
+    const getStatusInfo = () => {
+        switch (status) {
+            case 'active':
+                return { label: 'Working', color: colors?.green || '#4CAF50', icon: 'play-circle' as const };
+            case 'paused':
+                return { label: 'Paused', color: colors?.orange || '#FF9800', icon: 'pause-circle' as const };
+            case 'completed':
+                return { label: 'Completed', color: colors?.tabBlue || '#2196F3', icon: 'checkmark-circle' as const };
+            default:
+                return { label: 'Not Started', color: colors?.grey || '#9E9E9E', icon: 'ellipse-outline' as const };
+        }
+    };
+
+    const statusInfo = getStatusInfo();
+
     const StatCard = ({ icon, label, value, iconColor }: any) => (
-        <View style={[styles.statCard, { backgroundColor: colors.white }]}>
+        <View style={[styles.statCard, { backgroundColor: colors.cardBackground || colors.white }]}>
             <View style={[styles.iconContainer, { backgroundColor: iconColor + '15' }]}>
                 <Ionicons name={icon} size={24} color={iconColor} />
             </View>
             <View style={styles.statContent}>
                 <Text style={[styles.statLabel, { color: colors.grey }]}>{label}</Text>
-                <Text style={[styles.statValue, { color: colors.black }]}>{value}</Text>
+                <Text style={[styles.statValue, { color: colors.text || colors.black }]}>{value}</Text>
             </View>
         </View>
     );
@@ -35,10 +52,10 @@ const SessionStats: React.FC<SessionStatsProps> = ({
                 iconColor={colors.primary}
             />
             <StatCard
-                icon="calendar-outline"
-                label="Sessions"
-                value={sessionCount.toString()}
-                iconColor="#4CAF50"
+                icon={statusInfo.icon}
+                label="Current Status"
+                value={statusInfo.label}
+                iconColor={statusInfo.color}
             />
         </View>
     );
@@ -75,14 +92,14 @@ const styles = StyleSheet.create({
     },
     statLabel: {
         fontSize: 12,
-        fontFamily: 'medium',
+        fontWeight: '600',
         marginBottom: 4,
         textTransform: 'uppercase',
         letterSpacing: 0.5,
     },
     statValue: {
-        fontSize: 18,
-        fontFamily: 'bold',
+        fontSize: 16,
+        fontWeight: '700',
     },
 });
 

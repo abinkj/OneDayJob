@@ -1,19 +1,16 @@
-/**
- * WorkerCard Component
- * 
- * Displays individual worker information in employer dashboard.
- * Shows status, time spent, and rating option.
- */
-
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { formatDuration } from '../../../../services/api';
+import { Image } from 'expo-image';
+import Images from '../../../../utilities/images';
 
 interface Worker {
     id: string;
     name: string;
     email: string;
+    profilePicture?: string;
+    profilePictureUrl?: string;
     status: 'active' | 'paused' | 'completed' | 'not_started';
     timeSpent: number;
     hasRated?: boolean;
@@ -27,76 +24,95 @@ interface WorkerCardProps {
 }
 
 const WorkerCard: React.FC<WorkerCardProps> = React.memo(({ worker, onRate, colors }) => {
-    const getStatusColor = () => {
+    // Debug log to check worker data
+    // console.log(`WorkerCard render for ${worker.name}:`, { ... });
+
+    const getStatusConfig = () => {
         switch (worker.status) {
             case 'active':
-                return colors.green;
+                return {
+                    bg: colors.green + '15', // 15% opacity
+                    text: colors.darkGreen || '#2E7D32',
+                    label: 'Active'
+                };
             case 'paused':
-                return colors.lightOrange;
+                return {
+                    bg: colors.lightOrange || '#FFF3E0',
+                    text: colors.orange || '#EF6C00',
+                    label: 'Paused'
+                };
             case 'completed':
-                return colors.lightBlue;
+                return {
+                    bg: colors.lightBlue || '#E3F2FD',
+                    text: colors.tabBlue || '#1976D2',
+                    label: 'Done'
+                };
             default:
-                return colors.addressGrey;
+                return {
+                    bg: colors.border || '#EEEEEE',
+                    text: colors.grey || '#757575',
+                    label: 'Pending'
+                };
         }
     };
 
-    const getStatusTextColor = () => {
-        switch (worker.status) {
-            case 'active':
-                return colors.darkGreen;
-            case 'paused':
-                return colors.orange;
-            case 'completed':
-                return colors.tabBlue;
-            default:
-                return colors.grey;
-        }
-    };
-
-    const getStatusText = () => {
-        switch (worker.status) {
-            case 'active':
-                return 'Active';
-            case 'paused':
-                return 'Paused';
-            case 'completed':
-                return 'Done';
-            default:
-                return 'Pending';
-        }
-    };
+    const statusConfig = getStatusConfig();
 
     return (
-        <View style={[styles.container, { backgroundColor: colors.cardBackground }]}>
+        <View style={[
+            styles.container,
+            {
+                backgroundColor: colors.cardBackground,
+                borderColor: colors.border || 'rgba(0,0,0,0.05)',
+                borderWidth: 1,
+            }
+        ]}>
             <View style={styles.header}>
-                <View style={[styles.avatar, { backgroundColor: colors.primary }]}>
-                    <Text style={[styles.avatarText, { color: colors.white }]}>
-                        {worker.name ? worker.name.charAt(0).toUpperCase() : '?'}
-                    </Text>
-                </View>
+                <Image
+                    key={`worker-${worker.id}-${worker.profilePictureUrl || worker.profilePicture || 'default'}`}
+                    source={
+                        (worker.profilePictureUrl && typeof worker.profilePictureUrl === 'string' && worker.profilePictureUrl.startsWith('http'))
+                            ? { uri: worker.profilePictureUrl }
+                            : (worker.profilePicture && typeof worker.profilePicture === 'string' && worker.profilePicture.startsWith('http'))
+                                ? { uri: worker.profilePicture }
+                                : Images.profile.profileImage
+                    }
+                    style={[styles.avatar, { borderColor: colors.border || 'rgba(0,0,0,0.1)' }]}
+                    placeholder={Images.profile.profileImage}
+                    placeholderContentFit="cover"
+                    contentFit="cover"
+                    cachePolicy="none"
+                    transition={300}
+                    onError={(error) => {
+                        console.log('WorkerCard image error:', error);
+                    }}
+                />
 
                 <View style={styles.info}>
                     <Text style={[styles.name, { color: colors.text }]}>{worker.name}</Text>
                     <Text style={[styles.email, { color: colors.grey }]}>{worker.email}</Text>
                 </View>
 
-                <View style={[styles.statusBadge, { backgroundColor: getStatusColor() }]}>
-                    <Text style={[styles.statusText, { color: getStatusTextColor() }]}>
-                        {getStatusText()}
+                <View style={[styles.statusBadge, { backgroundColor: statusConfig.bg }]}>
+                    <Text style={[styles.statusText, { color: statusConfig.text }]}>
+                        {statusConfig.label}
                     </Text>
                 </View>
             </View>
 
+            <View style={[styles.divider, { backgroundColor: colors.border || 'rgba(0,0,0,0.05)' }]} />
+
             <View style={styles.statsRow}>
                 <View style={styles.statItem}>
-                    <Ionicons name="time-outline" size={16} color={colors.grey} />
+                    <Ionicons name="time-outline" size={18} color={colors.grey} />
+                    <Text style={[styles.statLabel, { color: colors.grey }]}>Time:</Text>
                     <Text style={[styles.statValue, { color: colors.text }]}>
                         {formatDuration(worker.timeSpent || 0)}
                     </Text>
                 </View>
 
                 {worker.status === 'active' && (
-                    <View style={styles.statItem}>
+                    <View style={styles.activeIndicator}>
                         <ActivityIndicator size="small" color={colors.darkGreen} />
                     </View>
                 )}
@@ -104,10 +120,10 @@ const WorkerCard: React.FC<WorkerCardProps> = React.memo(({ worker, onRate, colo
 
             {/* Rating Section */}
             {worker.status === 'completed' && (
-                <View style={styles.ratingSection}>
+                <View style={[styles.ratingSection, { borderTopColor: colors.border || 'rgba(0,0,0,0.05)' }]}>
                     {worker.hasRated ? (
                         <View style={styles.ratedContainer}>
-                            <Ionicons name="star" size={16} color="#FFD700" />
+                            <Ionicons name="star" size={18} color="#FFD700" />
                             <Text style={[styles.ratedText, { color: colors.grey }]}>
                                 Rated {worker.rating}/5
                             </Text>
@@ -132,12 +148,12 @@ const WorkerCard: React.FC<WorkerCardProps> = React.memo(({ worker, onRate, colo
 const styles = StyleSheet.create({
     container: {
         padding: 16,
-        borderRadius: 12,
+        borderRadius: 16,
         marginBottom: 12,
         shadowColor: '#000',
-        shadowOffset: { width: 0, height: 1 },
+        shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.05,
-        shadowRadius: 2,
+        shadowRadius: 8,
         elevation: 2,
     },
     header: {
@@ -146,37 +162,38 @@ const styles = StyleSheet.create({
         marginBottom: 12,
     },
     avatar: {
-        width: 40,
-        height: 40,
-        borderRadius: 20,
-        alignItems: 'center',
-        justifyContent: 'center',
+        width: 48,
+        height: 48,
+        borderRadius: 24,
         marginRight: 12,
-    },
-    avatarText: {
-        fontSize: 18,
-        fontWeight: '700',
+        borderWidth: 1,
     },
     info: {
         flex: 1,
     },
     name: {
         fontSize: 16,
-        fontWeight: '600',
-        marginBottom: 2,
+        fontWeight: '700',
+        marginBottom: 4,
+        letterSpacing: 0.3,
     },
     email: {
         fontSize: 12,
-        fontWeight: '400',
+        fontWeight: '500',
     },
     statusBadge: {
-        paddingHorizontal: 12,
+        paddingHorizontal: 10,
         paddingVertical: 6,
         borderRadius: 12,
     },
     statusText: {
         fontSize: 12,
         fontWeight: '700',
+        textTransform: 'uppercase',
+    },
+    divider: {
+        height: 1,
+        marginBottom: 12,
     },
     statsRow: {
         flexDirection: 'row',
@@ -187,37 +204,46 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
     },
-    statValue: {
+    statLabel: {
         fontSize: 14,
-        fontWeight: '600',
         marginLeft: 6,
+        marginRight: 6,
+        fontWeight: '500',
+    },
+    statValue: {
+        fontSize: 15,
+        fontWeight: '700',
+        fontVariant: ['tabular-nums'],
+    },
+    activeIndicator: {
+        flexDirection: 'row',
+        alignItems: 'center',
     },
     ratingSection: {
         marginTop: 12,
         paddingTop: 12,
         borderTopWidth: 1,
-        borderTopColor: 'rgba(0,0,0,0.05)',
     },
     ratedContainer: {
         flexDirection: 'row',
         alignItems: 'center',
     },
     ratedText: {
-        marginLeft: 6,
-        fontWeight: '500',
+        marginLeft: 8,
+        fontWeight: '600',
         fontSize: 14,
     },
     rateButton: {
         flexDirection: 'row',
         alignItems: 'center',
         paddingVertical: 8,
-        paddingHorizontal: 12,
-        borderRadius: 6,
+        paddingHorizontal: 16,
+        borderRadius: 8,
         alignSelf: 'flex-start',
     },
     rateButtonText: {
         fontWeight: '600',
-        fontSize: 12,
+        fontSize: 13,
         marginLeft: 6,
     },
 });

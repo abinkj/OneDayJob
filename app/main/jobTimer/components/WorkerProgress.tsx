@@ -7,10 +7,14 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { Image } from 'expo-image';
+import Images from '../../../../utilities/images';
 
 interface WorkerProgressProps {
     workerName: string;
     totalTime: number;
+    profilePicture?: string;
+    profilePictureUrl?: string;
     status: 'active' | 'paused' | 'completed' | 'not_started';
     colors: any;
 }
@@ -18,6 +22,8 @@ interface WorkerProgressProps {
 const WorkerProgress: React.FC<WorkerProgressProps> = ({
     workerName,
     totalTime,
+    profilePicture,
+    profilePictureUrl,
     status,
     colors,
 }) => {
@@ -25,13 +31,13 @@ const WorkerProgress: React.FC<WorkerProgressProps> = ({
         switch (status) {
             case 'active':
                 return {
-                    color: '#4CAF50',
+                    color: colors.green || '#4CAF50',
                     icon: 'play-circle' as const,
                     text: 'Working',
                 };
             case 'paused':
                 return {
-                    color: '#FF9800',
+                    color: colors.orange || '#FF9800',
                     icon: 'pause-circle' as const,
                     text: 'Paused',
                 };
@@ -55,13 +61,34 @@ const WorkerProgress: React.FC<WorkerProgressProps> = ({
     const minutes = Math.floor((totalTime % 3600) / 60);
 
     return (
-        <View style={[styles.container, { backgroundColor: colors.white }]}>
+        <View style={[
+            styles.container,
+            {
+                backgroundColor: colors.cardBackground,
+                borderColor: colors.border || 'rgba(0,0,0,0.05)',
+                borderWidth: 1,
+            }
+        ]}>
             <View style={styles.header}>
-                <View style={[styles.avatarContainer, { backgroundColor: colors.primary + '15' }]}>
-                    <Ionicons name="person" size={20} color={colors.primary} />
-                </View>
+                <Image
+                    key={`progress-${profilePictureUrl || profilePicture || 'default'}`}
+                    source={
+                        (profilePictureUrl && typeof profilePictureUrl === 'string' && profilePictureUrl.startsWith('http'))
+                            ? { uri: profilePictureUrl }
+                            : (profilePicture && typeof profilePicture === 'string' && profilePicture.startsWith('http'))
+                                ? { uri: profilePicture }
+                                : Images.profile.profileImage
+                    }
+                    style={styles.avatar}
+                    placeholder={Images.profile.profileImage}
+                    placeholderContentFit="cover"
+                    contentFit="cover"
+                    cachePolicy="none"
+                    transition={300}
+                />
+
                 <View style={styles.workerInfo}>
-                    <Text style={[styles.workerName, { color: colors.black }]}>{workerName}</Text>
+                    <Text style={[styles.workerName, { color: colors.text }]}>{workerName}</Text>
                     <View style={[styles.statusBadge, { backgroundColor: statusConfig.color + '15' }]}>
                         <Ionicons name={statusConfig.icon} size={14} color={statusConfig.color} />
                         <Text style={[styles.statusText, { color: statusConfig.color }]}>
@@ -71,16 +98,16 @@ const WorkerProgress: React.FC<WorkerProgressProps> = ({
                 </View>
             </View>
 
-            <View style={[styles.divider, { backgroundColor: colors.borderGrey + '20' }]} />
+            <View style={[styles.divider, { backgroundColor: colors.border || 'rgba(0,0,0,0.05)' }]} />
 
             <View style={styles.timeContainer}>
                 <View style={styles.timeItem}>
-                    <Text style={[styles.timeValue, { color: colors.black }]}>{hours}h</Text>
+                    <Text style={[styles.timeValue, { color: colors.text }]}>{hours}</Text>
                     <Text style={[styles.timeLabel, { color: colors.grey }]}>Hours</Text>
                 </View>
-                <View style={[styles.timeDivider, { backgroundColor: colors.borderGrey + '30' }]} />
+                <View style={[styles.timeDivider, { backgroundColor: colors.border || 'rgba(0,0,0,0.05)' }]} />
                 <View style={styles.timeItem}>
-                    <Text style={[styles.timeValue, { color: colors.black }]}>{minutes}m</Text>
+                    <Text style={[styles.timeValue, { color: colors.text }]}>{minutes}</Text>
                     <Text style={[styles.timeLabel, { color: colors.grey }]}>Minutes</Text>
                 </View>
             </View>
@@ -93,10 +120,10 @@ const styles = StyleSheet.create({
         borderRadius: 16,
         padding: 20,
         shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.08,
-        shadowRadius: 4,
-        elevation: 2,
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.1,
+        shadowRadius: 8,
+        elevation: 3,
         marginBottom: 20,
     },
     header: {
@@ -104,21 +131,22 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         marginBottom: 16,
     },
-    avatarContainer: {
-        width: 44,
-        height: 44,
-        borderRadius: 22,
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginRight: 12,
+    avatar: {
+        width: 48,
+        height: 48,
+        borderRadius: 24,
+        marginRight: 14,
+        borderWidth: 2,
+        borderColor: 'rgba(0,0,0,0.05)',
     },
     workerInfo: {
         flex: 1,
     },
     workerName: {
-        fontSize: 16,
-        fontFamily: 'bold',
+        fontSize: 17,
+        fontWeight: '700',
         marginBottom: 6,
+        letterSpacing: 0.3,
     },
     statusBadge: {
         flexDirection: 'row',
@@ -131,7 +159,7 @@ const styles = StyleSheet.create({
     },
     statusText: {
         fontSize: 12,
-        fontFamily: 'medium',
+        fontWeight: '600',
         textTransform: 'uppercase',
         letterSpacing: 0.5,
     },
@@ -153,15 +181,16 @@ const styles = StyleSheet.create({
         height: 40,
     },
     timeValue: {
-        fontSize: 28,
-        fontFamily: 'bold',
+        fontSize: 32,
+        fontWeight: '700',
         marginBottom: 4,
+        letterSpacing: -1,
     },
     timeLabel: {
         fontSize: 12,
-        fontFamily: 'medium',
+        fontWeight: '600',
         textTransform: 'uppercase',
-        letterSpacing: 0.5,
+        letterSpacing: 1,
     },
 });
 

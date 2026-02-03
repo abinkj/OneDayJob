@@ -21,6 +21,8 @@ export interface DashboardSummary {
         id: string;
         name: string;
         email: string;
+        profilePicture?: string;
+        profilePictureUrl?: string;
         status: 'active' | 'paused' | 'completed' | 'not_started';
         timeSpent: number;
         hasRated?: boolean;
