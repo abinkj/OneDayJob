@@ -12,6 +12,7 @@ import {
   Animated,
   Modal,
   DeviceEventEmitter,
+  BackHandler,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "../../../contexts/ThemeContext";
@@ -608,6 +609,39 @@ const HomeScreen = () => {
 
       fetchLocationAndRefetch();
     }, [isInitialized, refetchJobs]) // Removed authStatus and currentUser to prevent loops
+  );
+
+  // Double back to exit logic
+  const backPressedOnce = useRef(false);
+
+  useFocusEffect(
+    useCallback(() => {
+      const onBackPress = () => {
+        if (backPressedOnce.current) {
+          return false; // Let default behavior happen (exit)
+        }
+
+        backPressedOnce.current = true;
+        Toast.show({
+          type: "info",
+          text1: "Press back again to exit",
+          visibilityTime: 1000,
+        });
+
+        setTimeout(() => {
+          backPressedOnce.current = false;
+        }, 1000);
+
+        return true; // Prevent default behavior
+      };
+
+      const subscription = BackHandler.addEventListener(
+        "hardwareBackPress",
+        onBackPress
+      );
+
+      return () => subscription.remove();
+    }, [])
   );
 
   // OPTIMIZED: Debounce filter changes to avoid excessive API calls
