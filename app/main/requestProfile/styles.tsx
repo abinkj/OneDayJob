@@ -1,73 +1,81 @@
-import { StyleSheet } from "react-native";
-import DeviceDimensions from "../../../constants/DeviceDimenions";
+import { StyleSheet, Dimensions } from "react-native";
 import { Colors } from "../../../constants/Colors";
+import DeviceDimensions from "../../../constants/DeviceDimenions";
 
-const styles = StyleSheet.create({
+const { width } = Dimensions.get("window");
+
+export const createStyles = (colors: any) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: colors.background,
   },
   profileCard: {
-    backgroundColor: "rgba(255,255,255,0.5)",
-    //backgroundColor: Colors.tabGrey,
-    borderRadius: 12,
-    marginHorizontal: 16,
-    marginTop: 9 * DeviceDimensions.heightRatio,
-    padding: 16,
+    backgroundColor: colors.white,
+    margin: 10,
+    borderRadius: 20,
+    padding: 20,
     alignItems: "center",
-    // shadowColor:'black',
-    // shadowOffset:{width:0, height:4},
-    // shadowRadius:6,
-
-    // elevation:4
+    shadowColor: colors.black,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 5,
+    elevation: 3,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   profileImage: {
-    width: 100,
-    height: 100,
-    borderRadius: 80,
-    marginBottom: 8,
+    width: 100 * DeviceDimensions.widthRatio,
+    height: 100 * DeviceDimensions.widthRatio,
+    borderRadius: 50,
+    marginBottom: 10,
   },
   name: {
-    fontSize: 20,
-    fontWeight: "600",
-    marginTop: 8,
-    marginBottom: 4,
+    fontSize: 22,
+    fontWeight: "bold",
+    color: colors.black,
+    marginBottom: 5,
+    textAlign: "center",
   },
   locationContainer: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 16,
+    marginBottom: 20,
   },
   locationText: {
+    marginLeft: 5,
+    color: colors.grey,
     fontSize: 14,
-    color: "gray",
-    marginLeft: 4,
   },
   statsContainer: {
     flexDirection: "row",
+    justifyContent: "space-between",
     width: "100%",
-    marginTop: 8,
-    borderTopWidth: 1,
-    borderTopColor: "#F0F0F0",
-    paddingTop: 16,
+    marginTop: 10,
   },
   statBox: {
-    flex: 1,
     alignItems: "center",
+    flex: 1,
   },
   statLabel: {
     fontSize: 12,
-    color: "#888",
-    marginBottom: 8,
+    color: colors.grey,
+    fontWeight: "600",
+    marginBottom: 5,
   },
   statNumber: {
-    fontSize: 24,
+    fontSize: 18,
     fontWeight: "bold",
+    color: colors.black,
   },
   statSubLabel: {
     fontSize: 12,
-    color: "#888",
-    marginTop: 4,
+    color: colors.grey,
+    marginTop: 2,
+  },
+  separator: {
+    width: 1,
+    backgroundColor: colors.border,
+    height: "100%",
   },
   completionRateContainer: {
     flexDirection: "row",
@@ -76,132 +84,54 @@ const styles = StyleSheet.create({
   infoIcon: {
     marginLeft: 4,
   },
-  separator: {
-    width: 1,
-    backgroundColor: "#E0E0E0",
-    height: "80%",
-    alignSelf: "center",
-  },
-  dropdown: {
-    backgroundColor: "white",
-    borderRadius: 8,
-    padding: 16,
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 20,
-  },
-  dropdownText: {
-    fontSize: 16,
-    fontWeight: "500",
-  },
-  dropdownDetail: {
-    fontSize: 14,
-    color: "#333",
-    marginBottom: 8,
-  },
   reviewContainer: {
-    borderRadius: 12,
-    padding: 16,
-    marginHorizontal: 16,
-    marginTop: 20,
+    backgroundColor: colors.white,
+    borderRadius: 15,
+    padding: 15,
+    marginBottom: 15,
+    shadowColor: colors.black,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
+    elevation: 2,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   reviewerInfo: {
     flexDirection: "row",
-    marginBottom: 12,
+    alignItems: "center",
+    marginBottom: 10,
   },
   reviewerImage: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    marginRight: 10,
   },
   reviewerNameContainer: {
     flex: 1,
-    justifyContent: "center",
-    marginLeft: 12,
   },
   reviewerName: {
-    fontWeight: "bold",
     fontSize: 16,
-    marginBottom: 4,
+    fontWeight: "600",
+    color: colors.black,
   },
   stars: {
     flexDirection: "row",
-  },
-  starIcon: {
-    marginRight: 3,
+    marginTop: 2,
   },
   reviewDate: {
     fontSize: 12,
-    color: "#888",
-    alignSelf: "flex-start",
+    color: colors.grey,
   },
   reviewText: {
     fontSize: 14,
+    color: colors.black,
     lineHeight: 20,
-    color: "#333",
-  },
-  seeAllButton: {
-    backgroundColor: Colors.backgroundGrey,
-    borderRadius: 12,
-    paddingVertical: 16,
-    alignItems: "center",
-    marginHorizontal: 16,
-    marginTop: 20,
-    marginBottom: 24,
-  },
-  seeAllText: {
-    color: "#333",
-    fontSize: 16,
-    fontWeight: "500",
-  },
-  experienceContainer: {
-    backgroundColor: "#fff",
-    borderRadius: 12,
-    margin: 16,
-    padding: 16,
-    shadowColor: "#000",
-    shadowOpacity: 0.05,
-    shadowRadius: 5,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 2,
-    overflow: "hidden", // Important for animated height
-  },
-  dropdownHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  dropdownTitle: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#333",
-  },
-  dropdownContent: {
-    paddingTop: 10,
-    overflow: "hidden",
-  },
-  imageRow: {
-    marginTop: 10,
-    marginBottom: 5,
-  },
-  imagePlaceholder: {
-    width: 92 * DeviceDimensions.widthRatio,
-    height: 67 * DeviceDimensions.heightRatio,
-    backgroundColor: "#f0f0f0",
-    borderRadius: 6,
   },
   buttonContainer: {
-    paddingHorizontal: 16,
-    marginTop: 20,
-  },
-  fixedBottomContainer: {
-    position: "absolute",
-    bottom: 200,
-    left: 0,
-    right: 0,
-    zIndex: 10,
+    padding: 20,
   },
 });
 
-export default styles;
+export default createStyles;

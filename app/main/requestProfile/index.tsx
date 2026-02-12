@@ -1,15 +1,17 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import {
   View,
   Text,
-  Image,
+  // Image,
   ScrollView,
   Alert,
   ActivityIndicator,
   RefreshControl,
+  DeviceEventEmitter,
 } from "react-native";
+import { Image } from "expo-image";
 import { Ionicons } from "@expo/vector-icons";
-import styles from "./styles";
+import { createStyles } from "./styles";
 import { Header } from "../../../components/header";
 import { ProfileSkeleton } from "../../../components/Shimmer/Skeletons";
 import Images from "../../../utilities/images";
@@ -18,14 +20,29 @@ import CustomButton from "../../../components/CustomButton";
 import { Colors } from "../../../constants/Colors";
 import JobApplicationStatus from "../../../components/jobApplicationStatus";
 import ratingStars from "../../../components/ratingStars";
-import { useNavigation, useRoute } from "@react-navigation/native";
-import { User, Review } from "../../../types";
+import { useNavigation, useRoute, useFocusEffect } from "@react-navigation/native";
+import { User } from "../../../types";
 import { getUserProfile } from "../../../services/api";
+import { useTheme } from "../../../contexts/ThemeContext";
 
+interface BackendReview {
+  _id: string;
+  rating: number;
+  comment: string;
+  createdAt: string;
+  raterUser: {
+    firstName: string;
+    lastName: string;
+    profilePictureUrl?: string;
+  };
+}
 
+interface UserWithRatings extends User {
+  ratings?: BackendReview[];
+}
 
 const RequestProfile: React.FC = () => {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<UserWithRatings | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -33,14 +50,29 @@ const RequestProfile: React.FC = () => {
   const route = useRoute<any>();
   const { userId } = route.params as { userId: string };
 
-  const fetchUser = async (isRefresh = false) => {
+  const { colors, theme } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
+
+  const fetchUser = useCallback(async (isRefresh = false) => {
     try {
-      if (!isRefresh) setIsLoading(true);
-      const response = await getUserProfile(userId); // 🔥 API call
-      setUser(response?.data || response); // adjust depending on backend response shape
-    } catch (error) {
+      if (!isRefresh && !user) setIsLoading(true);
+
+      const response = await getUserProfile(userId);
+      if (response && (response.data || response)) {
+        setUser(response.data || response);
+      }
+    } catch (error: any) {
+      // Ignore cancellation errors
+      if (error.code === 'ERR_CANCELED' || error.name === 'CanceledError' || error.message === 'Request throttled locally') {
+        console.log('Request cancelled or throttled (RequestProfile)');
+        return;
+      }
+
       console.error("Error fetching user profile:", error);
-      Alert.alert("Error", "Failed to load profile data");
+      // Only show alert if we really don't have data and it's not a cancel
+      if (!user) {
+        // Alert.alert("Error", "Failed to load profile data");
+      }
     } finally {
       if (isRefresh) {
         setRefreshing(false);
@@ -48,28 +80,28 @@ const RequestProfile: React.FC = () => {
         setIsLoading(false);
       }
     }
-  };
+  }, [userId]);
 
+  // Initial fetch
   useEffect(() => {
     fetchUser();
-  }, [userId]);
+  }, [fetchUser]);
+
+  // Refresh user data on focus - use useFocusEffect instead of event listener for better control
+  useFocusEffect(
+    useCallback(() => {
+      // Optional: only refetch if we think data might be stale
+      // fetchUser(true); 
+      return () => { };
+    }, [])
+  );
 
   const handleRefresh = async () => {
     setRefreshing(true);
     await fetchUser(true);
   };
 
-  // Refresh user data on focus
-  useEffect(() => {
-    const unsubscribe = navigation.addListener("focus", async () => {
-      await fetchUser(true);
-    });
-    return unsubscribe;
-  }, [navigation, userId]);
-
-
-
-  if (isLoading) {
+  if (isLoading && !user) {
     return (
       <View style={styles.container}>
         <Header title="Request Profile" showBackButton />
@@ -78,33 +110,45 @@ const RequestProfile: React.FC = () => {
     );
   }
 
-  const profileImageSrc = user?.profilePictureUrl
-    ? { uri: user.profilePictureUrl }
-    : user?.profilePicture
-      ? typeof user.profilePicture === "string"
-        ? { uri: user.profilePicture }
-        : user.profilePicture
-      : Images.profile.profileImage;
-
   return (
     <View style={styles.container}>
       <Header title="Request Profile" showBackButton />
       <ScrollView
-        bounces={false}
+        bounces={true}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={handleRefresh}
+            tintColor={colors.primary}
+            colors={[colors.primary]}
+          />
         }
         contentContainerStyle={{ paddingBottom: 20 }}
+        showsVerticalScrollIndicator={false}
       >
         {/* Profile Card */}
         <View style={styles.profileCard}>
-          <Image source={profileImageSrc} style={styles.profileImage} />
+          <Image
+            source={
+              user?.profilePictureUrl
+                ? { uri: user.profilePictureUrl }
+                : user?.profilePicture
+                  ? typeof user.profilePicture === "string"
+                    ? { uri: user.profilePicture }
+                    : user.profilePicture
+                  : Images.profile.profileImage
+            }
+            style={styles.profileImage}
+            contentFit="cover"
+            transition={200}
+            placeholder={Images.profile.profileImage}
+          />
           <Text style={styles.name}>
             {user?.firstName} {user?.lastName}
           </Text>
 
           <View style={styles.locationContainer}>
-            <Ionicons name="location-outline" size={16} color="gray" />
+            <Ionicons name="location-outline" size={16} color={colors.grey} />
             <Text style={styles.locationText}>
               {user?.locationText || "Location not specified"}
             </Text>
@@ -133,7 +177,7 @@ const RequestProfile: React.FC = () => {
                 <Ionicons
                   name="information-circle-outline"
                   size={16}
-                  color="lightgray"
+                  color={colors.grey}
                   style={styles.infoIcon}
                 />
               </View>
@@ -151,7 +195,7 @@ const RequestProfile: React.FC = () => {
               fontSize: 18,
               fontWeight: "bold",
               marginBottom: 15,
-              color: Colors.black
+              color: colors.black
             }}>
               Recent Reviews
             </Text>
@@ -165,6 +209,9 @@ const RequestProfile: React.FC = () => {
                         : Images.profile.profileImage
                     }
                     style={styles.reviewerImage}
+                    contentFit="cover"
+                    transition={200}
+                    placeholder={Images.profile.profileImage}
                   />
                   <View style={styles.reviewerNameContainer}>
                     <Text style={styles.reviewerName}>
@@ -189,7 +236,7 @@ const RequestProfile: React.FC = () => {
         {/* No Reviews Message */}
         {(!user?.ratings || user.ratings.length === 0) && (
           <View style={{ padding: 20, alignItems: "center" }}>
-            <Text style={{ color: "gray" }}>No reviews yet</Text>
+            <Text style={{ color: colors.grey }}>No reviews yet</Text>
           </View>
         )}
 
