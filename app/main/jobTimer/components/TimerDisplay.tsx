@@ -33,7 +33,7 @@ const TimerDisplay: React.FC<TimerDisplayProps> = ({ time, status, colors }) => 
     const getStatusColor = () => {
         switch (status) {
             case 'active':
-                return '#4CAF50';
+                return colors.primary;
             case 'paused':
                 return '#FF9800';
             case 'completed':
@@ -85,7 +85,7 @@ const styles = StyleSheet.create({
     statusBadge: {
         flexDirection: 'row',
         alignItems: 'center',
-        paddingHorizontal: 16,
+        paddingHorizontal: 10,
         paddingVertical: 8,
         borderRadius: 20,
         gap: 8,

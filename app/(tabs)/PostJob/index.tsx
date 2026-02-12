@@ -1768,7 +1768,7 @@ const PostJobScreen = ({ navigation: navProp }) => {
         <View style={styles.detailsSection}>
           <View style={[styles.detailRow, { marginBottom: 20 }]}>
             <Text style={styles.detailLabel}>BUDGET</Text>
-            <Text style={styles.budget}>₹{budget || "500"}/hr</Text>
+            <Text style={styles.budget}>₹{budget || "500"}/person</Text>
           </View>
           <View style={styles.separator} />
 

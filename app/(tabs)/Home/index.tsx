@@ -35,7 +35,9 @@ import { restoreSession } from "../../../utilities/authentication";
 import { JobPost } from "../../../types";
 import { useJobPostings } from "../../../hooks/useJobs";
 import { JobCardSkeleton } from "../../../components/Shimmer/Skeletons";
-// import NotificationTester from '../../../components/NotificationTester';
+import { useActiveJob } from "../../../hooks/useActiveJob";
+import LiveJobHeader from "./components/LiveJobHeader";
+import SuccessAnimation from "../../../components/SuccessAnimation";
 
 
 const categoryIcons: Record<string, any> = {
@@ -60,6 +62,24 @@ const getCategoryIcon = (categoryName?: string) => {
 
 const HomeScreen = () => {
   const { sendVerificationCodeNotification } = useNotifications();
+  const activeJobState = useActiveJob();
+  const [showSuccessAnimation, setShowSuccessAnimation] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
+  const [successSubMessage, setSuccessSubMessage] = useState("");
+
+  // Effect to handle success animation for worker completion
+  useEffect(() => {
+    if (activeJobState.allWorkersCompleted) {
+      setSuccessMessage("All Workers Completed!");
+      setSuccessSubMessage(`Great job! ${activeJobState.job?.name} is fully complete.`);
+      setShowSuccessAnimation(true);
+    } else if (activeJobState.lastWorkerCompletion) {
+      const { workerName } = activeJobState.lastWorkerCompletion;
+      setSuccessMessage("Task Completed!");
+      setSuccessSubMessage(`${workerName} has finished their work.`);
+      setShowSuccessAnimation(true);
+    }
+  }, [activeJobState.lastWorkerCompletion, activeJobState.allWorkersCompleted, activeJobState.job?.name]);
 
   const testNotification = () => {
     sendVerificationCodeNotification("test-job-123", "Test Job", "123456");
@@ -89,6 +109,18 @@ const HomeScreen = () => {
   const navigation = useNavigation<any>();
   const userData = useSelector((state: any) => state.authentication.userData);
   const dispatch = useDispatch();
+
+  // Refs to access latest state without triggering re-renders/effects
+  const currentUserRef = useRef(currentUser);
+  const authStatusRef = useRef(authStatus);
+
+  useEffect(() => {
+    currentUserRef.current = currentUser;
+  }, [currentUser]);
+
+  useEffect(() => {
+    authStatusRef.current = authStatus;
+  }, [authStatus]);
 
   // Notification context
   const { unreadCount } = useNotifications();
@@ -336,9 +368,12 @@ const HomeScreen = () => {
       setLocationAddress(specific); // Keep for legacy compatibility if needed
       console.log("Location fetched:", locationData);
 
-      if (authStatus && currentUser?.id) {
+      setLocationAddress(specific); // Keep for legacy compatibility if needed
+      console.log("Location fetched:", locationData);
+
+      if (authStatusRef.current && currentUserRef.current?.id) {
         try {
-          console.log("Updating backend location for user:", currentUser.id);
+          console.log("Updating backend location for user:", currentUserRef.current.id);
           await updateUserLocationWithRetry({
             coordinates: {
               latitude: locationData.coordinates.latitude,
@@ -461,7 +496,7 @@ const HomeScreen = () => {
         setLocationDetails({ specific, broad });
         setLocationAddress(specific);
 
-        if (authStatus && currentUser) {
+        if (authStatusRef.current && currentUserRef.current) {
           try {
             await updateUserLocationWithRetry(selectedLocation);
             console.log(
@@ -572,7 +607,7 @@ const HomeScreen = () => {
       };
 
       fetchLocationAndRefetch();
-    }, [isInitialized, authStatus, currentUser, refetchJobs])
+    }, [isInitialized, refetchJobs]) // Removed authStatus and currentUser to prevent loops
   );
 
   // OPTIMIZED: Debounce filter changes to avoid excessive API calls
@@ -1011,35 +1046,43 @@ const HomeScreen = () => {
         ListHeaderComponent={
           <>
             {/* Header */}
-            <View style={styles.header}>
-              <View style={styles.locationHeader}>
-                <View style={styles.iconContainer}>
-                  <Ionicons name="location" size={20} color={colors.primary} />
+            {activeJobState.job ? (
+              <LiveJobHeader
+                job={activeJobState.job}
+                activeWorkerCount={activeJobState.activeWorkerCount}
+                totalWorkerCount={activeJobState.totalWorkerCount}
+              />
+            ) : (
+              <View style={styles.header}>
+                <View style={styles.locationHeader}>
+                  <View style={styles.iconContainer}>
+                    <Ionicons name="location" size={20} color={colors.primary} />
+                  </View>
+                  <View>
+                    <TouchableOpacity style={styles.locationSelector} onPress={fetchCurrentLocation}>
+                      <Text style={styles.locationTitleHeader}>{locationDetails.specific}</Text>
+                      <Ionicons name="chevron-down" size={14} color={colors.black} style={{ marginLeft: 4, marginTop: 2 }} />
+                    </TouchableOpacity>
+                    {!!locationDetails.broad && (
+                      <Text style={styles.locationSubtitleHeader} numberOfLines={1}>
+                        {locationDetails.broad}
+                      </Text>
+                    )}
+                  </View>
                 </View>
-                <View>
-                  <TouchableOpacity style={styles.locationSelector} onPress={fetchCurrentLocation}>
-                    <Text style={styles.locationTitleHeader}>{locationDetails.specific}</Text>
-                    <Ionicons name="chevron-down" size={14} color={colors.black} style={{ marginLeft: 4, marginTop: 2 }} />
-                  </TouchableOpacity>
-                  {!!locationDetails.broad && (
-                    <Text style={styles.locationSubtitleHeader} numberOfLines={1}>
-                      {locationDetails.broad}
-                    </Text>
-                  )}
-                </View>
+                <TouchableOpacity
+                  onPress={handleNotificationPress}
+                  style={{ position: "relative", marginRight: 10 }}
+                >
+                  <Ionicons
+                    name="notifications-outline"
+                    size={22}
+                    color={colors.black}
+                  />
+                  <NotificationBadge />
+                </TouchableOpacity>
               </View>
-              <TouchableOpacity
-                onPress={handleNotificationPress}
-                style={{ position: "relative", marginRight: 10 }}
-              >
-                <Ionicons
-                  name="notifications-outline"
-                  size={22}
-                  color={colors.black}
-                />
-                <NotificationBadge />
-              </TouchableOpacity>
-            </View>
+            )}
 
             {/* Search Bar */}
             <View style={styles.searchContainer}>
@@ -1122,6 +1165,13 @@ const HomeScreen = () => {
             )}
           </>
         }
+      />
+      <SuccessAnimation
+        visible={showSuccessAnimation}
+        message={successMessage}
+        subMessage={successSubMessage}
+        type={activeJobState.allWorkersCompleted ? 'all' : 'single'}
+        onAnimationFinish={() => setShowSuccessAnimation(false)}
       />
     </View>
   );

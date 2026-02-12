@@ -9,6 +9,8 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { AppState, AppStateStatus } from 'react-native';
 import NetInfo from '@react-native-community/netinfo';
 import Toast from 'react-native-toast-message';
+import { useQueryClient } from '@tanstack/react-query';
+import { useSelector } from 'react-redux';
 import {
     getWorkerSession,
     startWorkerSession,
@@ -65,6 +67,10 @@ export const useJobSession = (jobId: string): UseJobSessionReturn => {
     const [isOnline, setIsOnline] = useState(true);
     const [lastSyncTime, setLastSyncTime] = useState<number | null>(null);
     const [queueSize, setQueueSize] = useState(0);
+
+    const queryClient = useQueryClient();
+    const userData = useSelector((state: any) => state.authentication.userData);
+    const userId = userData?.id || userData?._id;
 
     const appState = useRef<AppStateStatus>(AppState.currentState);
     const heartbeatInterval = useRef<NodeJS.Timeout | null>(null);
@@ -214,6 +220,20 @@ export const useJobSession = (jobId: string): UseJobSessionReturn => {
             const response = await startWorkerSession(jobId);
 
             if (response.data.success) {
+                // CRITICAL FIX: Update session with real ID immediately from response
+                // This prevents subsequent calls (like sync) from using 'temp' ID
+                if (response.data.data) {
+                    setSession(prev => ({
+                        ...prev,
+                        ...response.data.data, // assuming response contains full session data or similar structure
+                        session: {
+                            ...prev?.session,
+                            ...response.data.data.session, // Merge correctly
+                            id: response.data.data.session?.id || response.data.data.id // Fallback if structure varies
+                        }
+                    } as SessionData));
+                }
+
                 await loadSession(true);
                 Toast.show({
                     type: 'success',
@@ -243,12 +263,22 @@ export const useJobSession = (jobId: string): UseJobSessionReturn => {
 
         // Optimistic update
         const previousSession = session;
+
+        // Calculate accrued time to update totalWorkedSeconds immediately for UI
+        const now = Date.now();
+        const currentTotal = session.session.totalWorkedSeconds || 0;
+        const additionalSeconds = lastSyncTime
+            ? Math.floor((now - lastSyncTime) / 1000)
+            : 0;
+
         setSession({
             ...session,
             session: {
                 ...session.session,
                 status: 'paused',
                 lastPauseTimestamp: new Date().toISOString(),
+                // Update total worked seconds so timer doesn't reset to 0
+                totalWorkedSeconds: currentTotal + Math.max(0, additionalSeconds),
             },
         });
 
@@ -405,6 +435,15 @@ export const useJobSession = (jobId: string): UseJobSessionReturn => {
 
             if (response.data.success) {
                 await loadSession(true);
+
+                // CRITICAL: Invalidate active job queries to force UI update immediately
+                // This ensures the "Active Job" bar disappears right away
+                console.log('[useJobSession] Invalidating active job queries');
+                await Promise.all([
+                    queryClient.invalidateQueries({ queryKey: ['userJobs', userId, 'activeCheck'] }),
+                    queryClient.invalidateQueries({ queryKey: ['userAppliedJobs', userId, 'activeCheck'] })
+                ]);
+
                 Toast.show({
                     type: 'success',
                     text1: 'Session Completed',
@@ -423,11 +462,17 @@ export const useJobSession = (jobId: string): UseJobSessionReturn => {
         } finally {
             setActionLoading(false);
         }
-    }, [session, isOnline, loadSession, lastSyncTime]);
+    }, [session, isOnline, loadSession, lastSyncTime, queryClient, userId]);
 
     // Heartbeat sync
     const syncHeartbeat = useCallback(async () => {
         if (!session?.session?.id || session.session.status !== 'active') {
+            return;
+        }
+
+        // Don't sync if we have a temporary ID (optimistic update in progress)
+        if (session.session.id === 'temp') {
+            console.log('[useJobSession] Skipping heartbeat sync for temp session');
             return;
         }
 

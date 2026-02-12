@@ -81,15 +81,17 @@ export const useJobPostings = (filters: JobFilters) => {
     getNextPageParam: (lastPage) => {
       return lastPage.hasMore ? lastPage.page + 1 : undefined;
     },
-    staleTime: 1000 * 30, // 30 seconds stale time
-    refetchInterval: 1000 * 30, // Poll every 30 seconds
+    staleTime: 1000 * 60 * 5, // 5 minutes stale time (increased from 30s)
+    refetchInterval: false, // Disable automatic polling for main feed to prevent overload
     refetchOnWindowFocus: true, // Refetch when app comes to foreground
     refetchOnMount: true,
     retry: (failureCount, error: any) => {
+      // Don't retry on 429 (Too Many Requests) or canceled requests
+      if (error.response?.status === 429) return false;
       if (error.name === 'CanceledError' || error.code === 'ERR_CANCELED') {
         return false;
       }
-      return failureCount < 3;
+      return failureCount < 2;
     },
   });
 };
@@ -107,14 +109,15 @@ export const useUserJobPostings = (userId: string | undefined) => {
       return lastPage.hasMore ? allPages.length + 1 : undefined;
     },
     enabled: !!userId,
-    staleTime: 1000 * 60,
+    staleTime: 1000 * 60 * 2, // 2 minutes
     refetchOnWindowFocus: true,
     refetchOnMount: true,
     retry: (failureCount, error: any) => {
+      if (error.response?.status === 429) return false;
       if (error.name === 'CanceledError' || error.code === 'ERR_CANCELED') {
         return false;
       }
-      return failureCount < 3;
+      return failureCount < 2;
     },
   });
 };
@@ -132,14 +135,15 @@ export const useUserAppliedJobs = (userId: string | undefined) => {
       return lastPage.hasMore ? allPages.length + 1 : undefined;
     },
     enabled: !!userId,
-    staleTime: 1000 * 60,
+    staleTime: 1000 * 60 * 2, // 2 minutes
     refetchOnWindowFocus: true,
     refetchOnMount: true,
     retry: (failureCount, error: any) => {
+      if (error.response?.status === 429) return false;
       if (error.name === 'CanceledError' || error.code === 'ERR_CANCELED') {
         return false;
       }
-      return failureCount < 3;
+      return failureCount < 2;
     },
   });
 };

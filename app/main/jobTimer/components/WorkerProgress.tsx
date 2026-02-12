@@ -31,7 +31,7 @@ const WorkerProgress: React.FC<WorkerProgressProps> = ({
         switch (status) {
             case 'active':
                 return {
-                    color: colors.green || '#4CAF50',
+                    color: colors.primary,
                     icon: 'play-circle' as const,
                     text: 'Working',
                 };
@@ -120,10 +120,10 @@ const styles = StyleSheet.create({
         borderRadius: 16,
         padding: 20,
         shadowColor: '#000',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.1,
-        shadowRadius: 8,
-        elevation: 3,
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.06,
+        shadowRadius: 6,
+        elevation: 2,
         marginBottom: 20,
     },
     header: {
@@ -152,7 +152,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         alignSelf: 'flex-start',
-        paddingHorizontal: 10,
+        paddingHorizontal: 8,
         paddingVertical: 4,
         borderRadius: 12,
         gap: 4,

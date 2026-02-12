@@ -11,6 +11,10 @@ import { logout as logoutAction } from "../redux/reducers/authReducers";
 
 const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL;
 
+// Simple request throttler to prevent duplicate requests
+const requestThrottler = new Map<string, number>();
+const THROTTLE_WINDOW = 2000; // 2 seconds
+
 const api = axios.create({
   baseURL: API_BASE_URL,
   headers: {
@@ -24,6 +28,26 @@ const api = axios.create({
 api.interceptors.request.use(
   async (config) => {
     try {
+      // Create a unique key for the request
+      const requestKey = `${config.method}:${config.url}:${JSON.stringify(config.params)}:${JSON.stringify(config.data)}`;
+      const now = Date.now();
+
+      // Check if identical request was made recently
+      // Exception: allow POST/PUT/DELETE non-idempotent requests if needed, but usually we want to prevent double-submit too
+      // For now, only throttle GET requests to be safe
+      if (config.method?.toUpperCase() === 'GET' && requestThrottler.has(requestKey)) {
+        const lastTime = requestThrottler.get(requestKey) || 0;
+        if (now - lastTime < THROTTLE_WINDOW) {
+          // Silently cancel without logging to consoleMain
+          const controller = new AbortController();
+          config.signal = controller.signal;
+          controller.abort('Request throttled locally');
+          return Promise.reject(new axios.Cancel('Request throttled locally'));
+        }
+      }
+
+      requestThrottler.set(requestKey, now);
+
       const token = await getAccessToken();
 
       console.log("API Request:", {
@@ -67,7 +91,7 @@ api.interceptors.response.use(
 
     // Check if the request was canceled
     if (axios.isCancel(error) || error.message === 'canceled') {
-      console.log("API Request Canceled:", originalRequest?.url);
+      // Don't log canceled requests to keep console clean
       return Promise.reject(error);
     }
 
