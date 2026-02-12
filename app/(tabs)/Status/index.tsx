@@ -63,6 +63,7 @@ const MyPostTab = () => {
     isLoading,
     refetch,
     isRefetching,
+    isFetching,
   } = useUserJobPostings(userId);
 
   const deleteJobMutation = useDeleteJob();
@@ -194,24 +195,29 @@ const MyPostTab = () => {
     );
   };
 
-  const renderEmpty = () => (
-    <View
-      style={{
-        justifyContent: "center",
-        alignItems: "center",
-        flex: 1,
-        padding: 20,
-        minHeight: 400,
-      }}
-    >
-      <Ionicons name="document-outline" size={64} color={colors.grey} />
-      <Text style={{ fontSize: 18, color: colors.grey, marginTop: 16 }}>
-        {selectedStatus
-          ? `No ${selectedStatus.toLowerCase()} jobs`
-          : "No job posts yet"}
-      </Text>
-    </View>
-  );
+  const renderEmpty = () => {
+    // Don't show empty state if currently fetching data
+    if (isFetching || isLoading) return null;
+
+    return (
+      <View
+        style={{
+          justifyContent: "center",
+          alignItems: "center",
+          flex: 1,
+          padding: 20,
+          minHeight: 400,
+        }}
+      >
+        <Ionicons name="document-outline" size={64} color={colors.grey} />
+        <Text style={{ fontSize: 18, color: colors.grey, marginTop: 16 }}>
+          {selectedStatus
+            ? `No ${selectedStatus.toLowerCase()} jobs`
+            : "No job posts yet"}
+        </Text>
+      </View>
+    );
+  };
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
@@ -275,6 +281,7 @@ const AppliedTab = () => {
     isLoading,
     refetch,
     isRefetching,
+    isFetching,
   } = useUserAppliedJobs(userId);
 
   const withdrawMutation = useWithdrawApplication();
@@ -329,6 +336,7 @@ const AppliedTab = () => {
         type: "success",
         text1: "Withdrawn",
         text2: "You have withdrawn your application successfully",
+        visibilityTime: 2000,
       });
     } catch (error: any) {
       console.error("Error withdrawing application:", error);
@@ -418,24 +426,29 @@ const AppliedTab = () => {
     );
   };
 
-  const renderEmpty = () => (
-    <View
-      style={{
-        justifyContent: "center",
-        alignItems: "center",
-        flex: 1,
-        padding: 20,
-        minHeight: 400,
-      }}
-    >
-      <Ionicons name="document-outline" size={64} color={colors.grey} />
-      <Text style={{ fontSize: 18, color: colors.grey, marginTop: 16 }}>
-        {selectedStatus
-          ? `No ${selectedStatus.toLowerCase()} applications`
-          : "No applied jobs yet"}
-      </Text>
-    </View>
-  );
+  const renderEmpty = () => {
+    // Don't show empty state if currently fetching data
+    if (isFetching || isLoading) return null;
+
+    return (
+      <View
+        style={{
+          justifyContent: "center",
+          alignItems: "center",
+          flex: 1,
+          padding: 20,
+          minHeight: 400,
+        }}
+      >
+        <Ionicons name="document-outline" size={64} color={colors.grey} />
+        <Text style={{ fontSize: 18, color: colors.grey, marginTop: 16 }}>
+          {selectedStatus
+            ? `No ${selectedStatus.toLowerCase()} applications`
+            : "No applied jobs yet"}
+        </Text>
+      </View>
+    );
+  };
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>

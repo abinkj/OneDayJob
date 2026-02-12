@@ -8,7 +8,9 @@ import {
   LayoutAnimation,
   Platform,
   UIManager,
+
   ActivityIndicator,
+  RefreshControl,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { Header } from "../../../components/header";
@@ -45,7 +47,9 @@ const Profile: React.FC = () => {
   const [reviews, setReviews] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isReadyToWork, setIsReadyToWork] = useState(false);
+
   const [isDropdownVisible, setIsDropdownVisible] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const dropdownHeight = useRef(new Animated.Value(0)).current;
   const experiencedHeight = 206 * DeviceDimensions.heightRatio;
 
@@ -55,55 +59,61 @@ const Profile: React.FC = () => {
   // const styles = createStyles(colors); // Using useMemo is better for performance if styles are complex or re-renders frequent
   const styles = React.useMemo(() => createStyles(colors), [colors]);
 
-  useEffect(() => {
-    const fetchUserAndRatings = async () => {
-      try {
-        setIsLoading(true);
+  const fetchUserAndRatings = async (isRefreshing = false) => {
+    try {
+      if (!isRefreshing) setIsLoading(true);
 
-        // Get user ID from local storage first
-        let userData = await getUserData();
+      // Get user ID from local storage first
+      let userData = await getUserData();
 
-        if (userData) {
-          const userId = userData.id || userData._id;
+      if (userData) {
+        const userId = userData.id || userData._id;
 
-          // Fetch fresh user data from backend (includes savedAddresses)
-          try {
-            const profileResponse = await getUserProfile(userId);
-            if (profileResponse.success && profileResponse.data) {
-              userData = profileResponse.data;
-              console.log('Profile screen - Fetched user from backend:', {
-                hasSavedAddresses: !!userData.savedAddresses,
-                savedAddressesCount: userData.savedAddresses?.length || 0
-              });
-            }
-          } catch (error) {
-            console.error('Error fetching user profile from backend:', error);
-            // Continue with local storage data as fallback
+        // Fetch fresh user data from backend (includes savedAddresses)
+        try {
+          const profileResponse = await getUserProfile(userId);
+          if (profileResponse.success && profileResponse.data) {
+            userData = profileResponse.data;
+            console.log('Profile screen - Fetched user from backend:', {
+              hasSavedAddresses: !!userData.savedAddresses,
+              savedAddressesCount: userData.savedAddresses?.length || 0
+            });
           }
-
-          console.log('Profile screen - User profile picture:', userData.profilePicture);
-          setUser(userData);
-
-          // Fetch ratings for this user (as an employee)
-          try {
-            const userId = userData.id || userData._id;
-            const ratingsResponse = await getUserRatings(userId, "employee");
-            if (ratingsResponse.data.success) {
-              setReviews(ratingsResponse.data.data);
-            }
-          } catch (error) {
-            console.error("Error fetching ratings:", error);
-          }
+        } catch (error) {
+          console.error('Error fetching user profile from backend:', error);
+          // Continue with local storage data as fallback
         }
-      } catch (error) {
-        console.error("Error fetching user data:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
 
+        console.log('Profile screen - User profile picture:', userData.profilePicture);
+        setUser(userData);
+
+        // Fetch ratings for this user (as an employee)
+        try {
+          const userId = userData.id || userData._id;
+          const ratingsResponse = await getUserRatings(userId, "employee");
+          if (ratingsResponse.data.success) {
+            setReviews(ratingsResponse.data.data);
+          }
+        } catch (error) {
+          console.error("Error fetching ratings:", error);
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching user data:", error);
+    } finally {
+      if (!isRefreshing) setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
     fetchUserAndRatings();
   }, []);
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await fetchUserAndRatings(true);
+    setRefreshing(false);
+  };
 
   // Refresh user data when returning from edit profile
   useEffect(() => {
@@ -245,7 +255,18 @@ const Profile: React.FC = () => {
   return (
     <View style={styles.container}>
       <Header title="Profile" showEditButton onEditPress={handleEdit} />
-      <ScrollView bounces={false} contentContainerStyle={{ paddingBottom: 100 }}>
+      <ScrollView
+        bounces={true}
+        contentContainerStyle={{ paddingBottom: 100 }}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor={colors.primary}
+            colors={[colors.primary]} // Android
+          />
+        }
+      >
         {/* Profile Card */}
         <View style={styles.profileCard}>
           {/* <Image source={profileImageSrc} style={styles.profileImage} /> */}
