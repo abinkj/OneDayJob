@@ -63,7 +63,7 @@ const WorkerCard: React.FC<WorkerCardProps> = React.memo(({ worker, onRate, colo
             styles.container,
             {
                 backgroundColor: colors.cardBackground,
-                borderColor: colors.border || 'rgba(0,0,0,0.05)',
+                borderColor: colors.border,
                 borderWidth: 1,
             }
         ]}>
@@ -75,13 +75,13 @@ const WorkerCard: React.FC<WorkerCardProps> = React.memo(({ worker, onRate, colo
                             ? { uri: worker.profilePictureUrl }
                             : (worker.profilePicture && typeof worker.profilePicture === 'string' && worker.profilePicture.startsWith('http'))
                                 ? { uri: worker.profilePicture }
-                                : Images.profile.profileImage
+                                : Images.profile.profileImage // Fallback to local asset
                     }
                     style={[styles.avatar, { borderColor: colors.border || 'rgba(0,0,0,0.1)' }]}
                     placeholder={Images.profile.profileImage}
                     placeholderContentFit="cover"
                     contentFit="cover"
-                    cachePolicy="none"
+                    cachePolicy="memory-disk"
                     transition={300}
                     onError={(error) => {
                         console.log('WorkerCard image error:', error);
@@ -150,11 +150,7 @@ const styles = StyleSheet.create({
         padding: 16,
         borderRadius: 16,
         marginBottom: 12,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.05,
-        shadowRadius: 8,
-        elevation: 2,
+
     },
     header: {
         flexDirection: 'row',

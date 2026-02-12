@@ -47,10 +47,17 @@ export const calculateDisplayTime = (
 
     // For active sessions, add elapsed time since last server update
     const referenceTime = new Date(referenceTimestamp).getTime();
+
+    // Validate reference time
+    if (isNaN(referenceTime)) {
+        return totalWorkedSeconds || 0;
+    }
+
     const elapsedSinceLastUpdate = Math.floor((currentTimestamp - referenceTime) / 1000);
 
-    // Ensure we never go backwards
-    return Math.max(totalWorkedSeconds + elapsedSinceLastUpdate, totalWorkedSeconds);
+    // Ensure we never go backwards or return NaN
+    // If local time is behind server time (clock drift), we just show server total
+    return Math.max(totalWorkedSeconds + Math.max(0, elapsedSinceLastUpdate), totalWorkedSeconds);
 };
 
 /**

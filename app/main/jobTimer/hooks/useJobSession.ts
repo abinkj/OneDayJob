@@ -389,12 +389,20 @@ export const useJobSession = (jobId: string): UseJobSessionReturn => {
 
     // Complete session
     const completeSession = useCallback(async (notes = '') => {
-        if (!session?.session?.id) return;
+        // Guard clause: Don't complete if already completed or no session ID
+        if (!session?.session?.id || session.session.status === 'completed') {
+            console.log('[useJobSession] Session already completed or invalid, skipping completion');
+            return;
+        }
 
         setActionLoading(true);
 
+        const now = Date.now();
+
         // Optimistic update
         const previousSession = session;
+        const previousLastSyncTime = lastSyncTime;
+
         setSession({
             ...session,
             session: {
@@ -402,6 +410,9 @@ export const useJobSession = (jobId: string): UseJobSessionReturn => {
                 status: 'completed',
             },
         });
+
+        // Update sync time to now to prevent double-counting or drift during the API call
+        setLastSyncTime(now);
 
         try {
             if (!isOnline) {
@@ -454,6 +465,7 @@ export const useJobSession = (jobId: string): UseJobSessionReturn => {
             console.error('[useJobSession] Error completing session:', error);
             // Rollback
             setSession(previousSession);
+            setLastSyncTime(previousLastSyncTime);
             Toast.show({
                 type: 'error',
                 text1: 'Error',
@@ -466,7 +478,8 @@ export const useJobSession = (jobId: string): UseJobSessionReturn => {
 
     // Heartbeat sync
     const syncHeartbeat = useCallback(async () => {
-        if (!session?.session?.id || session.session.status !== 'active') {
+        // Don't sync if action is in progress or session is not active
+        if (actionLoading || !session?.session?.id || session.session.status !== 'active') {
             return;
         }
 
@@ -496,20 +509,27 @@ export const useJobSession = (jobId: string): UseJobSessionReturn => {
                 return;
             }
 
-            await syncWorkerTime(
+            const response = await syncWorkerTime(
                 session.session.id,
                 additionalSeconds,
                 session.session.status,
                 true
             );
 
-            setLastSyncTime(now);
-            console.log('[useJobSession] Heartbeat synced');
+            // CRITICAL FIX: Only update lastSyncTime if the server successfully processed the update
+            if (response.data && response.data.success) {
+                setLastSyncTime(now);
+                console.log('[useJobSession] Heartbeat synced successfully');
 
-            // CRITICAL FIX: Reload session data after sync to get updated totalWorkedSeconds
-            await loadSession(true);
+                // Reload session data to ensure client is in sync with server
+                // This updates totalWorkedSeconds from the server's source of truth
+                await loadSession(true);
+            } else {
+                console.warn('[useJobSession] Heartbeat sync reported failure, not updating lastSyncTime');
+            }
         } catch (error) {
             console.error('[useJobSession] Heartbeat sync failed:', error);
+            // Do NOT update lastSyncTime here, so next sync will attempt to send the accumulated time again
         }
     }, [session, lastSyncTime, isOnline, loadSession]);
 
