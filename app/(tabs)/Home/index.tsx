@@ -346,12 +346,14 @@ const HomeScreen = () => {
       setLocation(locationData.coordinates);
 
       // Premium Address Logic
-      const specific = locationData.district || locationData.name || locationData.city || "Current Location";
+      // High-precision "Uber-like" logic
+      const specific = locationData.address || locationData.name || locationData.district || locationData.city || "Current Location";
 
       // Construct broad address (City/Area, State)
       // If 'specific' is the city, don't repeat it in broad
       let broadParts = [];
-      if (locationData.city && locationData.city !== specific) broadParts.push(locationData.city);
+      if (locationData.district && !specific.includes(locationData.district)) broadParts.push(locationData.district);
+      if (locationData.city && !specific.includes(locationData.city)) broadParts.push(locationData.city);
       if (locationData.state) broadParts.push(locationData.state);
 
       // Fallback strategies
@@ -367,10 +369,7 @@ const HomeScreen = () => {
 
       setLocationDetails({ specific, broad });
       setLocationAddress(specific); // Keep for legacy compatibility if needed
-      console.log("Location fetched:", locationData);
-
-      setLocationAddress(specific); // Keep for legacy compatibility if needed
-      console.log("Location fetched:", locationData);
+      console.log("Location fetched with high accuracy:", locationData.accuracy ? `${locationData.accuracy}m` : "Unknown", locationData);
 
       if (authStatusRef.current && currentUserRef.current?.id) {
         try {
@@ -480,10 +479,11 @@ const HomeScreen = () => {
         setLocation(selectedLocation.coordinates);
 
         // Premium Address Logic for Search
-        const specific = selectedLocation.district || selectedLocation.name || selectedLocation.city || "Selected Location";
+        const specific = selectedLocation.address || selectedLocation.name || selectedLocation.district || selectedLocation.city || "Selected Location";
 
         let broadParts = [];
-        if (selectedLocation.city && selectedLocation.city !== specific) broadParts.push(selectedLocation.city);
+        if (selectedLocation.district && !specific.includes(selectedLocation.district)) broadParts.push(selectedLocation.district);
+        if (selectedLocation.city && !specific.includes(selectedLocation.city)) broadParts.push(selectedLocation.city);
         if (selectedLocation.state) broadParts.push(selectedLocation.state);
 
         if (broadParts.length === 0 && selectedLocation.address) {

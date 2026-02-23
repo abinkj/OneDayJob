@@ -898,14 +898,14 @@ const PostJobScreen = ({ navigation: navProp }) => {
         });
         return;
       }
-      if (!jobDescription) {
-        showAlert({
-          type: "info",
-          title: "Required",
-          message: "Please enter a job description",
-        });
-        return;
-      }
+      // if (!jobDescription) {
+      //   showAlert({
+      //     type: "info",
+      //     title: "Required",
+      //     message: "Please enter a job description",
+      //   });
+      //   return;
+      // }
       if (!canBeDoneRemotely && !selectedLocation) {
         showAlert({
           type: "info",
@@ -924,6 +924,16 @@ const PostJobScreen = ({ navigation: navProp }) => {
     }
 
     if (currentStep === 3) {
+      // Validate that a date is selected
+      if (!scheduleDate) {
+        showAlert({
+          type: "info",
+          title: "Date Required",
+          message: "Please select a date for your job",
+        });
+        return;
+      }
+
       // Check if no time preference is selected
       if (selectedTimePreferences.length === 0) {
         showAlert({
@@ -1685,25 +1695,25 @@ const PostJobScreen = ({ navigation: navProp }) => {
         {/* Action Menu Dropdown */}
         {showMenu && (
           <View style={styles.menuContainer}>
-            <TouchableOpacity style={styles.menuItem} onPress={handleShare}>
+            {/* <TouchableOpacity style={styles.menuItem} onPress={handleShare}>
               <Ionicons
                 name="share-social-outline"
                 size={20}
                 color={colors.black}
               />
               <Text style={styles.menuText}>Share</Text>
-            </TouchableOpacity>
+            </TouchableOpacity> */}
             <TouchableOpacity style={styles.menuItem} onPress={handleEdit}>
               <Ionicons name="create-outline" size={20} color={colors.black} />
               <Text style={styles.menuText}>Edit</Text>
             </TouchableOpacity>
-            <TouchableOpacity
+            {/* <TouchableOpacity
               style={styles.menuItem}
               onPress={handlePostSimilar}
             >
               <Ionicons name="copy-outline" size={20} color={colors.black} />
               <Text style={styles.menuText}>Post Similar Job</Text>
-            </TouchableOpacity>
+            </TouchableOpacity> */}
             <TouchableOpacity style={styles.menuItem} onPress={handleRemoveJob}>
               <Ionicons name="trash-outline" size={20} color="red" />
               <Text style={[styles.menuText, { color: "red" }]}>
@@ -1808,8 +1818,7 @@ const PostJobScreen = ({ navigation: navProp }) => {
           <View style={styles.detailRow}>
             <Text style={styles.detailLabel}>DESCRIPTION</Text>
             <Text style={styles.descriptionValue}>
-              {jobDescription ||
-                "I need two people to help move furniture from my second-floor apartment to a moving truck. It includes a sofa, bed, and a few boxes. The task should take around an hour."}
+              {jobDescription}
             </Text>
           </View>
           <View style={styles.separator} />

@@ -12,6 +12,8 @@ export interface LocationData {
   name?: string | null;
   district?: string | null;
   subregion?: string | null;
+  accuracy?: number | null;
+  isMocked?: boolean;
   coordinates: {
     latitude: number;
     longitude: number;
@@ -27,6 +29,115 @@ export interface PlacePrediction {
   };
 }
 
+// Helper for robust, high-accuracy GPS parsing
+export const getHighAccuracyLocation = async (): Promise<Location.LocationObject> => {
+  // 1. Initial Quick Check (Often cached/inaccurate but instantaneous)
+  let bestLocation = await Location.getCurrentPositionAsync({
+    accuracy: Location.Accuracy.Balanced,
+  });
+
+  // If the first burst is highly accurate (< 20 meters), use it immediately.
+  if (bestLocation.coords.accuracy && bestLocation.coords.accuracy <= 20) {
+    return bestLocation;
+  }
+
+  // 2. Warm-up phase (Drift Reduction)
+  // Poll location 3 times over ~3-4 seconds, keeping the one with the best accuracy.
+  for (let i = 0; i < 3; i++) {
+    try {
+      const tempLoc = await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.Highest, // Forces GPS rather than wifi triangulation
+      });
+
+      const currentAcc = tempLoc.coords.accuracy || 9999;
+      const bestAcc = bestLocation.coords.accuracy || 9999;
+
+      if (currentAcc < bestAcc) {
+        bestLocation = tempLoc;
+      }
+
+      // If we find a highly accurate lock (< 15m), break early to save time.
+      if (currentAcc <= 15) {
+        break;
+      }
+
+      // Small delay between polls
+      await new Promise(resolve => setTimeout(resolve, 800));
+    } catch (e) {
+      console.warn("Error during location warm-up:", e);
+    }
+  }
+
+  return bestLocation;
+};
+
+// Advanced Google Geocoding for Uber/Swiggy-level precision
+const reverseGeocodeWithGoogle = async (lat: number, lng: number): Promise<LocationData | null> => {
+  if (!GOOGLE_PLACES_API_KEY || GOOGLE_PLACES_API_KEY === "YOUR_GOOGLE_PLACES_API_KEY") {
+    return null;
+  }
+
+  try {
+    const response = await fetch(
+      `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${GOOGLE_PLACES_API_KEY}`
+    );
+    const data = await response.json();
+
+    if (data.status === "OK" && data.results && data.results.length > 0) {
+      // Find the most specific "rooftop" or "street_address" result
+      const bestResult = data.results.find((r: any) =>
+        r.types.includes('street_address') || r.types.includes('premise') || r.types.includes('subpremise')
+      ) || data.results[0]; // Fallback to first result if no precise match
+
+      const addressComponents = bestResult.address_components || [];
+      const addressData: LocationData = {
+        address: "",
+        city: "",
+        state: "",
+        country: "United States",
+        zipCode: "",
+        name: null,
+        district: null,
+        subregion: null,
+        coordinates: { latitude: lat, longitude: lng },
+      };
+
+      // Extract precise components
+      let streetNumber = "";
+      let route = "";
+
+      addressComponents.forEach((c: any) => {
+        const types = c.types;
+        if (types.includes("street_number")) streetNumber = c.long_name;
+        if (types.includes("route")) route = c.long_name;
+        if (types.includes("locality")) addressData.city = c.long_name;
+        if (types.includes("sublocality") || types.includes("neighborhood")) {
+          if (!addressData.district) addressData.district = c.long_name;
+        }
+        if (types.includes("administrative_area_level_1")) addressData.state = c.long_name;
+        if (types.includes("country")) addressData.country = c.long_name;
+        if (types.includes("postal_code")) addressData.zipCode = c.long_name;
+        if (types.includes("premise")) addressData.name = c.long_name;
+      });
+
+      // Construct a highly readable street address
+      const streetParts = [streetNumber, route].filter(Boolean);
+      if (streetParts.length > 0) {
+        addressData.address = streetParts.join(" ");
+      } else {
+        // Fallback to the formatted_address provided by Google minus the trailing city/state details if possible
+        addressData.address = bestResult.formatted_address.split(',')[0];
+      }
+
+      return addressData;
+    }
+    return null;
+  } catch (error) {
+    console.error("Google Geocoding failed:", error);
+    return null;
+  }
+};
+
 // Get current location
 export const getCurrentLocation = async (): Promise<LocationData | null> => {
   try {
@@ -35,20 +146,43 @@ export const getCurrentLocation = async (): Promise<LocationData | null> => {
       throw new Error("Location permission not granted");
     }
 
-    let location = await Location.getCurrentPositionAsync({
-      accuracy: Location.Accuracy.High,
-    });
+    // 1. Get highly accurate coordinates with drift reduction
+    let location: Location.LocationObject;
+    try {
+      location = await getHighAccuracyLocation();
+    } catch (e) {
+      // Ultimate fallback if GPS is completely lost but we have permissions
+      console.warn("High accuracy fetch failed, falling back to Last Known Position", e);
+      const lastKnown = await Location.getLastKnownPositionAsync({});
+      if (!lastKnown) throw new Error("Could not determine location");
+      location = lastKnown;
+    }
 
-    // Reverse geocode to get address details
+    const { latitude, longitude, accuracy } = location.coords;
+    const isMocked = location.mocked || false;
+
+    // 2. Try Google Geocoding first for highest address precision
+    const googleAddress = await reverseGeocodeWithGoogle(latitude, longitude);
+
+    if (googleAddress) {
+      return {
+        ...googleAddress,
+        accuracy,
+        isMocked
+      };
+    }
+
+    // 3. Fallback to Expo Native Reverse Geocoding
+    console.log("Falling back to native Expo reverse geocoding...");
     const addressResponse = await Location.reverseGeocodeAsync({
-      latitude: location.coords.latitude,
-      longitude: location.coords.longitude,
+      latitude,
+      longitude,
     });
 
     if (addressResponse.length > 0) {
       const address = addressResponse[0];
       return {
-        address: `${address.street || ""} ${address.streetNumber || ""}`.trim(),
+        address: `${address.streetNumber || ""} ${address.street || ""}`.trim(),
         city: address.city || "",
         state: address.region || "",
         country: address.country || "United States",
@@ -56,24 +190,22 @@ export const getCurrentLocation = async (): Promise<LocationData | null> => {
         name: address.name,
         district: address.district,
         subregion: address.subregion,
-        coordinates: {
-          latitude: location.coords.latitude,
-          longitude: location.coords.longitude,
-        },
+        accuracy,
+        isMocked,
+        coordinates: { latitude, longitude },
       };
     }
 
-    // Fallback if reverse geocoding fails
+    // Ultimate Fail-safe Return
     return {
       address: "",
       city: "",
       state: "",
       country: "United States",
       zipCode: "",
-      coordinates: {
-        latitude: location.coords.latitude,
-        longitude: location.coords.longitude,
-      },
+      accuracy,
+      isMocked,
+      coordinates: { latitude, longitude },
     };
   } catch (error) {
     console.error("Error getting current location:", error);
