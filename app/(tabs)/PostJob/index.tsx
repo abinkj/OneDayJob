@@ -151,6 +151,7 @@ const PostJobScreen = ({ navigation: navProp }) => {
   );
   const [selectedTimePreferences, setSelectedTimePreferences] = useState([]); // Changed to array
   const [budget, setBudget] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Date/Time mode - simplified state
   const [scheduleDate, setScheduleDate] = useState<Date | null>(null);
@@ -716,7 +717,7 @@ const PostJobScreen = ({ navigation: navProp }) => {
     console.log("Selected category before posting:", selectedCategory);
     console.log("Category mapping:", categoryMapping);
     console.log("Backend category ID:", categoryMapping[selectedCategory]);
-
+    setIsSubmitting(true);
     setIsLoading(true);
 
     try {
@@ -770,6 +771,7 @@ const PostJobScreen = ({ navigation: navProp }) => {
       });
     } finally {
       setIsLoading(false);
+      setIsSubmitting(false);
     }
   };
   // Handle date selection from calendar
@@ -1913,7 +1915,7 @@ const PostJobScreen = ({ navigation: navProp }) => {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={handleBack}>
+        <TouchableOpacity onPress={handleBack} disabled={isSubmitting}>
           <Ionicons name="chevron-back" size={24} color={colors.black} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Post a Job</Text>
@@ -1944,7 +1946,7 @@ const PostJobScreen = ({ navigation: navProp }) => {
 
         {/* Fixed button container - always visible above keyboard */}
         <View style={{
-          paddingHorizontal: 20,
+          //paddingHorizontal: 20,
           paddingVertical: 16,
           paddingBottom: Platform.OS === "ios" ? 20 : 16,
           backgroundColor: colors.background,
@@ -1956,6 +1958,7 @@ const PostJobScreen = ({ navigation: navProp }) => {
               text={"Post"}
               color={colors.primary}
               onPress={handlePost}
+              disabled={isSubmitting}
             />
           ) : (
             <CustomButton
