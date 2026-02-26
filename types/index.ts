@@ -14,7 +14,7 @@ export interface UserLocation {
 
 export interface SavedAddress {
   _id?: string;
-  label: 'Home' | 'Work' | 'Other';
+  label: "Home" | "Work" | "Other";
   address: string;
   city: string;
   state: string;
@@ -173,6 +173,8 @@ export interface JobPost {
   updatedAt: string;
   userId: JobUser;
   requiresVerification?: boolean;
+  applicants?: any[];
+  hasApplied?: boolean;
 }
 
 // For backward compatibility and convenience
