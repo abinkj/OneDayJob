@@ -11,7 +11,7 @@ import {
 } from "react-native";
 import { OtpInput } from "react-native-otp-entry";
 import { useTheme } from "../../../contexts/ThemeContext";
-import { verifyOtp, requestOtp } from "../../../services/api";
+import { verifyOtp, requestOtp, getUserProfile } from "../../../services/api";
 import LottieView from "lottie-react-native";
 import { useRoute, useNavigation } from "@react-navigation/native";
 import { useDispatch } from "react-redux";
@@ -210,24 +210,25 @@ const Otp = () => {
     setIsLoading(true);
 
     try {
-      console.log("Verifying OTP for phoneNumber:", phoneNumber);
-      console.log("OTP code:", otp);
+      //console.log("Verifying OTP for phoneNumber:", phoneNumber);
+      //console.log("OTP code:", otp);
 
       const response = await verifyOtp({ phoneNumber, otpCode: otp });
-      console.log("OTP verification response:", response.data);
+      //console.log("OTP verification response:", response.data);
 
       if (response.data.success) {
         const accessToken = response.data.data.tokens.accessToken;
         const refreshToken = response.data.data.tokens.refreshToken;
         const userData = response.data.data.user;
-        console.log(
-          "resonse data-------------------> ",
-          JSON.stringify(response.data.data)
-        );
+        const profileResponse = await getUserProfile(userData.id);
+        
+        // console.log(
+        //   "resonse data-------------------> ",
+        //   JSON.stringify(response.data.data)
+        // );
 
-        console.log("Tokens and user data received successfully");
+        //console.log("Tokens and user data received successfully");
 
-        // ✅ Show success image first
         setIsOtpSuccess(true);
 
         setTimeout(async () => {
@@ -236,8 +237,8 @@ const Otp = () => {
             setIsOtpSuccess(false);
             setIsSettingUp(true);
 
-            console.log("User data:", userData);
-            console.log("Bank account details:", userData?.bankAccount);
+            //console.log("User data:", userData);
+            //console.log("Bank account details:", userData?.bankAccount);
             if (userData?.bankAccount) {
               await saveKycStatus("completed");
               dispatch(completeKyc());
@@ -277,7 +278,7 @@ const Otp = () => {
               console.log("Profile complete, logging in user");
 
               // Login user (saves tokens and triggers navigation via Redux)
-              await dispatch(loginUser(userData, accessToken, refreshToken) as any);
+              await dispatch(loginUser(profileResponse, accessToken, refreshToken) as any);
 
               // Register device with backend after tokens are saved
               console.log("📱 Registering device with backend after login...");
