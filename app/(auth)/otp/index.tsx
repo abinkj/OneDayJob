@@ -17,7 +17,11 @@ import { useRoute, useNavigation } from "@react-navigation/native";
 import { useDispatch } from "react-redux";
 import { loginUser } from "../../../utilities/authentication";
 import { createStyles } from "./styles";
-import { saveKycStatus, saveUserData, getUserData } from "../../../utilities/mmkvStore";
+import {
+  saveKycStatus,
+  saveUserData,
+  getUserData,
+} from "../../../utilities/mmkvStore";
 import { saveToken } from "../../../utilities/secureStore";
 import { completeKyc } from "../../../redux/reducers/authReducers";
 import Animated, {
@@ -48,7 +52,7 @@ const RotatingBorder = ({ size, color }: { size: number; color: string }) => {
     rotation.value = withRepeat(
       withTiming(360, { duration: 2000, easing: Easing.linear }),
       -1, // Infinite repeat
-      false
+      false,
     );
   }, []);
 
@@ -60,12 +64,12 @@ const RotatingBorder = ({ size, color }: { size: number; color: string }) => {
     <Animated.View
       style={[
         {
-          position: 'absolute',
+          position: "absolute",
           width: size + 8,
           height: size + 8,
           borderRadius: (size + 8) / 2,
           borderWidth: 3,
-          borderColor: 'transparent',
+          borderColor: "transparent",
           borderTopColor: color,
           borderRightColor: color,
         },
@@ -86,19 +90,19 @@ const AnimatedDot = ({ delay, color }: { delay: number; color: string }) => {
       scale.value = withRepeat(
         withSequence(
           withSpring(1.3, { damping: 2, stiffness: 80 }),
-          withSpring(0.7, { damping: 2, stiffness: 80 })
+          withSpring(0.7, { damping: 2, stiffness: 80 }),
         ),
         -1, // Infinite repeat
-        false
+        false,
       );
 
       opacity.value = withRepeat(
         withSequence(
           withTiming(1, { duration: 600, easing: Easing.inOut(Easing.ease) }),
-          withTiming(0.3, { duration: 600, easing: Easing.inOut(Easing.ease) })
+          withTiming(0.3, { duration: 600, easing: Easing.inOut(Easing.ease) }),
         ),
         -1, // Infinite repeat
-        false
+        false,
       );
     }, delay);
 
@@ -153,27 +157,30 @@ const Otp = () => {
       logoScale.value = withRepeat(
         withSequence(
           withSpring(1.1, { damping: 3, stiffness: 80 }),
-          withSpring(0.95, { damping: 3, stiffness: 80 })
+          withSpring(0.95, { damping: 3, stiffness: 80 }),
         ),
         -1, // Infinite repeat
-        false
+        false,
       );
 
       // Add subtle background pulse
       backgroundOpacity.value = withRepeat(
         withSequence(
-          withTiming(0.95, { duration: 2000, easing: Easing.inOut(Easing.ease) }),
-          withTiming(1, { duration: 2000, easing: Easing.inOut(Easing.ease) })
+          withTiming(0.95, {
+            duration: 2000,
+            easing: Easing.inOut(Easing.ease),
+          }),
+          withTiming(1, { duration: 2000, easing: Easing.inOut(Easing.ease) }),
         ),
         -1, // Infinite repeat
-        false
+        false,
       );
 
       // Add shimmer effect to brand name
       shimmerTranslate.value = withRepeat(
         withTiming(200, { duration: 2500, easing: Easing.linear }),
         -1, // Infinite repeat
-        false
+        false,
       );
     } else {
       // Reset to initial state when not setting up
@@ -221,7 +228,7 @@ const Otp = () => {
         const refreshToken = response.data.data.tokens.refreshToken;
         const userData = response.data.data.user;
         const profileResponse = await getUserProfile(userData.id);
-        
+
         // console.log(
         //   "resonse data-------------------> ",
         //   JSON.stringify(response.data.data)
@@ -253,9 +260,17 @@ const Otp = () => {
             if (!hasName) {
               // For incomplete profiles, save tokens manually but DON'T dispatch login yet
               // This prevents Redux from navigating to MainStack
-              console.log("Profile incomplete, saving tokens and navigating to ProfileCompletion");
-              console.log("📋 User data from API:", JSON.stringify(userData, null, 2));
-              console.log("🔍 User data has ID?", userData?.id || userData?._id);
+              console.log(
+                "Profile incomplete, saving tokens and navigating to ProfileCompletion",
+              );
+              console.log(
+                "📋 User data from API:",
+                JSON.stringify(userData, null, 2),
+              );
+              console.log(
+                "🔍 User data has ID?",
+                userData?.id || userData?._id,
+              );
 
               await saveToken(accessToken, refreshToken);
               console.log("✅ Tokens saved successfully");
@@ -265,7 +280,10 @@ const Otp = () => {
 
               // Verify the data was saved
               const savedData = await getUserData();
-              console.log("🔍 Verification - Retrieved user data after save:", JSON.stringify(savedData, null, 2));
+              console.log(
+                "🔍 Verification - Retrieved user data after save:",
+                JSON.stringify(savedData, null, 2),
+              );
 
               // Register device with backend
               console.log("📱 Registering device with backend...");
@@ -278,7 +296,9 @@ const Otp = () => {
               console.log("Profile complete, logging in user");
 
               // Login user (saves tokens and triggers navigation via Redux)
-              await dispatch(loginUser(profileResponse, accessToken, refreshToken) as any);
+              await dispatch(
+                loginUser(profileResponse, accessToken, refreshToken) as any,
+              );
 
               // Register device with backend after tokens are saved
               console.log("📱 Registering device with backend after login...");
@@ -290,7 +310,8 @@ const Otp = () => {
             showAlert({
               type: "error",
               title: "Setup Failed",
-              message: "An error occurred while setting up your account. Please try again.",
+              message:
+                "An error occurred while setting up your account. Please try again.",
             });
           }
         }, 1000); // Reduced to 1 second for better UX
@@ -323,7 +344,6 @@ const Otp = () => {
       setIsLoading(false);
     }
   };
-
 
   const handleResendOtp = async () => {
     if (isResending) return;
@@ -379,7 +399,9 @@ const Otp = () => {
   // ✅ Show loading view while setting up account
   if (isSettingUp) {
     return (
-      <Animated.View style={[styles.container, styles.center, backgroundAnimatedStyle]}>
+      <Animated.View
+        style={[styles.container, styles.center, backgroundAnimatedStyle]}
+      >
         <Animated.View
           entering={FadeInDown.duration(400)}
           style={styles.loadingContainer}
@@ -415,7 +437,7 @@ const Otp = () => {
           {/* Brand Name with fade in and shimmer effect */}
           <Animated.View
             entering={FadeInDown.delay(200).duration(600)}
-            style={{ overflow: 'hidden', position: 'relative' }}
+            style={{ overflow: "hidden", position: "relative" }}
           >
             <Animated.Text style={[styles.brandName, { color: colors.black }]}>
               Zoopol
@@ -424,12 +446,12 @@ const Otp = () => {
             <Animated.View
               style={[
                 {
-                  position: 'absolute',
+                  position: "absolute",
                   top: 0,
                   left: 0,
                   right: 0,
                   bottom: 0,
-                  backgroundColor: 'rgba(255, 255, 255, 0.3)',
+                  backgroundColor: "rgba(255, 255, 255, 0.3)",
                   width: 50,
                 },
                 shimmerAnimatedStyle,
