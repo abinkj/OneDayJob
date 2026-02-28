@@ -260,6 +260,7 @@ const EditProfile: React.FC = () => {
           value={firstName}
           onChangeText={setFirstName}
           placeholder="Enter your first name"
+          editable={!isSaving}
         />
 
         {/* Last Name */}
@@ -268,6 +269,7 @@ const EditProfile: React.FC = () => {
           value={lastName}
           onChangeText={setLastName}
           placeholder="Enter your last name"
+          editable={!isSaving}
         />
       </ScrollView>
 

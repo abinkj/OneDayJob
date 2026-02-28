@@ -42,7 +42,7 @@ const JobDetails = () => {
   const route = useRoute<any>();
   const insets = useSafeAreaInsets();
   const { kycStatus, userData } = useSelector(
-    (state: any) => state.authentication
+    (state: any) => state.authentication,
   );
   const { jobId, jobData } = route.params || {};
 
@@ -60,11 +60,19 @@ const JobDetails = () => {
   const { sendVerificationCodeNotification } = useNotifications();
 
   // Helper variables for role-based logic
-  const isEmployer = job?.userId?._id === userData?.id || job?.userId?.id === userData?.id;
-  const isAccepted = job?.assignedUsers?.some(
-    (u: any) => (typeof u === 'string' ? u === userData?.id : (u._id === userData?.id || u.id === userData?.id))
-  ) || (job?.assignedUsers as any)?.includes(userData?.id);
+  const isEmployer =
+    job?.userId?._id === userData?.id ||
+    job?.userId?.id === userData?.id ||
+    job?.userId?._id === userData?._id ||
+    job?.userId?.id === userData?._id;
 
+  const isAccepted =
+    job?.assignedUsers?.some((u: any) => {
+      const uId = typeof u === "string" ? u : u._id || u.id;
+      return uId === userData?.id || uId === userData?._id;
+    }) ||
+    (job?.assignedUsers as any)?.includes(userData?.id) ||
+    (job?.assignedUsers as any)?.includes(userData?._id);
 
   useEffect(() => {
     if (jobData) {
@@ -72,7 +80,9 @@ const JobDetails = () => {
       setJob(jobData);
 
       // FIX 4: Only check verification status if job requires verification AND user is not the employer
-      const isEmployerCheck = jobData.userId?._id === userData?.id || jobData.userId?.id === userData?.id;
+      const isEmployerCheck =
+        jobData.userId?._id === userData?.id ||
+        jobData.userId?.id === userData?.id;
       if (jobData.requiresVerification && jobId && !isEmployerCheck) {
         checkVerificationStatus();
       }
@@ -136,11 +146,11 @@ const JobDetails = () => {
       // Set up socket event listeners
       socketService.on(
         "verification-code-received",
-        handleVerificationCodeReceived
+        handleVerificationCodeReceived,
       );
       socketService.on(
         "verification-status-updated",
-        handleVerificationStatusUpdated
+        handleVerificationStatusUpdated,
       );
     });
 
@@ -148,11 +158,11 @@ const JobDetails = () => {
       // Clean up socket listeners
       socketService.off(
         "verification-code-received",
-        handleVerificationCodeReceived
+        handleVerificationCodeReceived,
       );
       socketService.off(
         "verification-status-updated",
-        handleVerificationStatusUpdated
+        handleVerificationStatusUpdated,
       );
     };
   }, [jobId, job?.requiresVerification]);
@@ -171,7 +181,7 @@ const JobDetails = () => {
     } catch (error) {
       console.log(
         "No verification status available or user not assigned to job:",
-        error.message
+        error.message,
       );
       // This is expected for users who haven't applied or been accepted
     } finally {
@@ -205,7 +215,7 @@ const JobDetails = () => {
         "No verification code available:",
         error.response?.status === 404
           ? "Codes not generated yet"
-          : error.message
+          : error.message,
       );
       // Don't show error for 404 (codes not generated yet)
       if (error.response?.status !== 404) {
@@ -247,12 +257,13 @@ const JobDetails = () => {
       const result = await applyJobOffline(jobId);
 
       // Check if request was queued (offline) or succeeded immediately (online)
-      if ('queued' in result && result.queued) {
+      if ("queued" in result && result.queued) {
         // Request was queued - user is offline
         Toast.show({
           type: "info",
           text1: "Application Queued",
-          text2: "You are offline. Your application will be submitted when you reconnect.",
+          text2:
+            "You are offline. Your application will be submitted when you reconnect.",
           visibilityTime: 4000,
         });
 
@@ -534,19 +545,21 @@ const JobDetails = () => {
               style={[
                 styles.locationText,
                 !job.isRemote &&
-                !(
-                  job.jobStatus === "completed" || job.status === "completed"
-                ) && {
-                  color: colors.primary,
-                  textDecorationLine: "underline",
-                },
+                  !(
+                    job.jobStatus === "completed" || job.status === "completed"
+                  ) && {
+                    color: colors.primary,
+                    textDecorationLine: "underline",
+                  },
               ]}
             >
               {job.isRemote
                 ? "Remote Work"
-                : `${job.location?.address || ""}${job.location?.city ? ", " + job.location.city : ""
-                }${job.location?.state ? ", " + job.location.state : ""}${job.location?.country ? ", " + job.location.country : ""
-                }`}
+                : `${job.location?.address || ""}${
+                    job.location?.city ? ", " + job.location.city : ""
+                  }${job.location?.state ? ", " + job.location.state : ""}${
+                    job.location?.country ? ", " + job.location.country : ""
+                  }`}
             </Text>
           </TouchableOpacity>
         </View>
@@ -562,7 +575,7 @@ const JobDetails = () => {
               {job.fromTime && job.toTime && (
                 <Text style={{ fontWeight: "600", color: colors.black }}>
                   {`\nExact Time: ${format24to12h(
-                    job.fromTime
+                    job.fromTime,
                   )} - ${format24to12h(job.toTime)}`}
                 </Text>
               )}
@@ -604,12 +617,15 @@ const JobDetails = () => {
               <Text style={styles.detailValue}>
                 {job.createdAt
                   ? (() => {
-                    const date = new Date(job.createdAt);
-                    const day = String(date.getDate()).padStart(2, '0');
-                    const month = String(date.getMonth() + 1).padStart(2, '0');
-                    const year = date.getFullYear();
-                    return `${day}/${month}/${year}`;
-                  })()
+                      const date = new Date(job.createdAt);
+                      const day = String(date.getDate()).padStart(2, "0");
+                      const month = String(date.getMonth() + 1).padStart(
+                        2,
+                        "0",
+                      );
+                      const year = date.getFullYear();
+                      return `${day}/${month}/${year}`;
+                    })()
                   : "N/A"}
               </Text>
             </View>
@@ -620,7 +636,7 @@ const JobDetails = () => {
         {/* Case 1: Accepted Worker -> Show Verification UI */}
         {job.requiresVerification && !isEmployer && isAccepted && (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>🔐 Verification</Text>
+            <Text style={styles.sectionTitle}>Verification</Text>
             {job.isCompletedByWorker ? (
               <View style={styles.verificationStatusContainer}>
                 <View style={styles.verificationStatusRow}>
@@ -783,21 +799,25 @@ const JobDetails = () => {
           </View>
         )}
         {/* Message if verification is required but user hasn't applied/been assigned */}
-        {job.requiresVerification && !applied && !job.assignedUsers?.includes(userData?.id) && !verificationStatus && (
-          <View style={styles.section}>
-            <View style={styles.verificationNotAssignedContainer}>
-              <Ionicons
-                name="information-circle-outline"
-                size={24}
-                color={colors.grey}
-              />
-              <Text style={styles.verificationNotAssignedText}>
-                Verification status will be available after you apply and are
-                accepted for this job.
-              </Text>
+        {job.requiresVerification &&
+          !applied &&
+          !job.hasApplied &&
+          !isAccepted &&
+          !verificationStatus && (
+            <View style={styles.section}>
+              <View style={styles.verificationNotAssignedContainer}>
+                <Ionicons
+                  name="information-circle-outline"
+                  size={24}
+                  color={colors.grey}
+                />
+                <Text style={styles.verificationNotAssignedText}>
+                  Verification status will be available after you apply and are
+                  accepted for this job.
+                </Text>
+              </View>
             </View>
-          </View>
-        )}
+          )}
 
         {/* Employer Info */}
         <View style={styles.section}>
@@ -829,28 +849,34 @@ const JobDetails = () => {
         <View
           style={[
             styles.actionContainer,
-            { paddingBottom: Math.max(insets.bottom, 16) },
+            //{ paddingBottom: Math.max(insets.bottom, 16) },
           ]}
         >
-          {jobData.jobStatus === "completed" ? (
+          {applied ||
+          job.hasApplied ||
+          isAccepted ||
+          (job.applicants &&
+            Array.isArray(job.applicants) &&
+            job.applicants.some(
+              (applicant: any) =>
+                applicant === userData?.id ||
+                applicant === userData?._id ||
+                applicant?.id === userData?.id ||
+                applicant?._id === userData?._id,
+            )) ? (
             <CustomButton
-              text="Job Completed"
-              onPress={() => { }}
+              text="Applied"
+              onPress={() => {}}
               disabled={true}
               color="#ccc"
               style={{ flex: 1 }}
             />
-          ) : jobData.hasApplied ||
-            (jobData.applicants && Array.isArray(jobData.applicants) &&
-              jobData.applicants.some((applicant: any) =>
-                applicant === userData?.id ||
-                applicant === userData?._id ||
-                applicant?.id === userData?.id ||
-                applicant?._id === userData?._id
-              )) ? (
+          ) : job.jobStatus === "completed" ||
+            job.status === "completed" ||
+            job.jobStatus === "filled" ? (
             <CustomButton
-              text="Applied"
-              onPress={() => { }}
+              text={job.jobStatus === "filled" ? "Job Filled" : "Job Completed"}
+              onPress={() => {}}
               disabled={true}
               color="#ccc"
               style={{ flex: 1 }}
