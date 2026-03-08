@@ -12,8 +12,10 @@ import { Header } from "../../../components/header";
 import LabeledInput from "../../../components/labeledTextInput";
 import { User } from "../../../types";
 import { saveUserData } from "../../../utilities/mmkvStore";
-import { updateProfile, uploadProfilePicture } from "../../../services/api";
-import { useDispatch } from "react-redux";
+import { uploadProfilePicture } from "../../../services/api";
+import { useProfile, useUpdateProfile } from "../../../hooks/useProfile";
+import { useDispatch, useSelector } from "react-redux";
+import { RootState } from "../../../redux/store";
 import Toast from "react-native-toast-message";
 import ImagePickerActionSheet, {
   ImagePickerActionSheetRef,
@@ -29,6 +31,12 @@ const EditProfile: React.FC = () => {
   const { user: initialUser } = (route.params as { user: User }) || {};
   const imagePickerRef = useRef<ImagePickerActionSheetRef>(null);
 
+  const userData = useSelector(
+    (state: RootState) => state.authentication.userData,
+  );
+  const { data: userProfile } = useProfile(userData);
+  const { mutateAsync: updateProfileMutation } = useUpdateProfile();
+
   const [user, setUser] = useState<User | null>(null);
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
@@ -40,22 +48,7 @@ const EditProfile: React.FC = () => {
 
   useEffect(() => {
     const fetchAndInitUser = async () => {
-      let init = initialUser;
-
-      // If we have initialUser, try to fetch fresh data from backend for profilePictureUrl
-      if (init && (init.id || init._id)) {
-        try {
-          const { getUserProfile } = require("../../../services/api");
-          const userId = init.id || init._id;
-          const profileResponse = await getUserProfile(userId);
-          if (profileResponse.success && profileResponse.data) {
-            console.log('EditProfile - Fetched user from backend with CloudFront URL');
-            init = profileResponse.data;
-          }
-        } catch (error) {
-          console.error('Error fetching user profile from backend:', error);
-        }
-      }
+      let init = initialUser || userProfile;
 
       if (!init) {
         init = {
@@ -69,10 +62,15 @@ const EditProfile: React.FC = () => {
       setUser(init);
       setFirstName(init.firstName || "");
       setLastName(init.lastName || "");
-      setLocation((init.locationText || init.location?.address || "") as string);
+      setLocation(
+        (init.locationText || init.location?.address || "") as string,
+      );
 
       // Use profilePictureUrl (CloudFront) if available, fallback to profilePicture
-      const imageSource = init.profilePictureUrl || init.profilePicture || Images.profile.profileImage;
+      const imageSource =
+        init.profilePictureUrl ||
+        init.profilePicture ||
+        Images.profile.profileImage;
       setProfileImage(imageSource as any);
     };
 
@@ -120,18 +118,19 @@ const EditProfile: React.FC = () => {
   };
 
   const handleSave = async () => {
-    console.log('=== SAVE CHANGES CLICKED ===');
+    console.log("=== SAVE CHANGES CLICKED ===");
     const userId = user?.id || user?._id;
-    console.log('User ID:', userId);
+    console.log("User ID:", userId);
     if (!validateForm() || !userId) {
-      console.log('Validation failed or no user ID');
+      console.log("Validation failed or no user ID");
       return;
     }
 
-    const imageUri = typeof profileImage === "string" ? profileImage : profileImage?.uri;
-    const isNewImage = imageUri && imageUri.startsWith('file://');
+    const imageUri =
+      typeof profileImage === "string" ? profileImage : profileImage?.uri;
+    const isNewImage = imageUri && imageUri.startsWith("file://");
 
-    console.log('Image check:', { profileImage, imageUri, isNewImage });
+    console.log("Image check:", { profileImage, imageUri, isNewImage });
 
     const hasChanges =
       user.firstName !== firstName.trim() ||
@@ -139,10 +138,10 @@ const EditProfile: React.FC = () => {
       (user.locationText || user.location?.address || "") !== location.trim() ||
       isNewImage; // If it's a local file, it's definitely a new image
 
-    console.log('Has changes:', hasChanges);
+    console.log("Has changes:", hasChanges);
 
     if (!hasChanges) {
-      console.log('No changes detected, showing toast');
+      console.log("No changes detected, showing toast");
       Toast.show({
         type: "info",
         text1: "No Changes",
@@ -151,16 +150,17 @@ const EditProfile: React.FC = () => {
       return;
     }
 
-    console.log('Proceeding with save...');
+    console.log("Proceeding with save...");
 
     try {
       setIsSaving(true);
 
       // Upload profile picture if it's a local URI
       let profilePictureUrl = user.profilePicture;
-      const imageUri = typeof profileImage === "string" ? profileImage : profileImage?.uri;
+      const imageUri =
+        typeof profileImage === "string" ? profileImage : profileImage?.uri;
 
-      if (imageUri && imageUri.startsWith('file://')) {
+      if (imageUri && imageUri.startsWith("file://")) {
         Toast.show({
           type: "info",
           text1: "Uploading Image",
@@ -169,19 +169,24 @@ const EditProfile: React.FC = () => {
 
         try {
           const uploadResponse = await uploadProfilePicture(imageUri);
-          console.log('Upload response:', uploadResponse);
+          console.log("Upload response:", uploadResponse);
 
           // IMPORTANT: Use the S3 key, not the full URL
           // The backend will convert the key to CloudFront URL via getCdnUrl()
           if (uploadResponse.success && uploadResponse.data?.key) {
             profilePictureUrl = uploadResponse.data.key; // Store only the S3 key
-            console.log('Profile picture uploaded successfully. S3 key:', profilePictureUrl);
+            console.log(
+              "Profile picture uploaded successfully. S3 key:",
+              profilePictureUrl,
+            );
           } else {
             throw new Error("Failed to upload profile picture");
           }
         } catch (uploadError) {
-          console.error('Upload error:', uploadError);
-          throw new Error("Failed to upload profile picture. Please try again.");
+          console.error("Upload error:", uploadError);
+          throw new Error(
+            "Failed to upload profile picture. Please try again.",
+          );
         }
       } else if (imageUri) {
         profilePictureUrl = imageUri;
@@ -199,12 +204,18 @@ const EditProfile: React.FC = () => {
         updatedAt: new Date().toISOString(),
       };
 
-      const { data, status } = await updateProfile(userId, updatedUser);
-      console.log("Profile update response------------------------->", data);
+      const updatedData = await updateProfileMutation({
+        userId,
+        data: updatedUser,
+      });
 
-      if (status >= 200 && status < 300 && data) {
-        await saveUserData(data.data);
-        setUser(data);
+      console.log(
+        "Profile update response------------------------->",
+        updatedData,
+      );
+
+      if (updatedData) {
+        setUser(updatedData);
         Toast.show({
           type: "success",
           text1: "Success",
@@ -219,7 +230,9 @@ const EditProfile: React.FC = () => {
         type: "error",
         text1: "Error",
         text2:
-          error?.response?.data?.message || error?.message || "Failed to save profile changes",
+          error?.response?.data?.message ||
+          error?.message ||
+          "Failed to save profile changes",
       });
     } finally {
       setIsSaving(false);
@@ -233,14 +246,21 @@ const EditProfile: React.FC = () => {
         {/* Profile Image */}
         <View style={styles.imageWrapper}>
           <Image
-            key={`edit-profile-${typeof profileImage === 'string' ? profileImage : profileImage?.uri}`}
+            key={`edit-profile-${typeof profileImage === "string" ? profileImage : profileImage?.uri}`}
             source={
-              typeof profileImage === 'string' && profileImage.startsWith('http')
+              typeof profileImage === "string" &&
+              profileImage.startsWith("http")
                 ? { uri: profileImage }
-                : profileImage?.uri && (typeof profileImage.uri === 'string') && profileImage.uri.startsWith('http')
-                  ? { uri: profileImage.uri }
-                  : profileImage?.uri && (typeof profileImage.uri === 'string') && profileImage.uri.startsWith('file://')
-                    ? { uri: profileImage.uri }
+                : (profileImage as any)?.uri &&
+                    typeof (profileImage as any).uri === "string" &&
+                    ((profileImage as any).uri as string).startsWith("http")
+                  ? { uri: (profileImage as any).uri }
+                  : (profileImage as any)?.uri &&
+                      typeof (profileImage as any).uri === "string" &&
+                      ((profileImage as any).uri as string).startsWith(
+                        "file://",
+                      )
+                    ? { uri: (profileImage as any).uri }
                     : Images.profile.profileImage
             }
             style={styles.profileImage}
@@ -261,6 +281,10 @@ const EditProfile: React.FC = () => {
           onChangeText={setFirstName}
           placeholder="Enter your first name"
           editable={!isSaving}
+          autoCapitalize="words"
+          autoCorrect={false}
+          spellCheck={false}
+          textContentType="name"
         />
 
         {/* Last Name */}
@@ -270,6 +294,10 @@ const EditProfile: React.FC = () => {
           onChangeText={setLastName}
           placeholder="Enter your last name"
           editable={!isSaving}
+          autoCapitalize="words"
+          autoCorrect={false}
+          spellCheck={false}
+          textContentType="name"
         />
       </ScrollView>
 

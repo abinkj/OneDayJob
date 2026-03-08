@@ -221,7 +221,7 @@ const Otp = () => {
       //console.log("OTP code:", otp);
 
       const response = await verifyOtp({ phoneNumber, otpCode: otp });
-      console.log("OTP verification response:", response.data);
+      console.log("OTP verification response:", JSON.stringify(response.data, null, 2));
 
       if (response.data.success) {
         const accessToken = response.data.data.tokens.accessToken;
