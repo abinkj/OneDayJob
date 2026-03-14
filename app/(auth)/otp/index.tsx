@@ -221,13 +221,13 @@ const Otp = () => {
       //console.log("OTP code:", otp);
 
       const response = await verifyOtp({ phoneNumber, otpCode: otp });
-      //console.log("OTP verification response:", response.data);
+      console.log("OTP verification response:", response.data);
 
       if (response.data.success) {
         const accessToken = response.data.data.tokens.accessToken;
         const refreshToken = response.data.data.tokens.refreshToken;
         const userData = response.data.data.user;
-        const profileResponse = await getUserProfile(userData.id);
+        //const profileResponse = await getUserProfile(userData.id);
 
         // console.log(
         //   "resonse data-------------------> ",
@@ -297,7 +297,7 @@ const Otp = () => {
 
               // Login user (saves tokens and triggers navigation via Redux)
               await dispatch(
-                loginUser(profileResponse, accessToken, refreshToken) as any,
+                loginUser(userData, accessToken, refreshToken) as any,
               );
 
               // Register device with backend after tokens are saved

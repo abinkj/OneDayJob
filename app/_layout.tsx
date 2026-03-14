@@ -42,7 +42,7 @@ export default function RootLayout() {
 
     // Cleanup on unmount
     return () => {
-      console.log("🔌 Disconnecting global socket...");
+      console.log("Disconnecting global socket...");
       socketService.disconnect();
     };
   }, []);
