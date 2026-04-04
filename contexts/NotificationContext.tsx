@@ -24,11 +24,6 @@ interface NotificationContextType {
   unreadCount: number;
 
   // Actions
-  sendVerificationCodeNotification: (
-    jobId: string,
-    jobName: string,
-    code: string
-  ) => Promise<void>;
   sendJobUpdateNotification: (
     jobId: string,
     jobName: string,
@@ -180,8 +175,6 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({
     // Set up socket event listeners
     socketService.on("new_application", handleNewApplication);
     socketService.on("application_status_update", handleApplicationStatus);
-    socketService.on("verification-codes-generated", handleVerificationCode);
-    socketService.on("verification-code-received", handleVerificationCode);
     socketService.on("verification-status-updated", handleApplicationStatus);
 
     // Cleanup event listeners
@@ -189,8 +182,6 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({
       console.log("🧹 Cleaning up socket event listeners...");
       socketService.off("new_application", handleNewApplication);
       socketService.off("application_status_update", handleApplicationStatus);
-      socketService.off("verification-codes-generated", handleVerificationCode);
-      socketService.off("verification-code-received", handleVerificationCode);
       socketService.off("verification-status-updated", handleApplicationStatus);
     };
   }, [isInitialized]);
@@ -239,34 +230,7 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({
     }
   };
 
-  // Send verification code notification
-  const sendVerificationCodeNotification = async (
-    jobId: string,
-    jobName: string,
-    code: string
-  ): Promise<void> => {
-    try {
-      await notificationService.sendVerificationCodeNotification(
-        jobId,
-        jobName,
-        code
-      );
 
-      // Add to local notifications list
-      const notification: NotificationData = {
-        type: "verification_code",
-        title: "🔑 Verification Code Received",
-        body: `Your verification code for "${jobName}" is: ${code}`,
-        jobId,
-        timestamp: new Date().toISOString(),
-      };
-
-      setNotifications((prev) => [notification, ...prev]);
-      setUnreadCount((prev) => prev + 1);
-    } catch (error) {
-      console.error("Error sending verification code notification:", error);
-    }
-  };
 
   // Send job update notification
   const sendJobUpdateNotification = async (
@@ -468,7 +432,6 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({
     requestPermission,
     notifications,
     unreadCount,
-    sendVerificationCodeNotification,
     sendJobUpdateNotification,
     sendApplicationStatusNotification,
     sendMessageNotification,

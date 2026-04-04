@@ -294,21 +294,7 @@ export const useJobSession = (jobId: string): UseJobSessionReturn => {
                 return;
             }
 
-            // CRITICAL: Sync time before pausing to ensure accurate time tracking
-            const now = Date.now();
-            const additionalSeconds = lastSyncTime
-                ? Math.floor((now - lastSyncTime) / 1000)
-                : 0;
 
-            if (additionalSeconds > 0) {
-                await syncWorkerTime(
-                    session.session.id,
-                    additionalSeconds,
-                    'active',
-                    false
-                );
-                setLastSyncTime(now);
-            }
 
             const response = await pauseWorkerSession(session.session.id);
 
@@ -426,21 +412,7 @@ export const useJobSession = (jobId: string): UseJobSessionReturn => {
                 return;
             }
 
-            // CRITICAL: Sync time before completing to ensure accurate final time
-            const now = Date.now();
-            const additionalSeconds = lastSyncTime
-                ? Math.floor((now - lastSyncTime) / 1000)
-                : 0;
 
-            if (additionalSeconds > 0) {
-                await syncWorkerTime(
-                    session.session.id,
-                    additionalSeconds,
-                    'active',
-                    false
-                );
-                setLastSyncTime(now);
-            }
 
             const response = await completeWorkerSession(session.session.id, notes);
 

@@ -34,6 +34,7 @@ import { JobPost } from "../../../types";
 import {
   getJobStatusInfo,
   getApplicationStatusInfo,
+  getDisplayStatus,
   JOB_STATUSES,
   APPLICATION_STATUSES,
 } from "../../../utilities/statusUtils";
@@ -90,7 +91,7 @@ const MyPostTab = () => {
   }, []);
 
   const handleNext = (jobId: string) => {
-    navigation.navigate("NewRequest", { jobId: jobId });
+    navigation.navigate("RequestVerification", { jobId: jobId });
   };
 
   // const handlePayment = (job: JobPost) => {
@@ -370,7 +371,12 @@ const AppliedTab = () => {
       setFilteredJobs(appliedJobs);
     } else {
       const filtered = appliedJobs.filter((application) => {
-        const statusInfo = getApplicationStatusInfo(application.status);
+        const displayStatus = getDisplayStatus(
+          application.job?.jobStatus,
+          application.status,
+          false
+        );
+        const statusInfo = getApplicationStatusInfo(displayStatus);
         return statusInfo.label === selectedStatus;
       });
       setFilteredJobs(filtered);
@@ -393,6 +399,7 @@ const AppliedTab = () => {
     getApplicationStatusInfo(APPLICATION_STATUSES.APPLIED),
     getApplicationStatusInfo(APPLICATION_STATUSES.ACCEPTED),
     getApplicationStatusInfo(APPLICATION_STATUSES.REJECTED),
+    getJobStatusInfo(JOB_STATUSES.COMPLETED),
   ];
 
   const renderItem = ({ item }: { item: any }) => {

@@ -25,14 +25,15 @@ import {
   createConversation,
   getCurrentUser,
   getEmployeeVerificationStatus,
-  getEmployeeVerificationCode,
+  markArrival,
 } from "../../../services/api";
 import { applyJobOffline } from "../../../services/offlineQueueExamples";
 import socketService from "../../../services/socketService";
-import SuccessAnimation from "../../../components/successAnimation";
+import SuccessAnimation from "../../../components/SuccessAnimation";
 import Toast from "react-native-toast-message";
 import { useNotifications } from "../../../contexts/NotificationContext";
 import { JobDetailsSkeleton } from "../../../components/Shimmer/Skeletons";
+import * as Location from 'expo-location';
 import CustomButton from "../../../components/CustomButton";
 
 const JobDetails = () => {
@@ -53,26 +54,53 @@ const JobDetails = () => {
   const [showSuccessAnimation, setShowSuccessAnimation] = useState(false);
   const [verificationStatus, setVerificationStatus] = useState<any>(null);
   const [checkingVerification, setCheckingVerification] = useState(false);
-  const [verificationCode, setVerificationCode] = useState<any>(null);
-  const [loadingCode, setLoadingCode] = useState(false);
 
   // Notification context
-  const { sendVerificationCodeNotification } = useNotifications();
+  const { sendJobUpdateNotification } = useNotifications();
+  
+  const [arrivalLoading, setArrivalLoading] = useState(false);
+  const [currentLocationAddress, setCurrentLocationAddress] = useState<string>("Getting location...");
 
   // Helper variables for role-based logic
   const isEmployer =
-    job?.userId?._id === userData?.id ||
-    job?.userId?.id === userData?.id ||
-    job?.userId?._id === userData?._id ||
-    job?.userId?.id === userData?._id;
+      (job?.userId?._id && userData?.id && job.userId._id === userData.id) ||
+      (job?.userId?._id && userData?._id && job.userId._id === userData._id) ||
+      (job?.userId?.id && userData?.id && job.userId.id === userData.id) ||
+      (job?.userId?.id && userData?._id && job.userId.id === userData._id) ||
+      (job?.userId === userData?.id) ||
+      (job?.userId === userData?._id);
 
   const isAccepted =
-    job?.assignedUsers?.some((u: any) => {
-      const uId = typeof u === "string" ? u : u._id || u.id;
-      return uId === userData?.id || uId === userData?._id;
-    }) ||
-    (job?.assignedUsers as any)?.includes(userData?.id) ||
-    (job?.assignedUsers as any)?.includes(userData?._id);
+   (job as any)?.assignedUsers?.some((u: any) => {
+     const uId = typeof u === "string" ? u : u._id || u.id;
+     return uId === userData?.id || uId === userData?._id;
+   }) ||
+   (job?.assignedUsers as any)?.includes(userData?.id) ||
+   (job?.assignedUsers as any)?.includes(userData?._id);
+
+  // Fetch current location on mount
+  useEffect(() => {
+    const fetchLocation = async () => {
+      try {
+        const { status } = await Location.requestForegroundPermissionsAsync();
+        if (status === 'granted') {
+          const loc = await Location.getCurrentPositionAsync({});
+          const reverseGeocode = await Location.reverseGeocodeAsync({
+            latitude: loc.coords.latitude,
+            longitude: loc.coords.longitude
+          });
+          if (reverseGeocode.length > 0) {
+            const addr = reverseGeocode[0];
+            const displayAddr = `${addr.name || ''} ${addr.street || ''}, ${addr.city || ''}`.trim();
+            setCurrentLocationAddress(displayAddr || "Location found");
+          }
+        }
+      } catch (err) {
+        console.log("Error getting location in JobDetails:", err);
+      }
+    };
+    if (isAccepted) fetchLocation();
+  }, [isAccepted]);
 
   useEffect(() => {
     if (jobData) {
@@ -94,78 +122,22 @@ const JobDetails = () => {
     }
   }, [jobId, jobData]);
 
-  // Socket event handlers for verification codes
   useEffect(() => {
-    if (!jobId || !job?.requiresVerification) return;
-
-    const initializeSocket = async () => {
-      try {
-        // Ensure socket is connected
-        if (!socketService.isSocketConnected()) {
-          console.log("Initializing socket connection...");
-          await socketService.connect();
-        }
-      } catch (error) {
-        console.error("Error initializing socket:", error);
-      }
-    };
-
-    const handleVerificationCodeReceived = (data: any) => {
-      console.log("🔑 Verification code received via Socket.IO:", data);
-      if (data.jobId === jobId) {
-        setVerificationCode({
-          jobId: data.jobId,
-          jobName: data.jobName,
-          code: data.code,
-          timestamp: data.timestamp,
-        });
-
-        // Send notification
-        sendVerificationCodeNotification(data.jobId, data.jobName, data.code);
-
-        Toast.show({
-          type: "success",
-          text1: "Verification Code Received",
-          text2: `Your code for "${data.jobName}" is: ${data.code}`,
-        });
-        // Refresh verification status
-        checkVerificationStatus();
-      }
-    };
+    if (!jobId || !job?.requiresVerification || isEmployer) return;
 
     const handleVerificationStatusUpdated = (data: any) => {
       console.log("📊 Verification status updated via Socket.IO:", data);
       if (data.jobId === jobId) {
-        // Refresh verification status
         checkVerificationStatus();
       }
     };
 
-    // Initialize socket and set up event listeners
-    initializeSocket().then(() => {
-      // Set up socket event listeners
-      socketService.on(
-        "verification-code-received",
-        handleVerificationCodeReceived,
-      );
-      socketService.on(
-        "verification-status-updated",
-        handleVerificationStatusUpdated,
-      );
-    });
+    socketService.on("verification-status-updated", handleVerificationStatusUpdated);
 
     return () => {
-      // Clean up socket listeners
-      socketService.off(
-        "verification-code-received",
-        handleVerificationCodeReceived,
-      );
-      socketService.off(
-        "verification-status-updated",
-        handleVerificationStatusUpdated,
-      );
+      socketService.off("verification-status-updated", handleVerificationStatusUpdated);
     };
-  }, [jobId, job?.requiresVerification]);
+  }, [jobId, job?.requiresVerification, isEmployer]);
 
   const checkVerificationStatus = async () => {
     if (!jobId) return;
@@ -189,46 +161,7 @@ const JobDetails = () => {
     }
   };
 
-  const fetchVerificationCode = async () => {
-    if (!jobId) return;
 
-    // FIX 2: Validate assignment before API call
-    if (!job?.assignedUsers?.includes(userData?.id)) {
-      Toast.show({
-        type: "info",
-        text1: "Not Assigned",
-        text2: "Verification codes are available only after acceptance",
-      });
-      return;
-    }
-
-    try {
-      setLoadingCode(true);
-      const response = await getEmployeeVerificationCode(jobId);
-
-      if (response.data.success) {
-        setVerificationCode(response.data.data);
-        console.log("Verification code:", response.data.data);
-      }
-    } catch (error) {
-      console.log(
-        "No verification code available:",
-        error.response?.status === 404
-          ? "Codes not generated yet"
-          : error.message,
-      );
-      // Don't show error for 404 (codes not generated yet)
-      if (error.response?.status !== 404) {
-        Toast.show({
-          type: "error",
-          text1: "Error",
-          text2: "Failed to fetch verification code",
-        });
-      }
-    } finally {
-      setLoadingCode(false);
-    }
-  };
 
   // const handleApply = () => {
   //   Alert.alert(
@@ -446,8 +379,83 @@ const JobDetails = () => {
     return reqs.join(", ");
   };
 
+  const handleArrival = async () => {
+    try {
+      setArrivalLoading(true);
+
+      // 1. Get current GPS location
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        Toast.show({
+          type: 'error',
+          text1: 'Location Permission Required',
+          text2: 'Please enable location access to mark your arrival.',
+        });
+        return;
+      }
+
+      Toast.show({
+        type: 'info',
+        text1: 'Getting your location...',
+        visibilityTime: 1500,
+      });
+
+      const loc = await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.High,
+      });
+
+      const { latitude, longitude } = loc.coords;
+      console.log('[Arrival] Current location:', { latitude, longitude });
+
+      // 2. Call arrival API
+      const response = await markArrival(jobId, latitude, longitude);
+
+      if (response.data?.success) {
+        Toast.show({
+          type: 'success',
+          text1: 'Arrival Marked! ✅',
+          text2: `You are ${response.data.data?.distance || 0}m from the job site. Waiting for employer approval.`,
+        });
+        // Refresh status
+        checkVerificationStatus();
+      } else {
+        const dist = response.data?.data?.distance;
+        Toast.show({
+          type: 'error',
+          text1: 'Too Far Away',
+          text2: dist
+            ? `You are ${dist}m away. Move within 500m of the job site.`
+            : response.data?.message || 'Could not verify your location.',
+        });
+      }
+    } catch (error: any) {
+      console.log('[Arrival] Error status:', error?.response?.status);
+      const isSessionNotFound = error?.response?.status === 404 && 
+                               error?.response?.data?.error?.message?.includes('session');
+      
+      const msg = isSessionNotFound 
+        ? 'The employer hasn\'t started the job session yet. Please wait for them to start.'
+        : error?.response?.data?.message || 'Failed to mark arrival. Please try again.';
+        
+      const dist = error?.response?.data?.data?.distance;
+      Toast.show({
+        type: 'error',
+        text1: dist ? 'Too Far Away' : (isSessionNotFound ? 'Wait for Employer' : 'Arrival Failed'),
+        text2: dist ? `You are ${dist}m away. Move within 500m of the job site.` : msg,
+      });
+    } finally {
+      setArrivalLoading(false);
+    }
+  };
+
   if (showSuccessAnimation) {
-    return <SuccessAnimation message="Application Submitted Successfully" />;
+    return (
+      <SuccessAnimation
+        visible={showSuccessAnimation}
+        message="Application Submitted Successfully"
+        onAnimationFinish={() => setShowSuccessAnimation(false)}
+      />
+    );
   }
 
   if (loading) {
@@ -632,26 +640,21 @@ const JobDetails = () => {
           </View>
         </View>
 
-        {/* Verification Section - STRICT VISIBILITY RULES */}
-        {/* Case 1: Accepted Worker -> Show Verification UI */}
+        {/* Verification & Arrival Section - NEW STRATEGY */}
         {job.requiresVerification && !isEmployer && isAccepted && (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Verification</Text>
+            <Text style={styles.sectionTitle}>Job Verification</Text>
+            
             {job.isCompletedByWorker ? (
               <View style={styles.verificationStatusContainer}>
                 <View style={styles.verificationStatusRow}>
-                  <Ionicons name="checkmark-circle" size={24} color="#4CAF50" />
+                  <Ionicons name="checkmark-circle" size={24} color="#10B981" />
                   <View style={styles.verificationStatusInfo}>
-                    <Text
-                      style={[
-                        styles.verificationStatusText,
-                        { color: "#4CAF50" },
-                      ]}
-                    >
+                    <Text style={[styles.verificationStatusText, { color: "#10B981" }]}>
                       Job Completed
                     </Text>
                     <Text style={styles.verificationMessageText}>
-                      This job has been completed successfully
+                      This job has been completed successfully.
                     </Text>
                   </View>
                 </View>
@@ -659,145 +662,94 @@ const JobDetails = () => {
             ) : checkingVerification ? (
               <View style={styles.verificationLoadingContainer}>
                 <ActivityIndicator size="small" color={colors.primary} />
-                <Text style={styles.verificationLoadingText}>
-                  Checking verification status...
-                </Text>
+                <Text style={styles.verificationLoadingText}>Checking arrival status...</Text>
               </View>
-            ) : verificationStatus ? (
+            ) : (
               <View style={styles.verificationStatusContainer}>
-                <View style={styles.verificationStatusRow}>
-                  <Ionicons
-                    name={
-                      verificationStatus.isVerified
-                        ? "checkmark-circle"
-                        : "time-outline"
-                    }
-                    size={24}
-                    color={
-                      verificationStatus.isVerified ? "#4CAF50" : "#FF9800"
-                    }
-                  />
-                  <View style={styles.verificationStatusInfo}>
-                    <Text
-                      style={[
-                        styles.verificationStatusText,
-                        {
-                          color: verificationStatus.isVerified
-                            ? "#4CAF50"
-                            : "#FF9800",
-                        },
-                      ]}
-                    >
-                      {verificationStatus.isVerified
-                        ? "Verified"
-                        : "Pending Verification"}
-                    </Text>
-                    <Text style={styles.verificationMessageText}>
-                      {verificationStatus.message}
-                    </Text>
-                  </View>
-                </View>
+                {/* Status based on arrivalStatus from API */}
+                {(() => {
+                  const arrivalStatus = verificationStatus?.arrivalStatus || 'pending';
+                  const canStartWork = verificationStatus?.canStartWork || false;
 
-                {/* Verification Code Display */}
-                {verificationCode && !verificationStatus?.isVerified && (
-                  <View style={styles.verificationCodeContainer}>
-                    <View style={styles.verificationCodeHeader}>
-                      <Text style={styles.verificationCodeLabel}>
-                        🔑 Your Verification Code:
-                      </Text>
-                      <TouchableOpacity
-                        style={styles.refreshCodeButton}
-                        onPress={fetchVerificationCode}
-                        disabled={loadingCode}
-                      >
-                        {loadingCode ? (
-                          <ActivityIndicator
-                            size="small"
-                            color={colors.primary}
-                          />
-                        ) : (
-                          <Ionicons
-                            name="refresh"
-                            size={20}
-                            color={colors.primary}
-                          />
-                        )}
-                      </TouchableOpacity>
-                    </View>
-                    <View style={styles.verificationCodeBox}>
-                      <Text style={styles.verificationCodeText}>
-                        {verificationCode.code}
-                      </Text>
-                    </View>
-                    <Text style={styles.verificationCodeInstructions}>
-                      📱 Show this code to your employer when you arrive at the
-                      job location
-                    </Text>
-                    {verificationCode.expiresAt && (
-                      <Text style={styles.verificationCodeExpiry}>
-                        ⏰ Code expires:{" "}
-                        {new Date(verificationCode.expiresAt).toLocaleString()}
-                      </Text>
-                    )}
-                    {verificationCode.failedAttempts > 0 && (
-                      <Text style={styles.verificationCodeFailedAttempts}>
-                        ⚠️ {verificationCode.failedAttempts} failed verification
-                        attempts
-                      </Text>
-                    )}
-                  </View>
-                )}
-
-                {/* No Code Available Message */}
-                {!verificationCode &&
-                  !loadingCode &&
-                  verificationStatus &&
-                  !verificationStatus.isVerified && (
-                    <View style={styles.noCodeContainer}>
-                      <Text style={styles.noCodeText}>
-                        📋 Verification codes have not been generated yet
-                      </Text>
-                      <TouchableOpacity
-                        style={styles.refreshCodeButtonLarge}
-                        onPress={fetchVerificationCode}
-                        disabled={loadingCode}
-                      >
-                        <Text style={styles.refreshCodeButtonText}>
-                          Check for Code
-                        </Text>
-                      </TouchableOpacity>
-                    </View>
-                  )}
-
-                {verificationStatus.isVerified && (
-                  <View style={styles.verificationSuccessContainer}>
-                    <Text style={styles.verificationSuccessText}>
-                      ✅ You can start working on this job!
-                    </Text>
-                  </View>
-                )}
-
-                {verificationStatus.isExpired && (
-                  <View style={styles.verificationErrorContainer}>
-                    <Text style={styles.verificationErrorText}>
-                      ⚠️ Your verification code has expired. Please contact your
-                      employer.
-                    </Text>
-                  </View>
-                )}
-
-                {verificationStatus.isLocked && (
-                  <View style={styles.verificationErrorContainer}>
-                    <Text style={styles.verificationErrorText}>
-                      🔒 Verification is temporarily locked due to failed
-                      attempts.
-                    </Text>
-                  </View>
-                )}
+                  if (arrivalStatus === 'pending') {
+                    return (
+                      <View style={styles.verificationStatusRow}>
+                        <Ionicons name="location-outline" size={24} color="#F59E0B" />
+                        <View style={styles.verificationStatusInfo}>
+                          <Text style={[styles.verificationStatusText, { color: "#F59E0B" }]}>
+                            Arrival Required
+                          </Text>
+                          <Text style={styles.verificationMessageText}>
+                            You must reach the job site and mark your arrival to proceed.
+                          </Text>
+                          <TouchableOpacity 
+                            style={[styles.refreshCodeButtonLarge, { marginTop: 12, backgroundColor: '#10B981' }]}
+                            onPress={handleArrival}
+                            disabled={arrivalLoading}
+                          >
+                            {arrivalLoading ? (
+                              <ActivityIndicator size="small" color="#fff" />
+                            ) : (
+                              <Text style={styles.refreshCodeButtonText}>I Have Reached the Location</Text>
+                            )}
+                          </TouchableOpacity>
+                          <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 8 }}>
+                            <Ionicons name="navigate-outline" size={14} color={colors.grey} />
+                            <Text style={{ fontSize: 12, color: colors.grey, marginLeft: 4 }}>
+                              Current: {currentLocationAddress}
+                            </Text>
+                          </View>
+                        </View>
+                      </View>
+                    );
+                  } else if (arrivalStatus === 'arrived' && !canStartWork) {
+                    return (
+                      <View style={styles.verificationStatusRow}>
+                        <ActivityIndicator size="small" color="#10B981" style={{ marginRight: 10 }} />
+                        <View style={styles.verificationStatusInfo}>
+                          <Text style={[styles.verificationStatusText, { color: "#10B981" }]}>
+                            Arrived ✅
+                          </Text>
+                          <Text style={styles.verificationMessageText}>
+                            Waiting for employer to approve your arrival. If the employer is nearby, you can ask them to verify you on their "Verify" tab.
+                          </Text>
+                          <TouchableOpacity 
+                            style={[styles.refreshCodeButtonLarge, { marginTop: 12, backgroundColor: colors.primary }]}
+                            onPress={checkVerificationStatus}
+                          >
+                            <Text style={styles.refreshCodeButtonText}>Refresh Status</Text>
+                          </TouchableOpacity>
+                        </View>
+                      </View>
+                    );
+                  } else if (canStartWork) {
+                    return (
+                      <View style={styles.verificationStatusRow}>
+                        <Ionicons name="checkmark-circle" size={24} color="#10B981" />
+                        <View style={styles.verificationStatusInfo}>
+                          <Text style={[styles.verificationStatusText, { color: "#10B981" }]}>
+                            Verified
+                          </Text>
+                          <Text style={styles.verificationMessageText}>
+                            You are verified and can start working!
+                          </Text>
+                          <TouchableOpacity 
+                            style={[styles.refreshCodeButtonLarge, { marginTop: 12, backgroundColor: colors.primary }]}
+                            onPress={() => navigation.navigate('JobTimer', { jobId: job._id, jobName: job.name })}
+                          >
+                            <Text style={styles.refreshCodeButtonText}>Go to Timer</Text>
+                          </TouchableOpacity>
+                        </View>
+                      </View>
+                    );
+                  }
+                  return null;
+                })()}
               </View>
-            ) : null}
+            )}
           </View>
         )}
+
         {/* Message if verification is required but user hasn't applied/been assigned */}
         {job.requiresVerification &&
           !applied &&

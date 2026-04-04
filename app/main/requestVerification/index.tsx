@@ -29,20 +29,14 @@ import { createStyles } from "./styles";
 import { Header } from "../../../components/header";
 import ratingStars from "../../../components/ratingStars";
 import AcceptRejectButtons from "../../../components/acceptRejectButtons";
-import VerificationCode from "../../../components/verificationCode";
 import { ListSkeleton } from "../../../components/Shimmer/Skeletons";
 import {
   getAppliedUser,
   rejectApplicants,
   selectApplicants,
-  verifyEmployee,
-  getJobVerificationStatus,
-  resendVerificationCodes,
-  scheduleVerification,
-  syncAcceptedApplications,
-  forceGenerateVerificationCodes,
   initiateJobExecution,
-  getJobDashboard,
+  getArrivedWorkers,
+  approveWorkerArrival,
 } from "../../../services/api";
 import Toast from "react-native-toast-message";
 
@@ -163,98 +157,7 @@ const RequestCard = React.memo(
   }
 );
 
-/* -------------------- Accepted User Card -------------------- */
-interface AcceptedUserCardProps {
-  data: any;
-  onSelect: (data: any) => void;
-  isSelected?: boolean;
-}
 
-const AcceptedUserCard = ({
-  data,
-  onSelect,
-  isSelected = false,
-}: AcceptedUserCardProps) => {
-  const user = data.user || {};
-  const { colors } = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
-
-  const handleCall = (phoneNumber: string) => {
-    if (phoneNumber) {
-      Linking.openURL(`tel:${phoneNumber}`);
-    }
-  };
-
-  const handleCardPress = () => {
-    if (onSelect) {
-      onSelect(data);
-    }
-  };
-
-  return (
-    <TouchableOpacity
-      style={[
-        styles.acceptedCardNew,
-        isSelected && styles.selectedAcceptedCard,
-      ]}
-      onPress={handleCardPress}
-    >
-      <View style={styles.acceptedCardContent}>
-        {/* Profile Picture */}
-        <Image
-          source={{ uri: user.avatar || "https://via.placeholder.com/50" }}
-          style={styles.acceptedProfileImage}
-        />
-
-        {/* User Info */}
-        <View style={styles.acceptedUserInfoNew}>
-          <Text style={styles.acceptedUserNameNew}>{user.name}</Text>
-
-          {/* Phone Number with Icon */}
-          <View style={styles.phoneContainer}>
-            <View style={styles.phoneIconContainer}>
-              <Ionicons name="call" size={16} color="#007AFF" />
-            </View>
-            <TouchableOpacity
-              onPress={() => handleCall(user.phoneNumber || user.phone)}
-            >
-              <Text style={styles.phoneNumberNew}>
-                {user.phoneNumber || user.phone || "Not provided"}
-              </Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        {/* Verification Status Badge */}
-        {data.isVerified ? (
-          <View
-            style={[styles.verifiedBadgeNew, { backgroundColor: "#4CAF50" }]}
-          >
-            <Text style={styles.verifiedBadgeTextNew}>Verified</Text>
-          </View>
-        ) : data.verificationStatus ? (
-          <View
-            style={[styles.verifiedBadgeNew, { backgroundColor: "#FF9800" }]}
-          >
-            <Text style={styles.verifiedBadgeTextNew}>
-              {data.verificationStatus.isExpired
-                ? "Expired"
-                : data.verificationStatus.isLocked
-                  ? "Locked"
-                  : "Pending"}
-            </Text>
-          </View>
-        ) : (
-          <View
-            style={[styles.verifiedBadgeNew, { backgroundColor: "#9E9E9E" }]}
-          >
-            <Text style={styles.verifiedBadgeTextNew}>No Code</Text>
-          </View>
-        )}
-      </View>
-    </TouchableOpacity>
-  );
-};
 
 /* -------------------- Requests Tab -------------------- */
 interface RequestsTabProps {
@@ -716,6 +619,7 @@ interface RequestsVerifyTabProps {
   jobId: string;
   onCountUpdate: (pending: number, accepted: number, verified: number) => void;
   refreshTrigger: number;
+  autoVerifyWorkerId?: string; // New: for deep-link auto-approval
   onDataUpdate?: (data: {
     pending: number;
     accepted: number;
@@ -727,535 +631,139 @@ const RequestsVerifyTab = ({
   jobId,
   onCountUpdate,
   refreshTrigger,
+  autoVerifyWorkerId,
   onDataUpdate,
 }: RequestsVerifyTabProps) => {
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
 
-  const [acceptedUsers, setAcceptedUsers] = useState<any[]>([]);
+  const [workers, setWorkers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [selectedUser, setSelectedUser] = useState<any>(null);
-  const [verificationCode, setVerificationCode] = useState("");
-  const [verifying, setVerifying] = useState(false);
-  const [verificationStatus, setVerificationStatus] = useState<any>(null);
-  const [scheduling, setScheduling] = useState(false);
+  const [approvingId, setApprovingId] = useState<string | null>(null);
   const [jobInitiated, setJobInitiated] = useState(false);
   const [initiatingJob, setInitiatingJob] = useState(false);
   const [hasInitiallyLoaded, setHasInitiallyLoaded] = useState(false);
 
-  const fetchAcceptedUsers = useCallback(
+  const fetchWorkers = useCallback(
     async (isRefresh = false) => {
       try {
-        console.log(
-          "📡 Fetching accepted users for jobId:",
-          jobId,
-          "isRefresh:",
-          isRefresh
-        );
-        if (isRefresh) {
-          setRefreshing(true);
-        } else {
-          setLoading(true);
-        }
+        if (isRefresh) setRefreshing(true);
+        else setLoading(true);
 
-        // Fetch both applied users and verification status
-        const [appliedResponse, verificationResponse] = await Promise.all([
-          getAppliedUser(jobId),
-          getJobVerificationStatus(jobId).catch((err) => {
-            console.log("No verification status available yet:", err.message);
-            return { data: { data: { participants: [] } } };
-          }),
-        ]);
+        const response = await getArrivedWorkers(jobId);
+        const data = response.data?.data;
+        const workerList = data?.workers || [];
+        setWorkers(workerList);
 
-        const accepted = Array.isArray(appliedResponse?.data)
-          ? appliedResponse.data
-            .filter((item) => item.status === "accepted")
-            .map((item) => {
-              // Find verification status for this user
-              const verificationStatus =
-                verificationResponse.data?.data?.participants?.find(
-                  (participant: any) =>
-                    participant.employeeId === item.user.id
-                );
+        const arrivedCount = data?.arrivedCount || 0;
+        const verifiedCount = data?.verifiedCount || 0;
+        const totalCount = data?.totalCount || 0;
 
-              return {
-                _id: item._id,
-                appliedAt: item.appliedAt,
-                acceptedAt: item.acceptedAt,
-                status: item.status,
-                isVerified: verificationStatus?.isVerified || false,
-                verificationStatus: verificationStatus,
-                user: {
-                  id: item.user.id,
-                  name: `${item.user.firstName} ${item.user.lastName}`,
-                  avatar: item.user.profilePicture,
-                  rating: item.user.rating ?? 0,
-                  rate: item.user.rate ?? "$0/hr",
-                  description:
-                    item.user.description ?? "No description provided",
-                  availability: item.user.availability ?? "Not specified",
-                  phoneNumber: item.user.phoneNumber || item.user.phone,
-                  email: item.user.email,
-                },
-              };
-            })
-          : [];
-
-        setAcceptedUsers(accepted);
-
-        // Store verification status for display
-        if (verificationResponse.data?.data) {
-          setVerificationStatus(verificationResponse.data.data);
-        }
-
-        // Update counts
-        const verified = accepted.filter((user) => user.isVerified).length;
         if (onCountUpdate) {
-          onCountUpdate(0, accepted.length, verified);
+          onCountUpdate(arrivedCount, totalCount, verifiedCount);
         }
+
+        // AUTO-VERIFY: If a deep-link workerId was provided, trigger approval immediately
+        if (autoVerifyWorkerId && !hasInitiallyLoaded) {
+          const workerToVerify = workerList.find((w: any) => 
+            w.workerId === autoVerifyWorkerId && w.arrivalStatus === 'arrived'
+          );
+          if (workerToVerify) {
+            console.log("🔗 AUTO-VERIFYING worker from deep-link:", autoVerifyWorkerId);
+            // We set hasInitiallyLoaded to true early to prevent any potential loops
+            setHasInitiallyLoaded(true);
+            handleApprove(workerToVerify.workerId, workerToVerify.workerName);
+          }
+        }
+
+        setHasInitiallyLoaded(true);
+
         if (onDataUpdate) {
           onDataUpdate({
-            pending: 0,
-            accepted: accepted.length,
-            total: accepted.length,
+            pending: arrivedCount,
+            accepted: totalCount,
+            total: totalCount,
           });
         }
       } catch (error) {
-        console.error("Error fetching accepted users:", error);
-        setAcceptedUsers([]);
-        if (onCountUpdate) {
-          onCountUpdate(0, 0, 0);
-        }
+        console.error("Error fetching arrived workers:", error);
+        setWorkers([]);
       } finally {
         setLoading(false);
         setRefreshing(false);
       }
     },
-    [jobId, onCountUpdate]
+    [jobId, onCountUpdate, onDataUpdate]
   );
-
-  const onRefresh = useCallback(() => {
-    fetchAcceptedUsers(true);
-  }, []);
 
   useEffect(() => {
     if (!hasInitiallyLoaded) {
-      console.log("🔄 RequestsVerifyTab: Initial load");
-      fetchAcceptedUsers();
+      fetchWorkers();
       setHasInitiallyLoaded(true);
     }
-  }, [hasInitiallyLoaded]); // Only run once on mount
+  }, [hasInitiallyLoaded]);
 
-  // Watch for refreshTrigger changes to refresh data
   useEffect(() => {
-    if (refreshTrigger > 0) {
-      console.log(
-        "🔄 RequestsVerifyTab: refreshTrigger changed, fetching data"
-      );
-      fetchAcceptedUsers();
-    }
-  }, [refreshTrigger]); // Remove fetchAcceptedUsers dependency to prevent loops
+    if (refreshTrigger > 0) fetchWorkers();
+  }, [refreshTrigger]);
 
-  const handleVerifyCode = async (code: string) => {
-    if (!selectedUser) return;
-
+  const handleApprove = async (workerId: string, workerName: string) => {
     try {
-      setVerifying(true);
+      setApprovingId(workerId);
+      const response = await approveWorkerArrival(jobId, workerId);
 
-      console.log("🔍 Testing verification for:", {
-        jobId,
-        employeeId: selectedUser.user.id,
-        employeeName: selectedUser.user.name,
-        verificationCode: code,
-      });
-
-      // Call the actual verification API
-      const response = await verifyEmployee(jobId, selectedUser.user.id, code);
-
-      if (response.data.success) {
-        console.log("✅ Verification successful:", response.data);
-
+      if (response.data?.success) {
         Toast.show({
           type: "success",
-          text1: "Verification Successful",
-          text2: `${selectedUser.user.name} has been verified.`,
+          text1: "Worker Approved ✅",
+          text2: `${workerName} can now start working.`,
         });
-
-        // Refresh the accepted users list to show updated verification status
-        await fetchAcceptedUsers();
-
-        setSelectedUser(null);
-        setVerificationCode("");
-      } else {
-        console.log("❌ Verification failed:", response.data);
-        Toast.show({
-          type: "error",
-          text1: "Verification Failed",
-          text2:
-            response.data.message ||
-            "Invalid verification code. Please try again.",
-        });
-      }
-    } catch (error) {
-      console.error("❌ Error verifying code:", error);
-
-      // Handle specific error cases
-      let errorMessage = "Invalid verification code. Please try again.";
-      if (error.response?.data?.message) {
-        errorMessage = error.response.data.message;
-      } else if (error.response?.status === 400) {
-        errorMessage = "Invalid or expired verification code.";
-      } else if (error.response?.status === 403) {
-        errorMessage = "You don't have permission to verify this employee.";
-      } else if (error.response?.status === 404) {
-        errorMessage = "Employee or job not found.";
-      }
-
-      Toast.show({
-        type: "error",
-        text1: "Verification Failed",
-        text2: errorMessage,
-      });
-    } finally {
-      setVerifying(false);
-    }
-  };
-
-  const handleResendCode = async () => {
-    if (!selectedUser) return;
-
-    try {
-      // Call the actual resend codes API
-      const response = await resendVerificationCodes(
-        jobId,
-        "Manual resend requested by employer"
-      );
-
-      if (response.data.success) {
-        Toast.show({
-          type: "success",
-          text1: "Codes Sent",
-          text2: "New verification codes have been sent to your phone.",
-        });
+        await fetchWorkers();
       } else {
         Toast.show({
           type: "error",
-          text1: "Error",
-          text2:
-            response.data.message ||
-            "Failed to resend codes. Please try again.",
+          text1: "Approval Failed",
+          text2: response.data?.message || "Could not approve worker.",
         });
       }
-    } catch (error) {
-      console.error("Error resending code:", error);
-
-      // Handle specific error cases
-      let errorMessage = "Failed to resend codes. Please try again.";
-      if (error.response?.data?.message) {
-        errorMessage = error.response.data.message;
-      } else if (error.response?.status === 403) {
-        errorMessage =
-          "You don't have permission to resend codes for this job.";
-      } else if (error.response?.status === 404) {
-        errorMessage = "Job not found.";
-      } else if (error.response?.status === 400) {
-        errorMessage = "Cannot resend codes at this time.";
-      }
-
+    } catch (error: any) {
       Toast.show({
         type: "error",
         text1: "Error",
-        text2: errorMessage,
-      });
-    }
-  };
-
-  const handleUserSelect = (user: any) => {
-    setSelectedUser(user);
-  };
-
-  const handleScheduleVerification = async () => {
-    try {
-      setScheduling(true);
-
-      // First, try to sync accepted applications with job's assignedUsers
-      if (acceptedUsers.length > 0) {
-        console.log("Syncing accepted applications with job assignedUsers...");
-        const applicationIds = acceptedUsers.map((user) => user._id);
-
-        try {
-          const syncResponse = await syncAcceptedApplications(
-            jobId,
-            applicationIds
-          );
-          console.log("Sync response:", syncResponse);
-
-          if (syncResponse.success) {
-            Toast.show({
-              type: "success",
-              text1: "Applications Synced",
-              text2: "Accepted applications have been synced with the job.",
-            });
-          }
-        } catch (syncError) {
-          console.log(
-            "Sync failed, continuing with verification scheduling:",
-            syncError.message
-          );
-          Toast.show({
-            type: "warning",
-            text1: "Sync Warning",
-            text2:
-              "Could not sync applications, but continuing with verification...",
-          });
-        }
-      }
-
-      // For immediate code generation, try force generation first
-      console.log("🔄 Attempting immediate code generation...");
-      try {
-        const forceResponse = await forceGenerateVerificationCodes(jobId);
-        if (forceResponse.data.success) {
-          Toast.show({
-            type: "success",
-            text1: "Codes Generated!",
-            text2:
-              "Verification codes have been generated and sent to your phone.",
-          });
-
-          // Refresh the data to show updated status
-          await fetchAcceptedUsers();
-          return; // Exit early on success
-        }
-      } catch (forceError) {
-        console.log(
-          "⚠️ Force generation failed, trying normal scheduling:",
-          forceError.message
-        );
-      }
-
-      const response = await scheduleVerification(jobId);
-
-      if (response.data.success) {
-        Toast.show({
-          type: "success",
-          text1: "Verification Scheduled",
-          text2: "Verification codes will be generated and sent to your phone.",
-        });
-
-        // Refresh the data to show updated status
-        await fetchAcceptedUsers();
-      } else {
-        Toast.show({
-          type: "error",
-          text1: "Scheduling Failed",
-          text2:
-            response.data.message ||
-            "Failed to schedule verification. Please try again.",
-        });
-      }
-    } catch (error) {
-      console.error("Error scheduling verification:", error);
-
-      let errorMessage = "Failed to schedule verification. Please try again.";
-      if (error.response?.data?.message) {
-        errorMessage = error.response.data.message;
-      } else if (error.response?.status === 403) {
-        errorMessage =
-          "You don't have permission to schedule verification for this job.";
-      } else if (error.response?.status === 404) {
-        errorMessage = "Job not found.";
-      } else if (error.response?.status === 400) {
-        // Check if it's a scheduling issue (job is today or in the past)
-        if (
-          error.response?.data?.message?.includes("schedule") ||
-          error.response?.data?.message?.includes("time") ||
-          error.response?.data?.message?.includes("date") ||
-          error.response?.data?.message?.includes("already passed")
-        ) {
-          console.log(
-            "⚠️ Normal scheduling failed due to time issues, trying force generation..."
-          );
-
-          // Automatically try force generation as fallback
-          try {
-            const forceResponse = await forceGenerateVerificationCodes(jobId);
-            if (forceResponse.data.success) {
-              Toast.show({
-                type: "success",
-                text1: "Codes Generated!",
-                text2:
-                  "Verification codes have been generated and sent to your phone.",
-              });
-
-              // Refresh the data to show updated status
-              await fetchAcceptedUsers();
-              return; // Exit early on success
-            }
-          } catch (forceError) {
-            console.error("❌ Force generation also failed:", forceError);
-          }
-
-          errorMessage =
-            "Cannot schedule verification for jobs today. Use 'Generate Codes Now (Test)' for immediate testing.";
-        } else {
-          errorMessage = "Cannot schedule verification at this time.";
-        }
-      }
-
-      Toast.show({
-        type: "error",
-        text1: "Scheduling Error",
-        text2: errorMessage,
+        text2: error?.response?.data?.message || "Failed to approve worker.",
       });
     } finally {
-      setScheduling(false);
-    }
-  };
-
-  const handleManualCodeGeneration = async () => {
-    try {
-      setScheduling(true);
-
-      console.log("🔄 Attempting manual code generation...");
-
-      // First try the normal scheduling approach
-      try {
-        const response = await scheduleVerification(jobId);
-
-        if (response.data.success) {
-          console.log("✅ Manual code generation successful:", response.data);
-
-          Toast.show({
-            type: "success",
-            text1: "Codes Generated",
-            text2:
-              "Verification codes have been generated and sent to your phone.",
-          });
-
-          // Wait a moment for codes to be processed, then refresh
-          setTimeout(async () => {
-            await fetchAcceptedUsers();
-          }, 2000);
-          return;
-        }
-      } catch (scheduleError) {
-        console.log(
-          "⚠️ Normal scheduling failed, trying force generation:",
-          scheduleError.response?.data
-        );
-
-        // If normal scheduling fails (e.g., job is today), try force generation
-        try {
-          const forceResponse = await forceGenerateVerificationCodes(jobId);
-
-          if (forceResponse.data.success) {
-            console.log(
-              "✅ Force code generation successful:",
-              forceResponse.data
-            );
-
-            Toast.show({
-              type: "success",
-              text1: "Codes Generated (Force)",
-              text2:
-                "Verification codes have been generated immediately for testing.",
-            });
-
-            // Wait a moment for codes to be processed, then refresh
-            setTimeout(async () => {
-              await fetchAcceptedUsers();
-            }, 2000);
-            return;
-          }
-        } catch (forceError) {
-          console.log(
-            "❌ Force generation also failed:",
-            forceError.response?.data
-          );
-          throw forceError;
-        }
-      }
-
-      // If we get here, both methods failed
-      Toast.show({
-        type: "error",
-        text1: "Generation Failed",
-        text2: "Could not generate codes. Please check backend logs.",
-      });
-    } catch (error) {
-      console.error("❌ Error generating codes manually:", error);
-
-      let errorMessage = "Failed to generate codes. Please try again.";
-      if (error.response?.data?.message) {
-        errorMessage = error.response.data.message;
-      } else if (error.response?.data?.errors) {
-        errorMessage = error.response.data.errors.join(", ");
-      }
-
-      Toast.show({
-        type: "error",
-        text1: "Error",
-        text2: errorMessage,
-      });
-    } finally {
-      setScheduling(false);
+      setApprovingId(null);
     }
   };
 
   const handleStartJob = async () => {
     try {
       setInitiatingJob(true);
-
-      console.log("Starting job execution for job:", jobId);
-
       const response = await initiateJobExecution(jobId);
 
       if (response.data.success) {
         setJobInitiated(true);
-
         Toast.show({
           type: "success",
           text1: "Job Started!",
-          text2: `Job execution initiated. ${response.data.data.workersNotified} workers have been notified.`,
+          text2: "Workers have been notified. They can now mark arrival.",
         });
-
-        // Refresh the verification status to show updated state
-        await fetchAcceptedUsers();
+        await fetchWorkers();
       } else {
         throw new Error(response.data.message || "Failed to start job");
       }
-    } catch (error) {
-      console.error("Error starting job:", error);
-
-      let errorMessage = "Failed to start job. Please try again.";
-      if (error.response?.data?.message) {
-        errorMessage = error.response.data.message;
-      } else if (error.response?.status === 404) {
-        errorMessage = "Job not found.";
-      } else if (error.response?.status === 400) {
-        errorMessage =
-          "Cannot start job at this time. Check if all workers are verified.";
-      }
-
+    } catch (error: any) {
       Toast.show({
         type: "error",
         text1: "Start Job Error",
-        text2: errorMessage,
+        text2: error?.response?.data?.message || "Failed to start job.",
       });
     } finally {
       setInitiatingJob(false);
     }
   };
-
-  const renderAcceptedUser = ({ item }) => (
-    <AcceptedUserCard
-      data={item}
-      onSelect={handleUserSelect}
-      isSelected={selectedUser?._id === item._id}
-    />
-  );
 
   if (loading) {
     return (
@@ -1265,11 +773,25 @@ const RequestsVerifyTab = ({
     );
   }
 
-  const verifiedCount = acceptedUsers.filter((user) => user.isVerified).length;
+  const arrivedWorkers = workers.filter((w) => w.arrivalStatus === "arrived");
+  const verifiedWorkers = workers.filter((w) => w.arrivalStatus === "verified");
+  const pendingWorkers = workers.filter((w) => w.arrivalStatus === "pending");
+  const allVerified =
+    workers.length > 0 && verifiedWorkers.length === workers.length;
+
+  const formatTimeAgo = (dateStr: string) => {
+    if (!dateStr) return "";
+    const diff = Date.now() - new Date(dateStr).getTime();
+    const mins = Math.floor(diff / 60000);
+    if (mins < 1) return "just now";
+    if (mins < 60) return `${mins}m ago`;
+    const hrs = Math.floor(mins / 60);
+    return `${hrs}h ago`;
+  };
 
   return (
     <View style={styles.tabContainer}>
-      {acceptedUsers.length === 0 ? (
+      {workers.length === 0 ? (
         <View style={{ alignItems: "center", marginTop: 40 }}>
           <Ionicons name="people-outline" size={64} color="#ccc" />
           <Text
@@ -1280,7 +802,7 @@ const RequestsVerifyTab = ({
               color: "#666",
             }}
           >
-            No accepted applicants yet
+            No workers assigned yet
           </Text>
           <Text
             style={{
@@ -1290,156 +812,439 @@ const RequestsVerifyTab = ({
               color: "#999",
             }}
           >
-            Accept some requests to see them here
+            Accept some applicants and start the job
           </Text>
+          {!jobInitiated && (
+            <View style={{ width: '100%', alignItems: 'center' }}>
+              <TouchableOpacity
+                style={{
+                  marginTop: 24,
+                  backgroundColor: colors.primary,
+                  paddingVertical: 14,
+                  paddingHorizontal: 24,
+                  borderRadius: 14,
+                  flexDirection: "row",
+                  alignItems: "center",
+                  justifyContent: 'center',
+                  shadowColor: colors.primary,
+                  shadowOffset: { width: 0, height: 4 },
+                  shadowOpacity: 0.2,
+                  shadowRadius: 8,
+                  elevation: 4
+                }}
+                onPress={handleStartJob}
+                disabled={initiatingJob}
+              >
+                {initiatingJob ? (
+                  <ActivityIndicator size="small" color="#fff" />
+                ) : (
+                  <>
+                    <Ionicons
+                      name="flash"
+                      size={20}
+                      color="#fff"
+                      style={{ marginRight: 8 }}
+                    />
+                    <Text
+                      style={{ color: "#fff", fontWeight: "700", fontSize: 15 }}
+                    >
+                      Manually Activate Job
+                    </Text>
+                  </>
+                )}
+              </TouchableOpacity>
+              
+              <Text style={{ 
+                marginTop: 16, 
+                color: colors.grey, 
+                fontSize: 13, 
+                textAlign: 'center',
+                paddingHorizontal: 30 
+              }}>
+                Workers can mark their arrival as soon as they reach the site. No manual initiation is required.
+              </Text>
+            </View>
+          )}
         </View>
       ) : (
-        <>
-          {/* Verification Status Header */}
-          {verificationStatus && (
-            <View style={styles.verificationStatusHeader}>
-              <View style={styles.verificationProgressContainer}>
-                <Text style={styles.verificationProgressText}>
-                  Verification Progress: {verificationStatus.verifiedCount || 0}{" "}
-                  / {verificationStatus.totalParticipants || 0}
+        <FlatList
+          bounces={false}
+          data={workers}
+          keyExtractor={(item) => item.workerId}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.listContainer}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={() => fetchWorkers(true)}
+              colors={[colors.primary]}
+              tintColor={colors.primary}
+            />
+          }
+          ListHeaderComponent={
+            <>
+              {/* Progress Summary */}
+              <View
+                style={{
+                  backgroundColor: colors.white,
+                  borderRadius: 14,
+                  padding: 16,
+                  marginBottom: 16,
+                  borderWidth: 1,
+                  borderColor: colors.border,
+                }}
+              >
+                <Text
+                  style={{
+                    fontSize: 15,
+                    fontWeight: "700",
+                    color: colors.black,
+                    marginBottom: 8,
+                  }}
+                >
+                  Arrival Progress
                 </Text>
-                {verificationStatus.totalParticipants === 0 &&
-                  acceptedUsers.length > 0 && (
-                    <Text style={styles.syncWarningText}>
-                      ⚠️ Accepted users need to be synced with the job. Click
-                      "Sync & Generate Codes" to fix this.
-                    </Text>
-                  )}
+                <View
+                  style={{
+                    flexDirection: "row",
+                    justifyContent: "space-between",
+                    marginBottom: 8,
+                  }}
+                >
+                  <Text style={{ fontSize: 13, color: colors.grey }}>
+                    {verifiedWorkers.length} / {workers.length} Verified
+                  </Text>
+                  <Text
+                    style={{
+                      fontSize: 13,
+                      color: "#10B981",
+                      fontWeight: "600",
+                    }}
+                  >
+                    {arrivedWorkers.length} Waiting Approval
+                  </Text>
+                </View>
                 <View style={styles.progressBar}>
                   <View
                     style={[
                       styles.progressFill,
                       {
-                        width: `${verificationStatus.verificationProgress || 0
-                          }%`,
+                        width: `${
+                          workers.length > 0
+                            ? (verifiedWorkers.length / workers.length) * 100
+                            : 0
+                        }%`,
                       },
                     ]}
                   />
                 </View>
               </View>
 
-              {verificationStatus.sessionStatus === "pending" && (
-                <TouchableOpacity
-                  style={[
-                    styles.scheduleButton,
-                    scheduling && styles.scheduleButtonDisabled,
-                  ]}
-                  onPress={handleScheduleVerification}
-                  disabled={scheduling}
+
+
+              {/* All Verified Banner */}
+              {allVerified && (
+                <View
+                  style={{
+                    backgroundColor: "#10B98115",
+                    borderRadius: 12,
+                    padding: 14,
+                    flexDirection: "row",
+                    alignItems: "center",
+                    marginBottom: 16,
+                    borderWidth: 1,
+                    borderColor: "#10B98130",
+                  }}
                 >
-                  {scheduling ? (
-                    <ActivityIndicator size="small" color="#fff" />
-                  ) : (
-                    <Text style={styles.scheduleButtonText}>
-                      {verificationStatus.totalParticipants === 0
-                        ? "Sync & Generate Codes"
-                        : "Generate Codes"}
+                  <Ionicons
+                    name="checkmark-circle"
+                    size={24}
+                    color="#10B981"
+                  />
+                  <View style={{ marginLeft: 12, flex: 1 }}>
+                    <Text
+                      style={{
+                        fontSize: 15,
+                        fontWeight: "700",
+                        color: "#10B981",
+                      }}
+                    >
+                      All Workers Verified!
                     </Text>
-                  )}
-                </TouchableOpacity>
+                    <Text
+                      style={{
+                        fontSize: 13,
+                        color: "#059669",
+                        marginTop: 2,
+                      }}
+                    >
+                      Everyone has arrived and been approved. Work is in
+                      progress.
+                    </Text>
+                  </View>
+                </View>
               )}
-            </View>
-          )}
 
-          {/* Start Job Button */}
-          {verificationStatus &&
-            verificationStatus.verifiedCount > 0 &&
-            verificationStatus.verifiedCount ===
-            verificationStatus.totalParticipants &&
-            !jobInitiated && (
-              <View style={styles.startJobContainer}>
-                <TouchableOpacity
-                  style={[
-                    styles.startJobButton,
-                    initiatingJob && styles.startJobButtonDisabled,
-                  ]}
-                  onPress={handleStartJob}
-                  disabled={initiatingJob}
+              {/* Section: Waiting Approval */}
+              {arrivedWorkers.length > 0 && (
+                <Text
+                  style={{
+                    fontSize: 14,
+                    fontWeight: "700",
+                    color: "#F59E0B",
+                    marginBottom: 10,
+                    textTransform: "uppercase",
+                    letterSpacing: 0.5,
+                  }}
                 >
-                  {initiatingJob ? (
-                    <ActivityIndicator size="small" color="#fff" />
-                  ) : (
-                    <>
-                      <Ionicons
-                        name="play-circle"
-                        size={24}
-                        color="#fff"
-                        style={{ marginRight: 8 }}
-                      />
-                      <Text style={styles.startJobButtonText}>Start Job</Text>
-                    </>
-                  )}
-                </TouchableOpacity>
-                <Text style={styles.startJobDescription}>
-                  All workers have been verified. Click to start the job and
-                  begin time tracking.
+                  ⏳ Waiting for Approval ({arrivedWorkers.length})
                 </Text>
-              </View>
-            )}
+              )}
+            </>
+          }
+          renderItem={({ item }) => {
+            const isArrived = item.arrivalStatus === "arrived";
+            const isVerified = item.arrivalStatus === "verified";
+            const isPending = item.arrivalStatus === "pending";
+            const isApproving = approvingId === item.workerId;
 
-          {/* Job Started Status */}
-          {jobInitiated && (
-            <View style={styles.jobStartedContainer}>
-              <View style={styles.jobStartedHeader}>
-                <Ionicons name="checkmark-circle" size={24} color="#4CAF50" />
-                <Text style={styles.jobStartedTitle}>
-                  Job Started Successfully!
-                </Text>
-              </View>
-              <Text style={styles.jobStartedDescription}>
-                Workers have been notified and can now start their work
-                sessions. You can monitor their progress in the dashboard.
-              </Text>
-            </View>
-          )}
+            let borderColor = colors.border;
+            let statusColor = "#999";
+            let statusText = "Waiting to arrive";
+            let statusIcon = "time-outline";
 
-          <FlatList
-            bounces={false}
-            data={acceptedUsers}
-            renderItem={renderAcceptedUser}
-            keyExtractor={(item) => item._id}
-            showsVerticalScrollIndicator={false}
-            contentContainerStyle={styles.listContainer}
-            refreshControl={
-              <RefreshControl
-                refreshing={refreshing}
-                onRefresh={onRefresh}
-                colors={["#007AFF"]}
-                tintColor="#007AFF"
-              />
+            if (isArrived) {
+              borderColor = "#F59E0B";
+              statusColor = "#F59E0B";
+              statusText = `Arrived ${formatTimeAgo(item.arrivedAt)}`;
+              statusIcon = "location";
+            } else if (isVerified) {
+              borderColor = "#10B981";
+              statusColor = "#10B981";
+              statusText =
+                item.sessionStatus === "active"
+                  ? "Working"
+                  : item.sessionStatus === "paused"
+                  ? "Paused"
+                  : item.sessionStatus === "completed"
+                  ? "Completed"
+                  : "Approved - Ready";
+              statusIcon = "checkmark-circle";
             }
-          />
 
-          {/* Verification Code Section */}
-          {selectedUser && (
-            <VerificationCode
-              userName={selectedUser.user.name}
-              onVerify={handleVerifyCode}
-              onResendCode={handleResendCode}
-              loading={verifying}
-            />
-          )}
-        </>
+            return (
+              <View
+                style={{
+                  backgroundColor: colors.white,
+                  borderRadius: 14,
+                  padding: 14,
+                  marginBottom: 10,
+                  borderLeftWidth: 4,
+                  borderLeftColor: borderColor,
+                  borderWidth: 1,
+                  borderColor: colors.border,
+                }}
+              >
+                <View
+                  style={{ flexDirection: "row", alignItems: "center" }}
+                >
+                  {/* Worker Avatar */}
+                  <View
+                    style={{
+                      width: 44,
+                      height: 44,
+                      borderRadius: 22,
+                      backgroundColor: `${statusColor}20`,
+                      alignItems: "center",
+                      justifyContent: "center",
+                      marginRight: 12,
+                    }}
+                  >
+                    <Ionicons name="person" size={22} color={statusColor} />
+                  </View>
+
+                  {/* Worker Info */}
+                  <View style={{ flex: 1 }}>
+                    <Text
+                      style={{
+                        fontSize: 15,
+                        fontWeight: "600",
+                        color: colors.black,
+                      }}
+                    >
+                      {item.workerName}
+                    </Text>
+                    <View
+                      style={{
+                        flexDirection: "row",
+                        alignItems: "center",
+                        marginTop: 3,
+                      }}
+                    >
+                      <Ionicons
+                        name={statusIcon as any}
+                        size={14}
+                        color={statusColor}
+                      />
+                      <Text
+                        style={{
+                          fontSize: 12,
+                          color: statusColor,
+                          marginLeft: 4,
+                          fontWeight: "500",
+                        }}
+                      >
+                        {statusText}
+                      </Text>
+                    </View>
+                    {item.locationDistance != null && isArrived && (
+                      <Text
+                        style={{
+                          fontSize: 11,
+                          color: "#10B981",
+                          marginTop: 2,
+                        }}
+                      >
+                        ✅ {item.locationDistance}m from job site
+                      </Text>
+                    )}
+                  </View>
+
+                  {/* Approve Button */}
+                  {isArrived && (
+                    <TouchableOpacity
+                      style={{
+                        backgroundColor: isApproving
+                          ? colors.grey
+                          : "#10B981",
+                        paddingVertical: 10,
+                        paddingHorizontal: 18,
+                        borderRadius: 10,
+                        flexDirection: "row",
+                        alignItems: "center",
+                      }}
+                      onPress={() =>
+                        handleApprove(item.workerId, item.workerName)
+                      }
+                      disabled={isApproving}
+                    >
+                      {isApproving ? (
+                        <ActivityIndicator size="small" color="#fff" />
+                      ) : (
+                        <>
+                          <Ionicons
+                            name="checkmark"
+                            size={16}
+                            color="#fff"
+                          />
+                          <Text
+                            style={{
+                              color: "#fff",
+                              fontWeight: "700",
+                              fontSize: 13,
+                              marginLeft: 4,
+                            }}
+                          >
+                            Approve
+                          </Text>
+                        </>
+                      )}
+                    </TouchableOpacity>
+                  )}
+
+                  {/* Verified badge */}
+                  {isVerified && (
+                    <View
+                      style={{
+                        backgroundColor: "#10B98115",
+                        paddingVertical: 6,
+                        paddingHorizontal: 12,
+                        borderRadius: 8,
+                      }}
+                    >
+                      <Text
+                        style={{
+                          color: "#10B981",
+                          fontWeight: "600",
+                          fontSize: 12,
+                        }}
+                      >
+                        ✔ Verified
+                      </Text>
+                    </View>
+                  )}
+
+                  {/* Pending indicator */}
+                  {isPending && (
+                    <View
+                      style={{
+                        backgroundColor: "#F3F4F6",
+                        paddingVertical: 6,
+                        paddingHorizontal: 12,
+                        borderRadius: 8,
+                      }}
+                    >
+                      <Text
+                        style={{
+                          color: "#9CA3AF",
+                          fontWeight: "500",
+                          fontSize: 12,
+                        }}
+                      >
+                        Pending
+                      </Text>
+                    </View>
+                  )}
+                </View>
+
+                {/* Timer display for active workers */}
+                {isVerified && item.totalWorkedSeconds > 0 && (
+                  <View
+                    style={{
+                      marginTop: 10,
+                      paddingTop: 10,
+                      borderTopWidth: 1,
+                      borderTopColor: colors.border,
+                      flexDirection: "row",
+                      alignItems: "center",
+                    }}
+                  >
+                    <Ionicons
+                      name="timer-outline"
+                      size={14}
+                      color={colors.grey}
+                    />
+                    <Text
+                      style={{
+                        fontSize: 12,
+                        color: colors.grey,
+                        marginLeft: 4,
+                      }}
+                    >
+                      Time worked:{" "}
+                      {Math.floor(item.totalWorkedSeconds / 3600)}h{" "}
+                      {Math.floor((item.totalWorkedSeconds % 3600) / 60)}m
+                    </Text>
+                  </View>
+                )}
+              </View>
+            );
+          }}
+        />
       )}
     </View>
   );
 };
-
 /* -------------------- Main Screen -------------------- */
 const RequestVerification = () => {
   const layout = useWindowDimensions();
   const route = useRoute<any>();
-  const { jobId } = route.params || {};
+  const { jobId, initialTab, workerId } = route.params || {};
 
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
 
-  const [index, setIndex] = useState(0);
+  const [index, setIndex] = useState(initialTab === 'verify' || workerId ? 1 : 0);
   const [pendingCount, setPendingCount] = useState(0);
   const [acceptedCount, setAcceptedCount] = useState(0);
   const [verifiedCount, setVerifiedCount] = useState(0);
@@ -1537,6 +1342,7 @@ const RequestVerification = () => {
             onCountUpdate={handleCountUpdate}
             refreshTrigger={refreshTrigger}
             onDataUpdate={handleDataUpdate}
+            autoVerifyWorkerId={route.params?.workerId}
           />
         );
       default:

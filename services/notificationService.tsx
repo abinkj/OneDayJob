@@ -1,4 +1,5 @@
 import { Platform, Alert, Linking } from 'react-native';
+import { router } from "expo-router";
 import * as Notifications from 'expo-notifications';
 import * as Device from 'expo-device';
 import Constants from 'expo-constants';
@@ -174,27 +175,55 @@ class NotificationService {
 
     console.log('Processed notification response:', notificationData);
 
-    // Navigate based on notification type
+    // Navigate based on notification type or explicit clickAction
+    const clickAction = notificationData.data?.clickAction || notificationData.clickAction;
+    
+    if (clickAction === 'VERIFY_ARRIVAL' && notificationData.jobId && notificationData.data?.workerId) {
+      console.log('🔗 Deep-linking to Arrival Verification:', notificationData.jobId, notificationData.data.workerId);
+      router.push({
+        pathname: "/main/requestVerification",
+        params: { jobId: notificationData.jobId, workerId: notificationData.data.workerId, initialTab: 'verify' }
+      });
+      return;
+    }
+
+    if (clickAction === 'REVIEW_COMPLETION' && notificationData.jobId) {
+        console.log('🔗 Deep-linking to Completion Review:', notificationData.jobId);
+        router.push({
+          pathname: "/main/requestVerification",
+          params: { jobId: notificationData.jobId, initialTab: 'verify' }
+        });
+        return;
+    }
+
     switch (notificationData.type) {
       case 'verification_code':
         if (notificationData.jobId) {
-          // Navigate to job details or verification screen
-          this.navigateToJobDetails(notificationData.jobId);
+          router.push({
+            pathname: "/main/requestVerification",
+            params: { jobId: notificationData.jobId }
+          });
         }
         break;
       case 'job_update':
         if (notificationData.jobId) {
-          this.navigateToJobDetails(notificationData.jobId);
+            router.push({
+                pathname: "/main/requestVerification",
+                params: { jobId: notificationData.jobId }
+            });
         }
         break;
       case 'application_status':
         if (notificationData.jobId) {
-          this.navigateToJobDetails(notificationData.jobId);
+            router.push({
+                pathname: "/JobDetails",
+                params: { jobId: notificationData.jobId }
+            });
         }
         break;
       case 'message':
         if (notificationData.data?.conversationId) {
-          this.navigateToChat(notificationData.data.conversationId);
+          // Navigate to specific chat logic
         }
         break;
     }

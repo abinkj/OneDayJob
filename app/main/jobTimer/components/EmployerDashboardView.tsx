@@ -143,28 +143,25 @@ const EmployerDashboardView: React.FC<EmployerDashboardViewProps> = ({
                 {!summary ? (
                     <>
                         <Text style={styles.instructionsText}>
-                            • First, tap "Initiate Job" to start the job execution
+                            • No manual initiation required! Wait for workers to mark arrival.
                         </Text>
                         <Text style={styles.instructionsText}>
-                            • This will create sessions for all accepted workers
+                            • Once they arrive, verify them on the "Verify" tab of this job.
                         </Text>
                         <Text style={styles.instructionsText}>
-                            • Workers can then start their timers and begin working
+                            • After verification, workers can start their timers immediately.
                         </Text>
                     </>
                 ) : (
                     <>
                         <Text style={styles.instructionsText}>
-                            • Monitor all workers' progress in real-time
+                            • View all workers' current total worked time below.
                         </Text>
                         <Text style={styles.instructionsText}>
-                            • Green indicates active workers
+                            • Green dots indicate they are currently working.
                         </Text>
                         <Text style={styles.instructionsText}>
-                            • Orange indicates paused workers
-                        </Text>
-                        <Text style={styles.instructionsText}>
-                            • Data refreshes automatically based on activity
+                            • You can rate and review workers after they complete the job.
                         </Text>
                     </>
                 )}
