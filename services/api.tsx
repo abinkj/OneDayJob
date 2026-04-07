@@ -11,10 +11,6 @@ import { logout as logoutAction } from "../redux/reducers/authReducers";
 
 const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL;
 
-// Simple request throttler to prevent duplicate requests
-const requestThrottler = new Map<string, number>();
-const THROTTLE_WINDOW = 2000; // 2 seconds
-
 const api = axios.create({
   baseURL: API_BASE_URL,
   headers: {
@@ -24,30 +20,9 @@ const api = axios.create({
   timeout: 10000, // 10 second timeout
 });
 
-// Enhanced request interceptor with better error handling
 api.interceptors.request.use(
   async (config) => {
     try {
-      // Create a unique key for the request
-      const requestKey = `${config.method}:${config.url}:${JSON.stringify(config.params)}:${JSON.stringify(config.data)}`;
-      const now = Date.now();
-
-      // Check if identical request was made recently
-      // Exception: allow POST/PUT/DELETE non-idempotent requests if needed, but usually we want to prevent double-submit too
-      // For now, only throttle GET requests to be safe
-      if (config.method?.toUpperCase() === 'GET' && requestThrottler.has(requestKey)) {
-        const lastTime = requestThrottler.get(requestKey) || 0;
-        if (now - lastTime < THROTTLE_WINDOW) {
-          // Silently cancel without logging to consoleMain
-          const controller = new AbortController();
-          config.signal = controller.signal;
-          controller.abort('Request throttled locally');
-          return Promise.reject(new axios.Cancel('Request throttled locally'));
-        }
-      }
-
-      requestThrottler.set(requestKey, now);
-
       const token = await getAccessToken();
 
       console.log("API Request:", {
@@ -870,6 +845,91 @@ export const getEmployeeVerificationCode = async (jobId: string) => {
     return response;
   } catch (error) {
     console.error("Error getting employee verification code:", error);
+    throw error;
+  }
+};
+
+// ==================== ARRIVAL VERIFICATION API ENDPOINTS ====================
+
+/**
+ * Worker marks arrival at job site
+ * POST /api/jobs/:jobId/arrive
+ */
+export const markArrival = async (
+  jobId: string,
+  latitude: number,
+  longitude: number
+) => {
+  try {
+    console.log("Marking arrival for job:", jobId, { latitude, longitude });
+    const response = await api.post(`/jobs/${jobId}/arrive`, {
+      latitude,
+      longitude,
+    });
+    console.log("Mark arrival response:", response.data);
+    return response;
+  } catch (error) {
+    console.error("Error marking arrival:", error);
+    throw error;
+  }
+};
+
+/**
+ * Get arrived workers list (employer view)
+ * GET /api/jobs/:jobId/arrived-workers
+ */
+export const getArrivedWorkers = async (jobId: string) => {
+  try {
+    console.log("Getting arrived workers for job:", jobId);
+    const response = await api.get(`/jobs/${jobId}/arrived-workers`);
+    console.log("Arrived workers response:", response.data);
+    return response;
+  } catch (error) {
+    console.error("Error getting arrived workers:", error);
+    throw error;
+  }
+};
+
+/**
+ * Employer approves a worker's arrival
+ * POST /api/jobs/:jobId/approve-arrival
+ */
+export const approveWorkerArrival = async (
+  jobId: string,
+  workerId: string
+) => {
+  try {
+    console.log("Approving worker arrival:", { jobId, workerId });
+    const response = await api.post(`/jobs/${jobId}/approve-arrival`, {
+      workerId,
+    });
+    console.log("Approve arrival response:", response.data);
+    return response;
+  } catch (error) {
+    console.error("Error approving worker arrival:", error);
+    throw error;
+  }
+};
+
+/**
+ * Check if worker is eligible to mark arrival (pre-check)
+ * POST /api/jobs/:jobId/check-arrival
+ */
+export const checkArrivalEligibility = async (
+  jobId: string,
+  latitude: number,
+  longitude: number
+) => {
+  try {
+    console.log("Checking arrival eligibility:", jobId, { latitude, longitude });
+    const response = await api.post(`/jobs/${jobId}/check-arrival`, {
+      latitude,
+      longitude,
+    });
+    console.log("Check arrival response:", response.data);
+    return response;
+  } catch (error) {
+    console.error("Error checking arrival eligibility:", error);
     throw error;
   }
 };

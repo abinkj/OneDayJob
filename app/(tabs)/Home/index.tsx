@@ -31,7 +31,9 @@ import {
   updateUserLocationWithRetry,
   isAuthenticated,
   getCategoriesForFilter,
+  markArrival,
 } from "../../../services/api";
+import * as Location from 'expo-location';
 import { restoreSession } from "../../../utilities/authentication";
 import { JobPost } from "../../../types";
 import { useJobPostings } from "../../../hooks/useJobs";
@@ -62,10 +64,12 @@ const getCategoryIcon = (categoryName?: string) => {
 };
 
 const HomeScreen = () => {
-  const { sendVerificationCodeNotification } = useNotifications();
+  const { sendJobUpdateNotification } = useNotifications();
   const activeJobState = useActiveJob();
   const [showSuccessAnimation, setShowSuccessAnimation] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
+  const [arrivingJobId, setArrivingJobId] = useState<string | null>(null);
+  const [arrivalLoading, setArrivalLoading] = useState(false);
   const [successSubMessage, setSuccessSubMessage] = useState("");
 
   // Effect to handle success animation for worker completion
@@ -83,7 +87,7 @@ const HomeScreen = () => {
   }, [activeJobState.lastWorkerCompletion, activeJobState.allWorkersCompleted, activeJobState.job?.name]);
 
   const testNotification = () => {
-    sendVerificationCodeNotification("test-job-123", "Test Job", "123456");
+    sendJobUpdateNotification("test-job-123", "Test Job", "Test update notification");
   };
 
   const [searchQuery, setSearchQuery] = useState("");
@@ -648,6 +652,82 @@ const HomeScreen = () => {
   // Note: TanStack Query handles caching and deduping, but we can keep a small debounce if needed for the search input specifically.
   // For now, we rely on the state changes triggering the hook.
 
+  // Handle "I Have Arrived" button press
+  const handleArrival = async (jobId: string, jobName: string) => {
+    try {
+      setArrivalLoading(true);
+      setArrivingJobId(jobId);
+
+      // 1. Get current GPS location
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        Toast.show({
+          type: 'error',
+          text1: 'Location Permission Required',
+          text2: 'Please enable location access to mark your arrival.',
+        });
+        return;
+      }
+
+      Toast.show({
+        type: 'info',
+        text1: 'Getting your location...',
+        visibilityTime: 1500,
+      });
+
+      const loc = await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.High,
+      });
+
+      const { latitude, longitude } = loc.coords;
+      console.log('[Arrival] Current location:', { latitude, longitude });
+
+      // 2. Call arrival API
+      const response = await markArrival(jobId, latitude, longitude);
+
+      if (response.data?.success) {
+        Toast.show({
+          type: 'success',
+          text1: 'Arrival Marked! ✅',
+          text2: `You are ${response.data.data?.distance || 0}m from the job site. Waiting for employer approval.`,
+        });
+        // Navigate to JobTimer to see the waiting state
+        navigation.navigate('JobTimer', {
+          jobId,
+          jobName,
+          isEmployer: false,
+        });
+      } else {
+        const dist = response.data?.data?.distance;
+        Toast.show({
+          type: 'error',
+          text1: 'Too Far Away',
+          text2: dist
+            ? `You are ${dist}m away. Move within 500m of the job site.`
+            : response.data?.message || 'Could not verify your location.',
+        });
+      }
+    } catch (error: any) {
+      console.log('[Arrival] Error status:', error?.response?.status);
+      const isSessionNotFound = error?.response?.status === 404 && 
+                               error?.response?.data?.error?.message?.includes('session');
+      
+      const msg = isSessionNotFound 
+        ? 'The employer hasn\'t started the job session yet. Please wait for them to start.'
+        : error?.response?.data?.message || 'Failed to mark arrival. Please try again.';
+        
+      const dist = error?.response?.data?.data?.distance;
+      Toast.show({
+        type: 'error',
+        text1: dist ? 'Too Far Away' : (isSessionNotFound ? 'Wait for Employer' : 'Arrival Failed'),
+        text2: dist ? `You are ${dist}m away. Move within 500m of the job site.` : msg,
+      });
+    } finally {
+      setArrivalLoading(false);
+      setArrivingJobId(null);
+    }
+  };
+
   const renderJobCard = ({
     item,
   }: {
@@ -660,32 +740,29 @@ const HomeScreen = () => {
       item.jobStatus?.toLowerCase() === "completed" ||
       item.status?.toLowerCase() === "completed";
 
+    // Determine if current user is the employer (job creator) or a worker
+    const jobItem = item as any;
+    const jobOwnerId =
+      jobItem.userId?._id ||
+      jobItem.userId?.id ||
+      jobItem.postedBy?._id ||
+      jobItem.postedBy?.id ||
+      jobItem.createdBy ||
+      jobItem.ownerId;
+    const isEmployer = (userData?.id && jobOwnerId && userData.id === jobOwnerId) || 
+                       (userData?._id && jobOwnerId && userData._id === jobOwnerId) ||
+                       (userData?.id && item.userId?._id && item.userId._id === userData.id) ||
+                       (userData?._id && item.userId?._id && item.userId._id === userData._id) ||
+                       (userData?.id && item.userId === userData.id) ||
+                       (userData?._id && item.userId === userData?._id);
+    const isWorkerOnInProgressJob = isInProgress && !isEmployer;
+
     const handleJobPress = () => {
       if (isInProgress) {
-        // Debug: Log the full job item to see available fields
-        console.log("Full job item data:", JSON.stringify(item, null, 2));
-
-        // Check if user is the job poster (employer) or an applicant (worker)
-        // The backend populates userId with user data, so we need to check both _id and id
-        const jobItem = item as any;
-        const jobOwnerId =
-          jobItem.userId?._id ||
-          jobItem.userId?.id ||
-          jobItem.postedBy?._id ||
-          jobItem.postedBy?.id ||
-          jobItem.createdBy ||
-          jobItem.ownerId;
-        const isEmployer =
-          userData?.id === jobOwnerId || userData?._id === jobOwnerId;
-
         console.log("Job ownership check:", {
           userDataId: userData?.id,
-          userData_id: userData?._id,
-          jobOwnerId: jobOwnerId,
-          jobUserId: item.userId,
-          jobPostedBy: jobItem.postedBy,
-          jobCreatedBy: jobItem.createdBy,
-          isEmployer: isEmployer,
+          jobOwnerId,
+          isEmployer,
           jobName: item.name,
         });
 
@@ -773,6 +850,62 @@ const HomeScreen = () => {
               : "Recently"}
           </Text>
         </View>
+
+        {/* Arrival Button for Workers on In-Progress Jobs */}
+        {isWorkerOnInProgressJob && (
+          <View style={{ marginTop: 10 }}>
+            <TouchableOpacity
+              style={{
+                backgroundColor: (item as any).hasArrived || (arrivalLoading && arrivingJobId === (item as any)._id) ? colors.grey : '#10B981',
+                paddingVertical: 12,
+                paddingHorizontal: 16,
+                borderRadius: 12,
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'center',
+                shadowColor: '#10B981',
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: ((item as any).hasArrived || arrivalLoading) ? 0 : 0.3,
+                shadowRadius: 4,
+                elevation: ((item as any).hasArrived || arrivalLoading) ? 0 : 3,
+              }}
+              onPress={() => (item as any).hasArrived ? Toast.show({ type: 'info', text1: 'Waiting for Approval', text2: 'Please ask your employer to verify you on their screen.' }) : handleArrival((item as any)._id, (item as any).name)}
+              disabled={(item as any).hasArrived || (arrivalLoading && arrivingJobId === (item as any)._id)}
+              activeOpacity={0.8}
+            >
+              {arrivalLoading && arrivingJobId === (item as any)._id ? (
+                <ActivityIndicator size="small" color="#fff" />
+              ) : (
+                <>
+                  <Ionicons name={(item as any).hasArrived ? "checkmark-circle" : "location"} size={18} color="#fff" style={{ marginRight: 8 }} />
+                  <Text style={{ color: '#fff', fontWeight: '700', fontSize: 14, letterSpacing: 0.3 }}>
+                    {(item as any).hasArrived ? 'Arrived - Waiting for Approval' : 'I Have Reached the Location'}
+                  </Text>
+                </>
+              )}
+            </TouchableOpacity>
+            
+            {(item as any).hasArrived && (
+              <Text style={{ fontSize: 11, color: '#10B981', marginTop: 4, textAlign: 'center', fontWeight: '500' }}>
+                Arrival marked! Ask employer to verify you.
+              </Text>
+            )}
+            
+            <View style={{ marginTop: 6, paddingHorizontal: 4 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <Ionicons name="navigate" size={12} color={colors.grey} />
+                <Text style={{ fontSize: 11, color: colors.grey, marginLeft: 4 }}>
+                  Current: {locationAddress || 'Getting location...'}
+                </Text>
+              </View>
+              {item.distance !== null && item.distance !== undefined && (
+                <Text style={{ fontSize: 10, color: colors.grey, marginLeft: 16, marginTop: 2 }}>
+                  ~{item.distance}km from site
+                </Text>
+              )}
+            </View>
+          </View>
+        )}
       </TouchableOpacity>
     );
   };

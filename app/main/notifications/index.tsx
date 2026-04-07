@@ -83,8 +83,8 @@ const NotificationScreen = () => {
 
   const getNotificationIcon = (type: string): string => {
     switch (type) {
-      case 'verification_code':
-        return 'key-outline';
+      case 'arrival_status':
+        return 'location-outline';
       case 'job_update':
         return 'briefcase-outline';
       case 'application_status':
@@ -100,8 +100,8 @@ const NotificationScreen = () => {
 
   const getNotificationColor = (type: string): string => {
     switch (type) {
-      case 'verification_code':
-        return '#4CAF50';
+      case 'arrival_status':
+        return '#10B981';
       case 'job_update':
         return '#2196F3';
       case 'application_status':

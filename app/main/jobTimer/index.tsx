@@ -13,9 +13,9 @@
  * - Better performance
  */
 
-import React, { useState, useMemo } from "react";
-import { View, Text, ScrollView, RefreshControl } from "react-native";
-import { useRoute } from "@react-navigation/native";
+import React, { useState, useMemo, useEffect, useCallback } from "react";
+import { View, Text, ScrollView, RefreshControl, BackHandler } from "react-native";
+import { useRoute, useNavigation } from "@react-navigation/native";
 import { Header } from "../../../components/header";
 import { JobDetailsSkeleton } from "../../../components/Shimmer/Skeletons";
 import { useTheme } from "../../../contexts/ThemeContext";
@@ -51,6 +51,7 @@ const JobTimerScreen = () => {
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const { showAlert } = useAlert();
+  const navigation = useNavigation();
 
   // Rating modal state
   const [isRatingModalVisible, setIsRatingModalVisible] = useState(false);
@@ -64,6 +65,26 @@ const JobTimerScreen = () => {
   // Note: We call both hooks to satisfy React's rules of hooks, but pass conditional data
   const workerSession = useJobSession(isEmployer ? '' : jobId); // Empty string prevents API call
   const employerDashboard = useEmployerDashboard(isEmployer ? jobId : ''); // Empty string prevents API call
+
+  // Soft lock: Warn when worker tries to leave during active session
+  const sessionStatus = workerSession?.session?.session?.status;
+  useEffect(() => {
+    if (isEmployer) return;
+    if (sessionStatus !== 'active') return;
+
+    const onBackPress = () => {
+      Toast.show({
+        type: 'info',
+        text1: 'Session Active \u23F1\uFE0F',
+        text2: 'Your work session is still running. Remember to pause or complete it.',
+        visibilityTime: 2500,
+      });
+      return false;
+    };
+
+    const sub = BackHandler.addEventListener('hardwareBackPress', onBackPress);
+    return () => sub.remove();
+  }, [isEmployer, sessionStatus]);
 
   // Calculate display time for worker (server-side calculation)
   const { displayTime } = useServerTimer(
