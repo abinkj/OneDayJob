@@ -21,6 +21,7 @@ import ImagePickerActionSheet, {
   ImagePickerActionSheetRef,
 } from "../../../components/imagePickerActionSheet";
 import { validateName } from "../../../utilities/formValidation";
+import { useAlert } from "../../../components/CustomAlert/AlertProvider";
 
 const EditProfile: React.FC = () => {
   const { colors } = useTheme();
@@ -45,6 +46,8 @@ const EditProfile: React.FC = () => {
     uri: Images.profile.profileImage as unknown as string,
   });
   const [isSaving, setIsSaving] = useState(false);
+  const [isSaved, setIsSaved] = useState(false);
+  const { showAlert } = useAlert();
 
   useEffect(() => {
     const fetchAndInitUser = async () => {
@@ -76,6 +79,54 @@ const EditProfile: React.FC = () => {
 
     fetchAndInitUser();
   }, []);
+
+  const hasUnsavedChanges = useMemo(() => {
+    if (!user) return false;
+
+    const imageUri =
+      typeof profileImage === "string" ? profileImage : profileImage?.uri;
+    const isNewImage = imageUri && imageUri.startsWith("file://");
+
+    return (
+      user.firstName !== firstName.trim() ||
+      user.lastName !== lastName.trim() ||
+      (user.locationText || user.location?.address || "") !== location.trim() ||
+      isNewImage
+    );
+  }, [user, firstName, lastName, location, profileImage]);
+
+  useEffect(() => {
+    const unsubscribe = navigation.addListener("beforeRemove", (e: any) => {
+      if (!hasUnsavedChanges || isSaved) {
+        return;
+      }
+
+      // Prevent default behavior of leaving the screen
+      e.preventDefault();
+
+      showAlert({
+        type: "warning",
+        title: "Discard Changes",
+        message:
+          "You have unsaved changes. Are you sure you want to discard them?",
+        buttons: [
+          {
+            text: "Stay",
+            style: "cancel",
+          },
+          {
+            text: "Discard",
+            style: "destructive",
+            onPress: () => {
+              navigation.dispatch(e.data.action);
+            },
+          },
+        ],
+      });
+    });
+
+    return unsubscribe;
+  }, [navigation, hasUnsavedChanges, isSaved, showAlert]);
 
   const showImagePicker = () => {
     imagePickerRef.current?.show();
@@ -221,6 +272,7 @@ const EditProfile: React.FC = () => {
           text1: "Success",
           text2: "Profile updated successfully",
         });
+        setIsSaved(true);
         setTimeout(() => navigation.goBack(), 1500);
       } else {
         throw new Error("Unexpected response from server.");
@@ -241,7 +293,11 @@ const EditProfile: React.FC = () => {
 
   return (
     <View style={styles.container}>
-      <Header title="Edit Profile" showBackButton />
+      <Header
+        title="Edit Profile"
+        showBackButton
+        onBackPress={() => navigation.goBack()}
+      />
       <ScrollView contentContainerStyle={styles.scrollContent} bounces={false}>
         {/* Profile Image */}
         <View style={styles.imageWrapper}>
