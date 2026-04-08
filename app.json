@@ -42,7 +42,8 @@
       [
         "expo-location",
         {
-          "locationAlwaysAndWhenInUsePermission": "Allow $(PRODUCT_NAME) to use your location."
+          "locationAlwaysAndWhenInUsePermission": "Allow $(PRODUCT_NAME) to access your location to help find nearby jobs and provide accurate navigation to job sites.",
+          "locationWhenInUsePermission": "Allow $(PRODUCT_NAME) to access your location to show available jobs in your immediate area."
         }
       ],
       [
@@ -57,7 +58,7 @@
         "expo-secure-store",
         {
           "configureAndroidBackup": true,
-          "faceIDPermission": "Allow $(PRODUCT_NAME) to access your Face ID biometric data."
+          "faceIDPermission": "Allow $(PRODUCT_NAME) to use Face ID for secure authentication to your account."
         }
       ],
       [
@@ -66,6 +67,13 @@
           "icon": "./assets/icon.png",
           "color": "#ffffff",
           "defaultChannel": "default"
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow $(PRODUCT_NAME) to access your photos to let you upload a profile picture and add relevant photos to job listings.",
+          "cameraPermission": "Allow $(PRODUCT_NAME) to access your camera to take a profile picture or document job-related tasks."
         }
       ],
       "expo-web-browser"

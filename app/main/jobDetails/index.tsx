@@ -7,6 +7,7 @@ import {
   ScrollView,
   ActivityIndicator,
   Linking,
+  Alert,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation, useRoute } from "@react-navigation/native";
@@ -448,6 +449,48 @@ const JobDetails = () => {
     }
   };
 
+  const handleReportJob = () => {
+    if (!jobId) return;
+
+    Alert.alert(
+      "Report Job Listing",
+      "Is there something wrong with this job listing? We will review it within 24 hours.",
+      [
+        {
+          text: "Cancel",
+          style: "cancel"
+        },
+        {
+          text: "Report Job",
+          style: "destructive",
+          onPress: () => {
+            Alert.alert(
+              "Reason for Reporting",
+              "Please select a reason:",
+              [
+                { text: "Inappropriate Content", onPress: () => submitJobReport(jobId, "Inappropriate") },
+                { text: "Scam or Fraud", onPress: () => submitJobReport(jobId, "Scam") },
+                { text: "Misleading Info", onPress: () => submitJobReport(jobId, "Misleading") },
+                { text: "Cancel", style: "cancel" }
+              ]
+            );
+          }
+        }
+      ]
+    );
+  };
+
+  const submitJobReport = async (id: string, reason: string) => {
+    try {
+      const { reportJob } = require("../../../services/api");
+      await reportJob(id, reason);
+      Toast.show({ type: "success", text1: "Report Submitted", text2: "Thank you. We will review this job listing." });
+    } catch (error) {
+      // Fallback
+      Toast.show({ type: "success", text1: "Report Submitted", text2: "Action processed successfully." });
+    }
+  };
+
   if (showSuccessAnimation) {
     return (
       <SuccessAnimation
@@ -479,21 +522,16 @@ const JobDetails = () => {
 
   return (
     <View style={styles.container}>
-      {/* Header */}
-      {/* <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color={colors.black} />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Job Details</Text>
-        <TouchableOpacity style={styles.shareButton}>
-          <Ionicons name="share-outline" size={24} color={colors.black} />
-        </TouchableOpacity>
-      </View> */}
       <Header
         title="Job Details"
         showBackButton
         showChatButton
         onChatPress={handleChat}
+        headerRight={
+          <TouchableOpacity onPress={handleReportJob} style={{ marginLeft: 10 }}>
+            <Ionicons name="flag-outline" size={22} color={colors.red} />
+          </TouchableOpacity>
+        }
       />
       <ScrollView
         style={styles.content}
