@@ -40,7 +40,7 @@ const ImagePickerActionSheet = forwardRef<
       cancelButtonStyle,
       cancelTextStyle,
     },
-    ref
+    ref,
   ) => {
     const actionSheetRef = useRef<ActionSheetRef>(null);
     const { colors } = useTheme();
@@ -53,58 +53,62 @@ const ImagePickerActionSheet = forwardRef<
 
     const handleTakePhoto = async () => {
       actionSheetRef.current?.hide();
-      try {
-        // Request camera permissions
-        const cameraPermission =
-          await ImagePicker.requestCameraPermissionsAsync();
-        if (cameraPermission.status !== "granted") {
-          onError?.("Camera permission is required to take photos");
-          return;
-        }
+      setTimeout(async () => {
+        try {
+          // Request camera permissions
+          const cameraPermission =
+            await ImagePicker.requestCameraPermissionsAsync();
+          if (cameraPermission.status !== "granted") {
+            onError?.("Camera permission is required to take photos");
+            return;
+          }
 
-        const result = await ImagePicker.launchCameraAsync({
-          allowsEditing: true,
-          aspect: [1, 1],
-          base64: false,
-          quality: 0.8,
-        });
+          const result = await ImagePicker.launchCameraAsync({
+            allowsEditing: true,
+            aspect: [1, 1],
+            base64: false,
+            quality: 0.8,
+          });
 
-        if (!result.canceled && result.assets[0]) {
-          onImageSelected(result.assets[0].uri);
+          if (!result.canceled && result.assets[0]) {
+            onImageSelected(result.assets[0].uri);
+          }
+        } catch (error) {
+          onError?.("Failed to take photo");
         }
-      } catch (error) {
-        onError?.("Failed to take photo");
-      }
+      }, 500); // 500ms delay for ActionSheet dismissal
     };
 
     const handleChooseFromGallery = async () => {
       actionSheetRef.current?.hide();
-      try {
-        // Request media library permissions
-        const libraryPermission =
-          await ImagePicker.requestMediaLibraryPermissionsAsync();
-        if (libraryPermission.status !== "granted") {
-          onError?.("Photo library permission is required to choose images");
-          return;
-        }
+      setTimeout(async () => {
+        try {
+          // Request media library permissions
+          const libraryPermission =
+            await ImagePicker.requestMediaLibraryPermissionsAsync();
+          if (libraryPermission.status !== "granted") {
+            onError?.("Photo library permission is required to choose images");
+            return;
+          }
 
-        const result = await ImagePicker.launchImageLibraryAsync({
-          mediaTypes: ["images"],
-          allowsMultipleSelection: false,
-          selectionLimit: 1,
-          allowsEditing: true,
-          aspect: [1, 1],
-          base64: false,
-          quality: 0.8,
-          exif: false,
-        });
+          const result = await ImagePicker.launchImageLibraryAsync({
+            mediaTypes: ["images"],
+            allowsMultipleSelection: false,
+            selectionLimit: 1,
+            allowsEditing: true,
+            aspect: [1, 1],
+            base64: false,
+            quality: 0.8,
+            exif: false,
+          });
 
-        if (!result.canceled && result.assets[0]) {
-          onImageSelected(result.assets[0].uri);
+          if (!result.canceled && result.assets[0]) {
+            onImageSelected(result.assets[0].uri);
+          }
+        } catch (error) {
+          onError?.("Failed to pick image");
         }
-      } catch (error) {
-        onError?.("Failed to pick image");
-      }
+      }, 500); // 500ms delay for ActionSheet dismissal
     };
 
     const defaultContainerStyle = useMemo(
@@ -114,7 +118,7 @@ const ImagePickerActionSheet = forwardRef<
         borderTopRightRadius: 20,
         ...containerStyle,
       }),
-      [colors.white, containerStyle]
+      [colors.white, containerStyle],
     );
 
     const defaultTitleStyle = useMemo(
@@ -126,7 +130,7 @@ const ImagePickerActionSheet = forwardRef<
         color: colors.black,
         ...titleStyle,
       }),
-      [colors.black, titleStyle]
+      [colors.black, titleStyle],
     );
 
     const defaultButtonStyle = useMemo(
@@ -139,7 +143,7 @@ const ImagePickerActionSheet = forwardRef<
         marginBottom: 10,
         ...buttonStyle,
       }),
-      [buttonStyle]
+      [buttonStyle],
     );
 
     const defaultButtonTextStyle = useMemo(
@@ -149,7 +153,7 @@ const ImagePickerActionSheet = forwardRef<
         color: colors.black,
         ...buttonTextStyle,
       }),
-      [colors.black, buttonTextStyle]
+      [colors.black, buttonTextStyle],
     );
 
     const defaultCancelButtonStyle = useMemo(
@@ -160,7 +164,7 @@ const ImagePickerActionSheet = forwardRef<
         alignItems: "center" as const,
         ...cancelButtonStyle,
       }),
-      [colors.address2, cancelButtonStyle]
+      [colors.address2, cancelButtonStyle],
     );
 
     const defaultCancelTextStyle = useMemo(
@@ -170,7 +174,7 @@ const ImagePickerActionSheet = forwardRef<
         fontWeight: "500" as const,
         ...cancelTextStyle,
       }),
-      [colors.grey, cancelTextStyle]
+      [colors.grey, cancelTextStyle],
     );
 
     return (
@@ -187,6 +191,7 @@ const ImagePickerActionSheet = forwardRef<
         closeOnPressBack={true}
         statusBarTranslucent={true}
         animated={true}
+        drawUnderStatusBar={true}
       >
         <View style={{ padding: 20 }}>
           <Text style={defaultTitleStyle}>{title}</Text>
@@ -219,7 +224,7 @@ const ImagePickerActionSheet = forwardRef<
         </View>
       </ActionSheet>
     );
-  }
+  },
 );
 
 ImagePickerActionSheet.displayName = "ImagePickerActionSheet";

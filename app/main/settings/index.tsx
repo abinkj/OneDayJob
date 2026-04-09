@@ -10,7 +10,7 @@ import CustomSwitch from "../../../components/CustomSwich";
 import { Image } from "expo-image";
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 // import { Colors } from "../../../constants/Colors";
 import { useTheme } from "../../../contexts/ThemeContext";
 import { Header } from "../../../components/header";
@@ -23,6 +23,9 @@ import Toast from "react-native-toast-message";
 import styles from "./styles";
 import strings from "../../../utilities/strings";
 import { useAlert } from "../../../components/CustomAlert/AlertProvider";
+import { getUserData } from "../../../utilities/mmkvStore";
+import { useProfile } from "../../../hooks/useProfile";
+import { RootState } from "../../../redux/store";
 
 interface SettingsItemProps {
   icon: string;
@@ -50,10 +53,7 @@ const SettingsItem: React.FC<SettingsItemProps> = ({
 
   return (
     <TouchableOpacity
-      style={[
-        styles.settingsItem,
-        { borderBottomColor: colors.addressGrey }
-      ]}
+      style={[styles.settingsItem, { borderBottomColor: colors.addressGrey }]}
       onPress={onPress}
       activeOpacity={0.7}
       disabled={!onPress}
@@ -63,7 +63,7 @@ const SettingsItem: React.FC<SettingsItemProps> = ({
           style={[
             styles.iconContainer,
             { backgroundColor: danger ? "#FFE5E5" : colors.categoryBox },
-            danger && styles.iconContainerDanger
+            danger && styles.iconContainerDanger,
           ]}
         >
           <IconComponent
@@ -73,14 +73,18 @@ const SettingsItem: React.FC<SettingsItemProps> = ({
           />
         </View>
         <View style={styles.settingsItemText}>
-          <Text style={[
-            styles.settingsItemTitle,
-            { color: danger ? colors.red : colors.black }
-          ]}>
+          <Text
+            style={[
+              styles.settingsItemTitle,
+              { color: danger ? colors.red : colors.black },
+            ]}
+          >
             {title}
           </Text>
           {subtitle && (
-            <Text style={[styles.settingsItemSubtitle, { color: colors.grey }]}>{subtitle}</Text>
+            <Text style={[styles.settingsItemSubtitle, { color: colors.grey }]}>
+              {subtitle}
+            </Text>
           )}
         </View>
       </View>
@@ -105,7 +109,9 @@ const SettingsSection: React.FC<SettingsSectionProps> = ({
   return (
     <View style={styles.section}>
       <Text style={[styles.sectionTitle, { color: colors.grey }]}>{title}</Text>
-      <View style={[styles.sectionContent, { backgroundColor: colors.white }]}>{children}</View>
+      <View style={[styles.sectionContent, { backgroundColor: colors.white }]}>
+        {children}
+      </View>
     </View>
   );
 };
@@ -113,64 +119,21 @@ const SettingsSection: React.FC<SettingsSectionProps> = ({
 const Settings: React.FC = () => {
   const navigation = useNavigation<any>();
   const dispatch = useDispatch();
-  const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const userData = useSelector(
+    (state: RootState) => state.authentication.userData,
+  );
+
+  const { data: user, isLoading: isProfileLoading } = useProfile(userData);
+  const [isLoading, setIsLoading] = useState(false);
   const [pushNotifications, setPushNotifications] = useState(true);
   const [emailNotifications, setEmailNotifications] = useState(true);
   const [jobAlerts, setJobAlerts] = useState(true);
   const [isTogglingTheme, setIsTogglingTheme] = useState(false);
 
   const { theme, colors, toggleTheme } = useTheme();
-  const darkMode = theme === 'dark';
+  const darkMode = theme === "dark";
 
   const { showAlert } = useAlert();
-
-  useEffect(() => {
-    fetchUserData();
-  }, []);
-
-  // Refresh user data when screen comes into focus
-  useEffect(() => {
-    const unsubscribe = navigation.addListener("focus", () => {
-      fetchUserData();
-    });
-    return unsubscribe;
-  }, [navigation]);
-
-  const fetchUserData = async () => {
-    try {
-      setIsLoading(true);
-      const currentUser = await getCurrentUser();
-      if (currentUser) {
-        const userId = currentUser.id || currentUser._id;
-
-        // Fetch fresh user data from backend to get profilePictureUrl
-        try {
-          const { getUserProfile } = require("../../../services/api");
-          const profileResponse = await getUserProfile(userId);
-          if (profileResponse.success && profileResponse.data) {
-            console.log('Settings - Fetched user from backend with CloudFront URL');
-            setUser(profileResponse.data);
-            return;
-          }
-        } catch (error) {
-          console.error('Error fetching user profile from backend:', error);
-        }
-
-        // Fallback to local storage
-        setUser(currentUser);
-      }
-    } catch (error) {
-      console.error("Error fetching user data:", error);
-      Toast.show({
-        type: "error",
-        text1: "Error",
-        text2: "Failed to load user data",
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   const handleEditProfile = () => {
     if (user) {
@@ -254,7 +217,7 @@ const Settings: React.FC = () => {
     });
   };
 
-  if (isLoading) {
+  if ((isProfileLoading && !user) || isLoading) {
     return (
       <View style={[styles.container, { backgroundColor: colors.background }]}>
         <Header title="Settings" showBackButton />
@@ -282,31 +245,46 @@ const Settings: React.FC = () => {
             key={`settings-${user?.profilePictureUrl || user?.profilePicture}`}
             source={
               // Use CloudFront URL (profilePictureUrl) if available, fallback to profilePicture
-              (user?.profilePictureUrl && typeof user.profilePictureUrl === 'string' && user.profilePictureUrl.startsWith('http'))
+              user?.profilePictureUrl &&
+              typeof user.profilePictureUrl === "string" &&
+              user.profilePictureUrl.startsWith("http")
                 ? { uri: user.profilePictureUrl }
-                : (user?.profilePicture && typeof user.profilePicture === 'string' && user.profilePicture.startsWith('http'))
+                : user?.profilePicture &&
+                    typeof user.profilePicture === "string" &&
+                    user.profilePicture.startsWith("http")
                   ? { uri: user.profilePicture }
                   : Images.profile.profileImage
             }
-            style={[styles.profileImage, { backgroundColor: colors.categoryBox }]}
+            style={[
+              styles.profileImage,
+              { backgroundColor: colors.categoryBox },
+            ]}
             placeholder={Images.profile.profileImage}
             placeholderContentFit="cover"
             contentFit="cover"
             cachePolicy="none"
-            transition={300}
+            //transition={300}
             onError={(error) => {
-              console.error('Settings image load error:', error);
-              console.error('Failed to load image URL:', user?.profilePictureUrl || user?.profilePicture);
+              console.error("Settings image load error:", error);
+              console.error(
+                "Failed to load image URL:",
+                user?.profilePictureUrl || user?.profilePicture,
+              );
             }}
             onLoad={() => {
-              console.log('Settings image loaded successfully:', user?.profilePictureUrl || user?.profilePicture);
+              console.log(
+                "Settings image loaded successfully:",
+                user?.profilePictureUrl || user?.profilePicture,
+              );
             }}
           />
           <View style={styles.profileInfo}>
             <Text style={[styles.profileName, { color: colors.black }]}>
               {user?.firstName} {user?.lastName}
             </Text>
-            <Text style={[styles.profileEmail, { color: colors.grey }]}>{user?.email}</Text>
+            <Text style={[styles.profileEmail, { color: colors.grey }]}>
+              {user?.email}
+            </Text>
           </View>
           {/* <Ionicons name="chevron-forward" size={20} color={colors.grey} /> */}
         </TouchableOpacity>

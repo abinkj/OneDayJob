@@ -8,7 +8,6 @@ import {
   LayoutAnimation,
   Platform,
   UIManager,
-
   ActivityIndicator,
   RefreshControl,
 } from "react-native";
@@ -34,6 +33,9 @@ import {
 import Toast from "react-native-toast-message";
 import { Image } from "expo-image";
 import { useAlert } from "../../../components/CustomAlert/AlertProvider";
+import { useProfile } from "../../../hooks/useProfile";
+import { useSelector } from "react-redux";
+import { RootState } from "../../../redux/store";
 
 if (
   Platform.OS === "android" &&
@@ -43,9 +45,15 @@ if (
 }
 
 const Profile: React.FC = () => {
-  const [user, setUser] = useState<User | null>(null);
+  const userData = useSelector(
+    (state: RootState) => state.authentication.userData,
+  );
+  const {
+    data: user,
+    isLoading: isProfileLoading,
+    refetch: refetchProfile,
+  } = useProfile(userData);
   const [reviews, setReviews] = useState<any[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [isReadyToWork, setIsReadyToWork] = useState(false);
 
   const [isDropdownVisible, setIsDropdownVisible] = useState(false);
@@ -59,93 +67,38 @@ const Profile: React.FC = () => {
   // const styles = createStyles(colors); // Using useMemo is better for performance if styles are complex or re-renders frequent
   const styles = React.useMemo(() => createStyles(colors), [colors]);
 
-  const fetchUserAndRatings = async (isRefreshing = false) => {
-    try {
-      if (!isRefreshing) setIsLoading(true);
-
-      // Get user ID from local storage first
-      let userData = await getUserData();
-
-      if (userData) {
-        const userId = userData.id || userData._id;
-
-        // Fetch fresh user data from backend (includes savedAddresses)
-        try {
-          const profileResponse = await getUserProfile(userId);
-          if (profileResponse.success && profileResponse.data) {
-            userData = profileResponse.data;
-            console.log('Profile screen - Fetched user from backend:', {
-              hasSavedAddresses: !!userData.savedAddresses,
-              savedAddressesCount: userData.savedAddresses?.length || 0
-            });
-          }
-        } catch (error) {
-          console.error('Error fetching user profile from backend:', error);
-          // Continue with local storage data as fallback
+  const fetchRatings = async () => {
+    if (user && (user.id || user._id)) {
+      try {
+        const userId = user.id || user._id;
+        const ratingsResponse = await getUserRatings(userId, "employee");
+        if (ratingsResponse.data.success) {
+          setReviews(ratingsResponse.data.data);
         }
-
-        console.log('Profile screen - User profile picture:', userData.profilePicture);
-        setUser(userData);
-
-        // Fetch ratings for this user (as an employee)
-        try {
-          const userId = userData.id || userData._id;
-          const ratingsResponse = await getUserRatings(userId, "employee");
-          if (ratingsResponse.data.success) {
-            setReviews(ratingsResponse.data.data);
-          }
-        } catch (error) {
-          console.error("Error fetching ratings:", error);
-        }
+      } catch (error) {
+        console.error("Error fetching ratings:", error);
       }
-    } catch (error) {
-      console.error("Error fetching user data:", error);
-    } finally {
-      if (!isRefreshing) setIsLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchUserAndRatings();
-  }, []);
+    fetchRatings();
+  }, [user?.id, user?._id]);
 
   const onRefresh = async () => {
     setRefreshing(true);
-    await fetchUserAndRatings(true);
+    await Promise.all([refetchProfile(), fetchRatings()]);
     setRefreshing(false);
   };
 
   // Refresh user data when returning from edit profile
   useEffect(() => {
-    const unsubscribe = navigation.addListener("focus", async () => {
-      try {
-        const userData = await getUserData();
-        if (userData) {
-          const userId = userData.id || userData._id;
-
-          // Fetch fresh data from backend
-          try {
-            const profileResponse = await getUserProfile(userId);
-            if (profileResponse.success && profileResponse.data) {
-              console.log('Profile screen (focus) - Fetched from backend');
-              setUser(profileResponse.data);
-              return;
-            }
-          } catch (error) {
-            console.error('Error fetching profile on focus:', error);
-          }
-
-          // Fallback to local storage
-          console.log('Profile screen (focus fallback) - User profile picture:', userData.profilePicture);
-          setUser(userData);
-        }
-      } catch (error) {
-        console.error('Error in focus listener:', error);
-      }
+    const unsubscribe = navigation.addListener("focus", () => {
+      refetchProfile();
     });
 
     return unsubscribe;
-  }, [navigation]);
+  }, [navigation, refetchProfile]);
 
   const handleNext = () => {
     navigation.navigate("RequestDetails");
@@ -235,13 +188,13 @@ const Profile: React.FC = () => {
     }
 
     // Find default address or use first one
-    const defaultAddr = user.savedAddresses.find(addr => addr.isDefault);
+    const defaultAddr = user.savedAddresses.find((addr) => addr.isDefault);
     const address = defaultAddr || user.savedAddresses[0];
 
     return `${address.city}, ${address.state}`;
   };
 
-  if (isLoading) {
+  if (isProfileLoading && !user) {
     return <ProfileSkeleton />;
   }
 
@@ -274,9 +227,13 @@ const Profile: React.FC = () => {
             key={`profile-${user?.profilePictureUrl || user?.profilePicture}`}
             source={
               // Use CloudFront URL (profilePictureUrl) if available, fallback to profilePicture
-              (user?.profilePictureUrl && typeof user.profilePictureUrl === 'string' && user.profilePictureUrl.startsWith('http'))
+              user?.profilePictureUrl &&
+              typeof user.profilePictureUrl === "string" &&
+              user.profilePictureUrl.startsWith("http")
                 ? { uri: user.profilePictureUrl }
-                : (user?.profilePicture && typeof user.profilePicture === 'string' && user.profilePicture.startsWith('http'))
+                : user?.profilePicture &&
+                    typeof user.profilePicture === "string" &&
+                    user.profilePicture.startsWith("http")
                   ? { uri: user.profilePicture }
                   : Images.profile.profileImage
             }
@@ -287,11 +244,17 @@ const Profile: React.FC = () => {
             cachePolicy="none"
             transition={300}
             onError={(error) => {
-              console.error('Profile image load error:', error);
-              console.error('Failed to load image URL:', user?.profilePictureUrl || user?.profilePicture);
+              console.error("Profile image load error:", error);
+              console.error(
+                "Failed to load image URL:",
+                user?.profilePictureUrl || user?.profilePicture,
+              );
             }}
             onLoad={() => {
-              console.log('Profile image loaded successfully:', user?.profilePictureUrl || user?.profilePicture);
+              console.log(
+                "Profile image loaded successfully:",
+                user?.profilePictureUrl || user?.profilePicture,
+              );
             }}
           />
           <Text style={styles.name}>
@@ -300,9 +263,7 @@ const Profile: React.FC = () => {
 
           <View style={styles.locationContainer}>
             <Ionicons name="location-sharp" size={16} color={colors.primary} />
-            <Text style={styles.locationText}>
-              {getDisplayAddress()}
-            </Text>
+            <Text style={styles.locationText}>{getDisplayAddress()}</Text>
           </View>
 
           {/* Stats */}
@@ -335,9 +296,16 @@ const Profile: React.FC = () => {
 
         {/* Reviews Section */}
         {reviews.length > 0 && (
-          <View >
+          <View>
             <Text
-              style={{ fontSize: 18, fontWeight: "bold", marginBottom: 15, marginTop: 15, paddingHorizontal: 20, color: colors.black }}
+              style={{
+                fontSize: 18,
+                fontWeight: "bold",
+                marginBottom: 15,
+                marginTop: 15,
+                paddingHorizontal: 20,
+                color: colors.black,
+              }}
             >
               Recent Reviews
             </Text>
@@ -346,8 +314,13 @@ const Profile: React.FC = () => {
                 <View style={styles.reviewerInfo}>
                   <Image
                     source={
-                      review.raterUser?.profilePictureUrl || review.raterUser?.profilePicture
-                        ? { uri: review.raterUser?.profilePictureUrl || review.raterUser?.profilePicture }
+                      review.raterUser?.profilePictureUrl ||
+                      review.raterUser?.profilePicture
+                        ? {
+                            uri:
+                              review.raterUser?.profilePictureUrl ||
+                              review.raterUser?.profilePicture,
+                          }
                         : Images.profile.profileImage
                     }
                     style={styles.reviewerImage}

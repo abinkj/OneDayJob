@@ -10,7 +10,7 @@ let initializationPromise: Promise<void> | null = null;
 /**
  * Initializes MMKV storage with a secure encryption key from expo-secure-store.
  * This function is idempotent - calling it multiple times is safe.
- * 
+ *
  * @returns Promise that resolves when storage is ready
  */
 export const initializeStorage = async (): Promise<void> => {
@@ -27,20 +27,20 @@ export const initializeStorage = async (): Promise<void> => {
   // Start initialization
   initializationPromise = (async () => {
     try {
-      console.log('🔐 Initializing MMKV with secure encryption...');
+      console.log("🔐 Initializing MMKV with secure encryption...");
 
       // Get or create the encryption key from secure storage
       const encryptionKey = await getOrCreateEncryptionKey();
 
       // Use createMMKV factory
       storageInstance = createMMKV({
-        id: 'mmkvStore',
+        id: "mmkvStore",
         encryptionKey: encryptionKey,
       });
 
-      console.log('✅ MMKV storage initialized successfully');
+      console.log("✅ MMKV storage initialized successfully");
     } catch (error) {
-      console.error('❌ Failed to initialize MMKV storage:', error);
+      console.error("❌ Failed to initialize MMKV storage:", error);
       throw error;
     }
   })();
@@ -55,7 +55,7 @@ export const initializeStorage = async (): Promise<void> => {
 const getStorage = (): MMKV => {
   if (storageInstance === null) {
     throw new Error(
-      'MMKV storage not initialized. Call initializeStorage() first.'
+      "MMKV storage not initialized. Call initializeStorage() first.",
     );
   }
   return storageInstance;
@@ -64,7 +64,7 @@ const getStorage = (): MMKV => {
 const USER_DATA_KEY = "USER";
 
 const deriveLocationString = (
-  location: string | UserLocation | undefined
+  location: string | UserLocation | undefined,
 ): string | undefined => {
   if (!location) return undefined;
   if (typeof location === "string") return location;
@@ -89,7 +89,9 @@ export const normalizeUser = (raw: any): User => {
       ? raw.profilePicture.uri
       : raw.profilePicture;
 
-  const locationString = deriveLocationString(raw.location);
+  // Prefer locationText supplied by the backend (enriched API response);
+  // fall back to deriving it locally from the location object.
+  const locationString = raw.locationText ?? deriveLocationString(raw.location);
 
   return {
     ...raw,
@@ -99,6 +101,9 @@ export const normalizeUser = (raw: any): User => {
     profilePicture,
     location: raw.location,
     locationText: locationString,
+    // Pass-through enriched fields (backend sends these on verifyOtp + getUserProfile)
+    totalReviews: raw.totalReviews ?? 0,
+    ratings: raw.ratings ?? [],
   } as User;
 };
 
@@ -210,13 +215,13 @@ export const getStorageInstance = (): MMKV => {
 /**
  * Export storage getter for direct access if needed.
  * WARNING: Always ensure initializeStorage() is called first!
- * 
+ *
  * For backward compatibility with code that uses `storage.set()` directly.
  */
 export const storage = new Proxy({} as MMKV, {
   get: (target, prop) => {
     const instance = getStorage();
     const value = (instance as any)[prop];
-    return typeof value === 'function' ? value.bind(instance) : value;
-  }
+    return typeof value === "function" ? value.bind(instance) : value;
+  },
 });
