@@ -21,6 +21,7 @@ import {
 } from '../../../../services/api';
 import { syncQueue } from '../utils/syncQueue';
 import { shouldSendHeartbeat } from '../utils/timeCalculations';
+import timerNotificationService from '../../../../services/timerNotificationService';
 
 export interface SessionData {
     session: {
@@ -105,8 +106,14 @@ export const useJobSession = (jobId: string): UseJobSessionReturn => {
             const response = await getWorkerSession(jobId, true);
 
             if (response.data.success) {
-                setSession(response.data.data);
+                const sessionData = response.data.data;
+                setSession(sessionData);
                 setLastSyncTime(Date.now());
+
+                // If session is active, ensure notification is running (useful on app restart)
+                if (sessionData?.session?.status === 'active' && sessionData?.job?.name) {
+                    timerNotificationService.startOngoingNotification(sessionData.job.name);
+                }
             }
         } catch (error: any) {
             // Handle case where no session exists yet (404)
@@ -220,6 +227,11 @@ export const useJobSession = (jobId: string): UseJobSessionReturn => {
             const response = await startWorkerSession(jobId);
 
             if (response.data.success) {
+                // start notification
+                if (session?.job?.name) {
+                    timerNotificationService.startOngoingNotification(session.job.name);
+                }
+                
                 // CRITICAL FIX: Update session with real ID immediately from response
                 // This prevents subsequent calls (like sync) from using 'temp' ID
                 if (response.data.data) {
@@ -299,6 +311,11 @@ export const useJobSession = (jobId: string): UseJobSessionReturn => {
             const response = await pauseWorkerSession(session.session.id);
 
             if (response.data.success) {
+                // Stop notification on pause
+                if (session?.job?.name) {
+                    timerNotificationService.stopNotification(session.job.name);
+                }
+
                 await loadSession(true);
                 Toast.show({
                     type: 'success',
@@ -352,6 +369,11 @@ export const useJobSession = (jobId: string): UseJobSessionReturn => {
             const response = await resumeWorkerSession(session.session.id);
 
             if (response.data.success) {
+                // Start notification on resume
+                if (session?.job?.name) {
+                    timerNotificationService.startOngoingNotification(session.job.name);
+                }
+
                 await loadSession(true);
                 Toast.show({
                     type: 'success',
@@ -417,6 +439,11 @@ export const useJobSession = (jobId: string): UseJobSessionReturn => {
             const response = await completeWorkerSession(session.session.id, notes);
 
             if (response.data.success) {
+                // Stop notification on completion
+                if (session?.job?.name) {
+                    timerNotificationService.stopNotification(session.job.name);
+                }
+
                 await loadSession(true);
 
                 // CRITICAL: Invalidate active job queries to force UI update immediately

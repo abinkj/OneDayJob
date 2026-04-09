@@ -63,6 +63,13 @@ const getCategoryIcon = (categoryName?: string) => {
   return categoryIcons[key] || categoryIcons.default;
 };
 
+// Helper to format distance for display (e.g. 3167m -> 3.2km)
+const formatDistanceDisplay = (meters: number): string => {
+  if (!meters || meters === 0) return "0m";
+  if (meters < 1000) return `${Math.round(meters)}m`;
+  return `${(meters / 1000).toFixed(1)} km`;
+};
+
 const HomeScreen = () => {
   const { sendJobUpdateNotification } = useNotifications();
   const activeJobState = useActiveJob();
@@ -349,24 +356,34 @@ const HomeScreen = () => {
 
       setLocation(locationData.coordinates);
 
-      // Premium Address Logic
-      // High-precision "Uber-like" logic
-      const specific = locationData.address || locationData.name || locationData.district || locationData.city || "Current Location";
+      // Premium Address Logic - Uber-Style Splitting
+      // Priority: Name (Building/Shop) > Address First Part > District > City
+      let specific = "";
+      if (locationData.name && !locationData.name.match(/^[A-Z0-9]{4,8}\+/)) {
+        specific = locationData.name;
+      } else if (locationData.address) {
+        // If address starts with "P.O" or similar, try to find a better part
+        const parts = locationData.address.split(',').map(p => p.trim());
+        if (parts[0].toLowerCase() === "p.o" && parts.length > 1) {
+          specific = parts[1]; // Use street if first part is just "P.O"
+        } else {
+          specific = parts[0];
+        }
+      } else {
+        specific = locationData.district || locationData.city || "Current Location";
+      }
 
-      // Construct broad address (City/Area, State)
-      // If 'specific' is the city, don't repeat it in broad
+      // Construct broad address (Area/City, State)
       let broadParts = [];
-      if (locationData.district && !specific.includes(locationData.district)) broadParts.push(locationData.district);
-      if (locationData.city && !specific.includes(locationData.city)) broadParts.push(locationData.city);
+      const cityDistrict = locationData.district || locationData.city;
+      if (cityDistrict && !specific.includes(cityDistrict)) broadParts.push(cityDistrict);
       if (locationData.state) broadParts.push(locationData.state);
 
-      // Fallback strategies
+      // Final fallback if broad is still empty
       if (broadParts.length === 0 && locationData.address) {
-        // Try to get some context from full address if broad is empty
         const parts = locationData.address.split(',').map(p => p.trim());
-        // Filter out the specific part if present
-        const remainingParts = parts.filter(p => !p.toLowerCase().includes(specific.toLowerCase()));
-        if (remainingParts.length > 0) broadParts.push(remainingParts[0]);
+        const remaining = parts.filter(p => !p.toLowerCase().includes(specific.toLowerCase()));
+        if (remaining.length > 0) broadParts.push(remaining[0]);
       }
 
       const broad = broadParts.join(', ') || locationData.country || "";
@@ -689,7 +706,7 @@ const HomeScreen = () => {
         Toast.show({
           type: 'success',
           text1: 'Arrival Marked! ✅',
-          text2: `You are ${response.data.data?.distance || 0}m from the job site. Waiting for employer approval.`,
+          text2: `You are ${formatDistanceDisplay(response.data.data?.distance || 0)} from the job site. Waiting for employer approval.`,
         });
         // Navigate to JobTimer to see the waiting state
         navigation.navigate('JobTimer', {
@@ -703,7 +720,7 @@ const HomeScreen = () => {
           type: 'error',
           text1: 'Too Far Away',
           text2: dist
-            ? `You are ${dist}m away. Move within 500m of the job site.`
+            ? `You are ${formatDistanceDisplay(dist)} away. Move within 500m of the job site.`
             : response.data?.message || 'Could not verify your location.',
         });
       }
@@ -720,7 +737,7 @@ const HomeScreen = () => {
       Toast.show({
         type: 'error',
         text1: dist ? 'Too Far Away' : (isSessionNotFound ? 'Wait for Employer' : 'Arrival Failed'),
-        text2: dist ? `You are ${dist}m away. Move within 500m of the job site.` : msg,
+        text2: dist ? `You are ${formatDistanceDisplay(dist)} away. Move within 500m of the job site.` : msg,
       });
     } finally {
       setArrivalLoading(false);
@@ -755,7 +772,16 @@ const HomeScreen = () => {
                        (userData?._id && item.userId?._id && item.userId._id === userData._id) ||
                        (userData?.id && item.userId === userData.id) ||
                        (userData?._id && item.userId === userData?._id);
-    const isWorkerOnInProgressJob = isInProgress && !isEmployer;
+    
+    const isAccepted =
+      (item as any)?.assignedUsers?.some((u: any) => {
+        const uId = typeof u === "string" ? u : u._id || u.id;
+        return uId === userData?.id || uId === userData?._id;
+      }) ||
+      (item?.assignedUsers as any)?.includes(userData?.id) ||
+      (item?.assignedUsers as any)?.includes(userData?._id);
+
+    const showArrivalFeature = !isEmployer && isAccepted && !isCompleted;
 
     const handleJobPress = () => {
       if (isInProgress) {
@@ -851,8 +877,8 @@ const HomeScreen = () => {
           </Text>
         </View>
 
-        {/* Arrival Button for Workers on In-Progress Jobs */}
-        {isWorkerOnInProgressJob && (
+        {/* Arrival Button for Workers on Accepted/In-Progress Jobs */}
+        {showArrivalFeature && (
           <View style={{ marginTop: 10 }}>
             <TouchableOpacity
               style={{
@@ -892,9 +918,13 @@ const HomeScreen = () => {
             )}
             
             <View style={{ marginTop: 6, paddingHorizontal: 4 }}>
-              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                <Ionicons name="navigate" size={12} color={colors.grey} />
-                <Text style={{ fontSize: 11, color: colors.grey, marginLeft: 4 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'flex-start' }}>
+                <Ionicons name="navigate" size={12} color={colors.grey} style={{ marginTop: 2 }} />
+                <Text 
+                  style={{ fontSize: 11, color: colors.grey, marginLeft: 4, flex: 1, lineHeight: 15 }}
+                  numberOfLines={2}
+                  ellipsizeMode="tail"
+                >
                   Current: {locationAddress || 'Getting location...'}
                 </Text>
               </View>

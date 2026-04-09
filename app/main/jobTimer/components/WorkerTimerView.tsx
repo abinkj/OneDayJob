@@ -131,35 +131,21 @@ const WorkerTimerView: React.FC<WorkerTimerViewProps> = ({
                 styles={styles}
             />
 
-            {/* Instructions */}
-            <View style={styles.instructionsCard}>
-                <Text style={styles.instructionsTitle}>How it works</Text>
-                {(!sessionStatus || sessionStatus === 'not_started') ? (
-                    <>
-                        <Text style={styles.instructionsText}>
-                            • Step 1: Mark your arrival on the Home screen
-                        </Text>
-                        <Text style={styles.instructionsText}>
-                            • Step 2: Wait for employer verification
-                        </Text>
-                        <Text style={styles.instructionsText}>
-                            • Step 3: Start your work session below
-                        </Text>
-                    </>
-                ) : (
-                    <>
-                        <Text style={styles.instructionsText}>
-                            • Log breaks by tapping "Pause"
-                        </Text>
-                        <Text style={styles.instructionsText}>
-                            • Tap "Complete" only when you finish for the day
-                        </Text>
-                        <Text style={styles.instructionsText}>
-                            • Time is automatically synced every 60 seconds
-                        </Text>
-                    </>
-                )}
-            </View>
+            {/* Instructions - Only show when not started */}
+            {(!sessionStatus || sessionStatus === 'not_started') && (
+                <View style={styles.instructionsCard}>
+                    <Text style={styles.instructionsTitle}>How it works</Text>
+                    <Text style={styles.instructionsText}>
+                        • Step 1: Mark your arrival on the Home screen
+                    </Text>
+                    <Text style={styles.instructionsText}>
+                        • Step 2: Wait for employer verification
+                    </Text>
+                    <Text style={styles.instructionsText}>
+                        • Step 3: Start your work session below
+                    </Text>
+                </View>
+            )}
         </>
     );
 };
