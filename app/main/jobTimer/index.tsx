@@ -13,7 +13,7 @@
  * - Better performance
  */
 
-import React, { useState, useMemo, useEffect, useCallback } from "react";
+import React, { useState, useMemo, useEffect, useCallback, useRef } from "react";
 import { View, Text, ScrollView, RefreshControl, BackHandler } from "react-native";
 import { useRoute, useNavigation } from "@react-navigation/native";
 import { Header } from "../../../components/header";
@@ -60,6 +60,8 @@ const JobTimerScreen = () => {
     name: string;
   } | null>(null);
   const [isSubmittingRating, setIsSubmittingRating] = useState(false);
+  const [isNavLocked, setIsNavLocked] = useState(false);
+  const lastBackPress = useRef<number>(0);
 
   // Use appropriate hook based on role
   // Note: We call both hooks to satisfy React's rules of hooks, but pass conditional data
@@ -73,18 +75,43 @@ const JobTimerScreen = () => {
     if (sessionStatus !== 'active') return;
 
     const onBackPress = () => {
+      const now = Date.now();
+      if (lastBackPress.current && now - lastBackPress.current < 2000) {
+        // Exit app on double back
+        BackHandler.exitApp();
+        return true;
+      }
+
+      lastBackPress.current = now;
       Toast.show({
         type: 'info',
-        text1: 'Session Active \u23F1\uFE0F',
-        text2: 'Your work session is still running. Remember to pause or complete it.',
-        visibilityTime: 2500,
+        text1: 'Session Active ⏱️',
+        text2: 'Tap back again to exit the app, or pause/complete your work.',
+        visibilityTime: 2000,
       });
-      return false;
+      return true; // Block standard navigation
     };
 
     const sub = BackHandler.addEventListener('hardwareBackPress', onBackPress);
-    return () => sub.remove();
-  }, [isEmployer, sessionStatus]);
+
+    // Lock navigation
+    navigation.setOptions({
+        headerLeft: () => null,
+        gestureEnabled: false,
+        swipeEnabled: false,
+    });
+    setIsNavLocked(true);
+
+    return () => {
+      sub.remove();
+      navigation.setOptions({
+        headerLeft: undefined,
+        gestureEnabled: true,
+        swipeEnabled: true,
+      });
+      setIsNavLocked(false);
+    };
+  }, [isEmployer, sessionStatus, navigation]);
 
   // Calculate display time for worker (server-side calculation)
   const { displayTime } = useServerTimer(
@@ -174,7 +201,7 @@ const JobTimerScreen = () => {
   if (loading) {
     return (
       <View style={styles.container}>
-        <Header title={isEmployer ? "Job Dashboard" : "Job Timer"} showBackButton />
+        <Header title={isEmployer ? "Job Dashboard" : "Job Timer"} showBackButton={!isNavLocked} />
         <JobDetailsSkeleton />
       </View>
     );
@@ -190,7 +217,7 @@ const JobTimerScreen = () => {
     <View style={styles.container}>
       <Header
         title={isEmployer ? "Job Dashboard" : "Job Timer"}
-        showBackButton
+        showBackButton={!isNavLocked}
       />
 
       <ScrollView

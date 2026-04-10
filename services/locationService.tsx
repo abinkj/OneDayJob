@@ -29,6 +29,14 @@ export interface PlacePrediction {
   };
 }
 
+// Utility to clean Google Plus Codes from addresses (e.g., "JJGJ+X97 New York" -> "New York")
+const cleanAddress = (address: string): string => {
+  if (!address || typeof address !== 'string') return address || "";
+  // Matches Plus Codes (alphanumeric with a + sign) likely at the start
+  return address.replace(/^[A-Z0-9]{4,8}\+[A-Z0-9]{2,5}\s*,?\s*/i, "").trim();
+};
+
+
 // Helper for robust, high-accuracy GPS parsing
 export const getHighAccuracyLocation = async (): Promise<Location.LocationObject> => {
   // 1. Initial Quick Check (Often cached/inaccurate but instantaneous)
@@ -126,7 +134,7 @@ const reverseGeocodeWithGoogle = async (lat: number, lng: number): Promise<Locat
         addressData.address = streetParts.join(" ");
       } else {
         // Fallback to the formatted_address provided by Google minus the trailing city/state details if possible
-        addressData.address = bestResult.formatted_address.split(',')[0];
+        addressData.address = cleanAddress(bestResult.formatted_address.split(',')[0]);
       }
 
       return addressData;
@@ -182,7 +190,7 @@ export const getCurrentLocation = async (): Promise<LocationData | null> => {
     if (addressResponse.length > 0) {
       const address = addressResponse[0];
       return {
-        address: `${address.streetNumber || ""} ${address.street || ""}`.trim(),
+        address: cleanAddress(`${address.streetNumber || ""} ${address.street || ""}`.trim()),
         city: address.city || "",
         state: address.region || "",
         country: address.country || "United States",

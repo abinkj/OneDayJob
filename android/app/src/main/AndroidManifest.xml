@@ -7,6 +7,8 @@
   <uses-permission android:name="android.permission.RECORD_AUDIO"/>
   <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW"/>
   <uses-permission android:name="android.permission.VIBRATE"/>
+  <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+  <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
   <uses-permission android:name="android.permission.WAKE_LOCK"/>
   <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
   <queries>
@@ -38,5 +40,8 @@
         <data android:scheme="exp+zoopol"/>
       </intent-filter>
     </activity>
+    <service android:name="app.notifee.core.ForegroundService" android:foregroundServiceType="specialUse" tools:replace="android:foregroundServiceType">
+      <property android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE" android:value="Ongoing job timer for gig workers to track their active work sessions and prevent unauthorized app closure during work."/>
+    </service>
   </application>
 </manifest>

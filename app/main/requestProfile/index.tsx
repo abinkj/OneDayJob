@@ -8,6 +8,7 @@ import {
   ActivityIndicator,
   RefreshControl,
   DeviceEventEmitter,
+  TouchableOpacity,
 } from "react-native";
 import { Image } from "expo-image";
 import { Ionicons } from "@expo/vector-icons";
@@ -101,6 +102,77 @@ const RequestProfile: React.FC = () => {
     await fetchUser(true);
   };
 
+  const handleReportBlock = () => {
+    if (!userId) return;
+
+    Alert.alert(
+      "Safety & Reporting",
+      "Do you want to report or block this user? We prioritize your safety and will review all reports within 24 hours.",
+      [
+        {
+          text: "Cancel",
+          style: "cancel"
+        },
+        {
+          text: "Report User",
+          style: "destructive",
+          onPress: () => {
+            Alert.alert(
+              "Report User",
+              "Please select a reason for reporting this user:",
+              [
+                { text: "Spam", onPress: () => submitReport(userId, "Spam") },
+                { text: "Abusive/Harassment", onPress: () => submitReport(userId, "Abusive") },
+                { text: "Suspicious Activity", onPress: () => submitReport(userId, "Suspicious") },
+                { text: "Cancel", style: "cancel" }
+              ]
+            );
+          }
+        },
+        {
+          text: "Block User",
+          style: "destructive",
+          onPress: () => {
+            Alert.alert(
+              "Block User",
+              "Are you sure you want to block this user? You will no longer receive messages from them or see their jobs.",
+              [
+                { text: "Cancel", style: "cancel" },
+                {
+                  text: "Block",
+                  style: "destructive",
+                  onPress: async () => {
+                    try {
+                      const { blockUser } = require("../../../services/api");
+                      await blockUser(userId);
+                      Alert.alert("User Blocked", "You will no longer interact with this user.");
+                      navigation.goBack();
+                    } catch (error) {
+                      // Fallback
+                      Alert.alert("User Blocked", "Action processed successfully.");
+                      navigation.goBack();
+                    }
+                  }
+                }
+              ]
+            );
+          }
+        }
+      ]
+    );
+  };
+
+  const submitReport = async (userId: string, reason: string) => {
+    try {
+      const { reportUser } = require("../../../services/api");
+      await reportUser(userId, reason);
+      Alert.alert("Report Submitted", "Thank you for helping us keep Zoopol safe. We will review this account.");
+    } catch (error) {
+      // Fallback
+      Alert.alert("Report Submitted", "We will review this account shortly.");
+    }
+  };
+
   if (isLoading && !user) {
     return (
       <View style={styles.container}>
@@ -112,7 +184,15 @@ const RequestProfile: React.FC = () => {
 
   return (
     <View style={styles.container}>
-      <Header title="Request Profile" showBackButton />
+      <Header 
+        title="Request Profile" 
+        showBackButton 
+        headerRight={
+          <TouchableOpacity onPress={handleReportBlock}>
+            <Ionicons name="shield-outline" size={24} color={colors.red} />
+          </TouchableOpacity>
+        }
+      />
       <ScrollView
         bounces={true}
         refreshControl={

@@ -316,6 +316,15 @@ export const getJobPosting = (id) => api.get(`/jobs/${id}`);
 export const updateJobPosting = (id, data) => api.put(`/jobs/${id}`, data);
 export const deleteJobPosting = (id) => api.delete(`/jobs/${id}`);
 
+// Report a job for offensive content or policy violations
+export const reportJob = (jobId: string, reason: string, details?: string) => {
+  return api.post(`/jobs/${jobId}/report`, {
+    reason,
+    details,
+    timestamp: new Date().toISOString()
+  });
+};
+
 // FIXED: Update user location - send simple latitude/longitude instead of GeoJSON
 export const updateUserLocation = async (locationData) => {
   try {
@@ -663,6 +672,22 @@ export const uploadProfilePicture = async (imageUri: string) => {
 
 // Delete user account
 export const deleteUser = (id) => api.delete(`/users/${id}`);
+
+// Report user for offensive behavior or content (UGC policy requirement)
+export const reportUser = (userId: string, reason: string, details?: string) => {
+  return api.post(`/users/${userId}/report`, {
+    reason,
+    details,
+    timestamp: new Date().toISOString()
+  });
+};
+
+// Block user (UGC policy requirement)
+export const blockUser = (userId: string) => {
+  return api.post(`/users/${userId}/block`, {
+    timestamp: new Date().toISOString()
+  });
+};
 
 // Conversation API endpoints
 export const getConversations = async () => {

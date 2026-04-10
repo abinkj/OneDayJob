@@ -8,9 +8,13 @@ import {
 import { useTheme } from "../../contexts/ThemeContext";
 import { SafeAreaView } from "react-native-safe-area-context";
 import OfflineIndicator from "../OfflineIndicator";
+import { useTimerRedirect } from "../../hooks/useTimerRedirect";
 
 const AppLayout = ({ children }) => {
   const { theme, colors } = useTheme();
+  
+  // Force redirect worker to timer if session is active
+  useTimerRedirect();
 
   return (
     <SafeAreaView

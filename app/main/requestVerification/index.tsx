@@ -854,15 +854,36 @@ const RequestsVerifyTab = ({
                 )}
               </TouchableOpacity>
               
-              <Text style={{ 
-                marginTop: 16, 
-                color: colors.grey, 
-                fontSize: 13, 
-                textAlign: 'center',
-                paddingHorizontal: 30 
+              <View style={{ 
+                marginTop: 20, 
+                backgroundColor: colors.primary + '10', 
+                padding: 16, 
+                borderRadius: 12, 
+                borderWidth: 1, 
+                borderColor: colors.primary + '20',
+                marginHorizontal: 20
               }}>
-                Workers can mark their arrival as soon as they reach the site. No manual initiation is required.
-              </Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 6 }}>
+                  <Ionicons name="information-circle" size={18} color={colors.primary} />
+                  <Text style={{ 
+                    fontSize: 14, 
+                    fontWeight: '700', 
+                    color: colors.primary,
+                    marginLeft: 6
+                  }}>
+                    What is Manual Activation?
+                  </Text>
+                </View>
+                <Text style={{ 
+                  color: colors.grey, 
+                  fontSize: 12, 
+                  lineHeight: 18
+                }}>
+                  This is a backup for when workers are on-site but their GPS isn't marking them as "Arrived".{"\n\n"}
+                  • Only use this if you see the worker in person.{"\n"}
+                  • You must first <Text style={{fontWeight: '700'}}>Accept</Text> a worker from the "Requests" tab.
+                </Text>
+              </View>
             </View>
           )}
         </View>
