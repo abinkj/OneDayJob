@@ -7,16 +7,20 @@ import MainStack from "./mainStack";
 import OnBoardingStack from "./onBoardingStack";
 import KycStack from "./kycStack";
 import { restoreSession } from "../../utilities/authentication";
-
+import ProfileCompletion from "@/(onboarding)/profileCompletion";
 import IntroStack from "./introStack";
 
 const RootStack = createNativeStackNavigator();
 
 const RootStackLayout = () => {
   const dispatch = useDispatch();
-  const { isLoggedIn, kycStatus, hasSeenOnboarding } = useSelector(
-    (state: any) => state.authentication
-  );
+  const { isLoggedIn, kycStatus, hasSeenOnboarding, isProfileComplete } =
+    useSelector((state: any) => state.authentication);
+
+  console.log("isLoggedIn", isLoggedIn);
+  console.log("kycStatus", kycStatus);
+  console.log("hasSeenOnboarding", hasSeenOnboarding);
+  console.log("isProfileComplete", isProfileComplete);
   // console.log("Kyc stats", kycStatus);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -50,7 +54,14 @@ const RootStackLayout = () => {
       }}
     >
       {isLoggedIn ? (
-        <RootStack.Screen name="MainStack" component={MainStack} />
+        isProfileComplete ? (
+          <RootStack.Screen name="MainStack" component={MainStack} />
+        ) : (
+          <RootStack.Screen
+            name="ProfileCompletion"
+            component={ProfileCompletion}
+          />
+        )
       ) : !hasSeenOnboarding ? (
         <RootStack.Screen name="IntroStack" component={IntroStack} />
       ) : (

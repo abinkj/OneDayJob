@@ -11,7 +11,7 @@ import {
 } from "react-native";
 import { OtpInput } from "react-native-otp-entry";
 import { useTheme } from "../../../contexts/ThemeContext";
-import { verifyOtp, requestOtp, getUserProfile } from "../../../services/api";
+import { verifyOtp, requestOtp } from "../../../services/api";
 import LottieView from "lottie-react-native";
 import { useRoute, useNavigation } from "@react-navigation/native";
 import { useDispatch } from "react-redux";
@@ -23,7 +23,6 @@ import {
   getUserData,
 } from "../../../utilities/mmkvStore";
 import { saveToken } from "../../../utilities/secureStore";
-import { completeKyc } from "../../../redux/reducers/authReducers";
 import Animated, {
   FadeInDown,
   useSharedValue,
@@ -38,20 +37,19 @@ import CustomButton from "../../../components/CustomButton";
 import { useAlert } from "../../../components/CustomAlert/AlertProvider";
 import { validateOtpCode } from "../../../utilities/formValidation";
 import { useNotifications } from "../../../contexts/NotificationContext";
+import { completeKyc, completeProfile } from "../../../redux/reducers/authReducers";
 
 interface RouteParams {
   phoneNumber: string;
 }
 
-// Rotating gradient border component
 const RotatingBorder = ({ size, color }: { size: number; color: string }) => {
   const rotation = useSharedValue(0);
 
   useEffect(() => {
-    // Start rotation immediately on mount
     rotation.value = withRepeat(
       withTiming(360, { duration: 2000, easing: Easing.linear }),
-      -1, // Infinite repeat
+      -1,
       false,
     );
   }, []);
@@ -79,20 +77,18 @@ const RotatingBorder = ({ size, color }: { size: number; color: string }) => {
   );
 };
 
-// Enhanced animated dot with continuous pulsing
 const AnimatedDot = ({ delay, color }: { delay: number; color: string }) => {
   const scale = useSharedValue(0.6);
   const opacity = useSharedValue(0.4);
 
   useEffect(() => {
-    // Stagger the start based on delay for wave effect
     const timer = setTimeout(() => {
       scale.value = withRepeat(
         withSequence(
           withSpring(1.3, { damping: 2, stiffness: 80 }),
           withSpring(0.7, { damping: 2, stiffness: 80 }),
         ),
-        -1, // Infinite repeat
+        -1,
         false,
       );
 
@@ -101,7 +97,7 @@ const AnimatedDot = ({ delay, color }: { delay: number; color: string }) => {
           withTiming(1, { duration: 600, easing: Easing.inOut(Easing.ease) }),
           withTiming(0.3, { duration: 600, easing: Easing.inOut(Easing.ease) }),
         ),
-        -1, // Infinite repeat
+        -1,
         false,
       );
     }, delay);
@@ -146,24 +142,21 @@ const Otp = () => {
   const styles = useMemo(() => createStyles(colors), [colors]);
   const { requestPermission, registerDevice } = useNotifications();
 
-  // Logo pulsing animation (must be at top level, not inside conditional)
   const logoScale = useSharedValue(1);
   const backgroundOpacity = useSharedValue(1);
   const shimmerTranslate = useSharedValue(-200);
 
   useEffect(() => {
     if (isSettingUp) {
-      // Start animation immediately with proper infinite repeat
       logoScale.value = withRepeat(
         withSequence(
           withSpring(1.1, { damping: 3, stiffness: 80 }),
           withSpring(0.95, { damping: 3, stiffness: 80 }),
         ),
-        -1, // Infinite repeat
+        -1,
         false,
       );
 
-      // Add subtle background pulse
       backgroundOpacity.value = withRepeat(
         withSequence(
           withTiming(0.95, {
@@ -172,18 +165,16 @@ const Otp = () => {
           }),
           withTiming(1, { duration: 2000, easing: Easing.inOut(Easing.ease) }),
         ),
-        -1, // Infinite repeat
+        -1,
         false,
       );
 
-      // Add shimmer effect to brand name
       shimmerTranslate.value = withRepeat(
         withTiming(200, { duration: 2500, easing: Easing.linear }),
-        -1, // Infinite repeat
+        -1,
         false,
       );
     } else {
-      // Reset to initial state when not setting up
       logoScale.value = withSpring(1);
       backgroundOpacity.value = withTiming(1);
       shimmerTranslate.value = -200;
@@ -217,9 +208,6 @@ const Otp = () => {
     setIsLoading(true);
 
     try {
-      //console.log("Verifying OTP for phoneNumber:", phoneNumber);
-      //console.log("OTP code:", otp);
-
       const response = await verifyOtp({ phoneNumber, otpCode: otp });
       console.log("OTP verification response:", JSON.stringify(response.data, null, 2));
 
@@ -227,81 +215,46 @@ const Otp = () => {
         const accessToken = response.data.data.tokens.accessToken;
         const refreshToken = response.data.data.tokens.refreshToken;
         const userData = response.data.data.user;
-        //const profileResponse = await getUserProfile(userData.id);
-
-        // console.log(
-        //   "resonse data-------------------> ",
-        //   JSON.stringify(response.data.data)
-        // );
-
-        //console.log("Tokens and user data received successfully");
+        const isProfileComplete = userData.isProfileComplete; // ✅ from API
 
         setIsOtpSuccess(true);
 
         setTimeout(async () => {
           try {
-            // Transition to setup state instead of showing OTP screen again
             setIsOtpSuccess(false);
             setIsSettingUp(true);
 
-            //console.log("User data:", userData);
-            //console.log("Bank account details:", userData?.bankAccount);
             if (userData?.bankAccount) {
               await saveKycStatus("completed");
               dispatch(completeKyc());
             }
 
-            // Request notification permissions
             await requestPermission();
 
-            // Check if profile is complete (has firstName and lastName)
-            const hasName = userData?.firstName && userData?.lastName;
-
-            if (!hasName) {
-              // For incomplete profiles, save tokens manually but DON'T dispatch login yet
-              // This prevents Redux from navigating to MainStack
-              console.log(
-                "Profile incomplete, saving tokens and navigating to ProfileCompletion",
-              );
-              console.log(
-                "📋 User data from API:",
-                JSON.stringify(userData, null, 2),
-              );
-              console.log(
-                "🔍 User data has ID?",
-                userData?.id || userData?._id,
-              );
+            if (!isProfileComplete) {
+              // Profile incomplete — save tokens & data but skip login dispatch
+              // so RootStackLayout doesn't navigate to MainStack prematurely
+              console.log("Profile incomplete, navigating to ProfileCompletion");
 
               await saveToken(accessToken, refreshToken);
-              console.log("✅ Tokens saved successfully");
+              console.log("✅ Tokens saved");
 
               await saveUserData(userData);
-              console.log("✅ User data saved successfully");
+              console.log("✅ User data saved");
 
-              // Verify the data was saved
               const savedData = await getUserData();
-              console.log(
-                "🔍 Verification - Retrieved user data after save:",
-                JSON.stringify(savedData, null, 2),
-              );
+              console.log("🔍 Verified saved data:", JSON.stringify(savedData, null, 2));
 
-              // Register device with backend
-              console.log("📱 Registering device with backend...");
               await registerDevice();
 
-              // Navigate to ProfileCompletion for new users
               navigation.replace("ProfileCompletion");
             } else {
-              // Profile is complete, proceed with normal login flow
+              // Profile complete — sync Redux and proceed to MainStack
               console.log("Profile complete, logging in user");
 
-              // Login user (saves tokens and triggers navigation via Redux)
-              await dispatch(
-                loginUser(userData, accessToken, refreshToken) as any,
-              );
+              dispatch(completeProfile()); // ✅ sync Redux isProfileComplete = true
+              await dispatch(loginUser(userData, accessToken, refreshToken) as any);
 
-              // Register device with backend after tokens are saved
-              console.log("📱 Registering device with backend after login...");
               await registerDevice();
             }
           } catch (error) {
@@ -310,11 +263,10 @@ const Otp = () => {
             showAlert({
               type: "error",
               title: "Setup Failed",
-              message:
-                "An error occurred while setting up your account. Please try again.",
+              message: "An error occurred while setting up your account. Please try again.",
             });
           }
-        }, 1000); // Reduced to 1 second for better UX
+        }, 1000);
       } else {
         showAlert({
           type: "error",
@@ -378,7 +330,6 @@ const Otp = () => {
     }
   };
 
-  // ✅ Show success view if OTP verified
   if (isOtpSuccess) {
     return (
       <View style={[styles.container, styles.center]}>
@@ -396,7 +347,6 @@ const Otp = () => {
     );
   }
 
-  // ✅ Show loading view while setting up account
   if (isSettingUp) {
     return (
       <Animated.View
@@ -406,15 +356,11 @@ const Otp = () => {
           entering={FadeInDown.duration(400)}
           style={styles.loadingContainer}
         >
-          {/* Animated Logo with Rotating Border */}
           <Animated.View
             entering={FadeInDown.delay(100).duration(600).springify()}
             style={styles.logoCircle}
           >
-            {/* Rotating gradient border */}
             <RotatingBorder size={100} color={colors.primary} />
-
-            {/* Pulsing logo container */}
             <Animated.View
               style={[
                 styles.logoCircleInner,
@@ -434,7 +380,6 @@ const Otp = () => {
             </Animated.View>
           </Animated.View>
 
-          {/* Brand Name with fade in and shimmer effect */}
           <Animated.View
             entering={FadeInDown.delay(200).duration(600)}
             style={{ overflow: "hidden", position: "relative" }}
@@ -442,7 +387,6 @@ const Otp = () => {
             <Animated.Text style={[styles.brandName, { color: colors.black }]}>
               Zoopol
             </Animated.Text>
-            {/* Shimmer overlay */}
             <Animated.View
               style={[
                 {
@@ -459,7 +403,6 @@ const Otp = () => {
             />
           </Animated.View>
 
-          {/* Loading Text */}
           <Animated.Text
             entering={FadeInDown.delay(300).duration(600)}
             style={[styles.loadingText, { color: colors.grey }]}
@@ -467,7 +410,6 @@ const Otp = () => {
             Setting up your account...
           </Animated.Text>
 
-          {/* Animated Pulsing Dots */}
           <Animated.View
             entering={FadeInDown.delay(400).duration(600)}
             style={styles.dotsContainer}
@@ -546,6 +488,7 @@ const Otp = () => {
               </Text>
             </Text>
           </View>
+
           <View style={{ width: "100%", marginTop: 20 }}>
             <CustomButton
               onPress={handleVerifyOtp}
