@@ -318,7 +318,7 @@ const Settings: React.FC = () => {
         </SettingsSection>
 
         {/* Notifications Section */}
-        <SettingsSection title="Notifications">
+        {/* <SettingsSection title="Notifications">
           <SettingsItem
             icon="notifications-outline"
             title="Push Notifications"
@@ -352,7 +352,7 @@ const Settings: React.FC = () => {
               <CustomSwitch value={jobAlerts} onValueChange={setJobAlerts} />
             }
           />
-        </SettingsSection>
+        </SettingsSection> */}
 
         {/* App Settings Section */}
         <SettingsSection title="App Settings">
@@ -448,7 +448,7 @@ const Settings: React.FC = () => {
         </SettingsSection>
 
         {/* Danger Zone */}
-        <SettingsSection title="Danger Zone">
+        <SettingsSection title="Log-Out">
           <SettingsItem
             icon="log-out-outline"
             title="Logout"
