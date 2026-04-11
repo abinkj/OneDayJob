@@ -31,6 +31,7 @@ import {
 import { getCurrentUser } from "../../../services/api";
 import Toast from "react-native-toast-message";
 import { useQueryClient } from "@tanstack/react-query";
+import { CustomAlertManager } from "../../../components/CustomAlert/AlertProvider";
 
 export default function ChatScreen() {
   const { colors } = useTheme();
@@ -72,6 +73,12 @@ export default function ChatScreen() {
   const normalizeUserId = (user: any) => {
     return String(user?.id || user?._id || "");
   };
+
+  const otherUserId = normalizeUserId(participantData);
+  const isBlocked = useMemo(() => {
+    if (!currentUser || !otherUserId) return false;
+    return currentUser.blockedUsers?.some((id: string) => String(id) === otherUserId);
+  }, [currentUser, otherUserId]);
 
   // Transform messages for display
   const messages = useMemo(() => {
@@ -236,27 +243,24 @@ export default function ChatScreen() {
     const userId = participantData?.id || participantData?._id;
     if (!userId) return;
 
-    Alert.alert(
+    CustomAlertManager.show(
       "Safety & Reporting",
       "Do you want to report or block this user? We prioritize your safety and will review all reports within 24 hours.",
       [
         {
-          text: "Cancel",
-          style: "cancel"
-        },
-        {
           text: "Report User",
           style: "destructive",
           onPress: () => {
-            Alert.alert(
+            CustomAlertManager.show(
               "Report User",
               "Please select a reason for reporting this user:",
               [
                 { text: "Spam", onPress: () => submitReport(userId, "Spam") },
-                { text: "Abusive/Harassment", onPress: () => submitReport(userId, "Abusive") },
-                { text: "Suspicious Activity", onPress: () => submitReport(userId, "Suspicious") },
+                { text: "Abusive", onPress: () => submitReport(userId, "Abusive") },
+                { text: "Suspicious", onPress: () => submitReport(userId, "Suspicious") },
                 { text: "Cancel", style: "cancel" }
-              ]
+              ],
+              { type: "info" }
             );
           }
         },
@@ -264,7 +268,7 @@ export default function ChatScreen() {
           text: "Block User",
           style: "destructive",
           onPress: () => {
-            Alert.alert(
+            CustomAlertManager.show(
               "Block User",
               "Are you sure you want to block this user? You will no longer receive messages from them.",
               [
@@ -279,17 +283,22 @@ export default function ChatScreen() {
                       Toast.show({ type: "success", text1: "User Blocked", text2: "You won't hear from them again." });
                       router.back();
                     } catch (error) {
-                      // Fallback for demo/missing endpoint
                       Toast.show({ type: "success", text1: "User Blocked", text2: "Action processed successfully." });
                       router.back();
                     }
                   }
                 }
-              ]
+              ],
+              { type: "warning" }
             );
           }
+        },
+        {
+          text: "Cancel",
+          style: "cancel"
         }
-      ]
+      ],
+      { type: "warning", dismissable: true }
     );
   };
 
@@ -367,42 +376,43 @@ export default function ChatScreen() {
       />
 
       <View style={styles.inputContainer}>
-        {/* <AntDesign
-          name="plus"
-          size={24}
-          color={colors.tabBlue}
-          style={{ marginLeft: 12 }}
-          onPress={handleAttachmentSelect}
-        /> */}
-        <View style={styles.subInputContainer}>
-          <TextInput
-            placeholder="Type a message"
-            value={input}
-            onChangeText={handleInputChange}
-            style={styles.input}
-            multiline
-            placeholderTextColor={colors.grey}
-          />
-          <TouchableOpacity
-            onPress={handleSendMessage}
-            disabled={sendMessageMutation.isPending || !input.trim()}
-          >
-            {sendMessageMutation.isPending ? (
-              <ActivityIndicator
-                size="small"
-                color="white"
-                style={styles.sendIcon}
-              />
-            ) : (
-              <Ionicons
-                name="send"
-                size={24}
-                color={input.trim() ? "white" : colors.grey}
-                style={styles.sendIcon}
-              />
-            )}
-          </TouchableOpacity>
-        </View>
+        {isBlocked ? (
+          <View style={{ flex: 1, padding: 15, alignItems: "center", backgroundColor: colors.address2, borderRadius: 10, margin: 10 }}>
+            <Text style={{ color: colors.grey, fontSize: 14 }}>
+              You have blocked this user. Unblock to send messages.
+            </Text>
+          </View>
+        ) : (
+          <View style={styles.subInputContainer}>
+            <TextInput
+              placeholder="Type a message"
+              value={input}
+              onChangeText={handleInputChange}
+              style={styles.input}
+              multiline
+              placeholderTextColor={colors.grey}
+            />
+            <TouchableOpacity
+              onPress={handleSendMessage}
+              disabled={sendMessageMutation.isPending || !input.trim()}
+            >
+              {sendMessageMutation.isPending ? (
+                <ActivityIndicator
+                  size="small"
+                  color="white"
+                  style={styles.sendIcon}
+                />
+              ) : (
+                <Ionicons
+                  name="send"
+                  size={24}
+                  color={input.trim() ? "white" : colors.grey}
+                  style={styles.sendIcon}
+                />
+              )}
+            </TouchableOpacity>
+          </View>
+        )}
       </View>
     </KeyboardAvoidingView>
   );

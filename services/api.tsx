@@ -689,6 +689,37 @@ export const blockUser = (userId: string) => {
   });
 };
 
+// ==================== ADMIN MODERATION API ====================
+
+// Admin: Ban a user
+export const adminBanUser = (userId: string, reason: string) => {
+  return api.post(`/admin/users/${userId}/ban`, {
+    reason,
+    timestamp: new Date().toISOString()
+  });
+};
+
+// Admin: Unban a user
+export const adminUnbanUser = (userId: string) => {
+  return api.post(`/admin/users/${userId}/unban`, {
+    timestamp: new Date().toISOString()
+  });
+};
+
+// Admin: Get reports
+export const adminGetReports = (status?: string, page: number = 1) => {
+  const query = status ? `?status=${status}&page=${page}` : `?page=${page}`;
+  return api.get(`/admin/reports${query}`);
+};
+
+// Admin: Update report status
+export const adminUpdateReportStatus = (reportId: string, status: string, notes?: string) => {
+  return api.patch(`/admin/reports/${reportId}`, {
+    status,
+    adminNotes: notes
+  });
+};
+
 // Conversation API endpoints
 export const getConversations = async () => {
   try {

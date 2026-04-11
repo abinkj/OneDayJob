@@ -327,6 +327,13 @@ const Otp = () => {
 
       let errorMessage = "Invalid OTP. Please try again.";
 
+      if (error.response?.status === 403) {
+        // User is suspended - navigate to suspended screen
+        errorMessage = error.response.data.message || "Your account has been suspended.";
+        navigation.replace("/auth/suspended");
+        return;
+      }
+
       if (error.response?.data?.message) {
         errorMessage = error.response.data.message;
       } else if (error.response?.status === 400) {

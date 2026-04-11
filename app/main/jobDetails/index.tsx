@@ -36,6 +36,7 @@ import { useNotifications } from "../../../contexts/NotificationContext";
 import { JobDetailsSkeleton } from "../../../components/Shimmer/Skeletons";
 import * as Location from 'expo-location';
 import CustomButton from "../../../components/CustomButton";
+import { CustomAlertManager } from "../../../components/CustomAlert/AlertProvider";
 
 const JobDetails = () => {
   const { colors } = useTheme();
@@ -46,6 +47,8 @@ const JobDetails = () => {
   const { kycStatus, userData } = useSelector(
     (state: any) => state.authentication,
   );
+  const isAdmin = userData?.role === "admin";
+  const userRole = userData?.role;
   const { jobId, jobData } = route.params || {};
 
   const [job, setJob] = useState<JobPost | null>(null);
@@ -326,6 +329,59 @@ const JobDetails = () => {
     }
   };
 
+  const handleAdminDelete = () => {
+    CustomAlertManager.show(
+      "Admin: Delete Job",
+      "Are you sure you want to delete this job listing? This action is permanent.",
+      [
+        { text: "Cancel", style: "cancel" },
+        { 
+          text: "Delete", 
+          style: "destructive", 
+          onPress: async () => {
+            try {
+              const { deleteJobPosting } = require("../../../services/api");
+              await deleteJobPosting(job?._id || (job as any)?.id);
+              Toast.show({ type: "success", text1: "Job Deleted", text2: "Listing has been removed." });
+              navigation.goBack();
+            } catch (error) {
+              Toast.show({ type: "error", text1: "Failed to delete job" });
+            }
+          } 
+        }
+      ],
+      { type: "warning" }
+    );
+  };
+
+  const handleAdminBan = () => {
+    const targetUserId = job?.userId?._id || job?.userId?.id;
+    if (!targetUserId) return;
+
+    CustomAlertManager.show(
+      "Admin: Ban User",
+      "Suspend this user account permanently?",
+      [
+        { text: "Cancel", style: "cancel" },
+        { 
+          text: "Ban User", 
+          style: "destructive", 
+          onPress: async () => {
+            try {
+              const { adminBanUser } = require("../../../services/api");
+              await adminBanUser(targetUserId, "Violated safety policies via job posting");
+              Toast.show({ type: "success", text1: "User Banned", text2: "Account has been suspended." });
+              navigation.goBack();
+            } catch (error) {
+              Toast.show({ type: "error", text1: "Failed to ban user" });
+            }
+          } 
+        }
+      ],
+      { type: "warning" }
+    );
+  };
+
   const handleCall = async () => {
     if (!job?.userId?.phoneNumber) {
       Toast.show({
@@ -452,31 +508,33 @@ const JobDetails = () => {
   const handleReportJob = () => {
     if (!jobId) return;
 
-    Alert.alert(
+    CustomAlertManager.show(
       "Report Job Listing",
       "Is there something wrong with this job listing? We will review it within 24 hours.",
       [
         {
-          text: "Cancel",
-          style: "cancel"
-        },
-        {
           text: "Report Job",
           style: "destructive",
           onPress: () => {
-            Alert.alert(
+            CustomAlertManager.show(
               "Reason for Reporting",
               "Please select a reason:",
               [
-                { text: "Inappropriate Content", onPress: () => submitJobReport(jobId, "Inappropriate") },
-                { text: "Scam or Fraud", onPress: () => submitJobReport(jobId, "Scam") },
-                { text: "Misleading Info", onPress: () => submitJobReport(jobId, "Misleading") },
+                { text: "Inappropriate", onPress: () => submitJobReport(jobId, "Inappropriate Content") },
+                { text: "Scam/Fraud", onPress: () => submitJobReport(jobId, "Scam") },
+                { text: "Misleading", onPress: () => submitJobReport(jobId, "False Information") },
                 { text: "Cancel", style: "cancel" }
-              ]
+              ],
+              { type: "info" }
             );
           }
+        },
+        {
+          text: "Cancel",
+          style: "cancel"
         }
-      ]
+      ],
+      { type: "warning", dismissable: true }
     );
   };
 
@@ -484,10 +542,9 @@ const JobDetails = () => {
     try {
       const { reportJob } = require("../../../services/api");
       await reportJob(id, reason);
-      Toast.show({ type: "success", text1: "Report Submitted", text2: "Thank you. We will review this job listing." });
+      CustomAlertManager.show("Report Submitted", "Thank you for the feedback. We will review this listing shortly.", [], { type: "success" });
     } catch (error) {
-      // Fallback
-      Toast.show({ type: "success", text1: "Report Submitted", text2: "Action processed successfully." });
+      CustomAlertManager.show("Report Submitted", "We will review this listing shortly.", [], { type: "success" });
     }
   };
 
@@ -832,6 +889,27 @@ const JobDetails = () => {
             </TouchableOpacity>
           </View>
         </View>
+
+        {/* Admin Actions Section */}
+        {isAdmin && (
+          <View style={[styles.section, { borderTopWidth: 1, borderTopColor: colors.addressGrey, marginTop: 20, paddingTop: 20 }]}>
+            <Text style={[styles.sectionTitle, { color: colors.red }]}>Admin Moderation</Text>
+            <View style={{ flexDirection: 'row', gap: 10, marginTop: 10 }}>
+              <TouchableOpacity 
+                style={{ flex: 1, backgroundColor: colors.red + '10', padding: 15, borderRadius: 10, alignItems: 'center', borderWidth: 1, borderColor: colors.red }}
+                onPress={handleAdminDelete}
+              >
+                <Text style={{ color: colors.red, fontWeight: 'bold' }}>Delete Job</Text>
+              </TouchableOpacity>
+              <TouchableOpacity 
+                style={{ flex: 1, backgroundColor: colors.red, padding: 15, borderRadius: 10, alignItems: 'center' }}
+                onPress={handleAdminBan}
+              >
+                <Text style={{ color: 'white', fontWeight: 'bold' }}>Ban Employer</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        )}
       </ScrollView>
 
       {/* Action Buttons - Hide for Employer */}
