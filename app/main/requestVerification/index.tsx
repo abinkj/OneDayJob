@@ -3,20 +3,14 @@ import {
   View,
   Text,
   TouchableOpacity,
-  TouchableWithoutFeedback,
-  useWindowDimensions,
-  Animated,
   FlatList,
   Image,
   ScrollView,
   ActivityIndicator,
-  Linking,
   RefreshControl,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import {
-  TabView,
-  SceneRendererProps,
   NavigationState,
 } from "react-native-tab-view";
 import {
@@ -65,7 +59,7 @@ const RequestCard = React.memo(
       (userId: string) => {
         (navigation as any).navigate("RequestProfile", { userId });
       },
-      [navigation]
+      [navigation],
     );
 
     const handleSelect = useCallback(() => {
@@ -145,8 +139,8 @@ const RequestCard = React.memo(
         {isDisabled && (
           <View style={styles.statusContainer}>
             <AcceptRejectButtons
-              onAccept={() => { }}
-              onReject={() => { }}
+              onAccept={() => {}}
+              onReject={() => {}}
               isAccepted={statusInfo.isAccepted}
               isRejected={statusInfo.isRejected}
             />
@@ -154,10 +148,8 @@ const RequestCard = React.memo(
         )}
       </View>
     );
-  }
+  },
 );
-
-
 
 /* -------------------- Requests Tab -------------------- */
 interface RequestsTabProps {
@@ -205,7 +197,7 @@ const RequestsTab = ({
           "📡 Fetching applied users for jobId:",
           jobId,
           "isRefresh:",
-          isRefresh
+          isRefresh,
         );
         if (isRefresh) {
           setRefreshing(true);
@@ -215,39 +207,39 @@ const RequestsTab = ({
         const response = await getAppliedUser(jobId);
         console.log(
           "Response------------------>",
-          JSON.stringify(response, null, 2)
+          JSON.stringify(response, null, 2),
         );
         const appliedUsers = Array.isArray(response?.data)
           ? response.data.map((item) => ({
-            _id: item._id,
-            appliedAt: item.appliedAt,
-            status: item.status,
-            acceptedAt: item.acceptedAt,
-            user: {
-              id: item.user.id,
-              name: `${item.user.firstName} ${item.user.lastName}`,
-              avatar: item.user.profilePicture,
-              rating: item.user.rating ?? 0,
-              rate: item.user.rate ?? "$0/hr",
-              description: item.user.description ?? "No description provided",
-              availability: item.user.availability ?? "Not specified",
-              phoneNumber: item.user.phoneNumber || item.user.phone,
-              email: item.user.email,
-            },
-          }))
+              _id: item._id,
+              appliedAt: item.appliedAt,
+              status: item.status,
+              acceptedAt: item.acceptedAt,
+              user: {
+                id: item.user.id,
+                name: `${item.user.firstName} ${item.user.lastName}`,
+                avatar: item.user.profilePicture,
+                rating: item.user.rating ?? 0,
+                rate: item.user.rate ?? "$0/hr",
+                description: item.user.description ?? "No description provided",
+                availability: item.user.availability ?? "Not specified",
+                phoneNumber: item.user.phoneNumber || item.user.phone,
+                email: item.user.email,
+              },
+            }))
           : [];
 
         setRequests(appliedUsers);
 
         // Update counts
         const pending = appliedUsers.filter(
-          (req) => req.status !== "accepted" && req.status !== "rejected"
+          (req) => req.status !== "accepted" && req.status !== "rejected",
         ).length;
         const accepted = appliedUsers.filter(
-          (req) => req.status === "accepted"
+          (req) => req.status === "accepted",
         ).length;
         const verified = appliedUsers.filter(
-          (req) => req.status === "accepted" && req.isVerified
+          (req) => req.status === "accepted" && req.isVerified,
         ).length;
 
         // Notify parent component about data changes
@@ -274,7 +266,7 @@ const RequestsTab = ({
         setRefreshing(false);
       }
     },
-    [jobId, onCountUpdate, onDataChange]
+    [jobId, onCountUpdate, onDataChange],
   );
 
   const onRefresh = useCallback(() => {
@@ -302,7 +294,7 @@ const RequestsTab = ({
 
     // Filter out accepted and rejected applications - only show pending
     const pendingRequests = requests.filter(
-      (req) => req.status !== "accepted" && req.status !== "rejected"
+      (req) => req.status !== "accepted" && req.status !== "rejected",
     );
 
     if (selectedFilter === "All") return pendingRequests;
@@ -312,7 +304,7 @@ const RequestsTab = ({
     }
     if (selectedFilter === "Budget Friendly") {
       return pendingRequests.filter(
-        (req) => req.user?.rate && req.user.rate < 50
+        (req) => req.user?.rate && req.user.rate < 50,
       );
     }
 
@@ -323,7 +315,7 @@ const RequestsTab = ({
     setSelectedRequests((prev) =>
       prev.includes(appId)
         ? prev.filter((id) => id !== appId)
-        : [...prev, appId]
+        : [...prev, appId],
     );
   };
 
@@ -666,11 +658,16 @@ const RequestsVerifyTab = ({
 
         // AUTO-VERIFY: If a deep-link workerId was provided, trigger approval immediately
         if (autoVerifyWorkerId && !hasInitiallyLoaded) {
-          const workerToVerify = workerList.find((w: any) => 
-            w.workerId === autoVerifyWorkerId && w.arrivalStatus === 'arrived'
+          const workerToVerify = workerList.find(
+            (w: any) =>
+              w.workerId === autoVerifyWorkerId &&
+              w.arrivalStatus === "arrived",
           );
           if (workerToVerify) {
-            console.log("🔗 AUTO-VERIFYING worker from deep-link:", autoVerifyWorkerId);
+            console.log(
+              "🔗 AUTO-VERIFYING worker from deep-link:",
+              autoVerifyWorkerId,
+            );
             // We set hasInitiallyLoaded to true early to prevent any potential loops
             setHasInitiallyLoaded(true);
             handleApprove(workerToVerify.workerId, workerToVerify.workerName);
@@ -694,7 +691,7 @@ const RequestsVerifyTab = ({
         setRefreshing(false);
       }
     },
-    [jobId, onCountUpdate, onDataUpdate]
+    [jobId, onCountUpdate, onDataUpdate],
   );
 
   useEffect(() => {
@@ -815,7 +812,7 @@ const RequestsVerifyTab = ({
             Accept some applicants and start the job
           </Text>
           {!jobInitiated && (
-            <View style={{ width: '100%', alignItems: 'center' }}>
+            <View style={{ width: "100%", alignItems: "center" }}>
               <TouchableOpacity
                 style={{
                   marginTop: 24,
@@ -825,12 +822,12 @@ const RequestsVerifyTab = ({
                   borderRadius: 14,
                   flexDirection: "row",
                   alignItems: "center",
-                  justifyContent: 'center',
+                  justifyContent: "center",
                   shadowColor: colors.primary,
                   shadowOffset: { width: 0, height: 4 },
                   shadowOpacity: 0.2,
                   shadowRadius: 8,
-                  elevation: 4
+                  elevation: 4,
                 }}
                 onPress={handleStartJob}
                 disabled={initiatingJob}
@@ -853,35 +850,53 @@ const RequestsVerifyTab = ({
                   </>
                 )}
               </TouchableOpacity>
-              
-              <View style={{ 
-                marginTop: 20, 
-                backgroundColor: colors.primary + '10', 
-                padding: 16, 
-                borderRadius: 12, 
-                borderWidth: 1, 
-                borderColor: colors.primary + '20',
-                marginHorizontal: 20
-              }}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 6 }}>
-                  <Ionicons name="information-circle" size={18} color={colors.primary} />
-                  <Text style={{ 
-                    fontSize: 14, 
-                    fontWeight: '700', 
-                    color: colors.primary,
-                    marginLeft: 6
-                  }}>
+
+              <View
+                style={{
+                  marginTop: 20,
+                  backgroundColor: colors.primary + "10",
+                  padding: 16,
+                  borderRadius: 12,
+                  borderWidth: 1,
+                  borderColor: colors.primary + "20",
+                  marginHorizontal: 20,
+                }}
+              >
+                <View
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    marginBottom: 6,
+                  }}
+                >
+                  <Ionicons
+                    name="information-circle"
+                    size={18}
+                    color={colors.primary}
+                  />
+                  <Text
+                    style={{
+                      fontSize: 14,
+                      fontWeight: "700",
+                      color: colors.primary,
+                      marginLeft: 6,
+                    }}
+                  >
                     What is Manual Activation?
                   </Text>
                 </View>
-                <Text style={{ 
-                  color: colors.grey, 
-                  fontSize: 12, 
-                  lineHeight: 18
-                }}>
-                  This is a backup for when workers are on-site but their GPS isn't marking them as "Arrived".{"\n\n"}
-                  • Only use this if you see the worker in person.{"\n"}
-                  • You must first <Text style={{fontWeight: '700'}}>Accept</Text> a worker from the "Requests" tab.
+                <Text
+                  style={{
+                    color: colors.grey,
+                    fontSize: 12,
+                    lineHeight: 18,
+                  }}
+                >
+                  This is a backup for when workers are on-site but their GPS
+                  isn't marking them as "Arrived".{"\n\n"}• Only use this if you
+                  see the worker in person.{"\n"}• You must first{" "}
+                  <Text style={{ fontWeight: "700" }}>Accept</Text> a worker
+                  from the "Requests" tab.
                 </Text>
               </View>
             </View>
@@ -961,8 +976,6 @@ const RequestsVerifyTab = ({
                 </View>
               </View>
 
-
-
               {/* All Verified Banner */}
               {allVerified && (
                 <View
@@ -977,11 +990,7 @@ const RequestsVerifyTab = ({
                     borderColor: "#10B98130",
                   }}
                 >
-                  <Ionicons
-                    name="checkmark-circle"
-                    size={24}
-                    color="#10B981"
-                  />
+                  <Ionicons name="checkmark-circle" size={24} color="#10B981" />
                   <View style={{ marginLeft: 12, flex: 1 }}>
                     <Text
                       style={{
@@ -1046,10 +1055,10 @@ const RequestsVerifyTab = ({
                 item.sessionStatus === "active"
                   ? "Working"
                   : item.sessionStatus === "paused"
-                  ? "Paused"
-                  : item.sessionStatus === "completed"
-                  ? "Completed"
-                  : "Approved - Ready";
+                    ? "Paused"
+                    : item.sessionStatus === "completed"
+                      ? "Completed"
+                      : "Approved - Ready";
               statusIcon = "checkmark-circle";
             }
 
@@ -1066,9 +1075,7 @@ const RequestsVerifyTab = ({
                   borderColor: colors.border,
                 }}
               >
-                <View
-                  style={{ flexDirection: "row", alignItems: "center" }}
-                >
+                <View style={{ flexDirection: "row", alignItems: "center" }}>
                   {/* Worker Avatar */}
                   <View
                     style={{
@@ -1135,9 +1142,7 @@ const RequestsVerifyTab = ({
                   {isArrived && (
                     <TouchableOpacity
                       style={{
-                        backgroundColor: isApproving
-                          ? colors.grey
-                          : "#10B981",
+                        backgroundColor: isApproving ? colors.grey : "#10B981",
                         paddingVertical: 10,
                         paddingHorizontal: 18,
                         borderRadius: 10,
@@ -1153,11 +1158,7 @@ const RequestsVerifyTab = ({
                         <ActivityIndicator size="small" color="#fff" />
                       ) : (
                         <>
-                          <Ionicons
-                            name="checkmark"
-                            size={16}
-                            color="#fff"
-                          />
+                          <Ionicons name="checkmark" size={16} color="#fff" />
                           <Text
                             style={{
                               color: "#fff",
@@ -1242,8 +1243,7 @@ const RequestsVerifyTab = ({
                         marginLeft: 4,
                       }}
                     >
-                      Time worked:{" "}
-                      {Math.floor(item.totalWorkedSeconds / 3600)}h{" "}
+                      Time worked: {Math.floor(item.totalWorkedSeconds / 3600)}h{" "}
                       {Math.floor((item.totalWorkedSeconds % 3600) / 60)}m
                     </Text>
                   </View>
@@ -1258,24 +1258,24 @@ const RequestsVerifyTab = ({
 };
 /* -------------------- Main Screen -------------------- */
 const RequestVerification = () => {
-  const layout = useWindowDimensions();
+  // const layout = useWindowDimensions(); // TABVIEW COMMENTED
   const route = useRoute<any>();
   const { jobId, initialTab, workerId } = route.params || {};
 
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
 
-  const [index, setIndex] = useState(initialTab === 'verify' || workerId ? 1 : 0);
+  // const [index, setIndex] = useState(initialTab === 'verify' || workerId ? 1 : 0); // TABVIEW COMMENTED
   const [pendingCount, setPendingCount] = useState(0);
   const [acceptedCount, setAcceptedCount] = useState(0);
   const [verifiedCount, setVerifiedCount] = useState(0);
   const [initialDataLoaded, setInitialDataLoaded] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
-  const [routes] = useState([
-    { key: "requests", title: "Requests" },
-    { key: "requestsVerify", title: "Verify" },
-  ]);
+  // const [routes] = useState([ // TABVIEW COMMENTED
+  //   { key: "requests", title: "Requests" }, // TABVIEW COMMENTED
+  //   { key: "requestsVerify", title: "Verify" }, // TABVIEW COMMENTED
+  // ]); // TABVIEW COMMENTED
 
   const handleCountUpdate = useCallback(
     (pending: number, accepted: number, verified: number) => {
@@ -1283,7 +1283,7 @@ const RequestVerification = () => {
       setAcceptedCount(accepted);
       setVerifiedCount(verified);
     },
-    []
+    [],
   );
 
   // Global refresh function that triggers data refresh in all tabs
@@ -1303,21 +1303,19 @@ const RequestVerification = () => {
       if (!initialDataLoaded) {
         setInitialDataLoaded(true);
 
-        // Smart tab switching logic:
-        // - If there are pending requests, stay on Requests tab (index 0)
-        // - If no pending but there are accepted, switch to Accepted tab (index 1)
-        // - If no data at all, stay on Requests tab
-        if (data.pending === 0 && data.accepted > 0 && data.total > 0) {
-          // Only switch if there are no pending requests but there are accepted ones
-          console.log(
-            "Auto-switching to Accepted tab: no pending requests but accepted users exist"
-          );
-          setIndex(1);
-        }
-        // If there are pending requests or no data, stay on Requests tab (index 0)
+        // Smart tab switching logic: // TABVIEW COMMENTED
+        // - If there are pending requests, stay on Requests tab (index 0) // TABVIEW COMMENTED
+        // - If no pending but there are accepted, switch to Accepted tab (index 1) // TABVIEW COMMENTED
+        // - If no data at all, stay on Requests tab // TABVIEW COMMENTED
+        // if (data.pending === 0 && data.accepted > 0 && data.total > 0) { // TABVIEW COMMENTED
+        //   console.log( // TABVIEW COMMENTED
+        //     "Auto-switching to Accepted tab: no pending requests but accepted users exist" // TABVIEW COMMENTED
+        //   ); // TABVIEW COMMENTED
+        //   setIndex(1); // TABVIEW COMMENTED
+        // } // TABVIEW COMMENTED
       }
     },
-    [initialDataLoaded]
+    [initialDataLoaded],
   );
 
   // Handle data changes after initial load (e.g., when users are accepted)
@@ -1326,7 +1324,7 @@ const RequestVerification = () => {
       console.log("📊 Data updated:", data);
       // Just log the data update, no automatic tab switching
     },
-    []
+    [],
   );
 
   // Reset when navigating to this screen
@@ -1337,103 +1335,106 @@ const RequestVerification = () => {
       setPendingCount(0);
       setAcceptedCount(0);
       setVerifiedCount(0);
-      // Always start on Requests tab when first entering
-      setIndex(0);
+      // setIndex(0); // TABVIEW COMMENTED
       console.log("🔄 Screen focused - resetting state");
-    }, []) // Remove automatic refresh to prevent double loading
+    }, []), // Remove automatic refresh to prevent double loading
   );
 
-  const renderScene = ({ route }) => {
-    switch (route.key) {
-      case "requests":
-        return (
-          <RequestsTab
-            jobId={jobId}
-            onCountUpdate={handleCountUpdate}
-            onDataChange={handleDataChange}
-            onDataUpdate={handleDataUpdate}
-            refreshTrigger={refreshTrigger}
-            onTriggerRefresh={triggerRefresh}
-          />
-        );
-      case "requestsVerify":
-        return (
-          <RequestsVerifyTab
-            jobId={jobId}
-            onCountUpdate={handleCountUpdate}
-            refreshTrigger={refreshTrigger}
-            onDataUpdate={handleDataUpdate}
-            autoVerifyWorkerId={route.params?.workerId}
-          />
-        );
-      default:
-        return null;
-    }
-  };
+  // const renderScene = ({ route }) => { // TABVIEW COMMENTED
+  //   switch (route.key) { // TABVIEW COMMENTED
+  //     case "requests": // TABVIEW COMMENTED
+  //       return ( // TABVIEW COMMENTED
+  //         <RequestsTab // TABVIEW COMMENTED
+  //           jobId={jobId} // TABVIEW COMMENTED
+  //           onCountUpdate={handleCountUpdate} // TABVIEW COMMENTED
+  //           onDataChange={handleDataChange} // TABVIEW COMMENTED
+  //           onDataUpdate={handleDataUpdate} // TABVIEW COMMENTED
+  //           refreshTrigger={refreshTrigger} // TABVIEW COMMENTED
+  //           onTriggerRefresh={triggerRefresh} // TABVIEW COMMENTED
+  //         /> // TABVIEW COMMENTED
+  //       ); // TABVIEW COMMENTED
+  //     case "requestsVerify": // TABVIEW COMMENTED
+  //       return ( // TABVIEW COMMENTED
+  //         <RequestsVerifyTab // TABVIEW COMMENTED
+  //           jobId={jobId} // TABVIEW COMMENTED
+  //           onCountUpdate={handleCountUpdate} // TABVIEW COMMENTED
+  //           refreshTrigger={refreshTrigger} // TABVIEW COMMENTED
+  //           onDataUpdate={handleDataUpdate} // TABVIEW COMMENTED
+  //           autoVerifyWorkerId={route.params?.workerId} // TABVIEW COMMENTED
+  //         /> // TABVIEW COMMENTED
+  //       ); // TABVIEW COMMENTED
+  //     default: // TABVIEW COMMENTED
+  //       return null; // TABVIEW COMMENTED
+  //   } // TABVIEW COMMENTED
+  // }; // TABVIEW COMMENTED
 
-  const renderTabBar = (
-    props: SceneRendererProps & { navigationState: State }
-  ) => {
-    const inputRange = props.navigationState.routes.map((_, i) => i);
-
-    const translateX = props.position.interpolate({
-      inputRange,
-      outputRange: inputRange.map(
-        (i) => i * (layout.width / props.navigationState.routes.length)
-      ),
-    });
-
-    return (
-      <View style={styles.tabbar}>
-        {props.navigationState.routes.map((route, i) => (
-          <TouchableWithoutFeedback
-            key={route.key}
-            onPress={() => props.jumpTo(route.key)}
-          >
-            <View style={styles.tab}>
-              <Text
-                style={[
-                  styles.label,
-                  index === i ? styles.active : styles.inactive,
-                ]}
-              >
-                {route.title}
-              </Text>
-            </View>
-          </TouchableWithoutFeedback>
-        ))}
-
-        {/* Verification Status Indicator */}
-        {index === 1 && verifiedCount > 0 && acceptedCount > 0 && (
-          <View style={styles.verificationStatus}>
-            <Text style={styles.verificationStatusText}>
-              {verifiedCount} out of {acceptedCount} Verified
-            </Text>
-          </View>
-        )}
-
-        <Animated.View
-          style={[
-            styles.underline,
-            {
-              width: layout.width / 2.68,
-              transform: [{ translateX }],
-            },
-          ]}
-        />
-      </View>
-    );
-  };
+  // const renderTabBar = ( // TABVIEW COMMENTED
+  //   props: SceneRendererProps & { navigationState: State } // TABVIEW COMMENTED
+  // ) => { // TABVIEW COMMENTED
+  //   const inputRange = props.navigationState.routes.map((_, i) => i); // TABVIEW COMMENTED
+  //   const translateX = props.position.interpolate({ // TABVIEW COMMENTED
+  //     inputRange, // TABVIEW COMMENTED
+  //     outputRange: inputRange.map( // TABVIEW COMMENTED
+  //       (i) => i * (layout.width / props.navigationState.routes.length) // TABVIEW COMMENTED
+  //     ), // TABVIEW COMMENTED
+  //   }); // TABVIEW COMMENTED
+  //   return ( // TABVIEW COMMENTED
+  //     <View style={styles.tabbar}> // TABVIEW COMMENTED
+  //       {props.navigationState.routes.map((route, i) => ( // TABVIEW COMMENTED
+  //         <TouchableWithoutFeedback // TABVIEW COMMENTED
+  //           key={route.key} // TABVIEW COMMENTED
+  //           onPress={() => props.jumpTo(route.key)} // TABVIEW COMMENTED
+  //         > // TABVIEW COMMENTED
+  //           <View style={styles.tab}> // TABVIEW COMMENTED
+  //             <Text // TABVIEW COMMENTED
+  //               style={[ // TABVIEW COMMENTED
+  //                 styles.label, // TABVIEW COMMENTED
+  //                 index === i ? styles.active : styles.inactive, // TABVIEW COMMENTED
+  //               ]} // TABVIEW COMMENTED
+  //             > // TABVIEW COMMENTED
+  //               {route.title} // TABVIEW COMMENTED
+  //             </Text> // TABVIEW COMMENTED
+  //           </View> // TABVIEW COMMENTED
+  //         </TouchableWithoutFeedback> // TABVIEW COMMENTED
+  //       ))} // TABVIEW COMMENTED
+  //       {index === 1 && verifiedCount > 0 && acceptedCount > 0 && ( // TABVIEW COMMENTED
+  //         <View style={styles.verificationStatus}> // TABVIEW COMMENTED
+  //           <Text style={styles.verificationStatusText}> // TABVIEW COMMENTED
+  //             {verifiedCount} out of {acceptedCount} Verified // TABVIEW COMMENTED
+  //           </Text> // TABVIEW COMMENTED
+  //         </View> // TABVIEW COMMENTED
+  //       )} // TABVIEW COMMENTED
+  //       <Animated.View // TABVIEW COMMENTED
+  //         style={[ // TABVIEW COMMENTED
+  //           styles.underline, // TABVIEW COMMENTED
+  //           { // TABVIEW COMMENTED
+  //             width: layout.width / 2.68, // TABVIEW COMMENTED
+  //             transform: [{ translateX }], // TABVIEW COMMENTED
+  //           }, // TABVIEW COMMENTED
+  //         ]} // TABVIEW COMMENTED
+  //       /> // TABVIEW COMMENTED
+  //     </View> // TABVIEW COMMENTED
+  //   ); // TABVIEW COMMENTED
+  // }; // TABVIEW COMMENTED
 
   return (
     <View style={styles.container}>
-      <Header showBackButton={true} />
+      <Header showBackButton={true} title="Request Verification" />
+      {/* TABVIEW COMMENTED
       <TabView
         navigationState={{ index, routes }}
         renderScene={renderScene}
         renderTabBar={renderTabBar}
         onIndexChange={setIndex}
         initialLayout={{ width: layout.width }}
+      />
+      */}
+      <RequestsVerifyTab
+        jobId={jobId}
+        onCountUpdate={handleCountUpdate}
+        refreshTrigger={refreshTrigger}
+        onDataUpdate={handleDataUpdate}
+        autoVerifyWorkerId={workerId}
       />
     </View>
   );
