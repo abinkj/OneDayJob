@@ -1,11 +1,5 @@
-import React, { useState, useEffect } from "react";
-import {
-  View,
-  FlatList,
-  ActivityIndicator,
-  Text,
-  RefreshControl,
-} from "react-native";
+import React from "react";
+import { View, FlatList, Text, RefreshControl } from "react-native";
 import { useSelector } from "react-redux";
 import ChatItem from "../../../components/chatItem";
 import { Header } from "../../../components/header";
@@ -54,18 +48,20 @@ export default function Chat() {
     return (rawConversations || []).map((conv: any) => {
       // Find the other participant (not the current user)
       const otherParticipant = conv.participants?.find(
-        (p: any) => (p.id || p._id) !== currentUserId
+        (p: any) => (p.id || p._id) !== currentUserId,
       );
 
-      const avatarUrl = otherParticipant?.profilePictureUrl || otherParticipant?.profilePicture || "";
+      const avatarUrl =
+        otherParticipant?.profilePictureUrl ||
+        otherParticipant?.profilePicture ||
+        "";
 
-      console.log('Chat item avatar:', {
+      console.log("Chat item avatar:", {
         name: otherParticipant?.firstName,
         profilePictureUrl: otherParticipant?.profilePictureUrl,
         profilePicture: otherParticipant?.profilePicture,
-        finalAvatar: avatarUrl
+        finalAvatar: avatarUrl,
       });
-
 
       return {
         id: conv._id,
@@ -94,83 +90,83 @@ export default function Chat() {
     });
   };
 
-  if (isLoading && !isRefetching) {
-    return <ChatListSkeleton />;
-  }
-
   return (
     <View style={styles.container}>
       <Header title="Chats" />
-      <View style={styles.chatHeader} />
-      <FlatList
-        data={transformedConversations}
-        keyExtractor={(item) => item.id}
-        bounces={true}
-        contentContainerStyle={{ paddingBottom: 100, paddingTop: 10 }}
-        showsVerticalScrollIndicator={false}
-        renderItem={({ item }) => (
-          <ChatItem item={item} onPress={() => handleChatPress(item)} />
-        )}
-        refreshControl={
-          <RefreshControl
-            refreshing={isRefetching}
-            onRefresh={() => refetch()}
-            colors={[colors.primary]}
-            tintColor={colors.primary}
-          />
-        }
-        ListEmptyComponent={
-          <View
-            style={{
-              flex: 1,
-              justifyContent: "center",
-              alignItems: "center",
-              marginTop: 100,
-              paddingHorizontal: 32,
-            }}
-          >
+
+      {isLoading && !isRefetching ? (
+        <ChatListSkeleton />
+      ) : (
+        <FlatList
+          data={transformedConversations}
+          keyExtractor={(item) => item.id}
+          bounces={true}
+          contentContainerStyle={{ paddingBottom: 100, paddingTop: 10 }}
+          showsVerticalScrollIndicator={false}
+          renderItem={({ item }) => (
+            <ChatItem item={item} onPress={() => handleChatPress(item)} />
+          )}
+          refreshControl={
+            <RefreshControl
+              refreshing={isRefetching}
+              onRefresh={() => refetch()}
+              colors={[colors.primary]}
+              tintColor={colors.primary}
+            />
+          }
+          ListEmptyComponent={
             <View
               style={{
-                width: 120,
-                height: 120,
-                borderRadius: 60,
-                backgroundColor: colors.categoryBox,
+                flex: 1,
                 justifyContent: "center",
                 alignItems: "center",
-                marginBottom: 24,
-                shadowColor: colors.primary,
-                shadowOffset: { width: 0, height: 4 },
-                shadowOpacity: 0.2,
-                shadowRadius: 8,
-                elevation: 4,
+                marginTop: 100,
+                paddingHorizontal: 32,
               }}
             >
-              <Ionicons name="chatbubbles" size={60} color={colors.primary} />
+              <View
+                style={{
+                  width: 120,
+                  height: 120,
+                  borderRadius: 60,
+                  backgroundColor: colors.categoryBox,
+                  justifyContent: "center",
+                  alignItems: "center",
+                  marginBottom: 24,
+                  shadowColor: colors.primary,
+                  shadowOffset: { width: 0, height: 4 },
+                  shadowOpacity: 0.2,
+                  shadowRadius: 8,
+                  elevation: 4,
+                }}
+              >
+                <Ionicons name="chatbubbles" size={60} color={colors.primary} />
+              </View>
+              <Text
+                style={{
+                  color: colors.black,
+                  fontSize: 22,
+                  fontWeight: "700",
+                  marginBottom: 12,
+                  textAlign: "center",
+                }}
+              >
+                No Chats Yet
+              </Text>
+              <Text
+                style={{
+                  color: colors.grey,
+                  fontSize: 16,
+                  textAlign: "center",
+                  lineHeight: 24,
+                }}
+              >
+                Connect with employers or job seekers to start a conversation.
+              </Text>
             </View>
-            <Text
-              style={{
-                color: colors.black,
-                fontSize: 22,
-                fontWeight: "700",
-                marginBottom: 12,
-                textAlign: "center",
-              }}
-            >
-              No Chats Yet
-            </Text>
-            <Text
-              style={{
-                color: colors.grey,
-                fontSize: 16,
-                textAlign: "center",
-                lineHeight: 24,
-              }}
-            >
-              Connect with employers or job seekers to start a conversation.
-            </Text>
-          </View>
-        }
-      />
+          }
+        />
+      )}
     </View>
   );
 }

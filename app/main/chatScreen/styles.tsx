@@ -62,8 +62,8 @@ export const createStyles = (colors: ThemeColors) => StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     height: 56,
-    marginVertical: 10,
     marginHorizontal: 16,
+    borderRadius:24
   },
   subInputContainer: {
     flex: 1,
