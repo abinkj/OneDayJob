@@ -3,6 +3,7 @@ import {
   logout,
   setKycStatus,
   setHasSeenOnboarding,
+  completeProfile,
 } from "../redux/reducers/authReducers";
 import {
   saveUserData,
@@ -56,7 +57,7 @@ export const restoreSession = () => async (dispatch) => {
       //   role: user.role,
       // });
       dispatch(login(user));
-
+      dispatch(completeProfile(user.isProfileComplete ?? false));
       const savedKycStatus = await getKycStatus();
       if (savedKycStatus) {
         dispatch(setKycStatus(savedKycStatus as KycStatus));

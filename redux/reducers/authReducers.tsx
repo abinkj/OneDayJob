@@ -37,8 +37,8 @@ const authSlice = createSlice({
     setHasSeenOnboarding(state, action) {
       state.hasSeenOnboarding = action.payload;
     },
-    completeProfile(state) {
-      state.isProfileComplete = true;
+    completeProfile(state, action) {
+      state.isProfileComplete = action.payload ?? true;
     },
   },
 });
