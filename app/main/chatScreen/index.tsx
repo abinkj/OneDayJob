@@ -418,13 +418,18 @@ export default function ChatScreen() {
   // Single renderAvatar — uses ChatAvatar with expo-image disk cache
   const renderAvatar = (props: any) => {
     const { user } = props.currentMessage;
-    console.log('renderavatar',user)
     return (
       <ChatAvatar
         uri={user?.avatar}
         name={user?.name}
         size={36}
         colors={colors}
+        onPress={() => {
+          router.push({
+            pathname: "/main/requestProfile",
+            params: { userId: user._id },
+          });
+        }}
       />
     );
   };
