@@ -5,26 +5,69 @@ import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useTheme } from "../../contexts/ThemeContext";
 import { ThemeColors } from "../../constants/Colors";
 
-const NotificationCard = ({ title, subtitle, time, count, onPress }) => {
-  const { colors } = useTheme();
+interface NotificationCardProps {
+  title: string;
+  subtitle: string;
+  time: string;
+  count?: number;
+  onPress: () => void;
+  type?: string;
+  isRead?: boolean;
+}
+
+const NotificationCard: React.FC<NotificationCardProps> = ({ title, subtitle, time, count, onPress, type, isRead }) => {
+  const { colors, theme } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
 
+  const getIcon = () => {
+    switch (type) {
+      case 'job_update':
+      case 'application_status':
+        return "briefcase-outline";
+      case 'message':
+        return "message-text-outline";
+      case 'system':
+        return "information-outline";
+      default:
+        return "bell-outline";
+    }
+  };
+
   return (
-    <TouchableOpacity onPress={onPress}>
-      <View style={styles.card}>
-        <View style={styles.left}>
-          <MaterialCommunityIcons name="bell-outline" size={24} color={colors.primary} />
+    <TouchableOpacity 
+      activeOpacity={0.7}
+      onPress={onPress}
+      style={styles.cardContainer}
+    >
+      {!isRead && <View style={styles.unreadIndicator} />}
+      <View style={[styles.card, !isRead && styles.unreadCard]}>
+        <View style={[styles.left, { backgroundColor: isRead ? colors.categoryBox : colors.lightBlue }]}>
+          <MaterialCommunityIcons 
+            name={getIcon()} 
+            size={22} 
+            color={isRead ? colors.grey : colors.primary} 
+          />
         </View>
         <View style={styles.content}>
           <View style={styles.header}>
-            <Text style={styles.title}>{title}</Text>
+            <Text 
+              style={[styles.title, !isRead && { fontWeight: "700" }]} 
+              numberOfLines={1}
+            >
+              {title}
+            </Text>
             <Text style={styles.time}>{time}</Text>
           </View>
-          <Text style={styles.subtitle}>{subtitle}</Text>
+          <Text 
+            style={styles.subtitle} 
+            numberOfLines={2}
+          >
+            {subtitle}
+          </Text>
         </View>
-        {count > 0 && (
+        {count > 0 && !isRead && (
           <View style={styles.badge}>
-            <Text style={styles.badgeText}>{count}</Text>
+            <View style={styles.activeDot} />
           </View>
         )}
       </View>
@@ -33,29 +76,39 @@ const NotificationCard = ({ title, subtitle, time, count, onPress }) => {
 };
 
 const createStyles = (colors: ThemeColors) => StyleSheet.create({
+  cardContainer: {
+    marginBottom: 12,
+  },
   card: {
     flexDirection: "row",
     backgroundColor: colors.white,
-    paddingVertical: 14,
+    paddingVertical: 16,
     paddingHorizontal: 16,
-    borderRadius: 16,
-    alignItems: "flex-start",
-    // iOS shadow
-    shadowColor: colors.black,
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 16,
-
-    // Android shadow
-    elevation: 2,
-    marginBottom: 8,
+    borderRadius: 20,
+    alignItems: "center",
+  },
+  unreadCard: {
+    backgroundColor: colors.white,
+    borderWidth: 1,
+    borderColor: colors.lightBlue,
+  },
+  unreadIndicator: {
+    position: "absolute",
+    left: -8,
+    top: "20%",
+    bottom: "20%",
+    width: 4,
+    backgroundColor: colors.primary,
+    borderRadius: 2,
+    zIndex: 1,
   },
   left: {
-    marginRight: 12,
-    marginTop: 4,
+    width: 48,
+    height: 48,
+    borderRadius: 14,
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 14,
   },
   content: {
     flex: 1,
@@ -63,36 +116,35 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: 4,
   },
   title: {
     fontWeight: "600",
     fontSize: 16,
     color: colors.black,
+    flex: 1,
   },
   time: {
     fontSize: 12,
     color: colors.grey,
+    marginLeft: 8,
   },
   subtitle: {
     fontSize: 14,
     color: colors.subGrey,
+    lineHeight: 18,
   },
   badge: {
-    backgroundColor: colors.primary,
-    position: "absolute",
-    right: 10,
-    bottom: 10,
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    alignItems: "center",
+    marginLeft: 10,
     justifyContent: "center",
+    alignItems: "center",
   },
-  badgeText: {
-    color: "#fff",
-    fontSize: 12,
-    fontWeight: "bold",
+  activeDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: colors.primary,
   },
 });
 

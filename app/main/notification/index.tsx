@@ -1,37 +1,19 @@
-import React, { useState, useEffect, useMemo } from "react";
-import { View, Text, StyleSheet, FlatList, RefreshControl } from "react-native";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
+import { View, Text, StyleSheet, FlatList, RefreshControl, ScrollView } from "react-native";
 import { Swipeable, TouchableOpacity } from "react-native-gesture-handler";
-import { MaterialIcons } from "@expo/vector-icons";
+import { MaterialIcons, Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { Header } from "../../../components/header";
-import SegmentedControl from "@react-native-segmented-control/segmented-control";
 import NotificationCard from "../../../components/notificationCard";
 import { useNotifications } from "../../../contexts/NotificationContext";
 import { NotificationData } from "../../../services/notificationService";
 import { useTheme } from "../../../contexts/ThemeContext";
 import { ThemeColors } from "../../../constants/Colors";
-
-const initialNotifications = [
-  {
-    id: "1",
-    message: "Your order has been shipped!",
-    type: "All",
-    time: "2 hours ago",
-    title: "Order Update",
-    unreadCount: 3,
-  },
-  { id: "2", message: "New discount available now.", type: "Promotions" },
-  {
-    id: "3",
-    message: "Reminder: Your wine subscription renews tomorrow.",
-    type: "Reminders",
-  },
-];
+import Animated, { FadeInDown, Layout, FadeIn } from "react-native-reanimated";
 
 const Notification = () => {
   const {
     notifications,
     unreadCount,
-    clearAllNotifications,
     deleteNotification,
     markAsRead,
     markAllAsRead,
@@ -59,32 +41,42 @@ const Notification = () => {
   };
 
   const renderRightActions = (id) => (
-    <TouchableOpacity style={styles.deleteBox} onPress={() => handleDelete(id)}>
-      <MaterialIcons name="delete" size={24} color="white" />
+    <TouchableOpacity 
+      activeOpacity={0.8}
+      style={styles.deleteBox} 
+      onPress={() => handleDelete(id)}
+    >
+      <MaterialIcons name="delete-outline" size={28} color="white" />
     </TouchableOpacity>
   );
 
-  const renderItem = ({ item }: { item: NotificationData }) => (
-    <Swipeable
-      renderRightActions={() => renderRightActions(item.id)}
-      overshootRight={false}
+  const renderItem = ({ item, index }: { item: NotificationData, index: number }) => (
+    <Animated.View 
+      entering={FadeInDown.delay(index * 100).springify()}
+      layout={Layout.springify()}
     >
-      <NotificationCard
-        title={item.title}
-        subtitle={item.body}
-        time={item.timestamp ? new Date(item.timestamp).toLocaleString() : 'Now'}
-        count={item.read ? 0 : 1}
-        onPress={() => {
-          if (item.id) {
-            markAsRead(item.id);
-          }
-          // TODO: Add navigation logic here based on item.type and item.jobId if needed
-        }}
-      />
-    </Swipeable>
+      <Swipeable
+        renderRightActions={() => renderRightActions(item.id)}
+        overshootRight={false}
+      >
+        <NotificationCard
+          title={item.title}
+          subtitle={item.body}
+          time={item.timestamp ? new Date(item.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Now'}
+          count={item.read ? 0 : 1}
+          type={item.type}
+          isRead={item.read}
+          onPress={() => {
+            if (item.id) {
+              markAsRead(item.id);
+            }
+          }}
+        />
+      </Swipeable>
+    </Animated.View>
   );
 
-  const filteredNotifications = (() => {
+  const filteredNotifications = useMemo(() => {
     if (segmentValues[selectedIndex] === "All") {
       return notifications;
     }
@@ -102,39 +94,64 @@ const Notification = () => {
           return true;
       }
     });
-  })();
+  }, [notifications, selectedIndex]);
+
+  const FilterChips = () => (
+    <ScrollView 
+      horizontal 
+      showsHorizontalScrollIndicator={false}
+      contentContainerStyle={styles.chipsContainer}
+    >
+      {segmentValues.map((value, index) => {
+        const isActive = selectedIndex === index;
+        return (
+          <TouchableOpacity
+            key={value}
+            onPress={() => setSelectedIndex(index)}
+            activeOpacity={0.7}
+            style={[
+              styles.chip,
+              isActive && styles.activeChip
+            ]}
+          >
+            <Text style={[
+              styles.chipText,
+              isActive && styles.activeChipText
+            ]}>
+              {value}
+            </Text>
+          </TouchableOpacity>
+        );
+      })}
+    </ScrollView>
+  );
 
   return (
     <View style={styles.container}>
       <Header
-        title="Notification"
+        title="Notifications"
         showBackButton
         headerRight={
           unreadCount > 0 ? (
-            <TouchableOpacity onPress={markAllAsRead}>
-              <MaterialIcons name="done-all" size={22} color={colors.primary} />
+            <TouchableOpacity 
+              onPress={markAllAsRead}
+              style={styles.markAllBtn}
+            >
+              <MaterialCommunityIcons name="check-all" size={22} color={colors.primary} />
+              <Text style={styles.markAllText}>Read All</Text>
             </TouchableOpacity>
           ) : null
         }
       />
 
-      {/* Segmented Control */}
-      <SegmentedControl
-        values={segmentValues}
-        selectedIndex={selectedIndex}
-        onChange={(event) => {
-          setSelectedIndex(event.nativeEvent.selectedSegmentIndex);
-        }}
-        style={styles.segment}
-        appearance={theme === 'dark' ? 'dark' : 'light'}
-      />
+      <FilterChips />
 
-      <FlatList bounces={false}
+      <FlatList
         data={filteredNotifications}
-        keyExtractor={(item, index) => item.id || item.jobId || item.timestamp || index.toString()}
+        keyExtractor={(item, index) => item.id || index.toString()}
         renderItem={renderItem}
-        contentContainerStyle={{ paddingBottom: 20, paddingTop: 10 }}
-        ItemSeparatorComponent={() => <View style={styles.separator} />}
+        contentContainerStyle={styles.listContent}
+        showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -144,13 +161,21 @@ const Notification = () => {
           />
         }
         ListEmptyComponent={
-          <View style={styles.emptyContainer}>
-            <MaterialIcons name="notifications-none" size={64} color={colors.grey} />
-            <Text style={styles.empty}>No notifications found.</Text>
+          <Animated.View 
+            entering={FadeIn.delay(300)}
+            style={styles.emptyContainer}
+          >
+            <View style={styles.emptyIconContainer}>
+              <Ionicons name="notifications-off-outline" size={80} color={colors.primary} style={{ opacity: 0.2 }} />
+              <View style={styles.emptyIconBadge}>
+                <Ionicons name="close" size={20} color={colors.white} />
+              </View>
+            </View>
+            <Text style={styles.emptyTitle}>All caught up!</Text>
             <Text style={styles.emptySubtitle}>
-              You'll receive notifications about job updates, applications, and messages here.ss
+              You don't have any {segmentValues[selectedIndex] !== 'All' ? segmentValues[selectedIndex].toLowerCase() : ''} notifications at the moment.
             </Text>
-          </View>
+          </Animated.View>
         }
       />
     </View>
@@ -163,55 +188,96 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
+  },
+  chipsContainer: {
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    gap: 8,
+  },
+  chip: {
     paddingHorizontal: 16,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: "bold",
-    marginBottom: 12,
-    color: colors.black,
-  },
-  segment: {
-    marginVertical: 16,
-  },
-  notificationItem: {
+    paddingVertical: 8,
+    borderRadius: 20,
     backgroundColor: colors.white,
-    padding: 16,
-    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: colors.border,
+    justifyContent: "center",
+    alignItems: "center",
   },
-  text: {
-    fontSize: 16,
-    color: colors.black,
+  activeChip: {
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
   },
-  separator: {
-    height: 16,
+  chipText: {
+    fontSize: 14,
+    color: colors.grey,
+    fontWeight: "500",
+  },
+  activeChipText: {
+    color: colors.white,
+    fontWeight: "600",
+  },
+  markAllBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: colors.lightBlue,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 12,
+  },
+  markAllText: {
+    fontSize: 12,
+    fontWeight: "600",
+    color: colors.primary,
+    marginLeft: 4,
+  },
+  listContent: {
+    paddingHorizontal: 16,
+    paddingTop: 4,
+    paddingBottom: 40,
   },
   deleteBox: {
     backgroundColor: colors.red,
     justifyContent: "center",
     alignItems: "center",
-    width: 70,
-    borderRadius: 10,
-    marginVertical: 4,
+    width: 80,
+    borderRadius: 20,
+    height: "85%",
+    marginTop: 4,
+    marginLeft: 10,
   },
   emptyContainer: {
     alignItems: "center",
-    justifyContent: "center",
-    paddingVertical: 40,
-    paddingHorizontal: 20,
+    paddingTop: 120,
+    paddingHorizontal: 40,
   },
-  empty: {
-    textAlign: "center",
-    fontSize: 18,
-    color: colors.grey,
-    marginTop: 16,
-    fontWeight: "600",
+  emptyIconContainer: {
+    marginBottom: 24,
+    position: "relative",
+  },
+  emptyIconBadge: {
+    position: "absolute",
+    bottom: 0,
+    right: 0,
+    backgroundColor: colors.primary,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    justifyContent: "center",
+    alignItems: "center",
+    borderWidth: 3,
+    borderColor: colors.background,
+  },
+  emptyTitle: {
+    fontSize: 20,
+    fontWeight: "700",
+    color: colors.black,
+    marginBottom: 8,
   },
   emptySubtitle: {
     textAlign: "center",
-    fontSize: 14,
-    color: colors.subGrey,
-    marginTop: 8,
-    lineHeight: 20,
+    fontSize: 15,
+    color: colors.grey,
+    lineHeight: 22,
   },
 });
