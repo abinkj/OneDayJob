@@ -46,7 +46,8 @@ const ReviewItem: React.FC<ReviewItemProps> = ({ review, styles }) => (
     <View style={styles.reviewerInfo}>
       <Image
         source={
-          review.raterUser?.profilePictureUrl || review.raterUser?.profilePicture
+          review.raterUser?.profilePictureUrl ||
+          review.raterUser?.profilePicture
             ? {
                 uri:
                   review.raterUser?.profilePictureUrl ||
@@ -70,9 +71,7 @@ const ReviewItem: React.FC<ReviewItemProps> = ({ review, styles }) => (
         {new Date(review.createdAt).toLocaleDateString()}
       </Text>
     </View>
-    {review.comment && (
-      <Text style={styles.reviewText}>{review.comment}</Text>
-    )}
+    {review.comment && <Text style={styles.reviewText}>{review.comment}</Text>}
   </View>
 );
 
@@ -248,13 +247,13 @@ const Profile: React.FC = () => {
       {/* Profile Card */}
       <View style={styles.profileCard}>
         <Image
-          key={`profile-${userData?.profilePictureUrl || userData?.profilePicture}`}
+          //key={`profile-${userData?.profilePictureUrl || userData?.profilePicture}`}
           source={profileImageSource}
           style={styles.profileImage}
           placeholder={Images.profile.profileImage}
           placeholderContentFit="cover"
           contentFit="cover"
-          cachePolicy="none"
+          cachePolicy="memory-disk"
           transition={300}
           onError={(error) => console.error("Profile image load error:", error)}
           onLoad={() => console.log("Profile image loaded")}
@@ -330,9 +329,7 @@ const Profile: React.FC = () => {
       <FlatList
         data={reviews}
         keyExtractor={(item, index) => item._id || String(index)}
-        renderItem={({ item }) => (
-          <ReviewItem review={item} styles={styles} />
-        )}
+        renderItem={({ item }) => <ReviewItem review={item} styles={styles} />}
         ListHeaderComponent={<ListHeader />}
         ListEmptyComponent={<ListEmpty />}
         contentContainerStyle={{ paddingBottom: 100 }}

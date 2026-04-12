@@ -1,7 +1,4 @@
-import Login from "@/(auth)/login";
-import SignUp from "@/(auth)/signUp";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
-import Otp from "@/(auth)/otp";
 import BankAccount from "@/main/bankAccount";
 
 const Stack = createNativeStackNavigator();

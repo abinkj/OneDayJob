@@ -254,13 +254,13 @@ const EditProfile: React.FC = () => {
         {/* Profile Image */}
         <View style={styles.imageWrapper}>
           <Image
-            key={`edit-profile-${typeof profileImage === "string" ? profileImage : profileImage?.uri}`}
+            //key={`edit-profile-${typeof profileImage === "string" ? profileImage : profileImage?.uri}`}
             source={resolvedImageSource}
             style={styles.profileImage}
             placeholder={Images.profile.profileImage}
             placeholderContentFit="cover"
             contentFit="cover"
-            cachePolicy="none"
+            cachePolicy="memory-disk"
           />
           <TouchableOpacity onPress={showImagePicker} style={styles.editIcon}>
             <Ionicons name="camera" size={16} color="#fff" />

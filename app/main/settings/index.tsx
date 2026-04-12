@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   ActivityIndicator,
 } from "react-native";
+import { useTranslation } from "react-i18next";
 import CustomSwitch from "../../../components/CustomSwich";
 import { Image } from "expo-image";
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
@@ -113,6 +114,7 @@ const SettingsSection: React.FC<SettingsSectionProps> = ({
 };
 
 const Settings: React.FC = () => {
+  const { t, i18n } = useTranslation();
   const navigation = useNavigation<any>();
   const dispatch = useDispatch();
   const userData = useSelector(
@@ -125,6 +127,7 @@ const Settings: React.FC = () => {
 
   const { theme, colors, toggleTheme } = useTheme();
   const darkMode = theme === "dark";
+
 
   const { showAlert } = useAlert();
 
@@ -218,7 +221,7 @@ const Settings: React.FC = () => {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <Header title="Settings" showBackButton />
+      <Header title={t("settings.title")} showBackButton />
       <ScrollView
         style={styles.scrollView}
         showsVerticalScrollIndicator={false}
@@ -232,7 +235,7 @@ const Settings: React.FC = () => {
           activeOpacity={0.7}
         >
           <Image
-            key={`settings-${userData?.profilePictureUrl || userData?.profilePicture}`}
+            //key={`settings-${userData?.profilePictureUrl || userData?.profilePicture}`}
             source={profileImageSource}
             style={[
               styles.profileImage,
@@ -241,7 +244,7 @@ const Settings: React.FC = () => {
             placeholder={Images.profile.profileImage}
             placeholderContentFit="cover"
             contentFit="cover"
-            cachePolicy="none"
+            cachePolicy="memory-disk"
             //transition={300}
             onError={(error) => {
               console.error("Settings image load error:", error);
@@ -263,17 +266,17 @@ const Settings: React.FC = () => {
         </TouchableOpacity>
 
         {/* Account Section */}
-        <SettingsSection title="Account">
+        <SettingsSection title={t("settings.account")}>
           <SettingsItem
             icon="person-outline"
-            title="Edit Profile"
-            subtitle="Update your personal information"
+            title={t("settings.editProfile")}
+            subtitle={t("settings.editProfileSub")}
             onPress={handleEditProfile}
           />
           <SettingsItem
             icon="location-outline"
-            title="Saved Addresses"
-            subtitle="Manage your saved locations"
+            title={t("settings.savedAddresses")}
+            subtitle={t("settings.savedAddressesSub")}
             onPress={() => navigation.navigate("SavedAddresses")}
           />
           {/* <SettingsItem
@@ -328,11 +331,11 @@ const Settings: React.FC = () => {
         </SettingsSection> */}
 
         {/* App Settings Section */}
-        <SettingsSection title="App Settings">
+        <SettingsSection title={t("settings.appSettings")}>
           <SettingsItem
             icon="moon-outline"
-            title="Dark Mode"
-            subtitle="Enable dark theme"
+            title={t("settings.darkMode")}
+            subtitle={t("settings.darkModeSub")}
             showArrow={false}
             rightComponent={
               isTogglingTheme ? (
@@ -360,79 +363,79 @@ const Settings: React.FC = () => {
           />
           <SettingsItem
             icon="language-outline"
-            title="Language"
-            subtitle="English"
-            onPress={() => {
-              Toast.show({
-                type: "info",
-                text1: "Coming Soon",
-                text2: "Language selection will be available soon",
-              });
-            }}
+            title={t("settings.language")}
+            subtitle={
+              i18n.language === "en"
+                ? t("languages.en")
+                : i18n.language === "es"
+                  ? t("languages.es")
+                  : t("languages.ml")
+            }
+            onPress={() => navigation.navigate("Language")}
           />
         </SettingsSection>
 
         {/* Support Section */}
-        <SettingsSection title="Support">
+        <SettingsSection title={t("settings.support")}>
           <SettingsItem
             icon="help-circle-outline"
-            title="Help & Support"
-            subtitle="Get help with your account"
+            title={t("settings.helpSupport")}
+            subtitle={t("settings.helpSupportSub")}
             onPress={() => {
               Toast.show({
                 type: "info",
-                text1: "Coming Soon",
+                text1: t("settings.comingSoon"),
                 text2: "Help center will be available soon",
               });
             }}
           />
           <SettingsItem
             icon="document-text-outline"
-            title="Terms & Conditions"
+            title={t("settings.termsConditions")}
             onPress={() => {
               navigation.navigate("PrivacyPolicy", {
                 url: strings.APP_TERMS_CONDITIONS,
-                title: "Terms & Conditions",
+                title: t("settings.termsConditions"),
               });
             }}
           />
           <SettingsItem
             icon="shield-checkmark-outline"
-            title="Privacy Policy"
+            title={t("settings.privacyPolicy")}
             onPress={() => {
               navigation.navigate("PrivacyPolicy", {
                 url: strings.APP_PRIVACY_POLICY,
-                title: "Privacy Policy",
+                title: t("settings.privacyPolicy"),
               });
             }}
           />
           <SettingsItem
             icon="information-circle-outline"
-            title="About"
-            subtitle="Version 1.0.0"
+            title={t("settings.about")}
+            subtitle={t("settings.version")}
             onPress={() => {
               Toast.show({
                 type: "info",
                 text1: "OneDayJob",
-                text2: "Version 1.0.0",
+                text2: t("settings.version"),
               });
             }}
           />
         </SettingsSection>
 
         {/* Danger Zone */}
-        <SettingsSection title="Log-Out">
+        <SettingsSection title={t("settings.logout")}>
           <SettingsItem
             icon="log-out-outline"
-            title="Logout"
+            title={t("settings.logout")}
             onPress={handleLogout}
             showArrow={false}
             danger
           />
           <SettingsItem
             icon="trash-outline"
-            title="Delete Account"
-            subtitle="Permanently delete your account"
+            title={t("settings.deleteAccount")}
+            subtitle={t("settings.deleteAccountSub")}
             onPress={handleDeleteAccount}
             showArrow={false}
             danger

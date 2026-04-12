@@ -3,7 +3,7 @@
 // export default function RootLayout() {
 //   return <Stack screenOptions={{ headerShown: false }} />;
 // }
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { Provider } from "react-redux";
 import { store } from "../redux/store";
 import { Stack } from "expo-router";
@@ -12,6 +12,7 @@ import toastConfig from "../components/customToast";
 import { NotificationProvider } from "../contexts/NotificationContext";
 import socketService from "../services/socketService";
 import { initializeStorage } from "../utilities/mmkvStore";
+import "../utilities/i18n";
 
 import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "../services/queryClient";
@@ -20,6 +21,14 @@ import { AlertProvider } from "../components/CustomAlert/AlertProvider";
 import { ThemeProvider } from "../contexts/ThemeContext";
 
 export default function RootLayout() {
+  const [ready, setReady] = useState(false);
+
+  useEffect(() => {
+    initializeStorage()
+      .then(() => setReady(true))
+      .catch(console.error);
+  }, []);
+
   useEffect(() => {
     // Initialize app services
     const initializeApp = async () => {
