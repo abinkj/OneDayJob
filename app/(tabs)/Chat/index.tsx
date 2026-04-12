@@ -4,64 +4,34 @@ import { useSelector } from "react-redux";
 import ChatItem from "../../../components/chatItem";
 import { Header } from "../../../components/header";
 import { ChatListSkeleton } from "../../../components/Shimmer/Skeletons";
-
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import { useConversations } from "../../../hooks/useChat";
 import { useTheme } from "../../../contexts/ThemeContext";
 import { createStyles } from "./styles";
+import { RootState } from "../../../redux/store";
+import { formatTime, resolveAvatar } from "../../../utilities/chat";
 
+
+// ─── Component ────────────────────────────────────────────────────────────────
 export default function Chat() {
   const navigation = useNavigation<any>();
   const { colors } = useTheme();
   const styles = React.useMemo(() => createStyles(colors), [colors]);
-  const userData = useSelector((state: any) => state.authentication.userData);
-  const currentUserId = userData?.id || userData?._id;
 
-  const {
-    data: rawConversations,
-    isLoading,
-    refetch,
-    isRefetching,
-  } = useConversations();
+  const userData = useSelector((state: RootState) => state.authentication.userData);
+  const currentUserId = String(userData?.id || userData?._id || "");
 
-  const formatTime = (dateString: string) => {
-    if (!dateString) return "";
-    const date = new Date(dateString);
-    const now = new Date();
-    const diff = now.getTime() - date.getTime();
-    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-
-    if (days === 0) {
-      return date.toLocaleTimeString([], {
-        hour: "2-digit",
-        minute: "2-digit",
-      });
-    } else if (days === 1) {
-      return "Yesterday";
-    } else {
-      return date.toLocaleDateString();
-    }
-  };
+  const { data: rawConversations, isLoading, refetch, isRefetching } =
+    useConversations();
 
   const transformedConversations = React.useMemo(() => {
-    return (rawConversations || []).map((conv: any) => {
-      // Find the other participant (not the current user)
+    if (!rawConversations) return [];
+
+    return rawConversations.map((conv: any) => {
       const otherParticipant = conv.participants?.find(
-        (p: any) => (p.id || p._id) !== currentUserId,
+        (p: any) => String(p.id || p._id) !== currentUserId,
       );
-
-      const avatarUrl =
-        otherParticipant?.profilePictureUrl ||
-        otherParticipant?.profilePicture ||
-        "";
-
-      console.log("Chat item avatar:", {
-        name: otherParticipant?.firstName,
-        profilePictureUrl: otherParticipant?.profilePictureUrl,
-        profilePicture: otherParticipant?.profilePicture,
-        finalAvatar: avatarUrl,
-      });
 
       return {
         id: conv._id,
@@ -69,8 +39,7 @@ export default function Chat() {
           ? `${otherParticipant.firstName} ${otherParticipant.lastName}`
           : "Unknown User",
         message: conv.lastMessage?.text || "No messages yet",
-        // Use CloudFront URL (profilePictureUrl) if available, fallback to profilePicture
-        avatar: avatarUrl,
+        avatar: resolveAvatar(otherParticipant), // validated http URL or ""
         unread: conv.unreadCount || 0,
         conversationId: conv._id,
         participant: otherParticipant,
@@ -100,7 +69,7 @@ export default function Chat() {
         <FlatList
           data={transformedConversations}
           keyExtractor={(item) => item.id}
-          bounces={true}
+          bounces
           contentContainerStyle={{ paddingBottom: 100, paddingTop: 10 }}
           showsVerticalScrollIndicator={false}
           renderItem={({ item }) => (
@@ -109,7 +78,7 @@ export default function Chat() {
           refreshControl={
             <RefreshControl
               refreshing={isRefetching}
-              onRefresh={() => refetch()}
+              onRefresh={refetch}
               colors={[colors.primary]}
               tintColor={colors.primary}
             />

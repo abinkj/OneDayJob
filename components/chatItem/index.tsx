@@ -35,6 +35,7 @@ export default function ChatItem({ item, onPress }: ChatItemProps) {
             style={styles.avatar}
             contentFit="cover"
             transition={200}
+            cachePolicy='memory-disk'
           />
         ) : (
           <View style={[styles.avatar, styles.placeholderAvatar]}>

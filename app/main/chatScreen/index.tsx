@@ -7,9 +7,9 @@ import {
   Alert,
   Keyboard,
 } from "react-native";
-import * as ImagePicker from "expo-image-picker";
 import { useRouter } from "expo-router";
 import { Ionicons, AntDesign } from "@expo/vector-icons";
+import { Image } from "expo-image"; // ← use expo-image for cached avatars
 import { Header } from "../../../components/header";
 import { ChatScreenSkeleton } from "../../../components/Shimmer/Skeletons";
 import { useTheme } from "../../../contexts/ThemeContext";
@@ -17,8 +17,8 @@ import { createStyles } from "./styles";
 import { useRoute } from "@react-navigation/native";
 import socketService from "../../../services/socketService";
 import { useHeaderHeight } from "@react-navigation/elements";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Platform } from "react-native";
+import Images from "../../../utilities/images";
 
 import {
   useMessages,
@@ -33,81 +33,144 @@ import {
   IMessage,
   Time,
 } from "react-native-gifted-chat";
-import { getCurrentUser } from "../../../services/api";
 import Toast from "react-native-toast-message";
 import { useQueryClient } from "@tanstack/react-query";
+import { useSelector } from "react-redux";
+import { RootState } from "../../../redux/store";
+import { resolveAvatar } from "../../../utilities/chat";
 
+// ─── Avatar component using expo-image for disk caching ─────────────────────
+interface ChatAvatarProps {
+  uri?: string;
+  name?: string;
+  size?: number;
+  colors: any;
+  onPress?: () => void;
+}
+
+const ChatAvatar: React.FC<ChatAvatarProps> = ({
+  uri,
+  name,
+  size = 32,
+  colors,
+  onPress,
+}) => {
+  const initials = name
+    ? name
+        .split(" ")
+        .map((n) => n[0])
+        .join("")
+        .toUpperCase()
+        .slice(0, 2)
+    : "?";
+
+  const isValidUri = uri && uri.startsWith("http");
+  console.log(uri)
+
+  return (
+    <TouchableOpacity
+      activeOpacity={onPress ? 0.7 : 1}
+      onPress={onPress}
+      disabled={!onPress}
+      style={{
+        width: size,
+        height: size,
+        borderRadius: size / 2,
+        overflow: "hidden",
+        backgroundColor: colors.categoryBox,
+        alignItems: "center",
+        justifyContent: "center",
+        marginBottom: 2,
+      }}
+    >
+      {isValidUri ? (
+        <Image
+          source={{ uri }}
+          style={{ width: size, height: size }}
+          contentFit="cover"
+          cachePolicy="disk" // ← cached — no re-download on revisit
+          placeholder={Images.profile.profileImage}
+          placeholderContentFit="cover"
+        />
+      ) : (
+        // Fallback initials when no valid URL
+        <Text
+          style={{
+            fontSize: size * 0.35,
+            fontWeight: "600",
+            color: colors.primary,
+          }}
+        >
+          {initials}
+        </Text>
+      )}
+    </TouchableOpacity>
+  );
+};
+
+
+// ─── Chat Screen ─────────────────────────────────────────────────────────────
 export default function ChatScreen() {
-  const { colors } = useTheme();
+  const { theme, colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const router = useRouter();
   const headerHeight = useHeaderHeight();
-  const insets = useSafeAreaInsets();
   const route = useRoute();
   const queryClient = useQueryClient();
-  const { conversationId, participant } = (route.params as any) || {};
 
+  // Use Redux for current user — no getCurrentUser() API call needed
+  const userData = useSelector(
+    (state: RootState) => state.authentication.userData,
+  );
+
+  const { conversationId, participant } = (route.params as any) || {};
   const conversationIdString = Array.isArray(conversationId)
     ? conversationId[0]
     : conversationId;
 
+  const participantData =
+    typeof participant === "string" ? JSON.parse(participant) : participant;
+
   const {
     data: rawMessages,
     isLoading: messagesLoading,
-    refetch: refetchMessages,
-    isRefetching: refreshing,
   } = useMessages(conversationIdString);
 
   const sendMessageMutation = useSendMessage();
   const markAsReadMutation = useMarkMessagesAsRead();
 
-  const [input, setInput] = useState("");
-  const [currentUser, setCurrentUser] = useState<any>(null);
   const [otherUserTyping, setOtherUserTyping] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
-  const [keyboardHeight, setKeyboardHeight] = useState(0);
 
   const typingTimeoutRef = useRef<any>(null);
-  const currentUserRef = useRef<any>(null);
 
+  // ─── Keyboard listeners ─────────────────────────────────────────────────
   useEffect(() => {
-    const showSubscription = Keyboard.addListener(
+    const show = Keyboard.addListener(
       Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow",
-      (e) => {
-        setKeyboardHeight(e.endCoordinates.height);
-      },
+      () => {},
     );
-    const hideSubscription = Keyboard.addListener(
+    const hide = Keyboard.addListener(
       Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide",
-      () => {
-        setKeyboardHeight(0);
-      },
+      () => {},
     );
-
     return () => {
-      showSubscription.remove();
-      hideSubscription.remove();
+      show.remove();
+      hide.remove();
     };
   }, []);
 
-  // Parse participant data
-  const participantData =
-    typeof participant === "string" ? JSON.parse(participant) : participant;
+  const currentUserId = String(userData?.id || userData?._id || "");
 
-  // Helper to normalize user IDs
-  const normalizeUserId = (user: any) => {
-    return String(user?.id || user?._id || "");
-  };
-
-  // Transform messages for display in GiftedChat format
+  // ─── Transform messages ──────────────────────────────────────────────────────
   const messages = useMemo(() => {
-    if (!rawMessages || !currentUser) return [];
-
-    const currentUserId = normalizeUserId(currentUser);
+    if (!rawMessages || !userData) return [];
 
     return rawMessages
       .map((msg: any) => {
-        const senderId = normalizeUserId(msg.sender);
+      const senderId = String(msg.sender?.id || msg.sender?._id || "");
+        const senderAvatar = resolveAvatar(msg.sender);
+
         return {
           _id: msg._id || msg.id || Math.random().toString(),
           text: msg.content?.text || msg.text || "",
@@ -115,45 +178,45 @@ export default function ChatScreen() {
           user: {
             _id: senderId,
             name:
-              msg.sender?.firstName ||
-              (senderId === currentUserId ? "Me" : participantData?.name),
-            avatar: msg.sender?.profilePictureUrl || msg.sender?.profilePicture,
+              senderId === currentUserId
+                ? `${userData.firstName} ${userData.lastName}`
+                : participantData?.name,
+            // Only use senderAvatar if it's a valid URL, otherwise fallback to participant/user data
+            avatar:
+              senderAvatar ||
+              (senderId === currentUserId
+                ? resolveAvatar(userData)
+                : participantData?.avatar),
           },
         };
       })
-      .reverse(); // GiftedChat expects newest first
-  }, [rawMessages, currentUser, participantData]);
+      .reverse();
+  }, [rawMessages, userData, participantData, currentUserId]);
 
-  // Setup socket listeners
+  // ─── Socket ──────────────────────────────────────────────────────────────
   useEffect(() => {
-    if (!conversationIdString || !currentUser) return;
+    if (!conversationIdString || !userData) return;
 
     const handleNewMessage = (data: any) => {
-      if (data.conversationId === conversationIdString) {
-        console.log("Socket: New message received", data.message);
-
-        // Update React Query cache manually
-        queryClient.setQueryData(
-          ["messages", conversationIdString],
-          (oldData: any[]) => {
-            const exists = oldData?.some(
-              (msg) =>
-                (msg._id || msg.id) === (data.message._id || data.message.id),
-            );
-            if (exists) return oldData;
-            return [...(oldData || []), data.message];
-          },
-        );
-
-        // Also invalidate conversations list
-        queryClient.invalidateQueries({ queryKey: ["conversations"] });
-      }
+      if (data.conversationId !== conversationIdString) return;
+      queryClient.setQueryData(
+        ["messages", conversationIdString],
+        (oldData: any[]) => {
+          const exists = oldData?.some(
+            (msg) =>
+              (msg._id || msg.id) === (data.message._id || data.message.id),
+          );
+          if (exists) return oldData;
+          return [...(oldData || []), data.message];
+        },
+      );
+      queryClient.invalidateQueries({ queryKey: ["conversations"] });
     };
 
     const handleTyping = (data: any) => {
       if (
         data.conversationId === conversationIdString &&
-        normalizeUserId({ id: data.userId }) !== normalizeUserId(currentUser)
+        String(data.userId) !== currentUserId
       ) {
         setOtherUserTyping(data.isTyping);
       }
@@ -166,40 +229,32 @@ export default function ChatScreen() {
       socketService.off("new-message");
       socketService.off("user-typing");
     };
-  }, [conversationIdString, currentUser, queryClient]);
+  }, [conversationIdString, userData, queryClient, currentUserId]);
 
-  // Initial load
+  // ─── Init ─────────────────────────────────────────────────────────────────
   useEffect(() => {
+    if (!conversationIdString) return;
+
     const init = async () => {
       try {
-        const user = await getCurrentUser();
-        setCurrentUser(user);
-        currentUserRef.current = user;
-
-        if (conversationIdString) {
-          await socketService.connect();
-          socketService.joinConversation(conversationIdString);
-          markAsReadMutation.mutate(conversationIdString);
-        }
+        await socketService.connect();
+        socketService.joinConversation(conversationIdString);
+        markAsReadMutation.mutate(conversationIdString);
       } catch (error) {
         console.error("Chat init error:", error);
       }
     };
+
     init();
 
     return () => {
-      if (conversationIdString) {
-        socketService.leaveConversation(conversationIdString);
-      }
+      socketService.leaveConversation(conversationIdString);
     };
   }, [conversationIdString]);
 
+  // ─── Send ─────────────────────────────────────────────────────────────────
   const handleSendMessage = async (newMessages: IMessage[] = []) => {
-    if (
-      newMessages.length === 0 ||
-      !conversationIdString ||
-      sendMessageMutation.isPending
-    )
+    if (!newMessages.length || !conversationIdString || sendMessageMutation.isPending)
       return;
 
     const messageText = newMessages[0].text;
@@ -207,15 +262,12 @@ export default function ChatScreen() {
     try {
       if (socketService.isSocketConnected()) {
         socketService.sendMessage(conversationIdString, messageText, "text");
+        socketService.stopTyping(conversationIdString);
       } else {
         await sendMessageMutation.mutateAsync({
           conversationId: conversationIdString,
           text: messageText,
         });
-      }
-
-      if (socketService.isSocketConnected()) {
-        socketService.stopTyping(conversationIdString);
       }
       setIsTyping(false);
     } catch (error) {
@@ -224,8 +276,8 @@ export default function ChatScreen() {
     }
   };
 
+  // ─── Typing ───────────────────────────────────────────────────────────────
   const handleInputChange = (text: string) => {
-    setInput(text);
     if (!conversationIdString || !socketService.isSocketConnected()) return;
 
     if (text.length > 0 && !isTyping) {
@@ -240,15 +292,14 @@ export default function ChatScreen() {
     }, 1000);
   };
 
-  const handleAttachmentSelect = async () => {
-    let result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.All,
-      allowsEditing: true,
-      base64: true,
-      quality: 1,
-    });
-    if (!result.canceled) {
-      // Handle image upload...
+  // ─── Report / Block ───────────────────────────────────────────────────────
+  const submitReport = async (userId: string, reason: string) => {
+    try {
+      const { reportUser } = require("../../../services/api");
+      await reportUser(userId, reason);
+      Toast.show({ type: "success", text1: "Report Submitted", text2: "Thank you for keeping the community safe." });
+    } catch {
+      Toast.show({ type: "success", text1: "Report Submitted", text2: "We will review this account shortly." });
     }
   };
 
@@ -258,41 +309,27 @@ export default function ChatScreen() {
 
     Alert.alert(
       "Safety & Reporting",
-      "Do you want to report or block this user? We prioritize your safety and will review all reports within 24 hours.",
+      "Do you want to report or block this user?",
       [
-        {
-          text: "Cancel",
-          style: "cancel",
-        },
+        { text: "Cancel", style: "cancel" },
         {
           text: "Report User",
           style: "destructive",
-          onPress: () => {
-            Alert.alert(
-              "Report User",
-              "Please select a reason for reporting this user:",
-              [
-                { text: "Spam", onPress: () => submitReport(userId, "Spam") },
-                {
-                  text: "Abusive/Harassment",
-                  onPress: () => submitReport(userId, "Abusive"),
-                },
-                {
-                  text: "Suspicious Activity",
-                  onPress: () => submitReport(userId, "Suspicious"),
-                },
-                { text: "Cancel", style: "cancel" },
-              ],
-            );
-          },
+          onPress: () =>
+            Alert.alert("Report User", "Select a reason:", [
+              { text: "Spam", onPress: () => submitReport(userId, "Spam") },
+              { text: "Abusive/Harassment", onPress: () => submitReport(userId, "Abusive") },
+              { text: "Suspicious Activity", onPress: () => submitReport(userId, "Suspicious") },
+              { text: "Cancel", style: "cancel" },
+            ]),
         },
         {
           text: "Block User",
           style: "destructive",
-          onPress: () => {
+          onPress: () =>
             Alert.alert(
               "Block User",
-              "Are you sure you want to block this user? You will no longer receive messages from them.",
+              "Are you sure? You will no longer receive messages from them.",
               [
                 { text: "Cancel", style: "cancel" },
                 {
@@ -302,139 +339,102 @@ export default function ChatScreen() {
                     try {
                       const { blockUser } = require("../../../services/api");
                       await blockUser(userId);
-                      Toast.show({
-                        type: "success",
-                        text1: "User Blocked",
-                        text2: "You won't hear from them again.",
-                      });
-                      router.back();
-                    } catch (error) {
-                      // Fallback for demo/missing endpoint
-                      Toast.show({
-                        type: "success",
-                        text1: "User Blocked",
-                        text2: "Action processed successfully.",
-                      });
-                      router.back();
-                    }
+                    } catch {}
+                    Toast.show({ type: "success", text1: "User Blocked" });
+                    router.back();
                   },
                 },
               ],
-            );
-          },
+            ),
         },
       ],
     );
   };
 
-  const submitReport = async (userId: string, reason: string) => {
-    try {
-      const { reportUser } = require("../../../services/api");
-      await reportUser(userId, reason);
-      Toast.show({
-        type: "success",
-        text1: "Report Submitted",
-        text2: "Thank you for helping us keep Zoopol safe.",
-      });
-    } catch (error) {
-      // Fallback
-      Toast.show({
-        type: "success",
-        text1: "Report Submitted",
-        text2: "We will review this account shortly.",
-      });
-    }
-  };
+  // ─── GiftedChat renderers ─────────────────────────────────────────────────
+  const renderBubble = (props: any) => (
+    <Bubble
+      {...props}
+      wrapperStyle={{
+        right: {
+          backgroundColor: colors.primary,
+          borderBottomEndRadius: 4,
+          padding: 4,
+        },
+        left: {
+          backgroundColor: colors.white,
+          borderBottomStartRadius: 4,
+          padding: 4,
+        },
+      }}
+      textStyle={{
+        right: { color: colors.white, fontSize: 16 },
+        left: { color: colors.black, fontSize: 16 },
+      }}
+      renderTicks={(currentMessage) => {
+        if (currentMessage.user._id === currentUserId) {
+          return (
+            <View style={{ flexDirection: "row", marginRight: 4 }}>
+              <AntDesign name="check" size={12} color="rgba(255,255,255,0.7)" />
+              <AntDesign name="check" size={12} color="rgba(255,255,255,0.7)" style={{ marginLeft: -8 }} />
+            </View>
+          );
+        }
+        return null;
+      }}
+    />
+  );
 
-  const renderBubble = (props: any) => {
+  const renderInputToolbar = (props: any) => (
+    <InputToolbar
+      {...props}
+      containerStyle={styles.inputContainer}
+      primaryStyle={{ alignItems: "center" }}
+    />
+  );
+
+  const renderSend = (props: any) => (
+    <Send {...props} containerStyle={{ justifyContent: "center" }}>
+      <View style={styles.sendIcon}>
+        {sendMessageMutation.isPending ? (
+          <ActivityIndicator size="small" color={colors.primary} />
+        ) : (
+          <Ionicons name="send" size={20} color="white" />
+        )}
+      </View>
+    </Send>
+  );
+
+  const renderTime = (props: any) => (
+    <Time
+      {...props}
+      timeTextStyle={{
+        right: { color: "rgba(255,255,255,0.7)", fontSize: 10 },
+        left: { color: colors.grey, fontSize: 10 },
+      }}
+    />
+  );
+
+  // Single renderAvatar — uses ChatAvatar with expo-image disk cache
+  const renderAvatar = (props: any) => {
+    const { user } = props.currentMessage;
+    console.log('renderavatar',user)
     return (
-      <Bubble
-        {...props}
-        wrapperStyle={{
-          right: {
-            backgroundColor: colors.primary,
-            borderBottomEndRadius: 4,
-            padding: 4,
-          },
-          left: {
-            backgroundColor: colors.white,
-            borderBottomStartRadius: 4,
-            padding: 4,
-            borderWidth: 0,
-          },
-        }}
-        textStyle={{
-          right: { color: colors.white, fontSize: 16 },
-          left: { color: colors.black, fontSize: 16 },
-        }}
-        tickStyle={{ color: "rgba(255, 255, 255, 0.7)" }}
-        renderTicks={(currentMessage) => {
-          if (currentMessage.user._id === normalizeUserId(currentUser)) {
-            return (
-              <View style={{ flexDirection: "row", marginRight: 4 }}>
-                <AntDesign
-                  name="check"
-                  size={12}
-                  color="rgba(255, 255, 255, 0.7)"
-                />
-                <AntDesign
-                  name="check"
-                  size={12}
-                  color="rgba(255, 255, 255, 0.7)"
-                  style={{ marginLeft: -8 }}
-                />
-              </View>
-            );
-          }
-          return null;
-        }}
+      <ChatAvatar
+        uri={user?.avatar}
+        name={user?.name}
+        size={36}
+        colors={colors}
       />
     );
   };
 
-  const renderInputToolbar = (props: any) => {
-    return (
-      <InputToolbar
-        {...props}
-        containerStyle={styles.inputContainer}
-        primaryStyle={{ alignItems: "center" }}
-      />
-    );
-  };
-
-  const renderSend = (props: any) => {
-    return (
-      <Send
-        {...props}
-        containerStyle={{ justifyContent: "center", borderRadius: 20 }}
-      >
-        <View style={styles.sendIcon}>
-          {sendMessageMutation.isPending ? (
-            <ActivityIndicator size="small" color={colors.primary} />
-          ) : (
-            <Ionicons name="send" size={20} color="white" />
-          )}
-        </View>
-      </Send>
-    );
-  };
-
-  const renderTime = (props: any) => {
-    return (
-      <Time
-        {...props}
-        timeTextStyle={{
-          right: { color: "rgba(255, 255, 255, 0.7)", fontSize: 10 },
-          left: { color: colors.grey, fontSize: 10 },
-        }}
-      />
-    );
-  };
-
-  if (messagesLoading && !currentUser) {
+  // ─── Loading ──────────────────────────────────────────────────────────────
+  if (messagesLoading && !userData) {
     return <ChatScreenSkeleton />;
   }
 
+  // ─── Render ───────────────────────────────────────────────────────────────
   return (
     <View style={styles.container}>
       <Header
@@ -449,17 +449,16 @@ export default function ChatScreen() {
 
       <GiftedChat
         keyboardAvoidingViewProps={{
-          keyboardVerticalOffset: headerHeight+50,
+          keyboardVerticalOffset: headerHeight + 50,
         }}
         messages={messages}
-        onSend={(newMessages) => handleSendMessage(newMessages)}
-        user={{
-          _id: normalizeUserId(currentUser),
-        }}
+        onSend={handleSendMessage}
+        user={{ _id: currentUserId }}
         renderBubble={renderBubble}
         renderInputToolbar={renderInputToolbar}
         renderSend={renderSend}
         renderTime={renderTime}
+        renderAvatar={renderAvatar}  // ← single, clean, cached
         textInputProps={{
           placeholder: "Type a message...",
           placeholderTextColor: colors.grey,
@@ -475,10 +474,9 @@ export default function ChatScreen() {
             </View>
           ) : null
         }
-        listProps={{
-          keyboardShouldPersistTaps: "never",
-        }}
-        //messagesContainerStyle={{ paddingBottom: 20 }}
+        listProps={{ keyboardShouldPersistTaps: "never" }}
+        isAvatarVisibleForEveryMessage
+        isAvatarOnTop
       />
     </View>
   );
