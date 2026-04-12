@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useMemo } from "react";
 import { View, TouchableOpacity, ScrollView } from "react-native";
 import { Image } from "expo-image";
 import { Ionicons } from "@expo/vector-icons";
-import { useNavigation, useRoute } from "@react-navigation/native";
+import { useNavigation } from "@react-navigation/native";
 import createStyles from "./styles";
 
 import CustomButton from "../../../components/CustomButton";
@@ -13,9 +13,10 @@ import LabeledInput from "../../../components/labeledTextInput";
 import { User } from "../../../types";
 import { saveUserData } from "../../../utilities/mmkvStore";
 import { uploadProfilePicture } from "../../../services/api";
-import { useProfile, useUpdateProfile } from "../../../hooks/useProfile";
+import { useUpdateProfile } from "../../../hooks/useProfile";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "../../../redux/store";
+import { login } from "../../../redux/reducers/authReducers";
 import Toast from "react-native-toast-message";
 import ImagePickerActionSheet, {
   ImagePickerActionSheetRef,
@@ -28,98 +29,78 @@ const EditProfile: React.FC = () => {
   const styles = useMemo(() => createStyles(colors), [colors]);
   const dispatch = useDispatch();
   const navigation = useNavigation<any>();
-  const route = useRoute();
-  const { user: initialUser } = (route.params as { user: User }) || {};
   const imagePickerRef = useRef<ImagePickerActionSheetRef>(null);
 
+  // Single source of truth — Redux only, no route.params, no MMKV read
   const userData = useSelector(
     (state: RootState) => state.authentication.userData,
   );
-  const { data: userProfile } = useProfile(userData);
+
   const { mutateAsync: updateProfileMutation } = useUpdateProfile();
 
-  const [user, setUser] = useState<User | null>(null);
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [location, setLocation] = useState("");
-  const [profileImage, setProfileImage] = useState<{ uri: string }>({
-    uri: Images.profile.profileImage as unknown as string,
-  });
+  const [profileImage, setProfileImage] = useState<string | { uri: string }>(
+    Images.profile.profileImage as unknown as string,
+  );
   const [isSaving, setIsSaving] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
+
   const { showAlert } = useAlert();
 
+  // Initialise form fields from Redux userData (runs once on mount, and if
+  // userData identity changes e.g. after a successful save dispatches login())
   useEffect(() => {
-    const fetchAndInitUser = async () => {
-      let init = initialUser || userProfile;
+    if (!userData) return;
 
-      if (!init) {
-        init = {
-          firstName: "",
-          lastName: "",
-          email: "",
-          profilePicture: Images.profile.profileImage,
-        } as unknown as User;
-      }
+    setFirstName(userData.firstName || "");
+    setLastName(userData.lastName || "");
+    setLocation(
+      (userData.locationText || userData.location?.address || "") as string,
+    );
 
-      setUser(init);
-      setFirstName(init.firstName || "");
-      setLastName(init.lastName || "");
-      setLocation(
-        (init.locationText || init.location?.address || "") as string,
-      );
+    // Prefer CloudFront URL, fallback to S3 key URL, then placeholder
+    const imageSource =
+      userData.profilePictureUrl ||
+      userData.profilePicture ||
+      (Images.profile.profileImage as unknown as string);
+    setProfileImage(imageSource as any);
+  }, [userData]);
 
-      // Use profilePictureUrl (CloudFront) if available, fallback to profilePicture
-      const imageSource =
-        init.profilePictureUrl ||
-        init.profilePicture ||
-        Images.profile.profileImage;
-      setProfileImage(imageSource as any);
-    };
-
-    fetchAndInitUser();
-  }, []);
-
+  // ─── Unsaved-changes guard ──────────────────────────────────────────────
   const hasUnsavedChanges = useMemo(() => {
-    if (!user) return false;
+    if (!userData) return false;
 
     const imageUri =
       typeof profileImage === "string" ? profileImage : profileImage?.uri;
-    const isNewImage = imageUri && imageUri.startsWith("file://");
+    const isNewImage = imageUri?.startsWith("file://");
 
     return (
-      user.firstName !== firstName.trim() ||
-      user.lastName !== lastName.trim() ||
-      (user.locationText || user.location?.address || "") !== location.trim() ||
-      isNewImage
+      userData.firstName !== firstName.trim() ||
+      userData.lastName !== lastName.trim() ||
+      (userData.locationText || userData.location?.address || "") !==
+        location.trim() ||
+      !!isNewImage
     );
-  }, [user, firstName, lastName, location, profileImage]);
+  }, [userData, firstName, lastName, location, profileImage]);
 
   useEffect(() => {
     const unsubscribe = navigation.addListener("beforeRemove", (e: any) => {
-      if (!hasUnsavedChanges || isSaved) {
-        return;
-      }
+      if (!hasUnsavedChanges || isSaved) return;
 
-      // Prevent default behavior of leaving the screen
       e.preventDefault();
-
       showAlert({
         type: "warning",
         title: "Discard Changes",
         message:
           "You have unsaved changes. Are you sure you want to discard them?",
         buttons: [
-          {
-            text: "Stay",
-            style: "cancel",
-          },
+          { text: "Stay", style: "cancel" },
           {
             text: "Discard",
             style: "destructive",
-            onPress: () => {
-              navigation.dispatch(e.data.action);
-            },
+            onPress: () => navigation.dispatch(e.data.action),
           },
         ],
       });
@@ -128,22 +109,18 @@ const EditProfile: React.FC = () => {
     return unsubscribe;
   }, [navigation, hasUnsavedChanges, isSaved, showAlert]);
 
-  const showImagePicker = () => {
-    imagePickerRef.current?.show();
-  };
+  // ─── Image picker ────────────────────────────────────────────────────────
+  const showImagePicker = () => imagePickerRef.current?.show();
 
   const handleImageSelected = (imageUri: string) => {
     setProfileImage({ uri: imageUri });
   };
 
   const handleImageError = (error: string) => {
-    Toast.show({
-      type: "error",
-      text1: "Error",
-      text2: error,
-    });
+    Toast.show({ type: "error", text1: "Error", text2: error });
   };
 
+  // ─── Validation ──────────────────────────────────────────────────────────
   const validateForm = (): boolean => {
     const firstNameValidation = validateName(firstName.trim(), "firstname");
     if (!firstNameValidation.status) {
@@ -168,31 +145,16 @@ const EditProfile: React.FC = () => {
     return true;
   };
 
+  // ─── Save ────────────────────────────────────────────────────────────────
   const handleSave = async () => {
-    console.log("=== SAVE CHANGES CLICKED ===");
-    const userId = user?.id || user?._id;
-    console.log("User ID:", userId);
-    if (!validateForm() || !userId) {
-      console.log("Validation failed or no user ID");
-      return;
-    }
+    const userId = userData?.id || userData?._id;
+    if (!validateForm() || !userId) return;
 
     const imageUri =
       typeof profileImage === "string" ? profileImage : profileImage?.uri;
-    const isNewImage = imageUri && imageUri.startsWith("file://");
+    const isNewImage = imageUri?.startsWith("file://");
 
-    console.log("Image check:", { profileImage, imageUri, isNewImage });
-
-    const hasChanges =
-      user.firstName !== firstName.trim() ||
-      user.lastName !== lastName.trim() ||
-      (user.locationText || user.location?.address || "") !== location.trim() ||
-      isNewImage; // If it's a local file, it's definitely a new image
-
-    console.log("Has changes:", hasChanges);
-
-    if (!hasChanges) {
-      console.log("No changes detected, showing toast");
+    if (!hasUnsavedChanges) {
       Toast.show({
         type: "info",
         text1: "No Changes",
@@ -201,57 +163,39 @@ const EditProfile: React.FC = () => {
       return;
     }
 
-    console.log("Proceeding with save...");
-
     try {
       setIsSaving(true);
 
-      // Upload profile picture if it's a local URI
-      let profilePictureUrl = user.profilePicture;
-      const imageUri =
-        typeof profileImage === "string" ? profileImage : profileImage?.uri;
+      // Upload new profile picture if a local file was picked
+      let profilePictureKey = userData?.profilePicture;
 
-      if (imageUri && imageUri.startsWith("file://")) {
+      if (isNewImage && imageUri) {
         Toast.show({
           type: "info",
           text1: "Uploading Image",
           text2: "Please wait...",
         });
 
-        try {
-          const uploadResponse = await uploadProfilePicture(imageUri);
-          console.log("Upload response:", uploadResponse);
-
-          // IMPORTANT: Use the S3 key, not the full URL
-          // The backend will convert the key to CloudFront URL via getCdnUrl()
-          if (uploadResponse.success && uploadResponse.data?.key) {
-            profilePictureUrl = uploadResponse.data.key; // Store only the S3 key
-            console.log(
-              "Profile picture uploaded successfully. S3 key:",
-              profilePictureUrl,
-            );
-          } else {
-            throw new Error("Failed to upload profile picture");
-          }
-        } catch (uploadError) {
-          console.error("Upload error:", uploadError);
-          throw new Error(
-            "Failed to upload profile picture. Please try again.",
-          );
+        const uploadResponse = await uploadProfilePicture(imageUri);
+        if (uploadResponse.success && uploadResponse.data?.key) {
+          // Store S3 key — backend converts to CloudFront URL via getCdnUrl()
+          profilePictureKey = uploadResponse.data.key;
+        } else {
+          throw new Error("Failed to upload profile picture");
         }
       } else if (imageUri) {
-        profilePictureUrl = imageUri;
+        profilePictureKey = imageUri;
       }
 
       const updatedUser: User = {
-        ...user,
+        ...userData!,
         firstName: firstName.trim(),
         lastName: lastName.trim(),
         location: {
-          ...(typeof user.location === "object" ? user.location : {}),
+          ...(typeof userData?.location === "object" ? userData.location : {}),
           address: location.trim(),
         },
-        profilePicture: profilePictureUrl,
+        profilePicture: profilePictureKey,
         updatedAt: new Date().toISOString(),
       };
 
@@ -260,13 +204,9 @@ const EditProfile: React.FC = () => {
         data: updatedUser,
       });
 
-      console.log(
-        "Profile update response------------------------->",
-        updatedData,
-      );
-
       if (updatedData) {
-        setUser(updatedData);
+        // Keep MMKV in sync for any legacy consumers, then update Redux
+        await saveUserData(updatedData);
         Toast.show({
           type: "success",
           text1: "Success",
@@ -291,6 +231,18 @@ const EditProfile: React.FC = () => {
     }
   };
 
+  // ─── Image source resolver ───────────────────────────────────────────────
+  const resolvedImageSource = useMemo(() => {
+    const uri =
+      typeof profileImage === "string" ? profileImage : profileImage?.uri;
+
+    if (uri && (uri.startsWith("http") || uri.startsWith("file://"))) {
+      return { uri };
+    }
+    return Images.profile.profileImage;
+  }, [profileImage]);
+
+  // ─── Render ──────────────────────────────────────────────────────────────
   return (
     <View style={styles.container}>
       <Header
@@ -303,22 +255,7 @@ const EditProfile: React.FC = () => {
         <View style={styles.imageWrapper}>
           <Image
             key={`edit-profile-${typeof profileImage === "string" ? profileImage : profileImage?.uri}`}
-            source={
-              typeof profileImage === "string" &&
-              profileImage.startsWith("http")
-                ? { uri: profileImage }
-                : (profileImage as any)?.uri &&
-                    typeof (profileImage as any).uri === "string" &&
-                    ((profileImage as any).uri as string).startsWith("http")
-                  ? { uri: (profileImage as any).uri }
-                  : (profileImage as any)?.uri &&
-                      typeof (profileImage as any).uri === "string" &&
-                      ((profileImage as any).uri as string).startsWith(
-                        "file://",
-                      )
-                    ? { uri: (profileImage as any).uri }
-                    : Images.profile.profileImage
-            }
+            source={resolvedImageSource}
             style={styles.profileImage}
             placeholder={Images.profile.profileImage}
             placeholderContentFit="cover"

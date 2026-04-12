@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -16,15 +16,11 @@ import { useTheme } from "../../../contexts/ThemeContext";
 import { Header } from "../../../components/header";
 import { ProfileSkeleton } from "../../../components/Shimmer/Skeletons";
 import { logoutUser } from "../../../utilities/authentication";
-import { getCurrentUser } from "../../../services/api";
-import { User } from "../../../types";
 import Images from "../../../utilities/images";
 import Toast from "react-native-toast-message";
 import styles from "./styles";
 import strings from "../../../utilities/strings";
 import { useAlert } from "../../../components/CustomAlert/AlertProvider";
-import { getUserData } from "../../../utilities/mmkvStore";
-import { useProfile } from "../../../hooks/useProfile";
 import { RootState } from "../../../redux/store";
 
 interface SettingsItemProps {
@@ -123,11 +119,8 @@ const Settings: React.FC = () => {
     (state: RootState) => state.authentication.userData,
   );
 
-  const { data: user, isLoading: isProfileLoading } = useProfile(userData);
+  // Removed: user, isProfileLoading states — userData from Redux is the source of truth
   const [isLoading, setIsLoading] = useState(false);
-  const [pushNotifications, setPushNotifications] = useState(true);
-  const [emailNotifications, setEmailNotifications] = useState(true);
-  const [jobAlerts, setJobAlerts] = useState(true);
   const [isTogglingTheme, setIsTogglingTheme] = useState(false);
 
   const { theme, colors, toggleTheme } = useTheme();
@@ -136,17 +129,9 @@ const Settings: React.FC = () => {
   const { showAlert } = useAlert();
 
   const handleEditProfile = () => {
-    if (user) {
-      navigation.navigate("EditProfile", { user });
+    if (userData) {
+      navigation.navigate("EditProfile", { user: userData }); // pass userData directly
     }
-  };
-
-  const handleBankAccount = () => {
-    navigation.navigate("BankAccount");
-  };
-
-  const handlePaymentHistory = () => {
-    navigation.navigate("PaymentHistory");
   };
 
   const handleLogout = () => {
@@ -155,10 +140,7 @@ const Settings: React.FC = () => {
       title: "Logout",
       message: "Are you sure you want to log out?",
       buttons: [
-        {
-          text: "Cancel",
-          style: "cancel",
-        },
+        { text: "Cancel", style: "cancel" },
         {
           text: "Logout",
           style: "destructive",
@@ -177,30 +159,26 @@ const Settings: React.FC = () => {
       message:
         "Are you sure you want to delete your account? This action cannot be undone and you will lose all your data.",
       buttons: [
-        {
-          text: "Cancel",
-          style: "cancel",
-        },
+        { text: "Cancel", style: "cancel" },
         {
           text: "Delete",
           style: "destructive",
           onPress: async () => {
             try {
-              if (user) {
-                const userId = user.id || user._id;
-                setIsLoading(true);
-                const { deleteUser } = require("../../../services/api");
+              const userId = userData?.id || userData?._id; // use userData directly
+              if (!userId) return;
 
-                await deleteUser(userId);
+              setIsLoading(true);
+              const { deleteUser } = require("../../../services/api");
+              await deleteUser(userId);
 
-                Toast.show({
-                  type: "success",
-                  text1: "Account Deleted",
-                  text2: "Your account has been deleted successfully",
-                });
+              Toast.show({
+                type: "success",
+                text1: "Account Deleted",
+                text2: "Your account has been deleted successfully",
+              });
 
-                dispatch(logoutUser() as any);
-              }
+              dispatch(logoutUser() as any);
             } catch (error) {
               console.error("Error deleting account:", error);
               Toast.show({
@@ -217,7 +195,7 @@ const Settings: React.FC = () => {
     });
   };
 
-  if ((isProfileLoading && !user) || isLoading) {
+  if (isLoading) {
     return (
       <View style={[styles.container, { backgroundColor: colors.background }]}>
         <Header title="Settings" showBackButton />
@@ -225,6 +203,18 @@ const Settings: React.FC = () => {
       </View>
     );
   }
+
+  // Resolve profile image source from userData (Redux only)
+  const profileImageSource =
+    userData?.profilePictureUrl &&
+    typeof userData.profilePictureUrl === "string" &&
+    userData.profilePictureUrl.startsWith("http")
+      ? { uri: userData.profilePictureUrl }
+      : userData?.profilePicture &&
+          typeof userData.profilePicture === "string" &&
+          userData.profilePicture.startsWith("http")
+        ? { uri: userData.profilePicture }
+        : Images.profile.profileImage;
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -242,19 +232,8 @@ const Settings: React.FC = () => {
           activeOpacity={0.7}
         >
           <Image
-            key={`settings-${user?.profilePictureUrl || user?.profilePicture}`}
-            source={
-              // Use CloudFront URL (profilePictureUrl) if available, fallback to profilePicture
-              user?.profilePictureUrl &&
-              typeof user.profilePictureUrl === "string" &&
-              user.profilePictureUrl.startsWith("http")
-                ? { uri: user.profilePictureUrl }
-                : user?.profilePicture &&
-                    typeof user.profilePicture === "string" &&
-                    user.profilePicture.startsWith("http")
-                  ? { uri: user.profilePicture }
-                  : Images.profile.profileImage
-            }
+            key={`settings-${userData?.profilePictureUrl || userData?.profilePicture}`}
+            source={profileImageSource}
             style={[
               styles.profileImage,
               { backgroundColor: colors.categoryBox },
@@ -268,22 +247,16 @@ const Settings: React.FC = () => {
               console.error("Settings image load error:", error);
               console.error(
                 "Failed to load image URL:",
-                user?.profilePictureUrl || user?.profilePicture,
-              );
-            }}
-            onLoad={() => {
-              console.log(
-                "Settings image loaded successfully:",
-                user?.profilePictureUrl || user?.profilePicture,
+                userData?.profilePictureUrl || userData?.profilePicture,
               );
             }}
           />
           <View style={styles.profileInfo}>
             <Text style={[styles.profileName, { color: colors.black }]}>
-              {user?.firstName} {user?.lastName}
+              {userData?.firstName} {userData?.lastName}
             </Text>
             <Text style={[styles.profileEmail, { color: colors.grey }]}>
-              {user?.email}
+              {userData?.phoneNumber}
             </Text>
           </View>
           {/* <Ionicons name="chevron-forward" size={20} color={colors.grey} /> */}
