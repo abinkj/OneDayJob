@@ -8,6 +8,7 @@ import {
 import { normalizeUser, storage } from "../utilities/mmkvStore";
 import { store } from "../redux/store";
 import { logout as logoutAction } from "../redux/reducers/authReducers";
+import NetInfo from "@react-native-community/netinfo";
 
 const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL;
 
@@ -22,6 +23,23 @@ const api = axios.create({
 
 api.interceptors.request.use(
   async (config) => {
+    // ── 1. Network check FIRST — block call immediately if offline
+    const netState = await NetInfo.fetch();
+    const isOffline =
+      !netState.isConnected || netState.isInternetReachable === false;
+
+    if (isOffline) {
+      // Reject with a recognisable error so callers / the response
+      // interceptor can handle it cleanly without logging noise.
+      return Promise.reject(
+        Object.assign(new Error("No internet connection"), {
+          code: "ERR_NETWORK_OFFLINE",
+          isOfflineError: true,
+        }),
+      );
+    }
+
+    // ── 2. Attach auth token
     try {
       const token = await getAccessToken();
 
@@ -29,7 +47,6 @@ api.interceptors.request.use(
         method: config.method?.toUpperCase(),
         url: config.url,
         hasToken: !!token,
-        //tokenPreview: token ? token.substring(0, 20) + "..." : "No token",
         tokenPreview: token ? token : "No token",
       });
 
@@ -48,10 +65,10 @@ api.interceptors.request.use(
   (error) => {
     console.error("Request interceptor error:", error);
     return Promise.reject(error);
-  }
+  },
 );
 
-// Enhanced response interceptor
+// ─── RESPONSE INTERCEPTOR ────────────────────────────────────────────────────
 api.interceptors.response.use(
   (response) => {
     console.log("API Response Success:", {
@@ -64,9 +81,17 @@ api.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
-    // Check if the request was canceled
-    if (axios.isCancel(error) || error.message === 'canceled') {
-      // Don't log canceled requests to keep console clean
+    // ── Offline error (thrown from request interceptor) — don't log noise
+    if (error.isOfflineError || error.code === "ERR_NETWORK_OFFLINE") {
+      console.warn(
+        "Request blocked — device is offline:",
+        originalRequest?.url,
+      );
+      return Promise.reject(error);
+    }
+
+    // ── Canceled requests — don't log
+    if (axios.isCancel(error) || error.message === "canceled") {
       return Promise.reject(error);
     }
 
@@ -79,47 +104,37 @@ api.interceptors.response.use(
       message: error.message,
     });
 
-    // If we get a 401 and haven't already tried to refresh
+    // ── 401 → attempt token refresh once
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
 
       try {
         console.log("Attempting token refresh...");
-        // Get refresh token from SecureStore
         const refreshTokenValue = await getRefreshToken();
 
         if (!refreshTokenValue) {
           throw new Error("No refresh token available");
         }
 
-        // Try to refresh the token using both cookies and body
         const refreshResponse = await axios.post(
           `${API_BASE_URL}/auth/refresh-token`,
+          { refreshToken: refreshTokenValue },
           {
-            refreshToken: refreshTokenValue,
-          },
-          {
-            headers: {
-              "Content-Type": "application/json",
-            },
+            headers: { "Content-Type": "application/json" },
             withCredentials: true,
-          }
+          },
         );
 
         const newToken = refreshResponse.data.accessToken;
 
         if (newToken) {
-          // Store the new token using SecureStore
           await saveToken(newToken, refreshResponse.data.refreshToken);
           console.log("Token refreshed successfully");
-
-          // Retry the original request with the new token
           originalRequest.headers.Authorization = `Bearer ${newToken}`;
           return api(originalRequest);
         }
       } catch (refreshError) {
         console.error("Token refresh failed:", refreshError);
-        // Refresh failed, clear auth data and logout
         await clearAuthData();
         store.dispatch(logoutAction());
         console.log("Session expired, please login again");
@@ -127,25 +142,25 @@ api.interceptors.response.use(
       }
     }
 
-    // FIX 3: Handle 401 vs 403 correctly
-    // 401 = Unauthorized (token invalid/expired) → logout
-    // 403 = Forbidden (user not allowed) → show error, don't logout
-
+    // 401 = Unauthorized → logout
     if (error.response?.status === 401) {
-      console.error("Unauthorized (401) - Token invalid or expired, logging out");
+      console.error("Unauthorized (401) - logging out");
       await clearAuthData();
       store.dispatch(logoutAction());
       return Promise.reject(error);
     }
 
+    // 403 = Forbidden → show error, do NOT logout
     if (error.response?.status === 403) {
-      console.warn("Forbidden (403):", error.response?.data?.error?.message || "Permission denied");
-      // DO NOT logout - user is authenticated but not authorized for this action
+      console.warn(
+        "Forbidden (403):",
+        error.response?.data?.error?.message || "Permission denied",
+      );
       return Promise.reject(error);
     }
 
     return Promise.reject(error);
-  }
+  },
 );
 
 // Enhanced job posting function with validation
@@ -162,7 +177,7 @@ export const createJobPosting = async (data) => {
     // Log the data being sent (for debugging)
     console.log(
       "Creating job posting with data:",
-      JSON.stringify(data, null, 2)
+      JSON.stringify(data, null, 2),
     );
 
     // Ensure arrays are properly formatted
@@ -182,7 +197,7 @@ export const createJobPosting = async (data) => {
     if (data.location && data.location.coordinates) {
       console.log(
         "Original location data:",
-        JSON.stringify(data.location, null, 2)
+        JSON.stringify(data.location, null, 2),
       );
       console.log("Location coordinates:", data.location.coordinates);
 
@@ -193,7 +208,7 @@ export const createJobPosting = async (data) => {
       ) {
         console.error("Missing latitude or longitude in location coordinates");
         throw new Error(
-          "Invalid location coordinates: missing latitude or longitude"
+          "Invalid location coordinates: missing latitude or longitude",
         );
       }
 
@@ -227,7 +242,7 @@ export const createJobPosting = async (data) => {
 
       console.log(
         "Transformed location data:",
-        JSON.stringify(data.location, null, 2)
+        JSON.stringify(data.location, null, 2),
       );
     } else {
       console.warn("No location data or coordinates found in job data");
@@ -321,7 +336,7 @@ export const reportJob = (jobId: string, reason: string, details?: string) => {
   return api.post(`/jobs/${jobId}/report`, {
     reason,
     details,
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
   });
 };
 
@@ -367,7 +382,7 @@ export const updateUserLocation = async (locationData) => {
 
     const response = await api.put(
       "/users/update-user-location",
-      locationPayload
+      locationPayload,
     );
 
     console.log("User location updated successfully:", response.data);
@@ -399,7 +414,7 @@ export const getJobsByLocation = async (radius = 10, categoryId = null) => {
 
     const jobsData = response.data?.data || response.data || [];
     console.log(
-      `Jobs by location fetched successfully: ${jobsData.length} jobs`
+      `Jobs by location fetched successfully: ${jobsData.length} jobs`,
     );
 
     // Return the response as-is, let the caller decide whether to fallback
@@ -424,7 +439,10 @@ export const getJobsByLocation = async (radius = 10, categoryId = null) => {
   }
 };
 
-export const getJobPostings = async (filters: any = {}, signal?: AbortSignal) => {
+export const getJobPostings = async (
+  filters: any = {},
+  signal?: AbortSignal,
+) => {
   try {
     const params = new URLSearchParams();
 
@@ -461,7 +479,7 @@ export const getJobPostings = async (filters: any = {}, signal?: AbortSignal) =>
 
     return response;
   } catch (error: any) {
-    if (error.name === 'CanceledError' || error.code === 'ERR_CANCELED') {
+    if (error.name === "CanceledError" || error.code === "ERR_CANCELED") {
       console.log("Request canceled:", filters);
       throw error;
     }
@@ -484,11 +502,11 @@ export const getJobPostingsByUserId = async (
   userId: string,
   page: number = 1,
   limit: number = 10,
-  signal?: AbortSignal
+  signal?: AbortSignal,
 ) => {
   const res = await api.get(
     `jobs/user-posts/${userId}?page=${page}&limit=${limit}`,
-    { signal }
+    { signal },
   );
   return res.data;
 };
@@ -497,11 +515,11 @@ export const getAppliedJobsByUserId = async (
   userId: string,
   page: number = 1,
   limit: number = 10,
-  signal?: AbortSignal
+  signal?: AbortSignal,
 ) => {
   const res = await api.get(
     `applications/user/${userId}/applied-jobs?page=${page}&limit=${limit}`,
-    { signal }
+    { signal },
   );
   return res.data;
 };
@@ -524,7 +542,7 @@ export const applyJob = async (jobId: string) => {
 
 export const selectApplicants = async (
   jobId: string,
-  selectedApplicationIds: string[] // Changed from selectedUserIds
+  selectedApplicationIds: string[], // Changed from selectedUserIds
 ) => {
   const res = await api.post(`/jobs/${jobId}/select-applicants`, {
     selectedApplicationIds, // Changed from selectedUserIds
@@ -534,7 +552,7 @@ export const selectApplicants = async (
 
 export const rejectApplicants = async (
   jobId: string,
-  rejectedApplicationIds: string[] // Changed from selectedUserIds
+  rejectedApplicationIds: string[], // Changed from selectedUserIds
 ) => {
   const res = await api.post(`/jobs/${jobId}/reject-applicants`, {
     rejectedApplicationIds, // Changed from selectedUserIds
@@ -566,7 +584,7 @@ export const updateUserProfile = async (userId: string, profileData: any) => {
 // FIXED: Enhanced location update with retry logic
 export const updateUserLocationWithRetry = async (
   locationData,
-  maxRetries = 3
+  maxRetries = 3,
 ) => {
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
@@ -578,7 +596,7 @@ export const updateUserLocationWithRetry = async (
       console.error(
         `Location update attempt ${attempt} failed:`,
         error.response?.status,
-        error.response?.data
+        error.response?.data,
       );
 
       if (attempt === maxRetries) {
@@ -643,29 +661,29 @@ export const uploadProfilePicture = async (imageUri: string) => {
     const formData = new FormData();
 
     // Extract filename from URI
-    const filename = imageUri.split('/').pop() || 'profile.jpg';
+    const filename = imageUri.split("/").pop() || "profile.jpg";
     const match = /\.(\w+)$/.exec(filename);
-    const type = match ? `image/${match[1]}` : 'image/jpeg';
+    const type = match ? `image/${match[1]}` : "image/jpeg";
 
     // Append image to FormData
-    formData.append('profilePicture', {
+    formData.append("profilePicture", {
       uri: imageUri,
       name: filename,
       type: type,
     } as any);
 
-    console.log('Uploading profile picture:', { filename, type });
+    console.log("Uploading profile picture:", { filename, type });
 
-    const response = await api.post('/upload/profile-picture', formData, {
+    const response = await api.post("/upload/profile-picture", formData, {
       headers: {
-        'Content-Type': 'multipart/form-data',
+        "Content-Type": "multipart/form-data",
       },
     });
 
-    console.log('Profile picture upload response:', response.data);
+    console.log("Profile picture upload response:", response.data);
     return response.data;
   } catch (error) {
-    console.error('Error uploading profile picture:', error);
+    console.error("Error uploading profile picture:", error);
     throw error;
   }
 };
@@ -674,18 +692,22 @@ export const uploadProfilePicture = async (imageUri: string) => {
 export const deleteUser = (id) => api.delete(`/users/${id}`);
 
 // Report user for offensive behavior or content (UGC policy requirement)
-export const reportUser = (userId: string, reason: string, details?: string) => {
+export const reportUser = (
+  userId: string,
+  reason: string,
+  details?: string,
+) => {
   return api.post(`/users/${userId}/report`, {
     reason,
     details,
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
   });
 };
 
 // Block user (UGC policy requirement)
 export const blockUser = (userId: string) => {
   return api.post(`/users/${userId}/block`, {
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
   });
 };
 
@@ -767,7 +789,7 @@ export const createConversation = async (participantId: string) => {
 export const sendMessage = async (
   conversationId: string,
   text: string,
-  type: string = "text"
+  type: string = "text",
 ) => {
   try {
     const response = await api.post(
@@ -777,7 +799,7 @@ export const sendMessage = async (
           text: text,
         },
         messageType: type,
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -805,7 +827,7 @@ export const markMessagesAsRead = async (conversationId: string) => {
 export const verifyEmployee = async (
   jobId: string,
   employeeId: string,
-  verificationCode: string
+  verificationCode: string,
 ) => {
   try {
     console.log("Verifying employee:", { jobId, employeeId, verificationCode });
@@ -847,14 +869,14 @@ export const getJobVerificationStatus = async (jobId: string) => {
  */
 export const resendVerificationCodes = async (
   jobId: string,
-  reason?: string
+  reason?: string,
 ) => {
   try {
     console.log(
       "Resending verification codes for job:",
       jobId,
       "Reason:",
-      reason
+      reason,
     );
 
     const response = await api.post(`/jobs/${jobId}/resend-codes`, {
@@ -914,7 +936,7 @@ export const getEmployeeVerificationCode = async (jobId: string) => {
 export const markArrival = async (
   jobId: string,
   latitude: number,
-  longitude: number
+  longitude: number,
 ) => {
   try {
     console.log("Marking arrival for job:", jobId, { latitude, longitude });
@@ -950,10 +972,7 @@ export const getArrivedWorkers = async (jobId: string) => {
  * Employer approves a worker's arrival
  * POST /api/jobs/:jobId/approve-arrival
  */
-export const approveWorkerArrival = async (
-  jobId: string,
-  workerId: string
-) => {
+export const approveWorkerArrival = async (jobId: string, workerId: string) => {
   try {
     console.log("Approving worker arrival:", { jobId, workerId });
     const response = await api.post(`/jobs/${jobId}/approve-arrival`, {
@@ -974,10 +993,13 @@ export const approveWorkerArrival = async (
 export const checkArrivalEligibility = async (
   jobId: string,
   latitude: number,
-  longitude: number
+  longitude: number,
 ) => {
   try {
-    console.log("Checking arrival eligibility:", jobId, { latitude, longitude });
+    console.log("Checking arrival eligibility:", jobId, {
+      latitude,
+      longitude,
+    });
     const response = await api.post(`/jobs/${jobId}/check-arrival`, {
       latitude,
       longitude,
@@ -1020,7 +1042,7 @@ export const submitRating = async (data: {
  */
 export const getUserRatings = async (
   userId: string,
-  role: "employer" | "employee"
+  role: "employer" | "employee",
 ) => {
   try {
     console.log(`Getting ratings for user ${userId} as ${role}`);
@@ -1096,14 +1118,14 @@ export const cancelVerification = async (jobId: string) => {
  */
 export const syncAcceptedApplications = async (
   jobId: string,
-  applicationIds: string[]
+  applicationIds: string[],
 ) => {
   try {
     console.log(
       "Syncing accepted applications for job:",
       jobId,
       "Applications:",
-      applicationIds
+      applicationIds,
     );
 
     const response = await selectApplicants(jobId, applicationIds);
@@ -1181,14 +1203,14 @@ export const startWorkerSession = async (jobId: string) => {
  */
 export const getWorkerSession = async (
   jobId: string,
-  includeHistory = false
+  includeHistory = false,
 ) => {
   try {
     console.log(
       "Getting worker session for job:",
       jobId,
       "Include history:",
-      includeHistory
+      includeHistory,
     );
 
     const url = `/job-timer/jobs/${jobId}/sessions/worker?includeHistory=${includeHistory}`;
@@ -1250,7 +1272,7 @@ export const completeWorkerSession = async (sessionId: string, notes = "") => {
       `/job-timer/sessions/${sessionId}/complete`,
       {
         notes,
-      }
+      },
     );
 
     console.log("Worker session completed:", response.data);
@@ -1269,7 +1291,7 @@ export const syncWorkerTime = async (
   sessionId: string,
   additionalSeconds: number,
   currentStatus: string,
-  heartbeat = false
+  heartbeat = false,
 ) => {
   try {
     console.log(
@@ -1278,7 +1300,7 @@ export const syncWorkerTime = async (
       "Additional seconds:",
       additionalSeconds,
       "Status:",
-      currentStatus
+      currentStatus,
     );
 
     const response = await api.put(`/job-timer/sessions/${sessionId}/sync`, {
@@ -1333,7 +1355,7 @@ export const formatDuration = (seconds: number): string => {
  */
 export const calculateCompletion = (
   workedSeconds: number,
-  targetHours: number
+  targetHours: number,
 ): number => {
   if (!targetHours) return 0;
   const targetSeconds = targetHours * 3600;
@@ -1371,7 +1393,7 @@ export const createPaymentOrder = async (jobId: string) => {
 export const verifyPayment = async (
   orderId: string,
   paymentId: string,
-  signature: string
+  signature: string,
 ) => {
   try {
     console.log("Verifying payment:", { orderId, paymentId });

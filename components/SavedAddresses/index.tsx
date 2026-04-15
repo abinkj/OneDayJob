@@ -17,6 +17,7 @@ import {
 } from "../../services/savedAddressApi";
 import Toast from "react-native-toast-message";
 import { createStyles } from "./styles";
+import CustomButton from "../CustomButton";
 
 interface SavedAddressesProps {
   onAddressSelect?: (address: SavedAddress) => void;
@@ -212,10 +213,11 @@ const SavedAddresses: React.FC<SavedAddressesProps> = ({
         }
       />
 
-      <TouchableOpacity style={styles.addButton} onPress={onAddNew}>
-        <Ionicons name="add" size={24} color={colors.white} />
-        <Text style={styles.addButtonText}>Add New Address</Text>
-      </TouchableOpacity>
+      <CustomButton
+        text="Add New Address"
+        onPress={onAddNew}
+        style={{ paddingHorizontal: 16 }}
+      />
     </View>
   );
 };

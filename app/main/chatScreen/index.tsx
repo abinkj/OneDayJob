@@ -1,33 +1,37 @@
-import React, { useState, useRef, useEffect, useMemo } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import {
   View,
   Text,
-  FlatList,
-  TextInput,
   TouchableOpacity,
-  KeyboardAvoidingView,
-  Platform,
   ActivityIndicator,
-  RefreshControl,
-  Alert,
+  Keyboard,
+  Platform,
 } from "react-native";
-import { useRouter } from "expo-router";
-
-import AntDesign from "@expo/vector-icons/AntDesign";
 import * as ImagePicker from "expo-image-picker";
-import { Ionicons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
+import { Ionicons, AntDesign } from "@expo/vector-icons";
 import { Header } from "../../../components/header";
 import { ChatScreenSkeleton } from "../../../components/Shimmer/Skeletons";
 import { useTheme } from "../../../contexts/ThemeContext";
 import { createStyles } from "./styles";
 import { useRoute } from "@react-navigation/native";
-import MessageBubble from "../../../components/messageBubble";
 import socketService from "../../../services/socketService";
+import { useHeaderHeight } from "@react-navigation/elements";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+
 import {
   useMessages,
   useSendMessage,
   useMarkMessagesAsRead,
 } from "../../../hooks/useChat";
+import {
+  GiftedChat,
+  Bubble,
+  InputToolbar,
+  Send,
+  IMessage,
+  Time,
+} from "react-native-gifted-chat";
 import { getCurrentUser } from "../../../services/api";
 import Toast from "react-native-toast-message";
 import { useQueryClient } from "@tanstack/react-query";
@@ -37,7 +41,8 @@ export default function ChatScreen() {
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const router = useRouter();
-
+  const headerHeight = useHeaderHeight();
+  const insets = useSafeAreaInsets();
   const route = useRoute();
   const queryClient = useQueryClient();
   const { conversationId, participant } = (route.params as any) || {};
@@ -60,10 +65,30 @@ export default function ChatScreen() {
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [otherUserTyping, setOtherUserTyping] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
 
-  const flatListRef = useRef<FlatList>(null);
   const typingTimeoutRef = useRef<any>(null);
   const currentUserRef = useRef<any>(null);
+
+  useEffect(() => {
+    const showSubscription = Keyboard.addListener(
+      Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow",
+      (e) => {
+        setKeyboardHeight(e.endCoordinates.height);
+      },
+    );
+    const hideSubscription = Keyboard.addListener(
+      Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide",
+      () => {
+        setKeyboardHeight(0);
+      },
+    );
+
+    return () => {
+      showSubscription.remove();
+      hideSubscription.remove();
+    };
+  }, []);
 
   // Parse participant data
   const participantData =
@@ -80,27 +105,30 @@ export default function ChatScreen() {
     return currentUser.blockedUsers?.some((id: string) => String(id) === otherUserId);
   }, [currentUser, otherUserId]);
 
-  // Transform messages for display
+  // Transform messages for display in GiftedChat format
   const messages = useMemo(() => {
     if (!rawMessages || !currentUser) return [];
 
-    return rawMessages.map((msg: any) => {
-      const currentUserId = normalizeUserId(currentUser);
-      const senderId = normalizeUserId(msg.sender);
-      const messageType = senderId === currentUserId ? "me" : "other";
+    const currentUserId = normalizeUserId(currentUser);
 
-      return {
-        id: msg._id || msg.id,
-        type: messageType,
-        text: msg.content?.text || msg.text || "",
-        time: new Date(msg.createdAt).toLocaleTimeString([], {
-          hour: "2-digit",
-          minute: "2-digit",
-        }),
-        senderId: senderId,
-      };
-    });
-  }, [rawMessages, currentUser]);
+    return rawMessages
+      .map((msg: any) => {
+        const senderId = normalizeUserId(msg.sender);
+        return {
+          _id: msg._id || msg.id || Math.random().toString(),
+          text: msg.content?.text || msg.text || "",
+          createdAt: new Date(msg.createdAt),
+          user: {
+            _id: senderId,
+            name:
+              msg.sender?.firstName ||
+              (senderId === currentUserId ? "Me" : participantData?.name),
+            avatar: msg.sender?.profilePictureUrl || msg.sender?.profilePicture,
+          },
+        };
+      })
+      .reverse(); // GiftedChat expects newest first
+  }, [rawMessages, currentUser, participantData]);
 
   // Setup socket listeners
   useEffect(() => {
@@ -108,19 +136,17 @@ export default function ChatScreen() {
 
     const handleNewMessage = (data: any) => {
       if (data.conversationId === conversationIdString) {
-        console.log("Socket: New message received", data.message);
-
         // Update React Query cache manually
         queryClient.setQueryData(
           ["messages", conversationIdString],
           (oldData: any[]) => {
             const exists = oldData?.some(
               (msg) =>
-                (msg._id || msg.id) === (data.message._id || data.message.id)
+                (msg._id || msg.id) === (data.message._id || data.message.id),
             );
             if (exists) return oldData;
             return [...(oldData || []), data.message];
-          }
+          },
         );
 
         // Also invalidate conversations list
@@ -172,28 +198,21 @@ export default function ChatScreen() {
     };
   }, [conversationIdString]);
 
-  const handleSendMessage = async () => {
+  const handleSendMessage = async (newMessages: IMessage[] = []) => {
     if (
-      input.trim() === "" ||
+      isBlocked ||
+      newMessages.length === 0 ||
       !conversationIdString ||
       sendMessageMutation.isPending
     )
       return;
 
-    const messageText = input.trim();
-    setInput("");
+    const messageText = newMessages[0].text;
 
     try {
-      // We still use the mutation which calls the API,
-      // but the real-time logic often prefers socket.
-      // However, if we use React Query, the mutation's onSuccess will invalidate and fetch OR we can do both.
-      // Current project seems to use socket for real-time and API for persistence.
-
       if (socketService.isSocketConnected()) {
         socketService.sendMessage(conversationIdString, messageText, "text");
-        // Socket listener will handle adding it to cache
       } else {
-        // Fallback to API via mutation
         await sendMessageMutation.mutateAsync({
           conversationId: conversationIdString,
           text: messageText,
@@ -206,14 +225,13 @@ export default function ChatScreen() {
       setIsTyping(false);
     } catch (error) {
       console.error("Send error:", error);
-      setInput(messageText);
       Toast.show({ type: "error", text1: "Failed to send message" });
     }
   };
 
   const handleInputChange = (text: string) => {
     setInput(text);
-    if (!conversationIdString || !socketService.isSocketConnected()) return;
+    if (!conversationIdString || !socketService.isSocketConnected() || isBlocked) return;
 
     if (text.length > 0 && !isTyping) {
       setIsTyping(true);
@@ -228,6 +246,7 @@ export default function ChatScreen() {
   };
 
   const handleAttachmentSelect = async () => {
+    if (isBlocked) return;
     let result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.All,
       allowsEditing: true,
@@ -248,6 +267,10 @@ export default function ChatScreen() {
       "Do you want to report or block this user? We prioritize your safety and will review all reports within 24 hours.",
       [
         {
+          text: "Cancel",
+          style: "cancel",
+        },
+        {
           text: "Report User",
           style: "destructive",
           onPress: () => {
@@ -256,13 +279,18 @@ export default function ChatScreen() {
               "Please select a reason for reporting this user:",
               [
                 { text: "Spam", onPress: () => submitReport(userId, "Spam") },
-                { text: "Abusive", onPress: () => submitReport(userId, "Abusive") },
-                { text: "Suspicious", onPress: () => submitReport(userId, "Suspicious") },
-                { text: "Cancel", style: "cancel" }
-              ],
-              { type: "info" }
+                {
+                  text: "Abusive/Harassment",
+                  onPress: () => submitReport(userId, "Abusive"),
+                },
+                {
+                  text: "Suspicious Activity",
+                  onPress: () => submitReport(userId, "Suspicious"),
+                },
+                { text: "Cancel", style: "cancel" },
+              ]
             );
-          }
+          },
         },
         {
           text: "Block User",
@@ -280,25 +308,28 @@ export default function ChatScreen() {
                     try {
                       const { blockUser } = require("../../../services/api");
                       await blockUser(userId);
-                      Toast.show({ type: "success", text1: "User Blocked", text2: "You won't hear from them again." });
+                      Toast.show({
+                        type: "success",
+                        text1: "User Blocked",
+                        text2: "You won't hear from them again.",
+                      });
                       router.back();
                     } catch (error) {
-                      Toast.show({ type: "success", text1: "User Blocked", text2: "Action processed successfully." });
+                      // Fallback for demo/missing endpoint
+                      Toast.show({
+                        type: "success",
+                        text1: "User Blocked",
+                        text2: "Action processed successfully.",
+                      });
                       router.back();
                     }
-                  }
-                }
-              ],
-              { type: "warning" }
+                  },
+                },
+              ]
             );
-          }
+          },
         },
-        {
-          text: "Cancel",
-          style: "cancel"
-        }
-      ],
-      { type: "warning", dismissable: true }
+      ]
     );
   };
 
@@ -306,11 +337,120 @@ export default function ChatScreen() {
     try {
       const { reportUser } = require("../../../services/api");
       await reportUser(userId, reason);
-      Toast.show({ type: "success", text1: "Report Submitted", text2: "Thank you for helping us keep Zoopol safe." });
+      Toast.show({
+        type: "success",
+        text1: "Report Submitted",
+        text2: "Thank you for helping us keep Zoopol safe.",
+      });
     } catch (error) {
       // Fallback
-      Toast.show({ type: "success", text1: "Report Submitted", text2: "We will review this account shortly." });
+      Toast.show({
+        type: "success",
+        text1: "Report Submitted",
+        text2: "We will review this account shortly.",
+      });
     }
+  };
+
+  const renderBubble = (props: any) => {
+    return (
+      <Bubble
+        {...props}
+        wrapperStyle={{
+          right: {
+            backgroundColor: colors.primary,
+            borderBottomEndRadius: 4,
+            padding: 4,
+          },
+          left: {
+            backgroundColor: colors.white,
+            borderBottomStartRadius: 4,
+            padding: 4,
+            borderWidth: 0,
+          },
+        }}
+        textStyle={{
+          right: { color: colors.white, fontSize: 16 },
+          left: { color: colors.black, fontSize: 16 },
+        }}
+        tickStyle={{ color: "rgba(255, 255, 255, 0.7)" }}
+        renderTicks={(currentMessage) => {
+          if (currentMessage.user._id === normalizeUserId(currentUser)) {
+            return (
+              <View style={{ flexDirection: "row", marginRight: 4 }}>
+                <AntDesign
+                  name="check"
+                  size={12}
+                  color="rgba(255, 255, 255, 0.7)"
+                />
+                <AntDesign
+                  name="check"
+                  size={12}
+                  color="rgba(255, 255, 255, 0.7)"
+                  style={{ marginLeft: -8 }}
+                />
+              </View>
+            );
+          }
+          return null;
+        }}
+      />
+    );
+  };
+
+  const renderInputToolbar = (props: any) => {
+    if (isBlocked) {
+      return (
+        <View style={{
+          padding: 15,
+          alignItems: "center",
+          backgroundColor: colors.address2,
+          borderRadius: 10,
+          marginHorizontal: 15,
+          marginBottom: 10
+        }}>
+          <Text style={{ color: colors.grey, fontSize: 14 }}>
+            You have blocked this user. Unblock to send messages.
+          </Text>
+        </View>
+      );
+    }
+    return (
+      <InputToolbar
+        {...props}
+        containerStyle={styles.inputContainer}
+        primaryStyle={{ alignItems: "center" }}
+      />
+    );
+  };
+
+  const renderSend = (props: any) => {
+    return (
+      <Send
+        {...props}
+        containerStyle={{ justifyContent: "center", borderRadius: 20 }}
+      >
+        <View style={styles.sendIcon}>
+          {sendMessageMutation.isPending ? (
+            <ActivityIndicator size="small" color={colors.primary} />
+          ) : (
+            <Ionicons name="send" size={20} color="white" />
+          )}
+        </View>
+      </Send>
+    );
+  };
+
+  const renderTime = (props: any) => {
+    return (
+      <Time
+        {...props}
+        timeTextStyle={{
+          right: { color: "rgba(255, 255, 255, 0.7)", fontSize: 10 },
+          left: { color: colors.grey, fontSize: 10 },
+        }}
+      />
+    );
   };
 
   if (messagesLoading && !currentUser) {
@@ -318,102 +458,50 @@ export default function ChatScreen() {
   }
 
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
-      keyboardVerticalOffset={Platform.OS === "ios" ? 100 : 20}
-    >
-      <Header 
-        title={participantData?.name || "Chat"} 
-        showBackButton 
+    <View style={styles.container}>
+      <Header
+        title={participantData?.name || "Chat"}
+        showBackButton
         headerRight={
           <TouchableOpacity onPress={handleReportBlock}>
             <Ionicons name="shield-outline" size={24} color={colors.red} />
           </TouchableOpacity>
         }
       />
-      <Text style={styles.dateLabel}>
-        {new Date().toLocaleDateString("en-US", {
-          weekday: "long",
-          year: "numeric",
-          month: "long",
-          day: "numeric",
-        })}
-      </Text>
 
-      <FlatList
-        ref={flatListRef}
-        data={messages}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
-          <MessageBubble text={item.text} time={item.time} type={item.type} />
-        )}
-        contentContainerStyle={styles.messagesContainer}
-        onContentSizeChange={() =>
-          flatListRef.current?.scrollToEnd({ animated: true })
-        }
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={() => refetchMessages()}
-          />
-        }
-        ListFooterComponent={
+      <GiftedChat
+        keyboardAvoidingViewProps={{
+          keyboardVerticalOffset: headerHeight + 50,
+        }}
+        messages={messages}
+        onSend={(newMessages) => handleSendMessage(newMessages)}
+        user={{
+          _id: normalizeUserId(currentUser),
+        }}
+        renderBubble={renderBubble}
+        renderInputToolbar={renderInputToolbar}
+        renderSend={renderSend}
+        renderTime={renderTime}
+        textInputProps={{
+          placeholder: isBlocked ? "Blocked" : "Type a message...",
+          placeholderTextColor: colors.grey,
+          onChangeText: handleInputChange,
+          editable: !isBlocked,
+        }}
+        isTyping={otherUserTyping}
+        renderFooter={() =>
           otherUserTyping ? (
-            <View style={{ padding: 10, alignItems: "center" }}>
-              <Text
-                style={{
-                  color: colors.grey,
-                  fontSize: 14,
-                  fontStyle: "italic",
-                }}
-              >
+            <View style={styles.typingIndicator}>
+              <Text style={styles.typingText}>
                 {participantData?.name || "Someone"} is typing...
               </Text>
             </View>
           ) : null
         }
+        listProps={{
+          keyboardShouldPersistTaps: "never",
+        }}
       />
-
-      <View style={styles.inputContainer}>
-        {isBlocked ? (
-          <View style={{ flex: 1, padding: 15, alignItems: "center", backgroundColor: colors.address2, borderRadius: 10, margin: 10 }}>
-            <Text style={{ color: colors.grey, fontSize: 14 }}>
-              You have blocked this user. Unblock to send messages.
-            </Text>
-          </View>
-        ) : (
-          <View style={styles.subInputContainer}>
-            <TextInput
-              placeholder="Type a message"
-              value={input}
-              onChangeText={handleInputChange}
-              style={styles.input}
-              multiline
-              placeholderTextColor={colors.grey}
-            />
-            <TouchableOpacity
-              onPress={handleSendMessage}
-              disabled={sendMessageMutation.isPending || !input.trim()}
-            >
-              {sendMessageMutation.isPending ? (
-                <ActivityIndicator
-                  size="small"
-                  color="white"
-                  style={styles.sendIcon}
-                />
-              ) : (
-                <Ionicons
-                  name="send"
-                  size={24}
-                  color={input.trim() ? "white" : colors.grey}
-                  style={styles.sendIcon}
-                />
-              )}
-            </TouchableOpacity>
-          </View>
-        )}
-      </View>
-    </KeyboardAvoidingView>
+    </View>
   );
 }

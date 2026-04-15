@@ -8,7 +8,7 @@ export const createStyles = (colors: ThemeColors) => StyleSheet.create({
     backgroundColor: colors.background,
   },
   chatHeader: {
-    marginTop: 22 * DeviceDimensions.heightRatio,
+    //marginTop: 22 * DeviceDimensions.heightRatio,
   },
 });
 

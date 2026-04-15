@@ -16,6 +16,7 @@ interface HeaderProps {
   onSkipPress?: () => void;
   showMessageIcon?: boolean;
   headerRight?: React.ReactNode;
+  onBackPress?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -29,13 +30,18 @@ export const Header: React.FC<HeaderProps> = ({
   onSkipPress,
   showMessageIcon = false,
   headerRight,
+  onBackPress,
 }) => {
   const router = useRouter();
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
 
   const handleBack = () => {
-    router.back();
+    if (onBackPress) {
+      onBackPress();
+    } else {
+      router.back();
+    }
   };
 
   return (
