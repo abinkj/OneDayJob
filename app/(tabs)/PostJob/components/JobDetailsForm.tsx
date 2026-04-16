@@ -183,7 +183,7 @@ const JobDetailsForm: React.FC<JobDetailsFormProps> = ({
                 </View>
             )}
 
-            <View style={styles.switchContainer}>
+            {/* <View style={styles.switchContainer}>
                 <Text style={styles.switchLabel}>Can this job be done remotely?</Text>
                 <CustomSwitch
                     value={canBeDoneRemotely}
@@ -195,7 +195,7 @@ const JobDetailsForm: React.FC<JobDetailsFormProps> = ({
                         }
                     }}
                 />
-            </View>
+            </View> */}
 
             {!canBeDoneRemotely && (
                 <View>

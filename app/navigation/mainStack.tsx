@@ -16,6 +16,7 @@ import PrivacyPolicy from "@/main/privacyPolicy";
 import SavedAddressesScreen from "@/main/savedAddresses";
 import AddEditAddressScreen from "@/main/addEditAddress";
 import Language from "@/main/language";
+import JobPostingHistory from "@/main/jobPostingHistory";
 import { useTheme } from "../../contexts/ThemeContext";
 
 const Stack = createNativeStackNavigator();
@@ -53,6 +54,7 @@ const MainStack = () => {
       <Stack.Screen name="AddEditAddress" component={AddEditAddressScreen} />
       <Stack.Screen name="PrivacyPolicy" component={PrivacyPolicy} />
       <Stack.Screen name="Language" component={Language} />
+      <Stack.Screen name="JobPostingHistory" component={JobPostingHistory} />
     </Stack.Navigator>
   );
 };

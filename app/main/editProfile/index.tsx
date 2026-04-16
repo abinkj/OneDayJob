@@ -11,12 +11,12 @@ import Images from "../../../utilities/images";
 import { Header } from "../../../components/header";
 import LabeledInput from "../../../components/labeledTextInput";
 import { User } from "../../../types";
-import { saveUserData } from "../../../utilities/mmkvStore";
+import { saveUserData, normalizeUser } from "../../../utilities/mmkvStore";
 import { uploadProfilePicture } from "../../../services/api";
 import { useUpdateProfile } from "../../../hooks/useProfile";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "../../../redux/store";
-import { login } from "../../../redux/reducers/authReducers";
+import { updateUser } from "../../../redux/reducers/authReducers";
 import Toast from "react-native-toast-message";
 import ImagePickerActionSheet, {
   ImagePickerActionSheetRef,
@@ -205,8 +205,11 @@ const EditProfile: React.FC = () => {
       });
 
       if (updatedData) {
+        console.log("Updated data:", JSON.stringify(updatedData, null, 2));
         // Keep MMKV in sync for any legacy consumers, then update Redux
         await saveUserData(updatedData);
+        dispatch(updateUser(normalizeUser(updatedData)));
+
         Toast.show({
           type: "success",
           text1: "Success",

@@ -423,6 +423,15 @@ const Settings: React.FC = () => {
           />
         </SettingsSection>
 
+        <SettingsSection title={"Job Postings"}>
+          <SettingsItem
+            icon="log-out-outline"
+            title={'Job Posting History'}
+            onPress={() => navigation.navigate("JobPostingHistory")}
+            showArrow={false}
+          />
+        </SettingsSection>
+
         {/* Danger Zone */}
         <SettingsSection title={t("settings.logout")}>
           <SettingsItem
