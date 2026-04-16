@@ -83,7 +83,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     padding: 16 * DeviceDimensions.widthRatio,
-    borderBottomWidth: 0.5,
+    //borderBottomWidth: 0.5,
     borderBottomColor: Colors.addressGrey,
   },
   settingsItemLeft: {
