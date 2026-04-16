@@ -43,6 +43,9 @@ import LiveJobHeader from "./components/LiveJobHeader";
 import SuccessAnimation from "../../../components/SuccessAnimation";
 
 
+import FilterActionSheet, { FilterActionSheetRef } from "../../../components/FilterActionSheet";
+
+
 const categoryIcons: Record<string, any> = {
   assembly: require("../../../assets/images/assembly.png"),
   catering: require("../../../assets/images/catering.png"),
@@ -112,10 +115,10 @@ const HomeScreen = () => {
   const [isInitialized, setIsInitialized] = useState(false);
   const [isFilterSticky, setIsFilterSticky] = useState(false);
 
-  // Filter modal states
-  const [showCategoryModal, setShowCategoryModal] = useState(false);
-  const [showPriceModal, setShowPriceModal] = useState(false);
-  const [showDistanceModal, setShowDistanceModal] = useState(false);
+  // Filter sheet refs
+  const categorySheetRef = useRef<FilterActionSheetRef>(null);
+  const priceSheetRef = useRef<FilterActionSheetRef>(null);
+  const distanceSheetRef = useRef<FilterActionSheetRef>(null);
   const [categories, setCategories] = useState([]);
 
   const navigation = useNavigation<any>();
@@ -166,7 +169,7 @@ const HomeScreen = () => {
 
   const distanceOptions = [
     { id: null, name: "All Locations" },
-    { id: "remote", name: "Remote Work" },
+    // { id: "remote", name: "Remote Work" },
     { id: "within-10km", name: "Within 10km" },
     { id: "above-10km", name: "Above 10km" },
   ];
@@ -561,17 +564,14 @@ const HomeScreen = () => {
   // Filter handlers
   const handleCategoryFilter = (categoryId) => {
     setSelectedCategory(categoryId === selectedCategory ? null : categoryId);
-    setShowCategoryModal(false);
   };
 
   const handlePriceFilter = (priceSort) => {
     setSelectedPriceSort(priceSort === selectedPriceSort ? null : priceSort);
-    setShowPriceModal(false);
   };
 
   const handleDistanceFilter = (distance) => {
     setSelectedDistance(distance === selectedDistance ? null : distance);
-    setShowDistanceModal(false);
   };
 
   const clearAllFilters = () => {
@@ -1013,9 +1013,9 @@ const HomeScreen = () => {
             <TouchableOpacity
               style={getFilterButtonStyle(item.isSelected)}
               onPress={() => {
-                if (item.id === "category") setShowCategoryModal(true);
-                else if (item.id === "price") setShowPriceModal(true);
-                else if (item.id === "distance") setShowDistanceModal(true);
+                if (item.id === "category") categorySheetRef.current?.show();
+                else if (item.id === "price") priceSheetRef.current?.show();
+                else if (item.id === "distance") distanceSheetRef.current?.show();
                 else if (item.id === "clear") clearAllFilters();
               }}
             >
@@ -1035,61 +1035,6 @@ const HomeScreen = () => {
       </View>
     );
   };
-
-  const renderFilterModal = (
-    visible,
-    setVisible,
-    title,
-    options,
-    selectedValue,
-    onSelect
-  ) => (
-    <Modal
-      visible={visible}
-      transparent
-      animationType="fade"
-      onRequestClose={() => setVisible(false)}
-    >
-      <View style={styles.modalOverlay}>
-        <View style={styles.modalContainer}>
-          <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>{title}</Text>
-            <TouchableOpacity onPress={() => setVisible(false)}>
-              <Ionicons name="close" size={24} color={colors.black} />
-            </TouchableOpacity>
-          </View>
-          <FlatList
-            data={options}
-            keyExtractor={(item) => String(item.id || item._id)}
-            bounces={false}
-            renderItem={({ item }) => (
-              <TouchableOpacity
-                style={[
-                  styles.modalOption,
-                  selectedValue === (item.id || item._id) &&
-                  styles.selectedOption,
-                ]}
-                onPress={() => onSelect(item.id || item._id)}
-              >
-                <Text
-                  style={[
-                    styles.modalOptionText,
-                    selectedValue === (item.id || item._id) &&
-                    styles.selectedOptionText,
-                  ]}
-                >
-                  {item.name}
-                </Text>
-                {selectedValue === (item.id || item._id) && (
-                  <Ionicons name="checkmark" size={20} color={colors.primary} />
-                )}
-              </TouchableOpacity>
-            )}
-          />
-        </View>
-      </View>
-    </Modal>
-  );
 
   const renderEmptyState = () => (
     <View
@@ -1171,33 +1116,6 @@ const HomeScreen = () => {
 
   return (
     <View style={styles.container}>
-      {/* Filter Modals */}
-      {renderFilterModal(
-        showCategoryModal,
-        setShowCategoryModal,
-        "Select Category",
-        categories,
-        selectedCategory,
-        handleCategoryFilter
-      )}
-
-      {renderFilterModal(
-        showPriceModal,
-        setShowPriceModal,
-        "Sort by Price",
-        priceOptions,
-        selectedPriceSort,
-        handlePriceFilter
-      )}
-
-      {renderFilterModal(
-        showDistanceModal,
-        setShowDistanceModal,
-        "Filter by Distance",
-        distanceOptions,
-        selectedDistance,
-        handleDistanceFilter
-      )}
 
       {/* Sticky Filter Row - positioned absolutely when sticky */}
       {isFilterSticky && (
@@ -1369,6 +1287,30 @@ const HomeScreen = () => {
         subMessage={successSubMessage}
         type={activeJobState.allWorkersCompleted ? 'all' : 'single'}
         onAnimationFinish={() => setShowSuccessAnimation(false)}
+      />
+
+      <FilterActionSheet
+        ref={categorySheetRef}
+        title="Select Category"
+        options={categories}
+        selectedValue={selectedCategory}
+        onSelect={handleCategoryFilter}
+      />
+
+      <FilterActionSheet
+        ref={priceSheetRef}
+        title="Sort by Price"
+        options={priceOptions}
+        selectedValue={selectedPriceSort}
+        onSelect={handlePriceFilter}
+      />
+
+      <FilterActionSheet
+        ref={distanceSheetRef}
+        title="Filter by Distance"
+        options={distanceOptions}
+        selectedValue={selectedDistance}
+        onSelect={handleDistanceFilter}
       />
     </View>
   );
