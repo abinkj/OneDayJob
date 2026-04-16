@@ -40,6 +40,12 @@ const authSlice = createSlice({
     completeProfile(state, action) {
       state.isProfileComplete = action.payload ?? true;
     },
+    updateUser(state, action) {
+      state.userData = action.payload;
+      if (action.payload?.isProfileComplete !== undefined) {
+        state.isProfileComplete = action.payload.isProfileComplete;
+      }
+    },
   },
 });
 export const {
@@ -50,6 +56,7 @@ export const {
   skipKyc,
   setHasSeenOnboarding,
   completeProfile,
+  updateUser,
 } = authSlice.actions;
 export default authSlice.reducer;
 // This file defines the authentication reducers using Redux Toolkit.

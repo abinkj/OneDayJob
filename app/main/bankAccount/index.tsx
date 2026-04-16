@@ -20,8 +20,8 @@ import {
   getCurrentUser,
 } from "../../../services/api";
 import Toast from "react-native-toast-message";
-import { skipKyc, completeKyc } from "../../../redux/reducers/authReducers";
-import { saveKycStatus, saveUserData } from "../../../utilities/mmkvStore";
+import { skipKyc, completeKyc, updateUser } from "../../../redux/reducers/authReducers";
+import { saveKycStatus, saveUserData, normalizeUser } from "../../../utilities/mmkvStore";
 
 const BankAccount = () => {
   const navigation = useNavigation<any>();
@@ -253,6 +253,7 @@ const BankAccount = () => {
         if (response.data.data) {
           // API response contains updated user object
           await saveUserData(response.data.data);
+          dispatch(updateUser(normalizeUser(response.data.data)));
         } else {
           // Fallback: Merge bank details into existing local user data
           const currentUser = await getCurrentUser();
@@ -268,6 +269,7 @@ const BankAccount = () => {
               },
             };
             await saveUserData(userWithBankDetails);
+            dispatch(updateUser(normalizeUser(userWithBankDetails)));
           }
         }
 
