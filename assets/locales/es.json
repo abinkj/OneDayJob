@@ -1,0 +1,37 @@
+{
+  "settings": {
+    "title": "Ajustes",
+    "account": "Cuenta",
+    "editProfile": "Editar Perfil",
+    "editProfileSub": "Actualiza tu información personal",
+    "savedAddresses": "Direcciones Guardadas",
+    "savedAddressesSub": "Gestiona tus ubicaciones guardadas",
+    "appSettings": "Ajustes de la Aplicación",
+    "darkMode": "Modo Oscuro",
+    "darkModeSub": "Activar tema oscuro",
+    "language": "Idioma",
+    "support": "Soporte",
+    "helpSupport": "Ayuda y Soporte",
+    "helpSupportSub": "Obtén ayuda con tu cuenta",
+    "termsConditions": "Términos y Condiciones",
+    "privacyPolicy": "Política de Privacidad",
+    "about": "Acerca de",
+    "version": "Versión 1.0.0",
+    "logout": "Cerrar Sesión",
+    "deleteAccount": "Eliminar Cuenta",
+    "deleteAccountSub": "Eliminar permanentemente tu cuenta",
+    "comingSoon": "Próximamente",
+    "languageSelection": "Seleccionar Idioma"
+  },
+  "common": {
+    "cancel": "Cancelar",
+    "confirm": "Confirmar",
+    "save": "Guardar",
+    "loading": "Cargando..."
+  },
+  "languages": {
+    "en": "Inglés",
+    "es": "Español",
+    "ml": "Malayalam"
+  }
+}

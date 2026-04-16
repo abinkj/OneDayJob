@@ -2,44 +2,29 @@ import { MMKV, createMMKV } from "react-native-mmkv";
 import { User, UserLocation } from "../types";
 import { getOrCreateEncryptionKey } from "./encryptionKeyManager";
 
-// IMPORTANT: Storage instance will be initialized asynchronously
-// Use initializeStorage() before accessing storage
+// ─── Storage singleton ───────────────────────────────────────────────────────
 let storageInstance: MMKV | null = null;
 let initializationPromise: Promise<void> | null = null;
 
 /**
- * Initializes MMKV storage with a secure encryption key from expo-secure-store.
- * This function is idempotent - calling it multiple times is safe.
- *
- * @returns Promise that resolves when storage is ready
+ * Initializes MMKV storage with a secure encryption key.
+ * Idempotent — safe to call multiple times.
+ * On failure the promise is cleared so the next call will retry.
  */
 export const initializeStorage = async (): Promise<void> => {
-  // If already initialized, return immediately
-  if (storageInstance !== null) {
-    return;
-  }
+  if (storageInstance !== null) return; // already done
 
-  // If initialization is in progress, wait for it
-  if (initializationPromise !== null) {
-    return initializationPromise;
-  }
+  if (initializationPromise !== null) return initializationPromise; // in progress
 
-  // Start initialization
   initializationPromise = (async () => {
     try {
       console.log("🔐 Initializing MMKV with secure encryption...");
-
-      // Get or create the encryption key from secure storage
       const encryptionKey = await getOrCreateEncryptionKey();
-
-      // Use createMMKV factory
-      storageInstance = createMMKV({
-        id: "mmkvStore",
-        encryptionKey: encryptionKey,
-      });
-
+      storageInstance = createMMKV({ id: "mmkvStore", encryptionKey });
       console.log("✅ MMKV storage initialized successfully");
     } catch (error) {
+      // Reset so the next call can retry instead of hanging on a rejected promise
+      initializationPromise = null;
       console.error("❌ Failed to initialize MMKV storage:", error);
       throw error;
     }
@@ -49,8 +34,8 @@ export const initializeStorage = async (): Promise<void> => {
 };
 
 /**
- * Gets the storage instance, ensuring it's initialized first.
- * @throws Error if storage is not initialized
+ * Returns the initialized storage instance.
+ * @throws if called before initializeStorage() resolves.
  */
 const getStorage = (): MMKV => {
   if (storageInstance === null) {
@@ -61,8 +46,11 @@ const getStorage = (): MMKV => {
   return storageInstance;
 };
 
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
 const USER_DATA_KEY = "USER";
 
+// Private — only used by normalizeUser
 const deriveLocationString = (
   location: string | UserLocation | undefined,
 ): string | undefined => {
@@ -78,20 +66,22 @@ const deriveLocationString = (
 };
 
 export const normalizeUser = (raw: any): User => {
-  if (!raw || typeof raw !== "object") return raw as User;
+  // Guard: return a safe empty-ish User instead of silently casting a bad value
+  if (!raw || typeof raw !== "object") {
+    console.warn("normalizeUser received a non-object value:", raw);
+    return {} as User;
+  }
 
   const id = raw.id ?? raw._id ?? undefined;
   const phoneNumber = raw.phoneNumber ?? raw.phone ?? undefined;
 
-  // Normalize profilePicture to string if `{ uri } ` is provided
+  // Unwrap { uri } shape that can appear when a local image object is persisted
   const profilePicture =
     typeof raw.profilePicture === "object" && raw.profilePicture?.uri
       ? raw.profilePicture.uri
-      : raw.profilePicture;
+      : (raw.profilePicture as string | undefined);
 
-  // Prefer locationText supplied by the backend (enriched API response);
-  // fall back to deriving it locally from the location object.
-  const locationString = raw.locationText ?? deriveLocationString(raw.location);
+  const locationText = raw.locationText ?? deriveLocationString(raw.location);
 
   return {
     ...raw,
@@ -100,16 +90,17 @@ export const normalizeUser = (raw: any): User => {
     phoneNumber,
     profilePicture,
     location: raw.location,
-    locationText: locationString,
-    // Pass-through enriched fields (backend sends these on verifyOtp + getUserProfile)
+    locationText,
     totalReviews: raw.totalReviews ?? 0,
     ratings: raw.ratings ?? [],
   } as User;
 };
 
+// ─── User ────────────────────────────────────────────────────────────────────
+
 export const saveUserData = async (userData: User | any): Promise<void> => {
   try {
-    await initializeStorage(); // Ensure storage is ready
+    await initializeStorage();
     const normalized = normalizeUser(userData);
     getStorage().set(USER_DATA_KEY, JSON.stringify(normalized));
   } catch (error) {
@@ -120,41 +111,47 @@ export const saveUserData = async (userData: User | any): Promise<void> => {
 
 export const getUserData = async (): Promise<User | null> => {
   try {
-    await initializeStorage(); // Ensure storage is ready
-    const data = getStorage().getString(USER_DATA_KEY);
-    if (!data) {
-      // Backward compatibility: try legacy key
-      const legacy = getStorage().getString("user");
-      if (legacy) {
-        const parsedLegacy = normalizeUser(JSON.parse(legacy));
-        getStorage().set(USER_DATA_KEY, JSON.stringify(parsedLegacy));
-        getStorage().remove("user");
-        return parsedLegacy;
-      }
-      return null;
+    await initializeStorage();
+    const storage = getStorage();
+
+    const data = storage.getString(USER_DATA_KEY);
+    if (data) {
+      return normalizeUser(JSON.parse(data));
     }
-    const parsed = JSON.parse(data);
-    return normalizeUser(parsed);
+
+    // One-time migration from legacy "user" key
+    const legacy = storage.getString("user");
+    if (legacy) {
+      const parsed = normalizeUser(JSON.parse(legacy));
+      storage.set(USER_DATA_KEY, JSON.stringify(parsed));
+      storage.remove("user");
+      console.log("✅ Migrated user data from legacy key");
+      return parsed;
+    }
+
+    return null;
   } catch (error) {
     console.error("Failed to load user data:", error);
     return null;
   }
 };
 
-export const clearUserData = async () => {
+export const clearUserData = async (): Promise<void> => {
   try {
-    await initializeStorage(); // Ensure storage is ready
+    await initializeStorage();
     getStorage().remove(USER_DATA_KEY);
   } catch (error) {
     console.error("Failed to clear user data:", error);
   }
 };
 
+// ─── KYC ─────────────────────────────────────────────────────────────────────
+
 const KYC_STATUS_KEY = "kycStatus";
 
 export const saveKycStatus = async (status: string): Promise<void> => {
   try {
-    await initializeStorage(); // Ensure storage is ready
+    await initializeStorage();
     getStorage().set(KYC_STATUS_KEY, status);
   } catch (error) {
     console.error("Failed to save KYC status:", error);
@@ -164,9 +161,8 @@ export const saveKycStatus = async (status: string): Promise<void> => {
 
 export const getKycStatus = async (): Promise<string | null> => {
   try {
-    await initializeStorage(); // Ensure storage is ready
-    const status = getStorage().getString(KYC_STATUS_KEY);
-    return status ?? null;
+    await initializeStorage();
+    return getStorage().getString(KYC_STATUS_KEY) ?? null;
   } catch (error) {
     console.error("Failed to load KYC status:", error);
     return null;
@@ -175,18 +171,20 @@ export const getKycStatus = async (): Promise<string | null> => {
 
 export const clearKycStatus = async (): Promise<void> => {
   try {
-    await initializeStorage(); // Ensure storage is ready
+    await initializeStorage();
     getStorage().remove(KYC_STATUS_KEY);
   } catch (error) {
     console.error("Failed to clear KYC status:", error);
   }
 };
 
+// ─── Onboarding ──────────────────────────────────────────────────────────────
+
 const ONBOARDING_STATUS_KEY = "hasSeenOnboarding";
 
 export const saveHasSeenOnboarding = async (status: boolean): Promise<void> => {
   try {
-    await initializeStorage(); // Ensure storage is ready
+    await initializeStorage();
     getStorage().set(ONBOARDING_STATUS_KEY, status);
   } catch (error) {
     console.error("Failed to save onboarding status:", error);
@@ -195,31 +193,29 @@ export const saveHasSeenOnboarding = async (status: boolean): Promise<void> => {
 
 export const getHasSeenOnboarding = async (): Promise<boolean> => {
   try {
-    await initializeStorage(); // Ensure storage is ready
-    const status = getStorage().getBoolean(ONBOARDING_STATUS_KEY);
-    return status ?? false;
+    await initializeStorage();
+    return getStorage().getBoolean(ONBOARDING_STATUS_KEY) ?? false;
   } catch (error) {
     console.error("Failed to load onboarding status:", error);
     return false;
   }
 };
 
-/**
- * Export storage getter for direct access if needed.
- * WARNING: Always ensure initializeStorage() is called first!
- */
-export const getStorageInstance = (): MMKV => {
-  return getStorage();
-};
+// ─── Direct instance access (advanced use only) ───────────────────────────────
 
 /**
- * Export storage getter for direct access if needed.
- * WARNING: Always ensure initializeStorage() is called first!
- *
- * For backward compatibility with code that uses `storage.set()` directly.
+ * Returns the raw MMKV instance.
+ * Caller must ensure initializeStorage() has resolved first.
+ */
+export const getStorageInstance = (): MMKV => getStorage();
+
+/**
+ * Proxy for legacy callers using `storage.set()` / `storage.get()` directly.
+ * Throws synchronously if accessed before initializeStorage() resolves —
+ * prefer the named async helpers above for all new code.
  */
 export const storage = new Proxy({} as MMKV, {
-  get: (target, prop) => {
+  get: (_target, prop) => {
     const instance = getStorage();
     const value = (instance as any)[prop];
     return typeof value === "function" ? value.bind(instance) : value;

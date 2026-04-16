@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   ActivityIndicator,
 } from "react-native";
+import { useTranslation } from "react-i18next";
 import CustomSwitch from "../../../components/CustomSwich";
 import { Image } from "expo-image";
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
@@ -16,15 +17,11 @@ import { useTheme } from "../../../contexts/ThemeContext";
 import { Header } from "../../../components/header";
 import { ProfileSkeleton } from "../../../components/Shimmer/Skeletons";
 import { logoutUser } from "../../../utilities/authentication";
-import { getCurrentUser } from "../../../services/api";
-import { User } from "../../../types";
 import Images from "../../../utilities/images";
 import Toast from "react-native-toast-message";
 import styles from "./styles";
 import strings from "../../../utilities/strings";
 import { useAlert } from "../../../components/CustomAlert/AlertProvider";
-import { getUserData } from "../../../utilities/mmkvStore";
-import { useProfile } from "../../../hooks/useProfile";
 import { RootState } from "../../../redux/store";
 
 interface SettingsItemProps {
@@ -117,36 +114,27 @@ const SettingsSection: React.FC<SettingsSectionProps> = ({
 };
 
 const Settings: React.FC = () => {
+  const { t, i18n } = useTranslation();
   const navigation = useNavigation<any>();
   const dispatch = useDispatch();
   const userData = useSelector(
     (state: RootState) => state.authentication.userData,
   );
 
-  const { data: user, isLoading: isProfileLoading } = useProfile(userData);
+  // Removed: user, isProfileLoading states — userData from Redux is the source of truth
   const [isLoading, setIsLoading] = useState(false);
-  const [pushNotifications, setPushNotifications] = useState(true);
-  const [emailNotifications, setEmailNotifications] = useState(true);
-  const [jobAlerts, setJobAlerts] = useState(true);
   const [isTogglingTheme, setIsTogglingTheme] = useState(false);
 
   const { theme, colors, toggleTheme } = useTheme();
   const darkMode = theme === "dark";
 
+
   const { showAlert } = useAlert();
 
   const handleEditProfile = () => {
-    if (user) {
-      navigation.navigate("EditProfile", { user });
+    if (userData) {
+      navigation.navigate("EditProfile", { user: userData }); // pass userData directly
     }
-  };
-
-  const handleBankAccount = () => {
-    navigation.navigate("BankAccount");
-  };
-
-  const handlePaymentHistory = () => {
-    navigation.navigate("PaymentHistory");
   };
 
   const handleLogout = () => {
@@ -155,10 +143,7 @@ const Settings: React.FC = () => {
       title: "Logout",
       message: "Are you sure you want to log out?",
       buttons: [
-        {
-          text: "Cancel",
-          style: "cancel",
-        },
+        { text: "Cancel", style: "cancel" },
         {
           text: "Logout",
           style: "destructive",
@@ -177,30 +162,26 @@ const Settings: React.FC = () => {
       message:
         "Are you sure you want to delete your account? This action cannot be undone and you will lose all your data.",
       buttons: [
-        {
-          text: "Cancel",
-          style: "cancel",
-        },
+        { text: "Cancel", style: "cancel" },
         {
           text: "Delete",
           style: "destructive",
           onPress: async () => {
             try {
-              if (user) {
-                const userId = user.id || user._id;
-                setIsLoading(true);
-                const { deleteUser } = require("../../../services/api");
+              const userId = userData?.id || userData?._id; // use userData directly
+              if (!userId) return;
 
-                await deleteUser(userId);
+              setIsLoading(true);
+              const { deleteUser } = require("../../../services/api");
+              await deleteUser(userId);
 
-                Toast.show({
-                  type: "success",
-                  text1: "Account Deleted",
-                  text2: "Your account has been deleted successfully",
-                });
+              Toast.show({
+                type: "success",
+                text1: "Account Deleted",
+                text2: "Your account has been deleted successfully",
+              });
 
-                dispatch(logoutUser() as any);
-              }
+              dispatch(logoutUser() as any);
             } catch (error) {
               console.error("Error deleting account:", error);
               Toast.show({
@@ -217,7 +198,7 @@ const Settings: React.FC = () => {
     });
   };
 
-  if ((isProfileLoading && !user) || isLoading) {
+  if (isLoading) {
     return (
       <View style={[styles.container, { backgroundColor: colors.background }]}>
         <Header title="Settings" showBackButton />
@@ -226,9 +207,21 @@ const Settings: React.FC = () => {
     );
   }
 
+  // Resolve profile image source from userData (Redux only)
+  const profileImageSource =
+    userData?.profilePictureUrl &&
+    typeof userData.profilePictureUrl === "string" &&
+    userData.profilePictureUrl.startsWith("http")
+      ? { uri: userData.profilePictureUrl }
+      : userData?.profilePicture &&
+          typeof userData.profilePicture === "string" &&
+          userData.profilePicture.startsWith("http")
+        ? { uri: userData.profilePicture }
+        : Images.profile.profileImage;
+
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <Header title="Settings" showBackButton />
+      <Header title={t("settings.title")} showBackButton />
       <ScrollView
         style={styles.scrollView}
         showsVerticalScrollIndicator={false}
@@ -242,19 +235,8 @@ const Settings: React.FC = () => {
           activeOpacity={0.7}
         >
           <Image
-            key={`settings-${user?.profilePictureUrl || user?.profilePicture}`}
-            source={
-              // Use CloudFront URL (profilePictureUrl) if available, fallback to profilePicture
-              user?.profilePictureUrl &&
-              typeof user.profilePictureUrl === "string" &&
-              user.profilePictureUrl.startsWith("http")
-                ? { uri: user.profilePictureUrl }
-                : user?.profilePicture &&
-                    typeof user.profilePicture === "string" &&
-                    user.profilePicture.startsWith("http")
-                  ? { uri: user.profilePicture }
-                  : Images.profile.profileImage
-            }
+            //key={`settings-${userData?.profilePictureUrl || userData?.profilePicture}`}
+            source={profileImageSource}
             style={[
               styles.profileImage,
               { backgroundColor: colors.categoryBox },
@@ -262,45 +244,39 @@ const Settings: React.FC = () => {
             placeholder={Images.profile.profileImage}
             placeholderContentFit="cover"
             contentFit="cover"
-            cachePolicy="none"
+            cachePolicy="memory-disk"
             //transition={300}
             onError={(error) => {
               console.error("Settings image load error:", error);
               console.error(
                 "Failed to load image URL:",
-                user?.profilePictureUrl || user?.profilePicture,
-              );
-            }}
-            onLoad={() => {
-              console.log(
-                "Settings image loaded successfully:",
-                user?.profilePictureUrl || user?.profilePicture,
+                userData?.profilePictureUrl || userData?.profilePicture,
               );
             }}
           />
           <View style={styles.profileInfo}>
             <Text style={[styles.profileName, { color: colors.black }]}>
-              {user?.firstName} {user?.lastName}
+              {userData?.firstName} {userData?.lastName}
             </Text>
             <Text style={[styles.profileEmail, { color: colors.grey }]}>
-              {user?.email}
+              {userData?.phoneNumber}
             </Text>
           </View>
           {/* <Ionicons name="chevron-forward" size={20} color={colors.grey} /> */}
         </TouchableOpacity>
 
         {/* Account Section */}
-        <SettingsSection title="Account">
+        <SettingsSection title={t("settings.account")}>
           <SettingsItem
             icon="person-outline"
-            title="Edit Profile"
-            subtitle="Update your personal information"
+            title={t("settings.editProfile")}
+            subtitle={t("settings.editProfileSub")}
             onPress={handleEditProfile}
           />
           <SettingsItem
             icon="location-outline"
-            title="Saved Addresses"
-            subtitle="Manage your saved locations"
+            title={t("settings.savedAddresses")}
+            subtitle={t("settings.savedAddressesSub")}
             onPress={() => navigation.navigate("SavedAddresses")}
           />
           {/* <SettingsItem
@@ -355,11 +331,11 @@ const Settings: React.FC = () => {
         </SettingsSection> */}
 
         {/* App Settings Section */}
-        <SettingsSection title="App Settings">
+        <SettingsSection title={t("settings.appSettings")}>
           <SettingsItem
             icon="moon-outline"
-            title="Dark Mode"
-            subtitle="Enable dark theme"
+            title={t("settings.darkMode")}
+            subtitle={t("settings.darkModeSub")}
             showArrow={false}
             rightComponent={
               isTogglingTheme ? (
@@ -387,79 +363,79 @@ const Settings: React.FC = () => {
           />
           <SettingsItem
             icon="language-outline"
-            title="Language"
-            subtitle="English"
-            onPress={() => {
-              Toast.show({
-                type: "info",
-                text1: "Coming Soon",
-                text2: "Language selection will be available soon",
-              });
-            }}
+            title={t("settings.language")}
+            subtitle={
+              i18n.language === "en"
+                ? t("languages.en")
+                : i18n.language === "es"
+                  ? t("languages.es")
+                  : t("languages.ml")
+            }
+            onPress={() => navigation.navigate("Language")}
           />
         </SettingsSection>
 
         {/* Support Section */}
-        <SettingsSection title="Support">
+        <SettingsSection title={t("settings.support")}>
           <SettingsItem
             icon="help-circle-outline"
-            title="Help & Support"
-            subtitle="Get help with your account"
+            title={t("settings.helpSupport")}
+            subtitle={t("settings.helpSupportSub")}
             onPress={() => {
               Toast.show({
                 type: "info",
-                text1: "Coming Soon",
+                text1: t("settings.comingSoon"),
                 text2: "Help center will be available soon",
               });
             }}
           />
           <SettingsItem
             icon="document-text-outline"
-            title="Terms & Conditions"
+            title={t("settings.termsConditions")}
             onPress={() => {
               navigation.navigate("PrivacyPolicy", {
                 url: strings.APP_TERMS_CONDITIONS,
-                title: "Terms & Conditions",
+                title: t("settings.termsConditions"),
               });
             }}
           />
           <SettingsItem
             icon="shield-checkmark-outline"
-            title="Privacy Policy"
+            title={t("settings.privacyPolicy")}
             onPress={() => {
               navigation.navigate("PrivacyPolicy", {
                 url: strings.APP_PRIVACY_POLICY,
-                title: "Privacy Policy",
+                title: t("settings.privacyPolicy"),
               });
             }}
           />
           <SettingsItem
             icon="information-circle-outline"
-            title="About"
-            subtitle="Version 1.0.0"
+            title={t("settings.about")}
+            subtitle={t("settings.version")}
             onPress={() => {
               Toast.show({
                 type: "info",
                 text1: "OneDayJob",
-                text2: "Version 1.0.0",
+                text2: t("settings.version"),
               });
             }}
           />
         </SettingsSection>
 
         {/* Danger Zone */}
-        <SettingsSection title="Log-Out">
+        <SettingsSection title={t("settings.logout")}>
           <SettingsItem
             icon="log-out-outline"
-            title="Logout"
+            title={t("settings.logout")}
             onPress={handleLogout}
             showArrow={false}
             danger
           />
           <SettingsItem
             icon="trash-outline"
-            title="Delete Account"
-            subtitle="Permanently delete your account"
+            title={t("settings.deleteAccount")}
+            subtitle={t("settings.deleteAccountSub")}
             onPress={handleDeleteAccount}
             showArrow={false}
             danger
