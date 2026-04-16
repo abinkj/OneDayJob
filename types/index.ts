@@ -57,6 +57,9 @@ export interface User {
   totalReviews?: number;
   isVerified?: boolean;
   isActive?: boolean;
+  isProfileComplete?: boolean;
+  isSuspended?: boolean;
+  blockedUsers?: string[];
   lastLogin?: string | null;
   createdAt?: string;
   updatedAt?: string;

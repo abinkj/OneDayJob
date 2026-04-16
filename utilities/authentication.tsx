@@ -4,6 +4,7 @@ import {
   setKycStatus,
   setHasSeenOnboarding,
   completeProfile,
+  setSuspended,
 } from "../redux/reducers/authReducers";
 import {
   saveUserData,
@@ -24,6 +25,9 @@ export const loginUser =
       await saveToken(accessToken, refreshToken);
       await saveUserData(userData);
       dispatch(login(userData));
+      if (userData.isSuspended || userData.role === "suspended") {
+        dispatch(setSuspended(true));
+      }
     } catch (error) {
       console.error("Login error:", error);
       throw error;
@@ -57,6 +61,9 @@ export const restoreSession = () => async (dispatch) => {
       const savedKycStatus = await getKycStatus();
       if (savedKycStatus) {
         dispatch(setKycStatus(savedKycStatus as KycStatus));
+      }
+      if (user.isSuspended || user.role === "suspended") {
+        dispatch(setSuspended(true));
       }
 
       return user;

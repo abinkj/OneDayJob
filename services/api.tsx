@@ -7,7 +7,7 @@ import {
 } from "../utilities/secureStore";
 import { normalizeUser, storage } from "../utilities/mmkvStore";
 import { store } from "../redux/store";
-import { logout as logoutAction } from "../redux/reducers/authReducers";
+import { logout as logoutAction, setSuspended } from "../redux/reducers/authReducers";
 import NetInfo from "@react-native-community/netinfo";
 
 const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL;
@@ -151,7 +151,14 @@ api.interceptors.response.use(
     }
 
     // 403 = Forbidden → show error, do NOT logout
+    // 403 = Forbidden → show error, do NOT logout unless suspended
     if (error.response?.status === 403) {
+      if (error.response.data?.error?.message?.toLowerCase().includes("suspended") || 
+          error.response.data?.message?.toLowerCase().includes("suspended")) {
+        console.warn("Account suspended, redirecting...");
+        store.dispatch(setSuspended(true));
+        return Promise.reject(error);
+      }
       console.warn(
         "Forbidden (403):",
         error.response?.data?.error?.message || "Permission denied",

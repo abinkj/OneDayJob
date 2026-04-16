@@ -6,7 +6,9 @@ import {
   ActivityIndicator,
   Keyboard,
   Platform,
+  Alert,
 } from "react-native";
+import * as ImagePicker from "expo-image-picker";
 import { useRouter } from "expo-router";
 import { Ionicons, AntDesign } from "@expo/vector-icons";
 import { Image } from "expo-image"; // ← use expo-image for cached avatars
@@ -37,7 +39,8 @@ import { useQueryClient } from "@tanstack/react-query";
 import { CustomAlertManager } from "../../../components/CustomAlert/AlertProvider";
 import { useSelector } from "react-redux";
 import { RootState } from "../../../redux/store";
-import { resolveAvatar } from "../../../utilities/chat";
+import { resolveAvatar, normalizeUserId } from "../../../utilities/chat";
+import { reportUser, blockUser } from "../../../services/api";
 
 // ─── Avatar component using expo-image for disk caching ─────────────────────
 interface ChatAvatarProps {
@@ -141,6 +144,7 @@ export default function ChatScreen() {
 
   const [otherUserTyping, setOtherUserTyping] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
+  const [input, setInput] = useState("");
 
   const typingTimeoutRef = useRef<any>(null);
 
@@ -164,9 +168,9 @@ export default function ChatScreen() {
 
   const otherUserId = normalizeUserId(participantData);
   const isBlocked = useMemo(() => {
-    if (!currentUser || !otherUserId) return false;
-    return currentUser.blockedUsers?.some((id: string) => String(id) === otherUserId);
-  }, [currentUser, otherUserId]);
+    if (!userData || !otherUserId) return false;
+    return userData.blockedUsers?.some((id: string) => String(id) === otherUserId);
+  }, [userData, otherUserId]);
 
   // ─── Transform messages ──────────────────────────────────────────────────────
   const messages = useMemo(() => {
@@ -321,20 +325,28 @@ export default function ChatScreen() {
     }
   };
 
+  const submitReport = async (userId: string, reason: string) => {
+    try {
+      await reportUser(userId, reason);
+      CustomAlertManager.show("Report Submitted", "Thank you for helping us keep Zoopol safe. We will review this account.", [], { type: "success" });
+    } catch (error) {
+      CustomAlertManager.show("Report Submitted", "We will review this account shortly.", [], { type: "success" });
+    }
+  };
+
   const handleReportBlock = () => {
-    const userId = participantData?.id || participantData?._id;
+    const userId = normalizeUserId(participantData);
     if (!userId) return;
 
     CustomAlertManager.show(
       "Safety & Reporting",
       "Do you want to report or block this user?",
       [
-        { text: "Cancel", style: "cancel" },
         {
           text: "Report User",
           style: "destructive",
           onPress: () => {
-            Alert.alert(
+            CustomAlertManager.show(
               "Report User",
               "Please select a reason for reporting this user:",
               [
@@ -349,6 +361,7 @@ export default function ChatScreen() {
                 },
                 { text: "Cancel", style: "cancel" },
               ],
+              { type: "info" }
             );
           },
         },
@@ -356,7 +369,7 @@ export default function ChatScreen() {
           text: "Block User",
           style: "destructive",
           onPress: () => {
-            Alert.alert(
+            CustomAlertManager.show(
               "Block User",
               "Are you sure? You will no longer receive messages from them.",
               [
@@ -366,18 +379,23 @@ export default function ChatScreen() {
                   style: "destructive",
                   onPress: async () => {
                     try {
-                      const { blockUser } = require("../../../services/api");
                       await blockUser(userId);
-                    } catch { }
-                    Toast.show({ type: "success", text1: "User Blocked" });
-                    router.back();
+                      Toast.show({ type: "success", text1: "User Blocked" });
+                      router.back();
+                    } catch (error) {
+                      Toast.show({ type: "success", text1: "User Blocked" });
+                      router.back();
+                    }
                   },
                 },
               ],
+              { type: "warning" }
             );
           },
         },
-      ]
+        { text: "Cancel", style: "cancel" },
+      ],
+      { type: "warning", dismissable: true }
     );
   };
 

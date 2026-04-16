@@ -49,7 +49,6 @@ const RequestProfile: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const { userData } = useSelector((state: any) => state.authentication);
-  const isAdmin = userData?.role === "admin";
 
   const navigation = useNavigation<any>();
   const route = useRoute<any>();
@@ -178,32 +177,6 @@ const RequestProfile: React.FC = () => {
     }
   };
 
-  const handleAdminBan = () => {
-    if (!userId) return;
-
-    CustomAlertManager.show(
-      "Admin: Ban User",
-      "Suspend this user account permanently? They will be logged out and blocked from all activities.",
-      [
-        { text: "Cancel", style: "cancel" },
-        { 
-          text: "Ban User", 
-          style: "destructive", 
-          onPress: async () => {
-            try {
-              const { adminBanUser } = require("../../../services/api");
-              await adminBanUser(userId, "Violated safety policies");
-              CustomAlertManager.show("User Banned", "Account has been suspended.", [], { type: "success" });
-              navigation.goBack();
-            } catch (error) {
-               CustomAlertManager.show("Error", "Failed to ban user", [], { type: "error" });
-            }
-          } 
-        }
-      ],
-      { type: "warning" }
-    );
-  };
 
   if (isLoading && !user) {
     return (
@@ -300,17 +273,6 @@ const RequestProfile: React.FC = () => {
           </View>
         </View>
 
-        {/* Admin Section */}
-        {isAdmin && (
-          <View style={{ paddingHorizontal: 20, marginTop: 10 }}>
-            <TouchableOpacity 
-              style={{ backgroundColor: colors.red, padding: 15, borderRadius: 10, alignItems: 'center' }}
-              onPress={handleAdminBan}
-            >
-              <Text style={{ color: 'white', fontWeight: 'bold' }}>Ban User</Text>
-            </TouchableOpacity>
-          </View>
-        )}
 
         {/* Reviews Section */}
         {user?.ratings && user.ratings.length > 0 && (
