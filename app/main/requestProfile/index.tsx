@@ -12,6 +12,7 @@ import {
 } from "react-native";
 import { Image } from "expo-image";
 import { Ionicons } from "@expo/vector-icons";
+import { useSelector } from "react-redux";
 import { createStyles } from "./styles";
 import { Header } from "../../../components/header";
 import { ProfileSkeleton } from "../../../components/Shimmer/Skeletons";
@@ -25,6 +26,7 @@ import { useNavigation, useRoute, useFocusEffect } from "@react-navigation/nativ
 import { User } from "../../../types";
 import { getUserProfile } from "../../../services/api";
 import { useTheme } from "../../../contexts/ThemeContext";
+import { CustomAlertManager } from "../../../components/CustomAlert/AlertProvider";
 
 interface BackendReview {
   _id: string;
@@ -46,6 +48,7 @@ const RequestProfile: React.FC = () => {
   const [user, setUser] = useState<UserWithRatings | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const { userData } = useSelector((state: any) => state.authentication);
 
   const navigation = useNavigation<any>();
   const route = useRoute<any>();
@@ -105,27 +108,24 @@ const RequestProfile: React.FC = () => {
   const handleReportBlock = () => {
     if (!userId) return;
 
-    Alert.alert(
+    CustomAlertManager.show(
       "Safety & Reporting",
       "Do you want to report or block this user? We prioritize your safety and will review all reports within 24 hours.",
       [
         {
-          text: "Cancel",
-          style: "cancel"
-        },
-        {
           text: "Report User",
           style: "destructive",
           onPress: () => {
-            Alert.alert(
+            CustomAlertManager.show(
               "Report User",
               "Please select a reason for reporting this user:",
               [
                 { text: "Spam", onPress: () => submitReport(userId, "Spam") },
-                { text: "Abusive/Harassment", onPress: () => submitReport(userId, "Abusive") },
-                { text: "Suspicious Activity", onPress: () => submitReport(userId, "Suspicious") },
+                { text: "Abusive", onPress: () => submitReport(userId, "Abusive") },
+                { text: "Suspicious", onPress: () => submitReport(userId, "Suspicious") },
                 { text: "Cancel", style: "cancel" }
-              ]
+              ],
+              { type: "info" }
             );
           }
         },
@@ -133,7 +133,7 @@ const RequestProfile: React.FC = () => {
           text: "Block User",
           style: "destructive",
           onPress: () => {
-            Alert.alert(
+            CustomAlertManager.show(
               "Block User",
               "Are you sure you want to block this user? You will no longer receive messages from them or see their jobs.",
               [
@@ -145,20 +145,25 @@ const RequestProfile: React.FC = () => {
                     try {
                       const { blockUser } = require("../../../services/api");
                       await blockUser(userId);
-                      Alert.alert("User Blocked", "You will no longer interact with this user.");
+                      CustomAlertManager.show("User Blocked", "You will no longer interact with this user.", [], { type: "success" });
                       navigation.goBack();
                     } catch (error) {
-                      // Fallback
-                      Alert.alert("User Blocked", "Action processed successfully.");
+                      CustomAlertManager.show("User Blocked", "Action processed successfully.", [], { type: "success" });
                       navigation.goBack();
                     }
                   }
                 }
-              ]
+              ],
+              { type: "warning" }
             );
           }
+        },
+        {
+          text: "Cancel",
+          style: "cancel"
         }
-      ]
+      ],
+      { type: "warning", dismissable: true }
     );
   };
 
@@ -166,12 +171,12 @@ const RequestProfile: React.FC = () => {
     try {
       const { reportUser } = require("../../../services/api");
       await reportUser(userId, reason);
-      Alert.alert("Report Submitted", "Thank you for helping us keep Zoopol safe. We will review this account.");
+      CustomAlertManager.show("Report Submitted", "Thank you for helping us keep Zoopol safe. We will review this account.", [], { type: "success" });
     } catch (error) {
-      // Fallback
-      Alert.alert("Report Submitted", "We will review this account shortly.");
+      CustomAlertManager.show("Report Submitted", "We will review this account shortly.", [], { type: "success" });
     }
   };
+
 
   if (isLoading && !user) {
     return (
@@ -267,6 +272,7 @@ const RequestProfile: React.FC = () => {
             </View>
           </View>
         </View>
+
 
         {/* Reviews Section */}
         {user?.ratings && user.ratings.length > 0 && (

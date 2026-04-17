@@ -7,7 +7,7 @@ import {
 } from "../utilities/secureStore";
 import { normalizeUser, storage } from "../utilities/mmkvStore";
 import { store } from "../redux/store";
-import { logout as logoutAction } from "../redux/reducers/authReducers";
+import { logout as logoutAction, setSuspended } from "../redux/reducers/authReducers";
 import NetInfo from "@react-native-community/netinfo";
 
 const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL;
@@ -188,7 +188,14 @@ api.interceptors.response.use(
     }
 
     // 403 = Forbidden → show error, do NOT logout
+    // 403 = Forbidden → show error, do NOT logout unless suspended
     if (error.response?.status === 403) {
+      if (error.response.data?.error?.message?.toLowerCase().includes("suspended") || 
+          error.response.data?.message?.toLowerCase().includes("suspended")) {
+        console.warn("Account suspended, redirecting...");
+        store.dispatch(setSuspended(true));
+        return Promise.reject(error);
+      }
       console.warn(
         "Forbidden (403):",
         error.response?.data?.error?.message || "Permission denied",
@@ -745,6 +752,37 @@ export const reportUser = (
 export const blockUser = (userId: string) => {
   return api.post(`/users/${userId}/block`, {
     timestamp: new Date().toISOString(),
+  });
+};
+
+// ==================== ADMIN MODERATION API ====================
+
+// Admin: Ban a user
+export const adminBanUser = (userId: string, reason: string) => {
+  return api.post(`/admin/users/${userId}/ban`, {
+    reason,
+    timestamp: new Date().toISOString()
+  });
+};
+
+// Admin: Unban a user
+export const adminUnbanUser = (userId: string) => {
+  return api.post(`/admin/users/${userId}/unban`, {
+    timestamp: new Date().toISOString()
+  });
+};
+
+// Admin: Get reports
+export const adminGetReports = (status?: string, page: number = 1) => {
+  const query = status ? `?status=${status}&page=${page}` : `?page=${page}`;
+  return api.get(`/admin/reports${query}`);
+};
+
+// Admin: Update report status
+export const adminUpdateReportStatus = (reportId: string, status: string, notes?: string) => {
+  return api.patch(`/admin/reports/${reportId}`, {
+    status,
+    adminNotes: notes
   });
 };
 

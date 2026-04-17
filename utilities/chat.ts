@@ -26,3 +26,12 @@ export const resolveAvatar = (user: any): string => {
   const url = user?.profilePictureUrl || user?.profilePicture;
   return url && typeof url === "string" && url.startsWith("http") ? url : "";
 };
+
+/**
+ * Normalizes a user ID from various possible structures (string, object with id, object with _id).
+ */
+export const normalizeUserId = (data: any): string => {
+  if (!data) return "";
+  if (typeof data === "string") return data;
+  return String(data.id || data._id || "");
+};

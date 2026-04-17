@@ -9,6 +9,7 @@ const initialState = {
   userData: null,
   hasSeenOnboarding: false,
   isProfileComplete: false,
+  isSuspended: false,
 };
 const authSlice = createSlice({
   name: "auth",
@@ -23,7 +24,11 @@ const authSlice = createSlice({
       state.userData = null;
       state.kycStatus = "not_started";
       state.isProfileComplete = false;
+      state.isSuspended = false;
       // We generally do NOT reset hasSeenOnboarding on logout
+    },
+    setSuspended(state, action) {
+      state.isSuspended = action.payload;
     },
     setKycStatus(state, action) {
       state.kycStatus = action.payload;
@@ -57,6 +62,7 @@ export const {
   setHasSeenOnboarding,
   completeProfile,
   updateUser,
+  setSuspended,
 } = authSlice.actions;
 export default authSlice.reducer;
 // This file defines the authentication reducers using Redux Toolkit.
