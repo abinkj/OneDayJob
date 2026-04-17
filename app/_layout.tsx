@@ -20,6 +20,8 @@ import AppLayout from "../components/ui/layout";
 import { AlertProvider } from "../components/CustomAlert/AlertProvider";
 import { ThemeProvider } from "../contexts/ThemeContext";
 
+import NetworkSyncBootstrap from "../offline/NetworkSyncBootstrap";
+
 export default function RootLayout() {
   const [ready, setReady] = useState(false);
 
@@ -58,6 +60,7 @@ export default function RootLayout() {
 
   return (
     <Provider store={store}>
+      <NetworkSyncBootstrap />
       <QueryClientProvider client={queryClient}>
         <NotificationProvider>
           <AlertProvider>

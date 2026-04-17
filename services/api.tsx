@@ -21,16 +21,52 @@ const api = axios.create({
   timeout: 10000, // 10 second timeout
 });
 
+import { getDeviceOnline } from "../offline/networkState";
+import { shouldQueueRequest } from "../offline/queuePolicy";
+import { getSyncDispatch } from "../offline/syncBridge";
+import { enqueueRequest } from "../redux/reducers/offlineSyncSlice";
+import { RequestMethod } from "../offline/types";
+
 api.interceptors.request.use(
   async (config) => {
-    // ── 1. Network check FIRST — block call immediately if offline
-    const netState = await NetInfo.fetch();
-    const isOffline =
-      !netState.isConnected || netState.isInternetReachable === false;
+    // ── 1. Network check — quickly check synchronous mirror
+    const isOffline = !getDeviceOnline();
 
     if (isOffline) {
-      // Reject with a recognisable error so callers / the response
-      // interceptor can handle it cleanly without logging noise.
+      // Check if this request should be queued
+      if (shouldQueueRequest(config)) {
+        console.log("📴 Offline: Queuing request to", config.url);
+        
+        try {
+          const dispatch = getSyncDispatch();
+          const queuedRequest = {
+            id: Math.random().toString(36).substr(2, 9),
+            url: config.url || "",
+            method: (config.method?.toUpperCase() || "POST") as RequestMethod,
+            data: config.data,
+            headers: config.headers as any,
+            createdAt: Date.now(),
+            retryCount: 0,
+          };
+          
+          dispatch(enqueueRequest(queuedRequest));
+          
+          // Return a pseudo-success so the caller doesn't catch an error immediately
+          // but knows it was queued.
+          return Promise.resolve({
+            ...config,
+            data: { offlineQueued: true, requestId: queuedRequest.id },
+            status: 202, // Accepted
+            statusText: "Accepted (Queued Offline)",
+            headers: {},
+            config,
+          } as any);
+        } catch (error) {
+          console.error("Failed to enqueue offline request:", error);
+        }
+      }
+
+      // If not queueable or enqueue failed, reject with offline error
       return Promise.reject(
         Object.assign(new Error("No internet connection"), {
           code: "ERR_NETWORK_OFFLINE",
@@ -42,6 +78,7 @@ api.interceptors.request.use(
     // ── 2. Attach auth token
     try {
       const token = await getAccessToken();
+      // ... rest of the original logic
 
       console.log("API Request:", {
         method: config.method?.toUpperCase(),
