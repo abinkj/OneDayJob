@@ -248,7 +248,6 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   },
   emptyContainer: {
     alignItems: "center",
-    paddingTop: 120,
     paddingHorizontal: 40,
   },
   emptyIconContainer: {

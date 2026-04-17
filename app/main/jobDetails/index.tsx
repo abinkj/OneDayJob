@@ -37,6 +37,7 @@ import { JobDetailsSkeleton } from "../../../components/Shimmer/Skeletons";
 import * as Location from 'expo-location';
 import CustomButton from "../../../components/CustomButton";
 import { CustomAlertManager } from "../../../components/CustomAlert/AlertProvider";
+import { defaultJobCategories, getCategoryIcon } from "../../../constants/JobConstants";
 
 const JobDetails = () => {
   const { colors } = useTheme();
@@ -547,7 +548,7 @@ const JobDetails = () => {
           <View style={styles.categoryContainer}>
             <Image
               style={styles.categoryIcon}
-              source={require("../../../assets/images/cleaning.png")}
+              source={getCategoryIcon(job.category?.name)}
             />
             <Text style={styles.categoryText}>
               {job.category?.name?.toUpperCase() || "GENERAL"}

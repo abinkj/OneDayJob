@@ -44,27 +44,9 @@ import SuccessAnimation from "../../../components/SuccessAnimation";
 
 
 import FilterActionSheet, { FilterActionSheetRef } from "../../../components/FilterActionSheet";
+import { getCategoryIcon } from "../../../constants/JobConstants";
 
 
-const categoryIcons: Record<string, any> = {
-  assembly: require("../../../assets/images/assembly.png"),
-  catering: require("../../../assets/images/catering.png"),
-  cleaning: require("../../../assets/images/cleaning.png"),
-  computer: require("../../../assets/images/computer.png"),
-  delivery: require("../../../assets/images/delivery.png"),
-  hauling: require("../../../assets/images/hauling.png"),
-  paint: require("../../../assets/images/paint.png"),
-  painting: require("../../../assets/images/paint.png"),
-  repair: require("../../../assets/images/repair.png"),
-  yardwork: require("../../../assets/images/yardwork.png"),
-  default: require("../../../assets/images/custom.png"),
-};
-
-const getCategoryIcon = (categoryName?: string) => {
-  if (!categoryName) return categoryIcons.default;
-  const key = categoryName.toLowerCase();
-  return categoryIcons[key] || categoryIcons.default;
-};
 
 // Helper to format distance for display (e.g. 3167m -> 3.2km)
 const formatDistanceDisplay = (meters: number): string => {
