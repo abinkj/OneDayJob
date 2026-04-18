@@ -17,8 +17,8 @@ export const createStyles = (colors: ThemeColors) => StyleSheet.create({
   tabbar: {
     flexDirection: "row",
     justifyContent: "space-around",
-    paddingTop: 32,
-    paddingBottom: 8,
+    paddingTop: 16,
+    paddingBottom: 12,
     position: "relative",
     backgroundColor: colors.white,
   },

@@ -31,7 +31,6 @@ const EditProfile: React.FC = () => {
   const navigation = useNavigation<any>();
   const imagePickerRef = useRef<ImagePickerActionSheetRef>(null);
 
-  // Single source of truth — Redux only, no route.params, no MMKV read
   const userData = useSelector(
     (state: RootState) => state.authentication.userData,
   );
@@ -44,13 +43,12 @@ const EditProfile: React.FC = () => {
   const [profileImage, setProfileImage] = useState<string | { uri: string }>(
     Images.profile.profileImage as unknown as string,
   );
+  const [imageRemoved, setImageRemoved] = useState(false); // ← NEW
   const [isSaving, setIsSaving] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
 
   const { showAlert } = useAlert();
 
-  // Initialise form fields from Redux userData (runs once on mount, and if
-  // userData identity changes e.g. after a successful save dispatches login())
   useEffect(() => {
     if (!userData) return;
 
@@ -60,12 +58,12 @@ const EditProfile: React.FC = () => {
       (userData.locationText || userData.location?.address || "") as string,
     );
 
-    // Prefer CloudFront URL, fallback to S3 key URL, then placeholder
     const imageSource =
       userData.profilePictureUrl ||
       userData.profilePicture ||
       (Images.profile.profileImage as unknown as string);
     setProfileImage(imageSource as any);
+    setImageRemoved(false); // ← reset on userData change
   }, [userData]);
 
   // ─── Unsaved-changes guard ──────────────────────────────────────────────
@@ -81,9 +79,10 @@ const EditProfile: React.FC = () => {
       userData.lastName !== lastName.trim() ||
       (userData.locationText || userData.location?.address || "") !==
         location.trim() ||
-      !!isNewImage
+      !!isNewImage ||
+      imageRemoved // ← NEW
     );
-  }, [userData, firstName, lastName, location, profileImage]);
+  }, [userData, firstName, lastName, location, profileImage, imageRemoved]);
 
   useEffect(() => {
     const unsubscribe = navigation.addListener("beforeRemove", (e: any) => {
@@ -113,7 +112,14 @@ const EditProfile: React.FC = () => {
   const showImagePicker = () => imagePickerRef.current?.show();
 
   const handleImageSelected = (imageUri: string) => {
-    setProfileImage({ uri: imageUri });
+    if (!imageUri) {
+      // User tapped "Remove photo"
+      setProfileImage(Images.profile.profileImage as unknown as string);
+      setImageRemoved(true); // ← mark as explicitly removed
+    } else {
+      setProfileImage({ uri: imageUri });
+      setImageRemoved(false); // ← new pick clears removal flag
+    }
   };
 
   const handleImageError = (error: string) => {
@@ -166,10 +172,12 @@ const EditProfile: React.FC = () => {
     try {
       setIsSaving(true);
 
-      // Upload new profile picture if a local file was picked
       let profilePictureKey = userData?.profilePicture;
 
-      if (isNewImage && imageUri) {
+      if (imageRemoved) {
+        // ← User explicitly removed their photo
+        profilePictureKey = ""; // or null — match what your backend expects
+      } else if (isNewImage && imageUri) {
         Toast.show({
           type: "info",
           text1: "Uploading Image",
@@ -178,7 +186,6 @@ const EditProfile: React.FC = () => {
 
         const uploadResponse = await uploadProfilePicture(imageUri);
         if (uploadResponse.success && uploadResponse.data?.key) {
-          // Store S3 key — backend converts to CloudFront URL via getCdnUrl()
           profilePictureKey = uploadResponse.data.key;
         } else {
           throw new Error("Failed to upload profile picture");
@@ -206,7 +213,6 @@ const EditProfile: React.FC = () => {
 
       if (updatedData) {
         console.log("Updated data:", JSON.stringify(updatedData, null, 2));
-        // Keep MMKV in sync for any legacy consumers, then update Redux
         await saveUserData(updatedData);
         dispatch(updateUser(normalizeUser(updatedData)));
 
@@ -216,6 +222,7 @@ const EditProfile: React.FC = () => {
           text2: "Profile updated successfully",
         });
         setIsSaved(true);
+        setImageRemoved(false); // ← reset after successful save
         setTimeout(() => navigation.goBack(), 1500);
       } else {
         throw new Error("Unexpected response from server.");
@@ -257,7 +264,6 @@ const EditProfile: React.FC = () => {
         {/* Profile Image */}
         <View style={styles.imageWrapper}>
           <Image
-            //key={`edit-profile-${typeof profileImage === "string" ? profileImage : profileImage?.uri}`}
             source={resolvedImageSource}
             style={styles.profileImage}
             placeholder={Images.profile.profileImage}
@@ -313,6 +319,7 @@ const EditProfile: React.FC = () => {
         onError={handleImageError}
         title="Change Profile Picture"
         primaryColor={colors.primary}
+        showRemoveButton
       />
     </View>
   );

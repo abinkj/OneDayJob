@@ -4,13 +4,13 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  Image,
   ScrollView,
   Modal,
   Platform,
   KeyboardAvoidingView,
   FlatList,
 } from "react-native";
+import { Image } from "expo-image";
 import { useNavigation } from "@react-navigation/native";
 import { useSelector } from "react-redux";
 import { Ionicons } from "@expo/vector-icons";
@@ -42,91 +42,12 @@ import CategorySelector from "./components/CategorySelector";
 import JobDetailsForm from "./components/JobDetailsForm";
 import BudgetInput from "./components/BudgetInput";
 
-// Default Job Categories (fallback if API fails)
-const defaultJobCategories = [
-  {
-    id: "cleaning",
-    name: "Cleaning",
-    icon: require("../../../assets/images/cleaning.png"),
-  },
-  {
-    id: "assembly",
-    name: "Assembly",
-    icon: require("../../../assets/images/assembly.png"),
-  },
-  {
-    id: "repair",
-    name: "Repair",
-    icon: require("../../../assets/images/repair.png"),
-  },
-  {
-    id: "delivery",
-    name: "Delivery",
-    icon: require("../../../assets/images/delivery.png"),
-  },
-  {
-    id: "yardwork",
-    name: "Yard Work",
-    icon: require("../../../assets/images/yardwork.png"),
-  },
-  {
-    id: "hauling",
-    name: "Hauling",
-    icon: require("../../../assets/images/hauling.png"),
-  },
-  {
-    id: "catering",
-    name: "Catering",
-    icon: require("../../../assets/images/catering.png"),
-  },
-  {
-    id: "painting",
-    name: "Painting",
-    icon: require("../../../assets/images/paint.png"),
-  },
-  {
-    id: "computer",
-    name: "Computer Fixing",
-    icon: require("../../../assets/images/computer.png"),
-  },
-  {
-    id: "custom",
-    name: "Custom",
-    icon: require("../../../assets/images/custom.png"),
-  },
-];
-
-// Time Slot Data
-const timeSlots = [
-  {
-    id: "morning",
-    name: "Morning",
-    time: "Before 10AM",
-    true: require("../../../assets/images/morning.png"),
-    false: require("../../../assets/images/morningU.png"),
-  },
-  {
-    id: "midday",
-    name: "Midday",
-    time: "10AM - 2PM",
-    true: require("../../../assets/images/midday.png"),
-    false: require("../../../assets/images/middayU.png"),
-  },
-  {
-    id: "afternoon",
-    name: "Afternoon",
-    time: "2PM - 6PM",
-    true: require("../../../assets/images/afternoon.png"),
-    false: require("../../../assets/images/afternoonU.png"),
-  },
-  {
-    id: "evening",
-    name: "Evening",
-    time: "After 6PM",
-    true: require("../../../assets/images/evening.png"),
-    false: require("../../../assets/images/eveningU.png"),
-  },
-];
+import {
+  defaultJobCategories,
+  timeSlots,
+} from "../../../constants/JobConstants";
+import { RootState } from "../../../redux/store";
+import Images from "../../../utilities/images";
 
 const PostJobScreen = ({ navigation: navProp }) => {
   const { colors } = useTheme();
@@ -147,7 +68,7 @@ const PostJobScreen = ({ navigation: navProp }) => {
   const [canBeDoneRemotely, setCanBeDoneRemotely] = useState(false);
   const [taskAddress, setTaskAddress] = useState("");
   const [selectedLocation, setSelectedLocation] = useState<LocationData | null>(
-    null
+    null,
   );
   const [selectedTimePreferences, setSelectedTimePreferences] = useState([]); // Changed to array
   const [budget, setBudget] = useState(null);
@@ -179,54 +100,56 @@ const PostJobScreen = ({ navigation: navProp }) => {
   const [showMenu, setShowMenu] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [uploadedPhotoUrls, setUploadedPhotoUrls] = useState([]);
-  const [user, setUser] = useState(null);
+  //const [user, setUser] = useState(null);
   const [categoryMapping, setCategoryMapping] = useState({});
   const [showCategoryPicker, setShowCategoryPicker] = useState(false);
-
+  const user = useSelector((state: RootState) => state.authentication.userData);
   // Load categories on component mount
   useEffect(() => {
     loadCategories();
+    console.log("userrrrrrr", JSON.stringify(user, null, 2));
+
     // Test location service
     testLocationService().then((result) => {
       console.log("Location service test result:", result);
     });
   }, []);
-  useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        // Use the same getCurrentUser function as HomeScreen
-        const userData = await getCurrentUser();
+  // useEffect(() => {
+  //   const fetchUser = async () => {
+  //     try {
+  //       // Use the same getCurrentUser function as HomeScreen
+  //       const userData = await getCurrentUser();
 
-        if (userData) {
-          setUser(userData);
-          console.log("Loaded user data in PostJob:", userData);
-        } else {
-          showAlert({
-            type: "error",
-            title: "Authentication Required",
-            message: "Please log in to post a job.",
-            buttons: [
-              {
-                text: "OK",
-                onPress: () => {
-                  navigation.navigate("Login");
-                },
-              },
-            ],
-          });
-        }
-      } catch (error) {
-        console.error("Error fetching user data in PostJob:", error);
-        showAlert({
-          type: "error",
-          title: "Error",
-          message: "Unable to load user data. Please try logging in again.",
-        });
-      }
-    };
+  //       if (userData) {
+  //         setUser(userData);
+  //         console.log("Loaded user data in PostJob:", userData);
+  //       } else {
+  //         showAlert({
+  //           type: "error",
+  //           title: "Authentication Required",
+  //           message: "Please log in to post a job.",
+  //           buttons: [
+  //             {
+  //               text: "OK",
+  //               onPress: () => {
+  //                 navigation.navigate("Login");
+  //               },
+  //             },
+  //           ],
+  //         });
+  //       }
+  //     } catch (error) {
+  //       console.error("Error fetching user data in PostJob:", error);
+  //       showAlert({
+  //         type: "error",
+  //         title: "Error",
+  //         message: "Unable to load user data. Please try logging in again.",
+  //       });
+  //     }
+  //   };
 
-    fetchUser();
-  }, []);
+  //   fetchUser();
+  // }, []);
 
   // Fixed loadCategories function
   const loadCategories = async () => {
@@ -249,7 +172,7 @@ const PostJobScreen = ({ navigation: navProp }) => {
 
             // Find matching default category by name (case insensitive)
             const matchingDefault = defaultJobCategories.find(
-              (def) => def.name.toLowerCase() === category.name.toLowerCase()
+              (def) => def.name.toLowerCase() === category.name.toLowerCase(),
             );
 
             if (matchingDefault) {
@@ -463,42 +386,42 @@ const PostJobScreen = ({ navigation: navProp }) => {
 
     return true;
   };
-  const checkAuthStatus = async () => {
-    try {
-      // Use the same authentication check as HomeScreen
-      const authValid = await isAuthenticated();
+  // const checkAuthStatus = async () => {
+  //   try {
+  //     // Use the same authentication check as HomeScreen
+  //     const authValid = await isAuthenticated();
 
-      console.log("PostJob Auth check result:", authValid);
+  //     console.log("PostJob Auth check result:", authValid);
 
-      if (!authValid) {
-        showAlert({
-          type: "error",
-          title: "Authentication Required",
-          message: "Please log in to post a job.",
-          buttons: [
-            {
-              text: "OK",
-              onPress: () => {
-                navigation.navigate("Login");
-              },
-            },
-          ],
-        });
-        return false;
-      }
+  //     if (!authValid) {
+  //       showAlert({
+  //         type: "error",
+  //         title: "Authentication Required",
+  //         message: "Please log in to post a job.",
+  //         buttons: [
+  //           {
+  //             text: "OK",
+  //             onPress: () => {
+  //               navigation.navigate("Login");
+  //             },
+  //           },
+  //         ],
+  //       });
+  //       return false;
+  //     }
 
-      return true;
-    } catch (error) {
-      console.error("Error checking auth status in PostJob:", error);
-      showAlert({
-        type: "error",
-        title: "Authentication Error",
-        message:
-          "Unable to verify authentication. Please try logging in again.",
-      });
-      return false;
-    }
-  };
+  //     return true;
+  //   } catch (error) {
+  //     console.error("Error checking auth status in PostJob:", error);
+  //     showAlert({
+  //       type: "error",
+  //       title: "Authentication Error",
+  //       message:
+  //         "Unable to verify authentication. Please try logging in again.",
+  //     });
+  //     return false;
+  //   }
+  // };
 
   const currentDate = new Date();
 
@@ -507,7 +430,7 @@ const PostJobScreen = ({ navigation: navProp }) => {
     dateString: string,
     hour: string,
     minute: string,
-    amPm: "AM" | "PM"
+    amPm: "AM" | "PM",
   ) => {
     // Parse the date string (format: "YYYY-MM-DD")
     const [year, month, day] = dateString.split("-").map(Number);
@@ -528,19 +451,19 @@ const PostJobScreen = ({ navigation: navProp }) => {
       hour24,
       parseInt(minute, 10),
       0,
-      0
+      0,
     );
 
     // Convert automatically to UTC string
     const utcString = localDate.toISOString();
 
     console.log(
-      `🕐 Input: ${dateString} ${hour}:${minute} ${amPm} (IST assumed)`
+      `🕐 Input: ${dateString} ${hour}:${minute} ${amPm} (IST assumed)`,
     );
     console.log(
       `   Local time (IST): ${localDate.toLocaleString("en-IN", {
         timeZone: "Asia/Kolkata",
-      })}`
+      })}`,
     );
     console.log(`   UTC time: ${utcString}`);
 
@@ -589,7 +512,7 @@ const PostJobScreen = ({ navigation: navProp }) => {
     if (!canBeDoneRemotely && selectedLocation) {
       console.log(
         "Adding location to job data:",
-        JSON.stringify(selectedLocation, null, 2)
+        JSON.stringify(selectedLocation, null, 2),
       );
       jobData.location = selectedLocation;
     } else {
@@ -597,7 +520,7 @@ const PostJobScreen = ({ navigation: navProp }) => {
         "No location data added - remote:",
         canBeDoneRemotely,
         "selectedLocation:",
-        !!selectedLocation
+        !!selectedLocation,
       );
     }
 
@@ -609,7 +532,7 @@ const PostJobScreen = ({ navigation: navProp }) => {
         scheduleDate.toISOString().split("T")[0],
         fromHour,
         fromMinute,
-        fromAmPm as "AM" | "PM"
+        fromAmPm as "AM" | "PM",
       );
       jobData.onDate = dateTime;
       // jobData.scheduleType = "on"; // Removed as backend doesn't support it anymore
@@ -698,10 +621,10 @@ const PostJobScreen = ({ navigation: navProp }) => {
       return;
     }
 
-    const isAuth = await checkAuthStatus();
-    if (!isAuth) {
-      return;
-    }
+    // const isAuth = await checkAuthStatus();
+    // if (!isAuth) {
+    //   return;
+    // }
 
     // Double-check user data is available
     if (!user || !user.id) {
@@ -725,7 +648,7 @@ const PostJobScreen = ({ navigation: navProp }) => {
       const jobData = formatJobData();
       console.log(
         "Final job data being sent:",
-        JSON.stringify(jobData, null, 2)
+        JSON.stringify(jobData, null, 2),
       );
 
       const response = await createJobPosting(jobData);
@@ -793,8 +716,6 @@ const PostJobScreen = ({ navigation: navProp }) => {
       day: "numeric",
     });
   };
-
-
 
   const [isExactTime, setIsExactTime] = useState(false);
 
@@ -1154,8 +1075,6 @@ const PostJobScreen = ({ navigation: navProp }) => {
     hour12: true,
   });
 
-
-
   const getCategoryIcon = () => {
     const category = jobCategories.find((cat) => cat.id === selectedCategory);
     return category
@@ -1247,7 +1166,7 @@ const PostJobScreen = ({ navigation: navProp }) => {
             <Calendar
               onDayPress={handleDateSelect}
               markedDates={{
-                [scheduleDate?.toISOString().split('T')[0] || '']: {
+                [scheduleDate?.toISOString().split("T")[0] || ""]: {
                   selected: true,
                   selectedColor: colors.primary,
                 },
@@ -1256,14 +1175,16 @@ const PostJobScreen = ({ navigation: navProp }) => {
               theme={{
                 todayTextColor: colors.primary,
                 arrowColor: colors.primary,
-                selectedDayBackgroundColor: colors.primary
+                selectedDayBackgroundColor: colors.primary,
               }}
             />
             <TouchableOpacity
-              style={{ marginTop: 16, padding: 12, alignItems: 'center' }}
+              style={{ marginTop: 16, padding: 12, alignItems: "center" }}
               onPress={() => setCalendarVisible(false)}
             >
-              <Text style={{ color: colors.primary, fontWeight: 'bold' }}>Close</Text>
+              <Text style={{ color: colors.primary, fontWeight: "bold" }}>
+                Close
+              </Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -1289,7 +1210,7 @@ const PostJobScreen = ({ navigation: navProp }) => {
       )}
 
       {/* Show Time Preferences / Time Slots */}
-      {(!isExactTime) && (
+      {!isExactTime && (
         <>
           <Text style={styles.sectionTitle}>Mention your time preference</Text>
 
@@ -1300,7 +1221,7 @@ const PostJobScreen = ({ navigation: navProp }) => {
                 style={[
                   styles.timeSlot,
                   selectedTimePreferences.includes(slot.id) &&
-                  styles.selectedTimeSlot,
+                    styles.selectedTimeSlot,
                 ]}
                 onPress={() => handleTimePreferenceToggle(slot.id)}
               >
@@ -1351,7 +1272,7 @@ const PostJobScreen = ({ navigation: navProp }) => {
                 style={[
                   styles.timeSlot,
                   selectedTimePreferences.includes(slot.id) &&
-                  styles.selectedTimeSlot,
+                    styles.selectedTimeSlot,
                 ]}
                 onPress={() => handleTimePreferenceToggle(slot.id)}
               >
@@ -1581,7 +1502,7 @@ const PostJobScreen = ({ navigation: navProp }) => {
     const getTimePreferenceName = () => {
       if (selectedTimePreferences.length === 0) return "Flexible";
       const timeSlot = timeSlots.find(
-        (slot) => slot.id === selectedTimePreferences[0]
+        (slot) => slot.id === selectedTimePreferences[0],
       );
       return timeSlot ? timeSlot.name : "Flexible";
     };
@@ -1592,18 +1513,18 @@ const PostJobScreen = ({ navigation: navProp }) => {
 
       if (scheduleDate) {
         // Format: DD/MM/YYYY
-        const day = String(scheduleDate.getDate()).padStart(2, '0');
-        const month = String(scheduleDate.getMonth() + 1).padStart(2, '0');
+        const day = String(scheduleDate.getDate()).padStart(2, "0");
+        const month = String(scheduleDate.getMonth() + 1).padStart(2, "0");
         const year = scheduleDate.getFullYear();
         let result = `${day}/${month}/${year}`;
         if (fromHour && toHour && isExactTime) {
           const fromTime = `${fromHour}:${String(fromMinute).padStart(
             2,
-            "0"
+            "0",
           )} ${fromAmPm}`;
           const toTime = `${toHour}:${String(toMinute).padStart(
             2,
-            "0"
+            "0",
           )} ${toAmPm}`;
           result += ` ${fromTime} - ${toTime}`;
         } else if (
@@ -1611,7 +1532,7 @@ const PostJobScreen = ({ navigation: navProp }) => {
           selectedTimePreferences.length > 0
         ) {
           const timeSlot = timeSlots.find(
-            (slot) => slot.id === selectedTimePreferences[0]
+            (slot) => slot.id === selectedTimePreferences[0],
           );
           if (timeSlot) {
             result += ` (${timeSlot.time})`;
@@ -1729,17 +1650,22 @@ const PostJobScreen = ({ navigation: navProp }) => {
         <View style={styles.previewCard}>
           <View style={styles.previewLeftSection}>
             <View style={styles.profileSection}>
-              {user?.profilePicture || user?.profileImage ? (
+                {/* <Image
+                   style={styles.avatarContainer}
+                   source={{ uri: user.profilePictureUrl || user.profileImage }}
+
+                /> */}
+
                 <Image
-                  style={styles.avatarContainer}
-                  source={{ uri: user.profilePicture || user.profileImage }}
+                  //key={`settings-${userData?.profilePictureUrl || userData?.profilePicture}`}
+                  source={{ uri: user.profilePictureUrl || user.profileImage }}
+                  style={[styles.avatarContainer]}
+                  placeholder={Images.profile.profileImage}
+                  placeholderContentFit="cover"
+                  contentFit="cover"
+                  cachePolicy="memory-disk"
+                  //transition={300}
                 />
-              ) : (
-                <Image
-                  style={styles.avatarContainer}
-                  source={require("../../../assets/images/profile/profile.png")}
-                />
-              )}
               <Text style={styles.userName}>
                 {user?.firstName && user?.lastName
                   ? `${user.firstName} ${user.lastName}`
@@ -1774,7 +1700,7 @@ const PostJobScreen = ({ navigation: navProp }) => {
           </View>
         </View>
 
-        <View style={styles.separator} />
+        {/* <View style={styles.separator} /> */}
 
         {/* Job Details */}
         <View style={styles.detailsSection}>
@@ -1782,7 +1708,7 @@ const PostJobScreen = ({ navigation: navProp }) => {
             <Text style={styles.detailLabel}>BUDGET</Text>
             <Text style={styles.budget}>₹{budget || "500"}/person</Text>
           </View>
-          <View style={styles.separator} />
+          {/* <View style={styles.separator} /> */}
 
           <View style={styles.detailRow}>
             <Text style={styles.detailLabel}>DATE</Text>
@@ -1812,18 +1738,16 @@ const PostJobScreen = ({ navigation: navProp }) => {
             <Text style={styles.detailValue}>
               {selectedLocation
                 ? selectedLocation.address ||
-                `${selectedLocation.city}, ${selectedLocation.state}`
+                  `${selectedLocation.city}, ${selectedLocation.state}`
                 : taskAddress || "Remote"}
             </Text>
           </View>
 
           <View style={styles.detailRow}>
             <Text style={styles.detailLabel}>DESCRIPTION</Text>
-            <Text style={styles.descriptionValue}>
-              {jobDescription}
-            </Text>
+            <Text style={styles.descriptionValue}>{jobDescription}</Text>
           </View>
-          <View style={styles.separator} />
+          {/* <View style={styles.separator} /> */}
 
           {/* Photos Section */}
           {photos.length > 0 && (
@@ -1870,10 +1794,10 @@ const PostJobScreen = ({ navigation: navProp }) => {
             </>
           )}
         </View>
-        <View style={styles.separator} />
+        {/* <View style={styles.separator} /> */}
 
         {/* Edit and Remove buttons at bottom */}
-        <View style={styles.bottomActions}>
+        {/* <View style={styles.bottomActions}>
           <TouchableOpacity style={styles.editButton123} onPress={handleEdit}>
             <Ionicons name="create-outline" size={20} color={colors.grey} />
             <Text style={styles.editButtonText}>Edit</Text>
@@ -1886,7 +1810,7 @@ const PostJobScreen = ({ navigation: navProp }) => {
             <Ionicons name="trash-outline" size={20} color="red" />
             <Text style={styles.removeButtonText}>Remove Job</Text>
           </TouchableOpacity>
-        </View>
+        </View> */}
       </View>
     );
   };
@@ -1945,14 +1869,16 @@ const PostJobScreen = ({ navigation: navProp }) => {
         </ScrollView>
 
         {/* Fixed button container - always visible above keyboard */}
-        <View style={{
-          //paddingHorizontal: 20,
-          paddingVertical: 16,
-          paddingBottom: Platform.OS === "ios" ? 20 : 16,
-          backgroundColor: colors.background,
-          borderTopWidth: 1,
-          borderTopColor: colors.border,
-        }}>
+        <View
+          style={{
+            //paddingHorizontal: 20,
+            paddingVertical: 16,
+            paddingBottom: Platform.OS === "ios" ? 20 : 16,
+            backgroundColor: colors.background,
+            borderTopWidth: 1,
+            borderTopColor: colors.border,
+          }}
+        >
           {currentStep === 5 ? (
             <CustomButton
               text={"Post"}
@@ -1981,7 +1907,9 @@ const PostJobScreen = ({ navigation: navProp }) => {
                 <Text style={styles.modalTitle}>
                   Add Requirements for the Job
                 </Text>
-                <TouchableOpacity onPress={() => setShowRequirementsModal(false)}>
+                <TouchableOpacity
+                  onPress={() => setShowRequirementsModal(false)}
+                >
                   <Ionicons name="close" size={24} color={colors.grey} />
                 </TouchableOpacity>
               </View>
@@ -1999,7 +1927,11 @@ const PostJobScreen = ({ navigation: navProp }) => {
                   onPress={handleAddRequirement}
                   style={styles.addButton}
                 >
-                  <Ionicons name="add-circle" size={24} color={colors.primary} />
+                  <Ionicons
+                    name="add-circle"
+                    size={24}
+                    color={colors.primary}
+                  />
                 </TouchableOpacity>
               </View>
 
@@ -2067,7 +1999,6 @@ const PostJobScreen = ({ navigation: navProp }) => {
             </View>
           </View>
         </Modal>
-
       </KeyboardAvoidingView>
     </View>
   );

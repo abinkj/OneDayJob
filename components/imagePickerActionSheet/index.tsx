@@ -21,6 +21,7 @@ interface ImagePickerActionSheetProps {
   buttonTextStyle?: object;
   cancelButtonStyle?: object;
   cancelTextStyle?: object;
+  showRemoveButton?: boolean;
 }
 
 const ImagePickerActionSheet = forwardRef<
@@ -39,6 +40,7 @@ const ImagePickerActionSheet = forwardRef<
       buttonTextStyle,
       cancelButtonStyle,
       cancelTextStyle,
+      showRemoveButton = false,
     },
     ref,
   ) => {
@@ -50,6 +52,11 @@ const ImagePickerActionSheet = forwardRef<
       show: () => actionSheetRef.current?.show(),
       hide: () => actionSheetRef.current?.hide(),
     }));
+
+    const handleRemovePhoto = () => {
+      actionSheetRef.current?.hide();
+      onImageSelected("");
+    };
 
     const handleTakePhoto = async () => {
       actionSheetRef.current?.hide();
@@ -68,6 +75,8 @@ const ImagePickerActionSheet = forwardRef<
             aspect: [1, 1],
             base64: false,
             quality: 0.8,
+            allowsMultipleSelection: false,
+            mediaTypes: ["images"],
           });
 
           if (!result.canceled && result.assets[0]) {
@@ -213,6 +222,16 @@ const ImagePickerActionSheet = forwardRef<
             <Ionicons name="images" size={24} color={activePrimaryColor} />
             <Text style={defaultButtonTextStyle}>Choose from Gallery</Text>
           </TouchableOpacity>
+          {showRemoveButton && (
+            <TouchableOpacity
+              style={defaultButtonStyle}
+              onPress={handleRemovePhoto}
+              activeOpacity={0.7}
+            >
+              <Ionicons name="trash" size={24} color={activePrimaryColor} />
+              <Text style={defaultButtonTextStyle}>Remove Photo</Text>
+            </TouchableOpacity>
+          )}
 
           <TouchableOpacity
             style={defaultCancelButtonStyle}

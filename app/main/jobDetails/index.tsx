@@ -37,6 +37,7 @@ import { JobDetailsSkeleton } from "../../../components/Shimmer/Skeletons";
 import * as Location from 'expo-location';
 import CustomButton from "../../../components/CustomButton";
 import { CustomAlertManager } from "../../../components/CustomAlert/AlertProvider";
+import { defaultJobCategories, getCategoryIcon } from "../../../constants/JobConstants";
 import { isJobOwner, isAssignedWorker, handleArrivalAction } from "../../../utilities/jobUtils";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -63,7 +64,7 @@ const JobDetails = () => {
 
   // Notification context
   const { sendJobUpdateNotification } = useNotifications();
-  
+
   const [arrivalLoading, setArrivalLoading] = useState(false);
   const [currentLocationAddress, setCurrentLocationAddress] = useState<string>("Getting location...");
 
@@ -477,7 +478,7 @@ const JobDetails = () => {
           <View style={styles.categoryContainer}>
             <Image
               style={styles.categoryIcon}
-              source={require("../../../assets/images/cleaning.png")}
+              source={getCategoryIcon(job.category?.name)}
             />
             <Text style={styles.categoryText}>
               {job.category?.name?.toUpperCase() || "GENERAL"}
@@ -525,21 +526,19 @@ const JobDetails = () => {
               style={[
                 styles.locationText,
                 !job.isRemote &&
-                  !(
-                    job.jobStatus === "completed" || job.status === "completed"
-                  ) && {
-                    color: colors.primary,
-                    textDecorationLine: "underline",
-                  },
+                !(
+                  job.jobStatus === "completed" || job.status === "completed"
+                ) && {
+                  color: colors.primary,
+                  textDecorationLine: "underline",
+                },
               ]}
             >
               {job.isRemote
                 ? "Remote Work"
-                : `${job.location?.address || ""}${
-                    job.location?.city ? ", " + job.location.city : ""
-                  }${job.location?.state ? ", " + job.location.state : ""}${
-                    job.location?.country ? ", " + job.location.country : ""
-                  }`}
+                : `${job.location?.address || ""}${job.location?.city ? ", " + job.location.city : ""
+                }${job.location?.state ? ", " + job.location.state : ""}${job.location?.country ? ", " + job.location.country : ""
+                }`}
             </Text>
           </TouchableOpacity>
         </View>
@@ -597,15 +596,15 @@ const JobDetails = () => {
               <Text style={styles.detailValue}>
                 {job.createdAt
                   ? (() => {
-                      const date = new Date(job.createdAt);
-                      const day = String(date.getDate()).padStart(2, "0");
-                      const month = String(date.getMonth() + 1).padStart(
-                        2,
-                        "0",
-                      );
-                      const year = date.getFullYear();
-                      return `${day}/${month}/${year}`;
-                    })()
+                    const date = new Date(job.createdAt);
+                    const day = String(date.getDate()).padStart(2, "0");
+                    const month = String(date.getMonth() + 1).padStart(
+                      2,
+                      "0",
+                    );
+                    const year = date.getFullYear();
+                    return `${day}/${month}/${year}`;
+                  })()
                   : "N/A"}
               </Text>
             </View>
@@ -648,7 +647,7 @@ const JobDetails = () => {
         {job.requiresVerification && !isEmployer && isAccepted && (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Job Verification</Text>
-            
+
             {job.isCompletedByWorker ? (
               <View style={styles.verificationStatusContainer}>
                 <View style={styles.verificationStatusRow}>
@@ -686,7 +685,7 @@ const JobDetails = () => {
                           <Text style={styles.verificationMessageText}>
                             You must reach the job site and mark your arrival to proceed.
                           </Text>
-                          <TouchableOpacity 
+                          <TouchableOpacity
                             style={[styles.refreshCodeButtonLarge, { marginTop: 12, backgroundColor: '#10B981' }]}
                             onPress={handleArrival}
                             disabled={arrivalLoading}
@@ -717,7 +716,7 @@ const JobDetails = () => {
                           <Text style={styles.verificationMessageText}>
                             Waiting for employer to approve your arrival. If the employer is nearby, you can ask them to verify you on their "Verify" tab.
                           </Text>
-                          <TouchableOpacity 
+                          <TouchableOpacity
                             style={[styles.refreshCodeButtonLarge, { marginTop: 12, backgroundColor: colors.primary }]}
                             onPress={checkVerificationStatus}
                           >
@@ -737,10 +736,10 @@ const JobDetails = () => {
                           <Text style={styles.verificationMessageText}>
                             You are verified and can start working!
                           </Text>
-                          <TouchableOpacity 
+                          <TouchableOpacity
                             style={[styles.refreshCodeButtonLarge, { marginTop: 12, backgroundColor: colors.primary }]}
-                            onPress={() => navigation.navigate('JobTimer', { 
-                              jobId: job._id, 
+                            onPress={() => navigation.navigate('JobTimer', {
+                              jobId: job._id,
                               jobName: job.name,
                               employerId: job.userId?._id || job.userId?.id || job.userId,
                               employerName: `${job.userId?.firstName || ''} ${job.userId?.lastName || ''}`.trim(),
@@ -816,20 +815,20 @@ const JobDetails = () => {
           ]}
         >
           {applied ||
-          job.hasApplied ||
-          isAccepted ||
-          (job.applicants &&
-            Array.isArray(job.applicants) &&
-            job.applicants.some(
-              (applicant: any) =>
-                applicant === userData?.id ||
-                applicant === userData?._id ||
-                applicant?.id === userData?.id ||
-                applicant?._id === userData?._id,
-            )) ? (
+            job.hasApplied ||
+            isAccepted ||
+            (job.applicants &&
+              Array.isArray(job.applicants) &&
+              job.applicants.some(
+                (applicant: any) =>
+                  applicant === userData?.id ||
+                  applicant === userData?._id ||
+                  applicant?.id === userData?.id ||
+                  applicant?._id === userData?._id,
+              )) ? (
             <CustomButton
               text="Applied"
-              onPress={() => {}}
+              onPress={() => { }}
               disabled={true}
               color="#ccc"
               style={{ flex: 1 }}
@@ -839,7 +838,7 @@ const JobDetails = () => {
             job.jobStatus === "filled" ? (
             <CustomButton
               text={job.jobStatus === "filled" ? "Job Filled" : "Job Completed"}
-              onPress={() => {}}
+              onPress={() => { }}
               disabled={true}
               color="#ccc"
               style={{ flex: 1 }}

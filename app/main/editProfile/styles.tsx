@@ -26,6 +26,8 @@ export const createStyles = (colors: ThemeColors) =>
       height: 100,
       borderRadius: 50,
       backgroundColor: colors.categoryBox,
+      borderWidth: 3,
+      borderColor: colors.primary,
     },
     editIcon: {
       position: "absolute",

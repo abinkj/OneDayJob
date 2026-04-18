@@ -128,7 +128,6 @@ const Settings: React.FC = () => {
   const { theme, colors, toggleTheme } = useTheme();
   const darkMode = theme === "dark";
 
-
   const { showAlert } = useAlert();
 
   const handleEditProfile = () => {
@@ -374,7 +373,14 @@ const Settings: React.FC = () => {
             onPress={() => navigation.navigate("Language")}
           />
         </SettingsSection>
-
+        <SettingsSection title={"Job Postings"}>
+          <SettingsItem
+            icon="log-out-outline"
+            title={"Job Posting History"}
+            onPress={() => navigation.navigate("JobPostingHistory")}
+            showArrow={false}
+          />
+        </SettingsSection>
         {/* Support Section */}
         <SettingsSection title={t("settings.support")}>
           <SettingsItem
@@ -420,15 +426,6 @@ const Settings: React.FC = () => {
                 text2: t("settings.version"),
               });
             }}
-          />
-        </SettingsSection>
-
-        <SettingsSection title={"Job Postings"}>
-          <SettingsItem
-            icon="log-out-outline"
-            title={'Job Posting History'}
-            onPress={() => navigation.navigate("JobPostingHistory")}
-            showArrow={false}
           />
         </SettingsSection>
 

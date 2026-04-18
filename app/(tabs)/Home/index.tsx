@@ -44,6 +44,7 @@ import socketService from "../../../services/socketService";
 
 import FilterActionSheet, { FilterActionSheetRef } from "../../../components/FilterActionSheet";
 
+
 const categoryIcons: Record<string, any> = {
   assembly: require("../../../assets/images/assembly.png"),
   catering: require("../../../assets/images/catering.png"),
@@ -62,6 +63,13 @@ const getCategoryIcon = (categoryName?: string) => {
   if (!categoryName) return categoryIcons.default;
   const key = categoryName.toLowerCase();
   return categoryIcons[key] || categoryIcons.default;
+};
+
+// Helper to format distance for display (e.g. 3167m -> 3.2km)
+const formatDistanceDisplay = (meters: number): string => {
+  if (!meters || meters === 0) return "0m";
+  if (meters < 1000) return `${Math.round(meters)}m`;
+  return `${(meters / 1000).toFixed(1)} km`;
 };
 
 const HomeScreen = () => {
