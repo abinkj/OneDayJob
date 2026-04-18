@@ -7,6 +7,7 @@ import { ThemeColors } from "../../constants/Colors";
 
 interface HeaderProps {
   title?: string;
+  subtitle?: string; // Optional secondary line shown below title
   showBackButton?: boolean;
   showEditButton?: boolean;
   onEditPress?: () => void;
@@ -21,6 +22,7 @@ interface HeaderProps {
 
 export const Header: React.FC<HeaderProps> = ({
   title,
+  subtitle,
   showBackButton,
   showEditButton = false,
   onEditPress,
@@ -39,8 +41,11 @@ export const Header: React.FC<HeaderProps> = ({
   const handleBack = () => {
     if (onBackPress) {
       onBackPress();
-    } else {
+    } else if (router.canGoBack()) {
       router.back();
+    } else {
+      // Fallback to Home if we can't go back (prevents crash on deep links)
+      router.replace("/(tabs)/Home");
     }
   };
 
@@ -52,7 +57,12 @@ export const Header: React.FC<HeaderProps> = ({
         </TouchableOpacity>
       )}
 
-      <Text style={styles.title}>{title}</Text>
+      <View style={{ alignItems: 'center' }}>
+        <Text style={styles.title}>{title}</Text>
+        {!!subtitle && (
+          <Text style={{ fontSize: 12, color: colors.grey, marginTop: 2 }} numberOfLines={1}>{subtitle}</Text>
+        )}
+      </View>
 
       {headerRight && (
         <View style={styles.rightContainer}>

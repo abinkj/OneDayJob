@@ -38,12 +38,15 @@ import * as Location from 'expo-location';
 import CustomButton from "../../../components/CustomButton";
 import { CustomAlertManager } from "../../../components/CustomAlert/AlertProvider";
 import { defaultJobCategories, getCategoryIcon } from "../../../constants/JobConstants";
+import { isJobOwner, isAssignedWorker, handleArrivalAction } from "../../../utilities/jobUtils";
+import { useQueryClient } from "@tanstack/react-query";
 
 const JobDetails = () => {
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const navigation = useNavigation<any>();
   const route = useRoute<any>();
+  const queryClient = useQueryClient();
   const insets = useSafeAreaInsets();
   const { kycStatus, userData } = useSelector(
     (state: any) => state.authentication,
@@ -61,26 +64,13 @@ const JobDetails = () => {
 
   // Notification context
   const { sendJobUpdateNotification } = useNotifications();
-  
+
   const [arrivalLoading, setArrivalLoading] = useState(false);
   const [currentLocationAddress, setCurrentLocationAddress] = useState<string>("Getting location...");
 
   // Helper variables for role-based logic
-  const isEmployer =
-      (job?.userId?._id && userData?.id && job.userId._id === userData.id) ||
-      (job?.userId?._id && userData?._id && job.userId._id === userData._id) ||
-      (job?.userId?.id && userData?.id && job.userId.id === userData.id) ||
-      (job?.userId?.id && userData?._id && job.userId.id === userData._id) ||
-      (job?.userId === userData?.id) ||
-      (job?.userId === userData?._id);
-
-  const isAccepted =
-   (job as any)?.assignedUsers?.some((u: any) => {
-     const uId = typeof u === "string" ? u : u._id || u.id;
-     return uId === userData?.id || uId === userData?._id;
-   }) ||
-   (job?.assignedUsers as any)?.includes(userData?.id) ||
-   (job?.assignedUsers as any)?.includes(userData?._id);
+  const isEmployer = isJobOwner(job, userData?.id || userData?._id);
+  const isAccepted = isAssignedWorker(job, userData?.id || userData?._id);
 
   // Fetch current location on mount
   useEffect(() => {
@@ -112,9 +102,7 @@ const JobDetails = () => {
       setJob(jobData);
 
       // FIX 4: Only check verification status if job requires verification AND user is not the employer
-      const isEmployerCheck =
-        jobData.userId?._id === userData?.id ||
-        jobData.userId?.id === userData?.id;
+      const isEmployerCheck = isJobOwner(jobData, userData?.id || userData?._id);
       if (jobData.requiresVerification && jobId && !isEmployerCheck) {
         checkVerificationStatus();
       }
@@ -384,72 +372,14 @@ const JobDetails = () => {
     return reqs.join(", ");
   };
 
+
   const handleArrival = async () => {
-    try {
-      setArrivalLoading(true);
-
-      // 1. Get current GPS location
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== 'granted') {
-        Toast.show({
-          type: 'error',
-          text1: 'Location Permission Required',
-          text2: 'Please enable location access to mark your arrival.',
-        });
-        return;
-      }
-
-      Toast.show({
-        type: 'info',
-        text1: 'Getting your location...',
-        visibilityTime: 1500,
-      });
-
-      const loc = await Location.getCurrentPositionAsync({
-        accuracy: Location.Accuracy.High,
-      });
-
-      const { latitude, longitude } = loc.coords;
-      console.log('[Arrival] Current location:', { latitude, longitude });
-
-      // 2. Call arrival API
-      const response = await markArrival(jobId, latitude, longitude);
-
-      if (response.data?.success) {
-        Toast.show({
-          type: 'success',
-          text1: 'Arrival Marked! ✅',
-          text2: `You are ${response.data.data?.distance || 0}m from the job site. Waiting for employer approval.`,
-        });
-        // Refresh status
-        checkVerificationStatus();
-      } else {
-        const dist = response.data?.data?.distance;
-        Toast.show({
-          type: 'error',
-          text1: 'Too Far Away',
-          text2: dist
-            ? `You are ${dist}m away. Move within 500m of the job site.`
-            : response.data?.message || 'Could not verify your location.',
-        });
-      }
-    } catch (error: any) {
-      console.log('[Arrival] Error status:', error?.response?.status);
-      const isSessionNotFound = error?.response?.status === 404 && 
-                               error?.response?.data?.error?.message?.includes('session');
-      
-      const msg = isSessionNotFound 
-        ? 'The employer hasn\'t started the job session yet. Please wait for them to start.'
-        : error?.response?.data?.message || 'Failed to mark arrival. Please try again.';
-        
-      const dist = error?.response?.data?.data?.distance;
-      Toast.show({
-        type: 'error',
-        text1: dist ? 'Too Far Away' : (isSessionNotFound ? 'Wait for Employer' : 'Arrival Failed'),
-        text2: dist ? `You are ${dist}m away. Move within 500m of the job site.` : msg,
-      });
-    } finally {
-      setArrivalLoading(false);
+    const result = await handleArrivalAction(jobId, setArrivalLoading);
+    if (result.success) {
+      // Invalidate queries to sync with backend
+      queryClient.invalidateQueries({ queryKey: ['jobs'] });
+      // Immediately refresh local verification status
+      checkVerificationStatus();
     }
   };
 
@@ -596,21 +526,19 @@ const JobDetails = () => {
               style={[
                 styles.locationText,
                 !job.isRemote &&
-                  !(
-                    job.jobStatus === "completed" || job.status === "completed"
-                  ) && {
-                    color: colors.primary,
-                    textDecorationLine: "underline",
-                  },
+                !(
+                  job.jobStatus === "completed" || job.status === "completed"
+                ) && {
+                  color: colors.primary,
+                  textDecorationLine: "underline",
+                },
               ]}
             >
               {job.isRemote
                 ? "Remote Work"
-                : `${job.location?.address || ""}${
-                    job.location?.city ? ", " + job.location.city : ""
-                  }${job.location?.state ? ", " + job.location.state : ""}${
-                    job.location?.country ? ", " + job.location.country : ""
-                  }`}
+                : `${job.location?.address || ""}${job.location?.city ? ", " + job.location.city : ""
+                }${job.location?.state ? ", " + job.location.state : ""}${job.location?.country ? ", " + job.location.country : ""
+                }`}
             </Text>
           </TouchableOpacity>
         </View>
@@ -668,26 +596,58 @@ const JobDetails = () => {
               <Text style={styles.detailValue}>
                 {job.createdAt
                   ? (() => {
-                      const date = new Date(job.createdAt);
-                      const day = String(date.getDate()).padStart(2, "0");
-                      const month = String(date.getMonth() + 1).padStart(
-                        2,
-                        "0",
-                      );
-                      const year = date.getFullYear();
-                      return `${day}/${month}/${year}`;
-                    })()
+                    const date = new Date(job.createdAt);
+                    const day = String(date.getDate()).padStart(2, "0");
+                    const month = String(date.getMonth() + 1).padStart(
+                      2,
+                      "0",
+                    );
+                    const year = date.getFullYear();
+                    return `${day}/${month}/${year}`;
+                  })()
                   : "N/A"}
               </Text>
             </View>
           </View>
         </View>
 
+        {/* Employer Verification Shortcut */}
+        {isEmployer && job?.requiresVerification && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Manage Workers</Text>
+            <View style={{
+              backgroundColor: colors.primary + '10',
+              padding: 16,
+              borderRadius: 12,
+              borderWidth: 1,
+              borderColor: colors.primary + '20'
+            }}>
+              <Text style={{ fontSize: 13, color: colors.grey, marginBottom: 12 }}>
+                Assigned workers must reach the location and be verified by you before the timer starts.
+              </Text>
+              <TouchableOpacity
+                style={{
+                  backgroundColor: colors.primary,
+                  paddingVertical: 12,
+                  borderRadius: 10,
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+                onPress={() => navigation.navigate('RequestVerification', { jobId, jobName: job.name })}
+              >
+                <Ionicons name="checkmark-circle-outline" size={18} color="#fff" style={{ marginRight: 8 }} />
+                <Text style={{ color: '#fff', fontWeight: '700' }}>Verify Arrived Workers</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        )}
+
         {/* Verification & Arrival Section - NEW STRATEGY */}
         {job.requiresVerification && !isEmployer && isAccepted && (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Job Verification</Text>
-            
+
             {job.isCompletedByWorker ? (
               <View style={styles.verificationStatusContainer}>
                 <View style={styles.verificationStatusRow}>
@@ -725,7 +685,7 @@ const JobDetails = () => {
                           <Text style={styles.verificationMessageText}>
                             You must reach the job site and mark your arrival to proceed.
                           </Text>
-                          <TouchableOpacity 
+                          <TouchableOpacity
                             style={[styles.refreshCodeButtonLarge, { marginTop: 12, backgroundColor: '#10B981' }]}
                             onPress={handleArrival}
                             disabled={arrivalLoading}
@@ -756,7 +716,7 @@ const JobDetails = () => {
                           <Text style={styles.verificationMessageText}>
                             Waiting for employer to approve your arrival. If the employer is nearby, you can ask them to verify you on their "Verify" tab.
                           </Text>
-                          <TouchableOpacity 
+                          <TouchableOpacity
                             style={[styles.refreshCodeButtonLarge, { marginTop: 12, backgroundColor: colors.primary }]}
                             onPress={checkVerificationStatus}
                           >
@@ -776,9 +736,15 @@ const JobDetails = () => {
                           <Text style={styles.verificationMessageText}>
                             You are verified and can start working!
                           </Text>
-                          <TouchableOpacity 
+                          <TouchableOpacity
                             style={[styles.refreshCodeButtonLarge, { marginTop: 12, backgroundColor: colors.primary }]}
-                            onPress={() => navigation.navigate('JobTimer', { jobId: job._id, jobName: job.name })}
+                            onPress={() => navigation.navigate('JobTimer', {
+                              jobId: job._id,
+                              jobName: job.name,
+                              employerId: job.userId?._id || job.userId?.id || job.userId,
+                              employerName: `${job.userId?.firstName || ''} ${job.userId?.lastName || ''}`.trim(),
+                              employerImage: job.userId?.profilePicture
+                            })}
                           >
                             <Text style={styles.refreshCodeButtonText}>Go to Timer</Text>
                           </TouchableOpacity>
@@ -849,20 +815,20 @@ const JobDetails = () => {
           ]}
         >
           {applied ||
-          job.hasApplied ||
-          isAccepted ||
-          (job.applicants &&
-            Array.isArray(job.applicants) &&
-            job.applicants.some(
-              (applicant: any) =>
-                applicant === userData?.id ||
-                applicant === userData?._id ||
-                applicant?.id === userData?.id ||
-                applicant?._id === userData?._id,
-            )) ? (
+            job.hasApplied ||
+            isAccepted ||
+            (job.applicants &&
+              Array.isArray(job.applicants) &&
+              job.applicants.some(
+                (applicant: any) =>
+                  applicant === userData?.id ||
+                  applicant === userData?._id ||
+                  applicant?.id === userData?.id ||
+                  applicant?._id === userData?._id,
+              )) ? (
             <CustomButton
               text="Applied"
-              onPress={() => {}}
+              onPress={() => { }}
               disabled={true}
               color="#ccc"
               style={{ flex: 1 }}
@@ -872,7 +838,7 @@ const JobDetails = () => {
             job.jobStatus === "filled" ? (
             <CustomButton
               text={job.jobStatus === "filled" ? "Job Filled" : "Job Completed"}
-              onPress={() => {}}
+              onPress={() => { }}
               disabled={true}
               color="#ccc"
               style={{ flex: 1 }}

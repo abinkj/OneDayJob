@@ -5,6 +5,7 @@ import { useNavigation } from '@react-navigation/native';
 import { useSelector } from 'react-redux';
 import { JobPost } from '../../../../types';
 import { useTheme } from '../../../../contexts/ThemeContext';
+import { isJobOwner } from '../../../../utilities/jobUtils';
 
 interface LiveJobHeaderProps {
     job: JobPost;
@@ -57,26 +58,25 @@ const LiveJobHeader: React.FC<LiveJobHeaderProps> = ({
     });
 
     const handlePress = () => {
-        // Determine if current user is the employer (job creator)
-        // job.userId can be either a string ID or an object with id property
-        const jobCreatorId = typeof job.userId === 'object' && job.userId !== null
-            ? (job.userId.id || job.userId._id)
-            : job.userId;
-
-        const isEmployer = jobCreatorId === userId;
+        const isEmployer = isJobOwner(job, userId);
 
         console.log('[LiveJobHeader] Navigation:', {
             isEmployer,
-            jobCreatorId,
             currentUserId: userId,
-            jobUserId: job.userId
         });
 
-        navigation.navigate("JobTimer", {
-            jobId: job._id,
-            jobName: job.name,
-            isEmployer: isEmployer,
-        });
+        if (isEmployer && (job.jobStatus === 'open' || job.jobStatus === 'filled')) {
+            navigation.navigate("RequestVerification", {
+                jobId: job._id,
+                jobName: job.name
+            });
+        } else {
+            navigation.navigate("JobTimer", {
+                jobId: job._id,
+                jobName: job.name,
+                isEmployer: isEmployer,
+            });
+        }
     };
 
     return (

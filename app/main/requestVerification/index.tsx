@@ -1260,7 +1260,8 @@ const RequestsVerifyTab = ({
 const RequestVerification = () => {
   // const layout = useWindowDimensions(); // TABVIEW COMMENTED
   const route = useRoute<any>();
-  const { jobId, initialTab, workerId } = route.params || {};
+  const navigation = useNavigation<any>();
+  const { jobId, initialTab, workerId, jobName } = route.params || {};
 
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
@@ -1271,6 +1272,20 @@ const RequestVerification = () => {
   const [verifiedCount, setVerifiedCount] = useState(0);
   const [initialDataLoaded, setInitialDataLoaded] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+  // Real-time socket listener: auto-refresh when a worker marks arrival
+  useEffect(() => {
+    let socket: any = null;
+    try {
+      const socketService = require('../../../services/socketService').default;
+      socket = socketService?.socket;
+    } catch { /* ignore */ }
+    if (!socket) return;
+    const onWorkerArrived = () => {
+      setRefreshTrigger(prev => prev + 1);
+    };
+    socket.on('worker-arrived', onWorkerArrived);
+    return () => { socket.off('worker-arrived', onWorkerArrived); };
+  }, []);
 
   // const [routes] = useState([ // TABVIEW COMMENTED
   //   { key: "requests", title: "Requests" }, // TABVIEW COMMENTED
@@ -1419,7 +1434,7 @@ const RequestVerification = () => {
 
   return (
     <View style={styles.container}>
-      <Header showBackButton={true} title="Request Verification" />
+      <Header showBackButton={true} title={jobName ? `Verify Workers` : 'Request Verification'} subtitle={jobName || undefined} />
       {/* TABVIEW COMMENTED
       <TabView
         navigationState={{ index, routes }}

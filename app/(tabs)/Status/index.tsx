@@ -9,6 +9,7 @@ import {
   Animated,
   RefreshControl,
   DeviceEventEmitter,
+  TouchableOpacity,
 } from "react-native";
 import {
   TabView,
@@ -41,6 +42,7 @@ import {
 import { createStyles } from "./styles";
 import { useTheme } from "../../../contexts/ThemeContext";
 import Toast from "react-native-toast-message";
+import { isJobOwner, isAssignedWorker, isJobToday, isJobLiveOrDueToday, formatJobDate } from "../../../utilities/jobUtils";
 
 type Route = {
   key: string;
@@ -155,6 +157,11 @@ const MyPostTab = () => {
     }
   }, [selectedStatus, posts]);
 
+  // Find active jobs for employer highlight
+  const activeEmployerJobs = React.useMemo(() => {
+    return posts.filter(post => post.jobStatus === 'in_progress' || (post.onDate === 'today' && post.jobStatus === 'open' && (post.applicantCount || 0) > 0));
+  }, [posts]);
+
   if (isLoading && !isRefetching && posts.length === 0) {
     return (
       <View style={{ flex: 1, backgroundColor: colors.background }}>
@@ -229,6 +236,51 @@ const MyPostTab = () => {
           onStatusSelect={setSelectedStatus}
           showAll={true}
         />
+      )}
+
+      {/* Active Job Highlight for Employer */}
+      {activeEmployerJobs.length > 0 && selectedStatus === null && (
+        <View style={{ paddingHorizontal: 16, marginTop: 16 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
+            <View style={{ backgroundColor: '#F59E0B', width: 4, height: 16, borderRadius: 2 }} />
+            <Text style={{ fontSize: 16, fontWeight: '700', color: colors.black, marginLeft: 8 }}>Live Now</Text>
+          </View>
+          {activeEmployerJobs.map(job => (
+            <TouchableOpacity 
+              key={job._id}
+              style={{
+                backgroundColor: colors.white,
+                borderRadius: 14,
+                padding: 14,
+                marginBottom: 10,
+                borderWidth: 1,
+                borderColor: '#F59E0B' + '40',
+                flexDirection: 'row',
+                alignItems: 'center',
+                shadowColor: '#F59E0B',
+                shadowOffset: { width: 0, height: 4 },
+                shadowOpacity: 0.1,
+                shadowRadius: 8,
+                elevation: 3
+              }}
+              onPress={() => handleNext(job._id)}
+            >
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontSize: 15, fontWeight: '700', color: colors.black }} numberOfLines={1}>{job.name}</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 4 }}>
+                  <Text style={{ fontSize: 13, color: '#F59E0B', fontWeight: '600' }}>
+                    {job.jobStatus === 'in_progress' ? 'Running' : 'Ready to Start'}
+                  </Text>
+                  <Text style={{ fontSize: 13, color: colors.grey }}> • {job.applicantCount || 0} Workers</Text>
+                </View>
+              </View>
+              <View style={{ backgroundColor: '#F59E0B', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8 }}>
+                <Text style={{ color: colors.white, fontWeight: '700', fontSize: 13 }}>Verify</Text>
+              </View>
+            </TouchableOpacity>
+          ))}
+          <View style={{ height: 1, backgroundColor: colors.border, marginVertical: 10, opacity: 0.5 }} />
+        </View>
       )}
       <FlatList
         ref={flatListRef}
@@ -383,6 +435,18 @@ const AppliedTab = () => {
     }
   }, [selectedStatus, appliedJobs]);
 
+  // Find active jobs for worker highlight
+  const activeWorkerJobs = React.useMemo(() => {
+    return appliedJobs.filter(app => {
+      const job = app.job;
+      if (!job) return false;
+      const isAccepted = app.status === 'accepted';
+      const isLive = job.jobStatus === 'in_progress';
+      const isToday = job.onDate === 'today';
+      return isLive || (isAccepted && isToday);
+    });
+  }, [appliedJobs]);
+
   if (isLoading && !isRefetching && appliedJobs.length === 0) {
     return (
       <View style={{ flex: 1 }}>
@@ -466,6 +530,53 @@ const AppliedTab = () => {
           onStatusSelect={setSelectedStatus}
           showAll={true}
         />
+      )}
+
+      {/* Active Job Highlight for Worker */}
+      {activeWorkerJobs.length > 0 && selectedStatus === null && (
+        <View style={{ paddingHorizontal: 16, marginTop: 16 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
+            <View style={{ backgroundColor: colors.primary, width: 4, height: 16, borderRadius: 2 }} />
+            <Text style={{ fontSize: 16, fontWeight: '700', color: colors.black, marginLeft: 8 }}>Live Now</Text>
+          </View>
+          {activeWorkerJobs.map(app => (
+            <TouchableOpacity 
+              key={app.applicationId}
+              style={{
+                backgroundColor: colors.white,
+                borderRadius: 14,
+                padding: 14,
+                marginBottom: 10,
+                borderWidth: 1,
+                borderColor: colors.primary + '30',
+                flexDirection: 'row',
+                alignItems: 'center',
+                shadowColor: colors.primary,
+                shadowOffset: { width: 0, height: 4 },
+                shadowOpacity: 0.1,
+                shadowRadius: 8,
+                elevation: 3
+              }}
+              onPress={() => app.job.jobStatus === 'in_progress' ? handleSummary(app.job._id, app.job.name) : handleNext(app.job)}
+            >
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontSize: 15, fontWeight: '700', color: colors.black }} numberOfLines={1}>{app.job.name}</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 4 }}>
+                  <Text style={{ fontSize: 13, color: colors.primary, fontWeight: '600' }}>
+                    {app.job.jobStatus === 'in_progress' ? 'Running' : 'Ready to Start'}
+                  </Text>
+                  <Text style={{ fontSize: 13, color: colors.grey }}> • {app.job.locationName || 'Location site'}</Text>
+                </View>
+              </View>
+              <View style={{ backgroundColor: colors.primary, paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8 }}>
+                <Text style={{ color: colors.white, fontWeight: '700', fontSize: 13 }}>
+                  {app.job.jobStatus === 'in_progress' ? 'Timer' : 'Arrive'}
+                </Text>
+              </View>
+            </TouchableOpacity>
+          ))}
+          <View style={{ height: 1, backgroundColor: colors.border, marginVertical: 10, opacity: 0.5 }} />
+        </View>
       )}
       <FlatList
         ref={flatListRef}
