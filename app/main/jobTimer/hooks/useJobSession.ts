@@ -43,6 +43,8 @@ export interface UseJobSessionReturn {
     isOnline: boolean;
     lastSyncTime: number | null;
     queueSize: number;
+    isPendingVerification: boolean;
+    forbiddenMessage: string | null;
 
     // Actions
     startSession: () => Promise<void>;
@@ -67,6 +69,8 @@ export const useJobSession = (jobId: string): UseJobSessionReturn => {
     const [actionLoading, setActionLoading] = useState(false);
     const [isOnline, setIsOnline] = useState(true);
     const [lastSyncTime, setLastSyncTime] = useState<number | null>(null);
+    const [isPendingVerification, setIsPendingVerification] = useState(false);
+    const [forbiddenMessage, setForbiddenMessage] = useState<string | null>(null);
     const [queueSize, setQueueSize] = useState(0);
 
     const queryClient = useQueryClient();
@@ -102,6 +106,8 @@ export const useJobSession = (jobId: string): UseJobSessionReturn => {
 
         try {
             if (!silent) setLoading(true);
+            setIsPendingVerification(false);
+            setForbiddenMessage(null);
 
             const response = await getWorkerSession(jobId, true);
 
@@ -116,9 +122,21 @@ export const useJobSession = (jobId: string): UseJobSessionReturn => {
                 }
             }
         } catch (error: any) {
+            const status = error.response?.status;
+            const message = error.response?.data?.message || 
+                          error.response?.data?.error?.message || 
+                          error.response?.data?.error || '';
+            
             // Handle case where no session exists yet (404)
-            if (error.response?.status === 404 || error.response?.status === 403) {
-                console.log('[useJobSession] No session found yet');
+            if (status === 404) {
+                console.log('[useJobSession] No session found yet (404)');
+                setSession(null);
+            } 
+            // Handle unauthorized/pending verification (403)
+            else if (status === 403) {
+                console.log('[useJobSession] Pending verification or forbidden (403):', message);
+                setIsPendingVerification(true);
+                setForbiddenMessage(message);
                 setSession(null);
             } else {
                 console.error('[useJobSession] Error loading session:', error);
@@ -586,6 +604,8 @@ export const useJobSession = (jobId: string): UseJobSessionReturn => {
         isOnline,
         lastSyncTime,
         queueSize,
+        isPendingVerification,
+        forbiddenMessage,
         startSession,
         pauseSession,
         resumeSession,

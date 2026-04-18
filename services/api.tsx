@@ -153,16 +153,18 @@ api.interceptors.response.use(
     // 403 = Forbidden → show error, do NOT logout
     // 403 = Forbidden → show error, do NOT logout unless suspended
     if (error.response?.status === 403) {
-      if (error.response.data?.error?.message?.toLowerCase().includes("suspended") || 
-          error.response.data?.message?.toLowerCase().includes("suspended")) {
+      const message = error.response.data?.error?.message || error.response.data?.message || "";
+      if (message.toLowerCase().includes("suspended")) {
         console.warn("Account suspended, redirecting...");
         store.dispatch(setSuspended(true));
         return Promise.reject(error);
       }
-      console.warn(
-        "Forbidden (403):",
-        error.response?.data?.error?.message || "Permission denied",
-      );
+      
+      // Skip warning for expected verification flow
+      if (!message.toLowerCase().includes("verified") && !message.toLowerCase().includes("verification")) {
+        console.warn("Forbidden (403):", message || "Permission denied");
+      }
+      
       return Promise.reject(error);
     }
 
@@ -1225,8 +1227,10 @@ export const getWorkerSession = async (
 
     console.log("Worker session data retrieved:", response.data);
     return response;
-  } catch (error) {
-    console.error("Error getting worker session:", error);
+  } catch (error: any) {
+    if (error.response?.status !== 403 && error.response?.status !== 404) {
+      console.error("Error getting worker session:", error);
+    }
     throw error;
   }
 };

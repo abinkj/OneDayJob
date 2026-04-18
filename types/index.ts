@@ -173,11 +173,18 @@ export interface JobPost {
   timePreference: string[];
   fromTime?: string; // HH:MM format for non-flexible jobs
   toTime?: string; // HH:MM format for non-flexible jobs
+  onDate?: string; // ISO date string — the actual scheduled work date (from backend `onDate` field)
   updatedAt: string;
   userId: JobUser;
   requiresVerification?: boolean;
   applicants?: any[];
   hasApplied?: boolean;
+  // Server-computed per-user fields (set by backend in getJobPostings)
+  isEmployer?: boolean;       // true if the current user is the job owner/employer
+  isAssignedWorker?: boolean; // true if the current user is an accepted/assigned worker
+  // Arrival state (derived from worker's session in the job list response)
+  hasArrived?: boolean;    // true if this worker has already pressed 'I Have Reached'
+  arrivalStatus?: 'pending' | 'arrived' | 'verified'; // mirrors JobSession.arrivalStatus
 }
 
 // For backward compatibility and convenience

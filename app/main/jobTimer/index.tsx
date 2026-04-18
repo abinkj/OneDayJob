@@ -33,11 +33,15 @@ import { useEmployerDashboard } from "./hooks/useEmployerDashboard";
 // Components
 import WorkerTimerView from "./components/WorkerTimerView";
 import EmployerDashboardView from "./components/EmployerDashboardView";
+import VerificationPendingView from "./components/VerificationPendingView";
 
 interface JobTimerRouteParams {
   jobId: string;
   jobName: string;
   isEmployer?: boolean;
+  employerId?: string;
+  employerName?: string;
+  employerImage?: string;
 }
 
 const JobTimerScreen = () => {
@@ -46,6 +50,9 @@ const JobTimerScreen = () => {
     jobId,
     jobName,
     isEmployer = false,
+    employerId,
+    employerName,
+    employerImage,
   } = route.params as JobTimerRouteParams;
 
   const { colors } = useTheme();
@@ -70,9 +77,11 @@ const JobTimerScreen = () => {
 
   // Soft lock: Warn when worker tries to leave during active session
   const sessionStatus = workerSession?.session?.session?.status;
+  const isPending = workerSession?.isPendingVerification;
+
   useEffect(() => {
     if (isEmployer) return;
-    if (sessionStatus !== 'active') return;
+    if (sessionStatus !== 'active' || isPending) return;
 
     const onBackPress = () => {
       const now = Date.now();
@@ -254,6 +263,15 @@ const JobTimerScreen = () => {
             onRateWorker={openRatingModal}
             colors={colors}
             styles={styles}
+          />
+        ) : workerSession.isPendingVerification ? (
+          <VerificationPendingView
+            colors={colors}
+            onRefresh={handleRefresh}
+            actionLoading={workerSession.actionLoading}
+            forbiddenMessage={workerSession.forbiddenMessage}
+            employerId={employerId}
+            employerName={employerName}
           />
         ) : (
           <WorkerTimerView

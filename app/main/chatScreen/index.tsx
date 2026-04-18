@@ -504,7 +504,7 @@ export default function ChatScreen() {
 
       <GiftedChat
         keyboardAvoidingViewProps={{
-          keyboardVerticalOffset: headerHeight + 50,
+          keyboardVerticalOffset: headerHeight + 120,
         }}
         messages={messages}
         onSend={handleSendMessage}
