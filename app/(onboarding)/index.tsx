@@ -56,20 +56,20 @@ const PaginationDot = ({ index, scrollX }: { index: number; scrollX: any }) => {
       scrollX.value,
       [(index - 1) * width, index * width, (index + 1) * width],
       [8, 20, 8],
-      Extrapolation.CLAMP
+      Extrapolation.CLAMP,
     );
 
     const opacity = interpolate(
       scrollX.value,
       [(index - 1) * width, index * width, (index + 1) * width],
       [0.4, 1, 0.4],
-      Extrapolate.CLAMP
+      Extrapolate.CLAMP,
     );
 
     const backgroundColor = interpolateColor(
       scrollX.value,
       [(index - 1) * width, index * width, (index + 1) * width],
-      ["#333", "#000", "#333"]
+      ["#333", "#000", "#333"],
     );
 
     return {
@@ -126,7 +126,7 @@ const Onboarding = () => {
 
   return (
     <LinearGradient
-      colors={[Colors.primary, "#7e8eff"]} // Soft purple/blue gradient
+      colors={["#ffffffff", Colors.primary]} // Soft purple/blue gradient
       style={styles.container}
     >
       <SafeAreaView style={{ flex: 1 }}>

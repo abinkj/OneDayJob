@@ -1856,7 +1856,7 @@ const PostJobScreen = ({ navigation: navProp }) => {
         <ScrollView
           ref={scrollViewRef}
           style={styles.scrollContainer}
-          contentContainerStyle={{ paddingBottom: 100 }}
+          contentContainerStyle={{ paddingBottom: 20 }}
           showsVerticalScrollIndicator={false}
           bounces={false}
           keyboardShouldPersistTaps="handled"
@@ -1873,7 +1873,7 @@ const PostJobScreen = ({ navigation: navProp }) => {
           style={{
             //paddingHorizontal: 20,
             paddingVertical: 16,
-            paddingBottom: Platform.OS === "ios" ? 20 : 16,
+            //paddingBottom: Platform.OS === "ios" ? 20 : 16,
             backgroundColor: colors.background,
             borderTopWidth: 1,
             borderTopColor: colors.border,
