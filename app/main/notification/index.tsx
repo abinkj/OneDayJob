@@ -186,7 +186,7 @@ export default Notification;
 
 const createStyles = (colors: ThemeColors) => StyleSheet.create({
   container: {
-    flex: 1,
+    //flex: 1,
     backgroundColor: colors.background,
   },
   chipsContainer: {
@@ -235,6 +235,7 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     paddingHorizontal: 16,
     paddingTop: 4,
     paddingBottom: 40,
+    flex:1
   },
   deleteBox: {
     backgroundColor: colors.red,

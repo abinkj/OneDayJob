@@ -104,8 +104,6 @@ const HomeScreen = () => {
   const [selectedPriceSort, setSelectedPriceSort] = useState(null);
   const [selectedDistance, setSelectedDistance] = useState(null);
   const [searchRadius, setSearchRadius] = useState(10);
-  const [currentUser, setCurrentUser] = useState(null);
-  const [authStatus, setAuthStatus] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
   const [isFilterSticky, setIsFilterSticky] = useState(false);
 
@@ -119,17 +117,6 @@ const HomeScreen = () => {
   const userData = useSelector((state: any) => state.authentication.userData);
   const dispatch = useDispatch();
 
-  // Refs to access latest state without triggering re-renders/effects
-  const currentUserRef = useRef(currentUser);
-  const authStatusRef = useRef(authStatus);
-
-  useEffect(() => {
-    currentUserRef.current = currentUser;
-  }, [currentUser]);
-
-  useEffect(() => {
-    authStatusRef.current = authStatus;
-  }, [authStatus]);
 
   // Notification context
   const { unreadCount } = useNotifications();
@@ -316,34 +303,6 @@ const HomeScreen = () => {
     }
   };
 
-  // FIXED: Better authentication status check
-  const checkAuthStatus = async () => {
-    try {
-      const user = await getCurrentUser();
-      const authValid = await Promise.race([
-        isAuthenticated(),
-        new Promise((resolve) => setTimeout(() => resolve(false), 5000)),
-      ]);
-
-      console.log("Auth status check:", {
-        authValid,
-        hasUser: !!user,
-        userDetails: user
-          ? { id: user.id, phone: user.phoneNumber || user.phone }
-          : null,
-      });
-
-      setAuthStatus(!!authValid);
-      setCurrentUser(user);
-
-      return { authValid: !!authValid, user };
-    } catch (error) {
-      console.error("Error checking auth status:", error);
-      setAuthStatus(false);
-      setCurrentUser(null);
-      return { authValid: false, user: null };
-    }
-  };
 
   const fetchCurrentLocation = async () => {
     try {
@@ -402,11 +361,11 @@ const HomeScreen = () => {
         locationData,
       );
 
-      if (authStatusRef.current && currentUserRef.current?.id) {
+      if (userData?.id) {
         try {
           console.log(
             "Updating backend location for user:",
-            currentUserRef.current.id,
+            userData.id,
           );
           await updateUserLocationWithRetry({
             coordinates: {
@@ -545,7 +504,7 @@ const HomeScreen = () => {
         setLocationDetails({ specific, broad });
         setLocationAddress(specific);
 
-        if (authStatusRef.current && currentUserRef.current) {
+        if (userData) {
           try {
             await updateUserLocationWithRetry(selectedLocation);
             console.log(
@@ -570,7 +529,7 @@ const HomeScreen = () => {
   const onRefresh = async () => {
     setRefreshing(true);
     try {
-      await checkAuthStatus();
+      await dispatch(restoreSession() as any);
       await fetchCurrentLocation();
       await refetchJobs();
     } catch (error) {
@@ -621,7 +580,6 @@ const HomeScreen = () => {
         console.log("Initializing HomeScreen...");
         setLoading(true);
         await dispatch(restoreSession() as any);
-        const { authValid, user } = await checkAuthStatus();
         await loadCategories();
         setIsInitialized(true);
         console.log("HomeScreen initialization complete");
@@ -655,7 +613,7 @@ const HomeScreen = () => {
       };
 
       fetchLocationAndRefetch();
-    }, [isInitialized, refetchJobs]), // Removed authStatus and currentUser to prevent loops
+    }, [isInitialized, refetchJobs]),
   );
 
   // Double back to exit logic
@@ -1191,7 +1149,7 @@ const HomeScreen = () => {
           marginBottom: 24,
         }}
       >
-        {!authStatus
+        {!userData
           ? "Login to see jobs near you."
           : "Try adjusting your filters or search radius."}
       </Text>
