@@ -15,8 +15,7 @@
       },
       "env": {
         "EXPO_PUBLIC_API_URL": "https://api.zoopol.com/api/",
-        "EXPO_PUBLIC_GOOGLE_PLACES_API_KEY": "AIzaSyDD0b3hU5q5IjOgjnBGGN7UEvk3sApEI5w",
-        "EXPO_PUBLIC_RAZORPAY_KEY_ID": ""
+        "EXPO_PUBLIC_GOOGLE_PLACES_API_KEY": "AIzaSyDD0b3hU5q5IjOgjnBGGN7UEvk3sApEI5w"
       }
     },
     "production": {
