@@ -254,9 +254,6 @@ const Profile: React.FC = () => {
           placeholderContentFit="cover"
           contentFit="cover"
           cachePolicy="memory-disk"
-          transition={300}
-          onError={(error) => console.error("Profile image load error:", error)}
-          onLoad={() => console.log("Profile image loaded")}
         />
 
         <Text style={styles.name}>
