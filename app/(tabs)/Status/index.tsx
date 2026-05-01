@@ -612,8 +612,8 @@ const Status = () => {
   const layout = Dimensions.get("window");
   const [index, onIndexChange] = useState(0);
   const [routes] = useState<Route[]>([
-    { key: "myPost", title: "My post" },
-    { key: "applied", title: "Applied" },
+    { key: "myPost", title: "My Jobs" },
+    { key: "applied", title: "Applied Jobs" },
   ]);
 
   const renderScene = SceneMap({

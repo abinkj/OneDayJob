@@ -61,6 +61,21 @@ export interface SocketEvents {
     timestamp: string;
   }) => void;
 
+  "test-data": (data: {
+    id: string;
+    message: string;
+    random: number;
+    timestamp: string;
+  }) => void;
+
+  "simulator-job-status": (data: {
+    action: string;
+    jobId: string;
+    workerId: string;
+    status: string;
+    timestamp: string;
+  }) => void;
+
   new_application: (data: any) => void;
   application_status_update: (data: any) => void;
   "verification-codes-generated": (data: any) => void;
@@ -248,6 +263,18 @@ class SocketService {
     }
     if (!(await this.canEmit("stopTyping"))) return;
     this.socket!.emit("typing-stop", { conversationId });
+  }
+
+  async joinTestConnection() {
+    if (!(await this.canEmit("joinTestConnection"))) return;
+    console.log("Joining test connection stream");
+    this.socket!.emit("join-test");
+  }
+
+  async leaveTestConnection() {
+    if (!(await this.canEmit("leaveTestConnection"))) return;
+    console.log("Leaving test connection stream");
+    this.socket!.emit("leave-test");
   }
 
   // ── Listener helpers ───────────────────────────────────────────────────────
