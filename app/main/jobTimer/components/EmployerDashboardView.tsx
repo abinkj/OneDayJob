@@ -5,7 +5,7 @@
  */
 
 import React from 'react';
-import { View, Text, TouchableOpacity, ActivityIndicator, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, ActivityIndicator, StyleSheet, FlatList } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import WorkerCard from './WorkerCard';
 import { DashboardData } from '../hooks/useEmployerDashboard';
@@ -31,6 +31,14 @@ const EmployerDashboardView: React.FC<EmployerDashboardViewProps> = ({
     styles,
 }) => {
     const summary = dashboard?.summary;
+
+    // Debug log to track dashboard updates
+    console.log('[EmployerDashboardView] Rendered with summary:', {
+        hasSummary: !!summary,
+        workerCount: summary?.workers?.length || 0,
+        activeCount: summary?.activeWorkers || 0,
+        pausedCount: summary?.pausedWorkers || 0,
+    });
 
     const getTimeSinceRefresh = (): string => {
         if (!lastRefreshTime) return '';
@@ -124,16 +132,23 @@ const EmployerDashboardView: React.FC<EmployerDashboardViewProps> = ({
 
             {/* Workers List */}
             {summary?.workers && summary.workers.length > 0 && (
-                <View>
+                <View style={localStyles.workersContainer}>
                     <Text style={styles.sectionTitle}>Workers Progress</Text>
-                    {summary.workers.map((worker: any, index: number) => (
-                        <WorkerCard
-                            key={worker.id || index}
-                            worker={worker}
-                            onRate={onRateWorker}
-                            colors={colors}
-                        />
-                    ))}
+                    <FlatList
+                        data={summary.workers}
+                        keyExtractor={(item, index) => item.id || String(index)}
+                        renderItem={({ item }) => (
+                            <WorkerCard
+                                worker={item}
+                                onRate={onRateWorker}
+                                colors={colors}
+                            />
+                        )}
+                        scrollEnabled={false} // Important: avoids conflict with parent ScrollView
+                        initialNumToRender={10}
+                        maxToRenderPerBatch={10}
+                        windowSize={5}
+                    />
                 </View>
             )}
 
@@ -183,6 +198,9 @@ const localStyles = StyleSheet.create({
         fontSize: 11,
         fontWeight: '600',
         marginLeft: 4,
+    },
+    workersContainer: {
+        marginBottom: 8,
     },
 });
 

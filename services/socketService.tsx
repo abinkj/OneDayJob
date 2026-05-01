@@ -79,6 +79,7 @@ export interface SocketEvents {
   new_application: (data: any) => void;
   application_status_update: (data: any) => void;
   "verification-codes-generated": (data: any) => void;
+  notification: (data: any) => void;
 
   job_created: (data: any) => void;
   job_updated: (data: any) => void;

@@ -129,16 +129,21 @@ export const createStyles = (colors: ThemeColors) => StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 16,
-    paddingHorizontal: 24,
+    height: 56,
     borderRadius: 12,
-    minWidth: 120,
+    flex: 1,
+    marginHorizontal: 6,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 2,
   },
   startButton: {
     backgroundColor: colors.darkGreen,
   },
   pauseButton: {
-    backgroundColor: '#FF9800',
+    backgroundColor: colors.orange,
   },
   resumeButton: {
     backgroundColor: colors.tabBlue,
@@ -149,8 +154,9 @@ export const createStyles = (colors: ThemeColors) => StyleSheet.create({
   actionButtonText: {
     color: '#fff',
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: '700',
     marginLeft: 8,
+    letterSpacing: 0.5,
   },
 
   // Instructions Card

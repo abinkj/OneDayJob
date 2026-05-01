@@ -22,6 +22,7 @@ import {
 import { syncQueue } from '../utils/syncQueue';
 import { shouldSendHeartbeat } from '../utils/timeCalculations';
 import timerNotificationService from '../../../../services/timerNotificationService';
+import socketService from '../../../../services/socketService';
 
 export interface SessionData {
     session: {
@@ -155,6 +156,44 @@ export const useJobSession = (jobId: string): UseJobSessionReturn => {
     useEffect(() => {
         loadSession();
     }, [loadSession]);
+
+    // Setup socket listeners for instant updates
+    useEffect(() => {
+        if (!jobId || !userId) return;
+
+        const handleNotification = (data: any) => {
+            console.log('[useJobSession] Socket notification received:', data.type);
+            
+            // Check if this is relevant to our current job
+            const isRelevant = data.jobId === jobId;
+            
+            if (isRelevant) {
+                // Handle different notification types
+                if (data.type === 'job_initiated' || 
+                    data.type === 'verification_status_updated' || 
+                    data.type === 'session_status_updated') {
+                    
+                    console.log(`[useJobSession] Relevant update received (${data.type}). Refreshing...`);
+                    
+                    if (data.message) {
+                        Toast.show({
+                            type: 'info',
+                            text1: 'Update',
+                            text2: data.message,
+                        });
+                    }
+                    
+                    loadSession(true);
+                }
+            }
+        };
+
+        socketService.on('notification', handleNotification);
+
+        return () => {
+            socketService.off('notification', handleNotification);
+        };
+    }, [jobId, userId, loadSession]);
 
     // Process offline queue
     const processQueue = useCallback(async () => {

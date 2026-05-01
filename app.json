@@ -14,7 +14,14 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.zoopol.app"
+      "bundleIdentifier": "com.zoopol.app",
+      "infoPlist": {
+        "LSApplicationQueriesSchemes": [
+          "tel",
+          "mailto",
+          "sms"
+        ]
+      }
     },
     "scheme": "zoopol",
     "android": {

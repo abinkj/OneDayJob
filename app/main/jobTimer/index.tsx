@@ -1,26 +1,17 @@
 /**
- * Job Timer Screen - Refactored
- * 
- * Simplified main component using custom hooks and extracted components.
- * Reduced from 930 lines to ~200 lines.
- * 
- * Key improvements:
- * - Server-side time calculation (no per-second updates)
- * - Custom hooks for business logic
- * - Extracted UI components
- * - Optimistic updates
- * - Offline support
- * - Better performance
+ * Job Timer Screen
+ *
+ * Main screen for tracking work time, shared by workers and employers.
+ * Features instant updates via Socket.IO and optimistic UI transitions.
  */
 
-import React, { useState, useMemo, useEffect, useCallback, useRef } from "react";
-import { View, Text, ScrollView, RefreshControl, BackHandler } from "react-native";
-import { useRoute, useNavigation } from "@react-navigation/native";
+import React, { useState, useMemo } from "react";
+import { View, Text, ScrollView, RefreshControl } from "react-native";
+import { useRoute } from "@react-navigation/native";
 import { Header } from "../../../components/header";
 import { JobDetailsSkeleton } from "../../../components/Shimmer/Skeletons";
 import { useTheme } from "../../../contexts/ThemeContext";
 import { useAlert } from "../../../components/CustomAlert/AlertProvider";
-import { submitRating } from "../../../services/api";
 import Toast from "react-native-toast-message";
 import { createStyles } from "./styles";
 import RatingModal from "../../../components/RatingModal";
@@ -52,13 +43,11 @@ const JobTimerScreen = () => {
     isEmployer = false,
     employerId,
     employerName,
-    employerImage,
   } = route.params as JobTimerRouteParams;
 
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const { showAlert } = useAlert();
-  const navigation = useNavigation();
 
   // Rating modal state
   const [isRatingModalVisible, setIsRatingModalVisible] = useState(false);
@@ -66,73 +55,21 @@ const JobTimerScreen = () => {
     id: string;
     name: string;
   } | null>(null);
-  const [isSubmittingRating, setIsSubmittingRating] = useState(false);
-  const [isNavLocked, setIsNavLocked] = useState(false);
-  const lastBackPress = useRef<number>(0);
 
   // Use appropriate hook based on role
-  // Note: We call both hooks to satisfy React's rules of hooks, but pass conditional data
-  const workerSession = useJobSession(isEmployer ? '' : jobId); // Empty string prevents API call
-  const employerDashboard = useEmployerDashboard(isEmployer ? jobId : ''); // Empty string prevents API call
-
-  // Soft lock: Warn when worker tries to leave during active session
-  const sessionStatus = workerSession?.session?.session?.status;
-  const isPending = workerSession?.isPendingVerification;
-
-  useEffect(() => {
-    if (isEmployer) return;
-    if (sessionStatus !== 'active' || isPending) return;
-
-    const onBackPress = () => {
-      const now = Date.now();
-      if (lastBackPress.current && now - lastBackPress.current < 2000) {
-        // Exit app on double back
-        BackHandler.exitApp();
-        return true;
-      }
-
-      lastBackPress.current = now;
-      Toast.show({
-        type: 'info',
-        text1: 'Session Active ⏱️',
-        text2: 'Tap back again to exit the app, or pause/complete your work.',
-        visibilityTime: 2000,
-      });
-      return true; // Block standard navigation
-    };
-
-    const sub = BackHandler.addEventListener('hardwareBackPress', onBackPress);
-
-    // Lock navigation
-    navigation.setOptions({
-        headerLeft: () => null,
-        gestureEnabled: false,
-        swipeEnabled: false,
-    });
-    setIsNavLocked(true);
-
-    return () => {
-      sub.remove();
-      navigation.setOptions({
-        headerLeft: undefined,
-        gestureEnabled: true,
-        swipeEnabled: true,
-      });
-      setIsNavLocked(false);
-    };
-  }, [isEmployer, sessionStatus, navigation]);
+  const workerSession = useJobSession(isEmployer ? "" : jobId);
+  const employerDashboard = useEmployerDashboard(isEmployer ? jobId : "");
 
   // Calculate display time for worker (server-side calculation)
   const { displayTime } = useServerTimer(
     isEmployer ? null : workerSession.session?.session || null,
-    isEmployer ? null : workerSession.lastSyncTime
+    isEmployer ? null : workerSession.lastSyncTime,
   );
 
   // Determine loading state
-  const loading = isEmployer ? employerDashboard.loading : workerSession.loading;
-  const actionLoading = isEmployer
-    ? employerDashboard.actionLoading
-    : workerSession.actionLoading;
+  const loading = isEmployer
+    ? employerDashboard.loading
+    : workerSession.loading;
 
   // Handle refresh
   const handleRefresh = async () => {
@@ -153,36 +90,14 @@ const JobTimerScreen = () => {
     if (!selectedWorkerForRating) return;
 
     try {
-      setIsSubmittingRating(true);
-      await submitRating({
-        ratedUser: selectedWorkerForRating.id,
-        job: jobId,
-        role: "employee",
+      await employerDashboard.submitWorkerRating(
+        selectedWorkerForRating.id,
         rating,
         comment,
-      });
-
-      Toast.show({
-        type: "success",
-        text1: "Rating Submitted",
-        text2: `You have successfully rated ${selectedWorkerForRating.name}`,
-      });
-
+      );
       setIsRatingModalVisible(false);
-
-      // Refresh employer dashboard
-      if (isEmployer) {
-        await employerDashboard.refresh();
-      }
     } catch (error) {
-      console.error("Error submitting rating:", error);
-      Toast.show({
-        type: "error",
-        text1: "Error",
-        text2: "Failed to submit rating",
-      });
-    } finally {
-      setIsSubmittingRating(false);
+      // Error handled in hook
     }
   };
 
@@ -193,10 +108,7 @@ const JobTimerScreen = () => {
       title: "Complete Session",
       message: "Are you sure you want to complete this work session?",
       buttons: [
-        {
-          text: "Cancel",
-          style: "cancel",
-        },
+        { text: "Cancel", style: "cancel" },
         {
           text: "Complete",
           style: "destructive",
@@ -206,17 +118,6 @@ const JobTimerScreen = () => {
     });
   };
 
-  // Loading state
-  if (loading) {
-    return (
-      <View style={styles.container}>
-        <Header title={isEmployer ? "Job Dashboard" : "Job Timer"} showBackButton={!isNavLocked} />
-        <JobDetailsSkeleton />
-      </View>
-    );
-  }
-
-  // Get job info
   const job = isEmployer
     ? employerDashboard.dashboard?.job || employerDashboard.dashboard?.jobInfo
     : workerSession.session?.job;
@@ -226,79 +127,82 @@ const JobTimerScreen = () => {
     <View style={styles.container}>
       <Header
         title={isEmployer ? "Job Dashboard" : "Job Timer"}
-        showBackButton={!isNavLocked}
+        showBackButton
       />
+      {loading ? (
+        <JobDetailsSkeleton />
+      ) : (
+        <>
+          <ScrollView
+            style={styles.content}
+            showsVerticalScrollIndicator={false}
+            refreshControl={
+              <RefreshControl
+                refreshing={loading}
+                onRefresh={handleRefresh}
+                tintColor={colors.primary}
+              />
+            }
+          >
+            {/* Job Info Card */}
+            <View style={styles.jobInfoCard}>
+              <Text style={styles.jobTitle}>{jobName || job?.name}</Text>
+              {employer && !isEmployer && (
+                <Text style={styles.employerName}>
+                  Employer: {employer.firstName} {employer.lastName}
+                </Text>
+              )}
+              {job?.description && (
+                <Text style={styles.jobDescription}>{job.description}</Text>
+              )}
+            </View>
 
-      <ScrollView
-        style={styles.content}
-        showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl
-            refreshing={loading}
-            onRefresh={handleRefresh}
-            tintColor={colors.primary}
+            {/* Dynamic Views */}
+            {isEmployer ? (
+              <EmployerDashboardView
+                dashboard={employerDashboard.dashboard}
+                actionLoading={employerDashboard.actionLoading}
+                lastRefreshTime={employerDashboard.lastRefreshTime}
+                onInitiateJob={employerDashboard.initiateJob}
+                onRateWorker={openRatingModal}
+                colors={colors}
+                styles={styles}
+              />
+            ) : workerSession.isPendingVerification ? (
+              <VerificationPendingView
+                colors={colors}
+                onRefresh={handleRefresh}
+                actionLoading={workerSession.actionLoading}
+                forbiddenMessage={workerSession.forbiddenMessage}
+                employerId={employerId}
+                employerName={employerName}
+              />
+            ) : (
+              <WorkerTimerView
+                session={workerSession.session}
+                displayTime={displayTime}
+                isOnline={workerSession.isOnline}
+                lastSyncTime={workerSession.lastSyncTime}
+                queueSize={workerSession.queueSize}
+                actionLoading={workerSession.actionLoading}
+                onStart={workerSession.startSession}
+                onPause={workerSession.pauseSession}
+                onResume={workerSession.resumeSession}
+                onComplete={handleCompleteWithConfirmation}
+                colors={colors}
+                styles={styles}
+              />
+            )}
+          </ScrollView>
+          <RatingModal
+            isVisible={isRatingModalVisible}
+            onClose={() => setIsRatingModalVisible(false)}
+            onSubmit={handleSubmitRating}
+            isSubmitting={employerDashboard.actionLoading}
+            workerName={selectedWorkerForRating?.name || "Worker"}
           />
-        }
-      >
-        {/* Job Info Card */}
-        <View style={styles.jobInfoCard}>
-          <Text style={styles.jobTitle}>{jobName || job?.name}</Text>
-          {employer && !isEmployer && (
-            <Text style={styles.employerName}>
-              Employer: {employer.firstName} {employer.lastName}
-            </Text>
-          )}
-          {job?.description && (
-            <Text style={styles.jobDescription}>{job.description}</Text>
-          )}
-        </View>
-
-        {/* Render appropriate view based on role */}
-        {isEmployer ? (
-          <EmployerDashboardView
-            dashboard={employerDashboard.dashboard}
-            actionLoading={employerDashboard.actionLoading}
-            lastRefreshTime={employerDashboard.lastRefreshTime}
-            onInitiateJob={employerDashboard.initiateJob}
-            onRateWorker={openRatingModal}
-            colors={colors}
-            styles={styles}
-          />
-        ) : workerSession.isPendingVerification ? (
-          <VerificationPendingView
-            colors={colors}
-            onRefresh={handleRefresh}
-            actionLoading={workerSession.actionLoading}
-            forbiddenMessage={workerSession.forbiddenMessage}
-            employerId={employerId}
-            employerName={employerName}
-          />
-        ) : (
-          <WorkerTimerView
-            session={workerSession.session}
-            displayTime={displayTime}
-            isOnline={workerSession.isOnline}
-            lastSyncTime={workerSession.lastSyncTime}
-            queueSize={workerSession.queueSize}
-            actionLoading={workerSession.actionLoading}
-            onStart={workerSession.startSession}
-            onPause={workerSession.pauseSession}
-            onResume={workerSession.resumeSession}
-            onComplete={handleCompleteWithConfirmation}
-            colors={colors}
-            styles={styles}
-          />
-        )}
-      </ScrollView>
-
-      {/* Rating Modal */}
-      <RatingModal
-        isVisible={isRatingModalVisible}
-        onClose={() => setIsRatingModalVisible(false)}
-        onSubmit={handleSubmitRating}
-        isSubmitting={isSubmittingRating}
-        workerName={selectedWorkerForRating?.name || "Worker"}
-      />
+        </>
+      )}
     </View>
   );
 };

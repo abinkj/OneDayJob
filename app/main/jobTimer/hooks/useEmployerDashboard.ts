@@ -8,15 +8,19 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { AppState, AppStateStatus } from 'react-native';
 import Toast from 'react-native-toast-message';
-import { getJobDashboard, initiateJobExecution } from '../../../../services/api';
+import { getJobDashboard, initiateJobExecution, submitRating } from '../../../../services/api';
+import socketService from '../../../../services/socketService';
 
 export interface DashboardSummary {
     totalWorkers: number;
     activeWorkers: number;
     pausedWorkers: number;
     completedWorkers: number;
+    notStartedWorkers: number;
     totalTimeSpent: number;
     averageTimePerWorker: number;
+    completionPercentage: number;
+    lastUpdated?: string | Date;
     workers: Array<{
         id: string;
         name: string;
@@ -45,6 +49,7 @@ export interface UseEmployerDashboardReturn {
     // Actions
     refresh: () => Promise<void>;
     initiateJob: () => Promise<void>;
+    submitWorkerRating: (workerId: string, rating: number, comment: string) => Promise<void>;
 }
 
 /**
@@ -139,6 +144,83 @@ export const useEmployerDashboard = (jobId: string): UseEmployerDashboardReturn 
         };
     }, [dashboard?.summary?.activeWorkers, getPollingInterval, loadDashboard]);
 
+    // Setup socket listeners for instant updates
+    useEffect(() => {
+        if (!jobId) return;
+
+        const handleNotification = (data: any) => {
+            console.log('[useEmployerDashboard] Socket notification received:', data.type);
+            
+            // Check if this is a session update for our current job
+            if (data.type === 'session_status_updated' && data.jobId === jobId) {
+                console.log(`[useEmployerDashboard] Worker ${data.workerName} changed status to ${data.status}. Updating UI...`);
+                
+                // Optimistically update the worker status in our local state
+                setDashboard(prev => {
+                    if (!prev || !prev.summary || !prev.summary.workers) {
+                        console.log('[useEmployerDashboard] Cannot update optimistically: summary or workers missing');
+                        return prev;
+                    }
+                    
+                    let found = false;
+                    const updatedWorkers = prev.summary.workers.map(w => {
+                        if (String(w.id) === String(data.workerId)) {
+                            found = true;
+                            console.log(`[useEmployerDashboard] Optimistic update for ${w.name}: ${w.status} -> ${data.status}`);
+                            return { ...w, status: data.status as any };
+                        }
+                        return w;
+                    });
+
+                    if (!found) {
+                        console.log(`[useEmployerDashboard] Worker ID ${data.workerId} not found in current workers list:`, 
+                            prev.summary.workers.map(w => w.id));
+                        return prev;
+                    }
+
+                    // Re-calculate summary counts based on updated workers
+                    const activeWorkers = updatedWorkers.filter(w => w.status === 'active').length;
+                    const pausedWorkers = updatedWorkers.filter(w => w.status === 'paused').length;
+                    const completedWorkers = updatedWorkers.filter(w => w.status === 'completed').length;
+                    const notStartedWorkers = updatedWorkers.filter(w => w.status === 'not_started').length;
+
+                    console.log(`[useEmployerDashboard] New counts - Active: ${activeWorkers}, Paused: ${pausedWorkers}`);
+
+                    return {
+                        ...prev,
+                        summary: {
+                            ...prev.summary,
+                            workers: updatedWorkers,
+                            activeWorkers,
+                            pausedWorkers,
+                            completedWorkers,
+                            notStartedWorkers,
+                            lastUpdated: new Date().toISOString(),
+                        }
+                    };
+                });
+
+                // Show a brief toast for the employer
+                Toast.show({
+                    type: 'info',
+                    text1: 'Status Updated',
+                    text2: `${data.workerName} is now ${data.status}`,
+                    visibilityTime: 2000,
+                });
+
+                // Trigger a delayed refresh to get updated server-side data (like final time)
+                // We wait 2 seconds to ensure the backend has finished its background summary update
+                setTimeout(() => loadDashboard(true), 2000);
+            }
+        };
+
+        socketService.on('notification', handleNotification);
+
+        return () => {
+            socketService.off('notification', handleNotification);
+        };
+    }, [jobId, loadDashboard]);
+
     // Handle app state changes
     useEffect(() => {
         const subscription = AppState.addEventListener('change', async (nextAppState) => {
@@ -186,6 +268,38 @@ export const useEmployerDashboard = (jobId: string): UseEmployerDashboardReturn 
         }
     }, [jobId, loadDashboard]);
 
+    // Submit rating for a worker
+    const submitWorkerRating = useCallback(async (workerId: string, rating: number, comment: string) => {
+        setActionLoading(true);
+        try {
+            await submitRating({
+                ratedUser: workerId,
+                job: jobId,
+                role: "employee",
+                rating,
+                comment,
+            });
+
+            Toast.show({
+                type: "success",
+                text1: "Rating Submitted",
+                text2: "Worker has been rated successfully",
+            });
+
+            await loadDashboard(true);
+        } catch (error) {
+            console.error('[useEmployerDashboard] Error submitting rating:', error);
+            Toast.show({
+                type: "error",
+                text1: "Error",
+                text2: "Failed to submit rating",
+            });
+            throw error; // Re-throw to handle in UI if needed
+        } finally {
+            setActionLoading(false);
+        }
+    }, [jobId, loadDashboard]);
+
     return {
         dashboard,
         loading,
@@ -193,5 +307,6 @@ export const useEmployerDashboard = (jobId: string): UseEmployerDashboardReturn 
         lastRefreshTime,
         refresh: () => loadDashboard(false),
         initiateJob,
+        submitWorkerRating,
     };
 };
