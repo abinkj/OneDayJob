@@ -14,18 +14,16 @@ import Animated, {
   useAnimatedStyle,
   useAnimatedScrollHandler,
   interpolate,
-  Extrapolate,
   interpolateColor,
   Extrapolation,
 } from "react-native-reanimated";
 import { setHasSeenOnboarding } from "../../redux/reducers/authReducers";
 import { saveHasSeenOnboarding } from "../../utilities/mmkvStore";
-import { SafeAreaView } from "react-native-safe-area-context";
 import CustomButton from "../../components/CustomButton";
 import { Colors } from "../../constants/Colors";
 import { LinearGradient } from "expo-linear-gradient";
 
-const { width, height } = Dimensions.get("window");
+const { width } = Dimensions.get("window");
 
 const slides = [
   {
@@ -45,7 +43,7 @@ const slides = [
   },
   {
     id: "4",
-    title: "Let’s Get You Started",
+    title: "Let's Get You Started",
     image: require("../../assets/images/onboarding/ob4.png"),
   },
 ];
@@ -63,7 +61,7 @@ const PaginationDot = ({ index, scrollX }: { index: number; scrollX: any }) => {
       scrollX.value,
       [(index - 1) * width, index * width, (index + 1) * width],
       [0.4, 1, 0.4],
-      Extrapolate.CLAMP,
+      Extrapolation.CLAMP,
     );
 
     const backgroundColor = interpolateColor(
@@ -72,11 +70,7 @@ const PaginationDot = ({ index, scrollX }: { index: number; scrollX: any }) => {
       ["#333", "#000", "#333"],
     );
 
-    return {
-      width: dotWidth,
-      opacity,
-      backgroundColor,
-    };
+    return { width: dotWidth, opacity, backgroundColor };
   });
 
   return <Animated.View style={[styles.dot, animatedStyle]} />;
@@ -115,7 +109,7 @@ const Onboarding = () => {
   };
 
   const handleSkip = () => {
-    handleFinish(); // Skip usually finishes onboarding
+    handleFinish();
   };
 
   const onViewableItemsChanged = useRef(({ viewableItems }: any) => {
@@ -126,59 +120,59 @@ const Onboarding = () => {
 
   return (
     <LinearGradient
-      colors={["#ffffffff", Colors.primary]} // Soft purple/blue gradient
+      colors={[Colors.primary, "#8B5CF6"]}
       style={styles.container}
     >
-      <SafeAreaView style={{ flex: 1 }}>
-        <Animated.FlatList
-          ref={flatListRef as any}
-          data={slides}
-          onScroll={onScroll}
-          scrollEventThrottle={16}
-          renderItem={({ item }) => (
-            <View style={styles.slide}>
-              <View style={styles.imageContainer}>
-                <Image
-                  source={item.image}
-                  style={styles.image}
-                  resizeMode="contain"
-                />
-              </View>
-              <Text style={styles.title}>{item.title}</Text>
+      <View style={styles.skipContainer}>
+        <TouchableOpacity onPress={handleSkip}>
+          <Text style={styles.skipText}>Skip</Text>
+        </TouchableOpacity>
+      </View>
+
+      <Animated.FlatList
+        ref={flatListRef as any}
+        data={slides}
+        onScroll={onScroll}
+        scrollEventThrottle={16}
+        renderItem={({ item }) => (
+          <View style={styles.slide}>
+            <View style={styles.imageContainer}>
+              <Image
+                source={item.image}
+                style={styles.image}
+                resizeMode="contain"
+              />
             </View>
-          )}
-          horizontal
-          pagingEnabled
-          showsHorizontalScrollIndicator={false}
-          keyExtractor={(item) => item.id}
-          onViewableItemsChanged={onViewableItemsChanged}
-          viewabilityConfig={{ viewAreaCoveragePercentThreshold: 50 }}
-        />
-
-        <View style={styles.footer}>
-          <View style={styles.pagination}>
-            {slides.map((_, index) => (
-              <PaginationDot key={index} index={index} scrollX={scrollX} />
-            ))}
+            <Text style={styles.title}>{item.title}</Text>
           </View>
+        )}
+        horizontal
+        pagingEnabled
+        showsHorizontalScrollIndicator={false}
+        keyExtractor={(item) => item.id}
+        onViewableItemsChanged={onViewableItemsChanged}
+        viewabilityConfig={{ viewAreaCoveragePercentThreshold: 50 }}
+      />
 
-          <View style={styles.buttonsContainer}>
-            <TouchableOpacity onPress={handleSkip} style={styles.skipButton}>
-              <Text style={styles.skipText}>Skip</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity style={styles.nextButton} onPress={handleNext}>
-              {loading ? (
-                <Text style={styles.nextText}>...</Text>
-              ) : (
-                <Text style={styles.nextText}>
-                  {currentIndex === slides.length - 1 ? "Get Started" : "Next"}
-                </Text>
-              )}
-            </TouchableOpacity>
-          </View>
+      <View style={styles.footer}>
+        <View style={styles.pagination}>
+          {slides.map((_, index) => (
+            <PaginationDot key={index} index={index} scrollX={scrollX} />
+          ))}
         </View>
-      </SafeAreaView>
+
+        <CustomButton
+          text={
+            loading
+              ? "..."
+              : currentIndex === slides.length - 1
+                ? "Get Started"
+                : "Next"
+          }
+          onPress={handleNext}
+          disabled={loading}
+        />
+      </View>
     </LinearGradient>
   );
 };
@@ -187,12 +181,22 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
+  skipContainer: {
+    alignItems: "flex-end",
+    marginRight: "5%",
+    marginTop: "5%",
+  },
+  skipText: {
+    fontSize: 18,
+    color: "#fff",
+    fontWeight: "600",
+  },
   slide: {
     width,
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: 20,
-    marginTop: -60, // Pull up slightly to balance layout
+    marginTop: -60,
   },
   imageContainer: {
     justifyContent: "center",
@@ -204,16 +208,16 @@ const styles = StyleSheet.create({
     height: width,
   },
   title: {
-    fontSize: 46,
-    fontWeight: "700",
-    color: "#2C2C2C",
+    fontSize: 38,
+    fontWeight: "600",
+    color: "#fff",
     textAlign: "center",
     marginBottom: 10,
     lineHeight: 50,
   },
   footer: {
-    paddingHorizontal: 30,
-    paddingBottom: 40,
+    paddingHorizontal: 16,
+    paddingBottom: 20,
   },
   pagination: {
     flexDirection: "row",
@@ -226,30 +230,6 @@ const styles = StyleSheet.create({
     borderRadius: 4,
     backgroundColor: "#333",
     marginHorizontal: 4,
-  },
-  buttonsContainer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  skipButton: {
-    padding: 10,
-  },
-  skipText: {
-    fontSize: 18,
-    color: "#444",
-    fontWeight: "500",
-  },
-  nextButton: {
-    backgroundColor: "#2C2C2C", // Dark / Black button
-    paddingVertical: 14,
-    paddingHorizontal: 32,
-    borderRadius: 12,
-  },
-  nextText: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "700",
   },
 });
 
