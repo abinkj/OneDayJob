@@ -4,6 +4,7 @@ import {
   Text,
   StyleSheet,
   ActivityIndicator,
+  View,
 } from "react-native";
 import Animated, {
   useSharedValue,
@@ -21,6 +22,7 @@ interface CustomButtonProps {
   disabled?: boolean;
   isLoading?: boolean;
   style?: any;
+  icon?: React.ReactNode;
 }
 
 const CustomButton: React.FC<CustomButtonProps> = ({
@@ -30,6 +32,7 @@ const CustomButton: React.FC<CustomButtonProps> = ({
   disabled = false,
   isLoading = false,
   style,
+  icon,
 }) => {
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
@@ -70,7 +73,10 @@ const CustomButton: React.FC<CustomButtonProps> = ({
         {isLoading ? (
           <ActivityIndicator color="white" size="small" />
         ) : (
-          <Text style={styles.buttonText}>{text}</Text>
+          <View style={styles.contentContainer}>
+            {icon && <View style={styles.iconContainer}>{icon}</View>}
+            <Text style={styles.buttonText}>{text}</Text>
+          </View>
         )}
       </TouchableOpacity>
     </Animated.View>
@@ -86,6 +92,14 @@ const createStyles = (colors: ThemeColors) =>
       justifyContent: "center",
       minWidth: 120,
       height: 48, // Fixed height to prevent layout shift during loading
+    },
+    contentContainer: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    iconContainer: {
+      marginRight: 8,
     },
     buttonText: {
       fontSize: fontSizes.size16,

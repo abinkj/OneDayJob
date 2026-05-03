@@ -35,16 +35,19 @@ interface JobTimerRouteParams {
   employerId?: string;
   employerName?: string;
   employerImage?: string;
+  employerPhoneNumber?: string;
 }
 
 const JobTimerScreen = () => {
   const route = useRoute();
+  console.log(route.params)
   const {
     jobId,
     jobName,
     isEmployer = false,
     employerId,
     employerName,
+    employerPhoneNumber: employerPhoneNumberParam,
   } = route.params as JobTimerRouteParams;
 
   const { colors } = useTheme();
@@ -189,6 +192,7 @@ const JobTimerScreen = () => {
                 forbiddenMessage={workerSession.forbiddenMessage}
                 employerId={employerId}
                 employerName={employerName}
+                employerPhoneNumber={employerPhoneNumberParam || employer?.phoneNumber}
               />
             ) : (
               <WorkerTimerView

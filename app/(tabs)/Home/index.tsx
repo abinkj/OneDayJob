@@ -655,7 +655,9 @@ const HomeScreen = () => {
   // For now, we rely on the state changes triggering the hook.
 
   // Handle "I Have Arrived" button press
-  const handleArrival = async (jobId: string, jobName: string) => {
+  const handleArrival = async (item: any) => {
+    const jobId = item._id;
+    const jobName = item.name;
     try {
       setArrivalLoading(true);
       setArrivingJobId(jobId);
@@ -698,6 +700,10 @@ const HomeScreen = () => {
           jobId,
           jobName,
           isEmployer: false,
+          employerId: item.userId?._id || item.userId?.id || item.userId,
+          employerName: `${item.userId?.firstName || ""} ${item.userId?.lastName || ""}`.trim(),
+          employerPhoneNumber: item.userId?.phoneNumber,
+          employerImage: item.userId?.profilePicture,
         });
       } else {
         const dist = response.data?.data?.distance;
@@ -790,6 +796,10 @@ const HomeScreen = () => {
           jobId: item._id,
           jobName: item.name,
           isEmployer: isEmployer,
+          employerId: jobOwnerId,
+          employerName: `${item.userId?.firstName || ""} ${item.userId?.lastName || ""}`.trim(),
+          employerPhoneNumber: item.userId?.phoneNumber,
+          employerImage: item.userId?.profilePicture,
         });
       } else {
         navigation.navigate("JobDetails", { jobId: item._id, jobData: item });
@@ -912,7 +922,7 @@ const HomeScreen = () => {
                       text2:
                         "Please ask your employer to verify you on their screen.",
                     })
-                  : handleArrival((item as any)._id, (item as any).name)
+                  : handleArrival(item)
               }
               disabled={
                 (item as any).hasArrived ||
