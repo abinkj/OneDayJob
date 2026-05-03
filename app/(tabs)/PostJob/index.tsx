@@ -8,7 +8,6 @@ import {
   Modal,
   Platform,
   KeyboardAvoidingView,
-  FlatList,
 } from "react-native";
 import { Image } from "expo-image";
 import { useNavigation } from "@react-navigation/native";
@@ -20,13 +19,9 @@ import * as ImagePicker from "expo-image-picker";
 import { Calendar } from "react-native-calendars";
 import { createStyles } from "./styles";
 import CustomSwitch from "../../../components/CustomSwich";
-import JobDescriptionSection from "../../../components/JobDescription";
-import LocationSearch from "../../../components/LocationSearch";
 import {
   createJobPosting,
   getCategories,
-  getCurrentUser, // Add this import
-  isAuthenticated,
   // uploadJobPhotos
 } from "../../../services/api"; // Adjust the path according to your project structure
 import { LocationData } from "../../../services/locationService";
@@ -53,7 +48,7 @@ const PostJobScreen = ({ navigation: navProp }) => {
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const navigation = useNavigation();
-  const { kycStatus } = useSelector((state) => state.authentication);
+  const { kycStatus } = useSelector((state:any) => state.authentication);
   const { showAlert } = useAlert();
   const scrollViewRef = useRef<ScrollView>(null);
 

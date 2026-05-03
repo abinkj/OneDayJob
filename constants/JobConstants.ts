@@ -62,6 +62,16 @@ export const defaultJobCategories: DefaultCategory[] = [
     icon: require("../assets/images/computer.png"),
   },
   {
+    id: "plumber",
+    name: "Plumber",
+    icon: require("../assets/images/plumber.png"),
+  },
+  {
+    id: "electrician",
+    name: "Electrician",
+    icon: require("../assets/images/electrician.png"),
+  },
+  {
     id: "custom",
     name: "Custom",
     icon: require("../assets/images/custom.png"),

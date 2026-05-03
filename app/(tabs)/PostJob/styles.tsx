@@ -107,6 +107,44 @@ export const createStyles = (colors: ThemeColors) => StyleSheet.create({
     width: 20 * DeviceDimensions.widthRatio,
     height: 20 * DeviceDimensions.heightRatio,
   },
+  // Step 2 Category List Styles
+  categoryItemStep2: {
+    alignItems: 'center',
+    marginRight: 20 * DeviceDimensions.widthRatio,
+    width: 80 * DeviceDimensions.widthRatio,
+  },
+  selectedCategoryStep2: {
+    // optional: add background or scale if needed
+  },
+  categoryIconContainerStep2: {
+    width: 60 * DeviceDimensions.widthRatio,
+    height: 60 * DeviceDimensions.heightRatio,
+    borderRadius: 30,
+    backgroundColor: colors.categoryBox,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 8 * DeviceDimensions.heightRatio,
+    borderWidth: 1,
+    borderColor: 'transparent',
+  },
+  selectedCategoryIconContainerStep2: {
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
+  },
+  categoryIconStep2: {
+    width: 30 * DeviceDimensions.widthRatio,
+    height: 30 * DeviceDimensions.heightRatio,
+  },
+  categoryNameStep2: {
+    fontSize: 12,
+    fontFamily: 'medium',
+    color: colors.grey,
+    textAlign: 'center',
+  },
+  selectedCategoryNameStep2: {
+    color: colors.primary,
+    fontFamily: 'bold',
+  },
   // Custom Category Styles
   customCategoryContainer: {
     paddingHorizontal: 20,

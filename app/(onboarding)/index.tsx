@@ -119,10 +119,7 @@ const Onboarding = () => {
   }).current;
 
   return (
-    <LinearGradient
-      colors={[Colors.primary, "#8B5CF6"]}
-      style={styles.container}
-    >
+    <LinearGradient colors={["white", Colors.primary]} style={styles.container}>
       <View style={styles.skipContainer}>
         <TouchableOpacity onPress={handleSkip}>
           <Text style={styles.skipText}>Skip</Text>
@@ -171,6 +168,7 @@ const Onboarding = () => {
           }
           onPress={handleNext}
           disabled={loading}
+          color={Colors.blue}
         />
       </View>
     </LinearGradient>
@@ -188,8 +186,8 @@ const styles = StyleSheet.create({
   },
   skipText: {
     fontSize: 18,
-    color: "#fff",
-    fontWeight: "600",
+    color: "black",
+    fontWeight: "500",
   },
   slide: {
     width,
