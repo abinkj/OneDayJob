@@ -27,6 +27,7 @@ import {
   getCurrentUser,
   getEmployeeVerificationStatus,
   markArrival,
+  getJobPosting,
 } from "../../../services/api";
 import { applyJobOffline } from "../../../services/offlineQueueExamples";
 import socketService from "../../../services/socketService";
@@ -97,21 +98,44 @@ const JobDetails = () => {
   }, [isAccepted]);
 
   useEffect(() => {
-    if (jobData) {
-      console.log("Job data received:", JSON.stringify(jobData, null, 2));
-      setJob(jobData);
+    const loadJobDetails = async () => {
+      if (jobData) {
+        console.log("Job data received:", JSON.stringify(jobData, null, 2));
+        setJob(jobData);
 
-      // FIX 4: Only check verification status if job requires verification AND user is not the employer
-      const isEmployerCheck = isJobOwner(jobData, userData?.id || userData?._id);
-      if (jobData.requiresVerification && jobId && !isEmployerCheck) {
-        checkVerificationStatus();
+        // FIX 4: Only check verification status if job requires verification AND user is not the employer
+        const isEmployerCheck = isJobOwner(jobData, userData?.id || userData?._id);
+        if (jobData.requiresVerification && jobId && !isEmployerCheck) {
+          checkVerificationStatus();
+        }
+      } else if (jobId) {
+        try {
+          setLoading(true);
+          setError(null);
+          const response = await getJobPosting(jobId);
+          if (response.data?.success && response.data?.data) {
+            const fetchedJob = response.data.data;
+            setJob(fetchedJob);
+            
+            const isEmployerCheck = isJobOwner(fetchedJob, userData?.id || userData?._id);
+            if (fetchedJob.requiresVerification && !isEmployerCheck) {
+              checkVerificationStatus();
+            }
+          } else {
+            setError("Job data not available. Please go back and try again.");
+          }
+        } catch (err) {
+          console.log("Error fetching job details:", err);
+          setError("Failed to load job details. Please try again.");
+        } finally {
+          setLoading(false);
+        }
+      } else {
+        setError("No job information provided");
       }
-    } else if (jobId) {
-      // If only jobId is passed, show error (fallback)
-      setError("Job data not available. Please go back and try again.");
-    } else {
-      setError("No job information provided");
-    }
+    };
+
+    loadJobDetails();
   }, [jobId, jobData]);
 
   useEffect(() => {
@@ -509,37 +533,43 @@ const JobDetails = () => {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Location</Text>
           <TouchableOpacity
-            style={styles.locationContainer}
+            style={styles.locationCard}
             onPress={() => openMap(job.location, job.name || "Job Location")}
             disabled={
               job.isRemote ||
               job.jobStatus === "completed" ||
               job.status === "completed"
             }
+            activeOpacity={0.7}
           >
-            <Ionicons
-              name="location-outline"
-              size={20}
-              color={colors.primary}
-            />
-            <Text
-              style={[
-                styles.locationText,
-                !job.isRemote &&
-                !(
-                  job.jobStatus === "completed" || job.status === "completed"
-                ) && {
-                  color: colors.primary,
-                  textDecorationLine: "underline",
-                },
-              ]}
-            >
-              {job.isRemote
-                ? "Remote Work"
-                : `${job.location?.address || ""}${job.location?.city ? ", " + job.location.city : ""
-                }${job.location?.state ? ", " + job.location.state : ""}${job.location?.country ? ", " + job.location.country : ""
-                }`}
-            </Text>
+            <View style={styles.mapIconContainer}>
+              <Image 
+                source={require("../../../assets/images/google_maps.png")}
+                style={{ width: 24, height: 24 }}
+                resizeMode="contain"
+              />
+            </View>
+            <View style={styles.locationTextContainer}>
+              <Text
+                style={[
+                  styles.locationTextPrimary,
+                  (job.jobStatus === "completed" || job.status === "completed") && { color: colors.grey }
+                ]}
+                numberOfLines={2}
+              >
+                {job.isRemote
+                  ? "Remote Work"
+                  : `${job.location?.address || ""}${job.location?.city ? ", " + job.location.city : ""
+                  }${job.location?.state ? ", " + job.location.state : ""}${job.location?.country ? ", " + job.location.country : ""
+                  }`}
+              </Text>
+              {!job.isRemote && !(job.jobStatus === "completed" || job.status === "completed") && (
+                <Text style={styles.tapToViewText}>Tap to view on Google Maps</Text>
+              )}
+            </View>
+            {!job.isRemote && !(job.jobStatus === "completed" || job.status === "completed") && (
+              <Ionicons name="chevron-forward" size={20} color={colors.primary} />
+            )}
           </TouchableOpacity>
         </View>
 
@@ -784,12 +814,19 @@ const JobDetails = () => {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Employer</Text>
           <View style={styles.employerContainer}>
-            <View style={styles.employerAvatar}>
-              <Text style={styles.employerInitials}>
-                {job.userId?.firstName?.charAt(0)}
-                {job.userId?.lastName?.charAt(0)}
-              </Text>
-            </View>
+            {job.userId?.profilePicture ? (
+              <Image 
+                source={{ uri: job.userId.profilePicture }} 
+                style={styles.employerAvatar} 
+              />
+            ) : (
+              <View style={styles.employerAvatar}>
+                <Text style={styles.employerInitials}>
+                  {job.userId?.firstName?.charAt(0)}
+                  {job.userId?.lastName?.charAt(0)}
+                </Text>
+              </View>
+            )}
             <View style={styles.employerInfo}>
               <Text style={styles.employerName}>
                 {job.userId?.firstName} {job.userId?.lastName}
@@ -799,7 +836,7 @@ const JobDetails = () => {
               </Text>
             </View>
             <TouchableOpacity style={styles.contactButton} onPress={handleCall}>
-              <Ionicons name="call-outline" size={20} color={colors.primary} />
+              <Ionicons name="call" size={20} color="#fff" />
             </TouchableOpacity>
           </View>
         </View>

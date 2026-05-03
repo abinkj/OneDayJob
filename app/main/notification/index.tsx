@@ -9,6 +9,7 @@ import { NotificationData } from "../../../services/notificationService";
 import { useTheme } from "../../../contexts/ThemeContext";
 import { ThemeColors } from "../../../constants/Colors";
 import Animated, { FadeInDown, Layout, FadeIn } from "react-native-reanimated";
+import { useNavigation } from "@react-navigation/native";
 
 const Notification = () => {
   const {
@@ -23,6 +24,7 @@ const Notification = () => {
   const { colors, theme } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
 
+  const navigation = useNavigation<any>();
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -69,6 +71,67 @@ const Notification = () => {
           onPress={() => {
             if (item.id) {
               markAsRead(item.id);
+            }
+
+            const clickAction = item.data?.clickAction || (item as any).clickAction;
+
+            // Handle VERIFY_ARRIVAL
+            if (clickAction === 'VERIFY_ARRIVAL' && item.jobId && item.data?.workerId) {
+              navigation.navigate("RequestVerification", { 
+                jobId: item.jobId, 
+                workerId: item.data.workerId, 
+                initialTab: 'verify' 
+              });
+              return;
+            }
+
+            // Handle REVIEW_COMPLETION
+            if (clickAction === 'REVIEW_COMPLETION' && item.jobId) {
+              navigation.navigate("JobTimer", { 
+                jobId: item.jobId, 
+                jobName: item.data?.jobName || "Job Summary",
+                isEmployer: true 
+              });
+              return;
+            }
+
+            // Handle Job Published
+            if (item.data?.type === 'job_published' && item.jobId) {
+              navigation.navigate("JobDetails", { 
+                jobId: item.jobId 
+              });
+              return;
+            }
+
+            // Handle fallback navigation based on notification type
+            switch (item.type) {
+              case 'verification_code':
+                if (item.jobId) {
+                  navigation.navigate("RequestVerification", { 
+                    jobId: item.jobId 
+                  });
+                }
+                break;
+              case 'job_update':
+              case 'application_status':
+                if (item.jobId) {
+                  navigation.navigate("JobDetails", { 
+                    jobId: item.jobId 
+                  });
+                }
+                break;
+              case 'message':
+                if (item.data?.conversationId) {
+                  navigation.navigate("ChatScreen", { 
+                    conversationId: item.data.conversationId,
+                    participant: {
+                      id: item.data.senderId || item.userId,
+                      name: item.data.senderName || 'User',
+                      avatar: item.data.senderAvatar
+                    }
+                  });
+                }
+                break;
             }
           }}
         />

@@ -1,5 +1,4 @@
-import { Platform, Alert, Linking } from 'react-native';
-import { router } from "expo-router";
+import { Platform, Alert, Linking, DeviceEventEmitter } from 'react-native';
 import * as Notifications from 'expo-notifications';
 import * as Device from 'expo-device';
 import Constants from 'expo-constants';
@@ -175,13 +174,13 @@ class NotificationService {
 
     console.log('Processed notification response:', notificationData);
 
-    // Navigate based on notification type or explicit clickAction
-    const clickAction = notificationData.data?.clickAction || notificationData.clickAction;
+    // Emit an event to be handled by the top-level navigation layout
+    const clickAction = notificationData.data?.clickAction || (notificationData as any).clickAction;
     
     if (clickAction === 'VERIFY_ARRIVAL' && notificationData.jobId && notificationData.data?.workerId) {
       console.log('🔗 Deep-linking to Arrival Verification:', notificationData.jobId, notificationData.data.workerId);
-      router.push({
-        pathname: "/main/requestVerification",
+      DeviceEventEmitter.emit('navigate_from_notification', {
+        screen: 'RequestVerification',
         params: { jobId: notificationData.jobId, workerId: notificationData.data.workerId, initialTab: 'verify' }
       });
       return;
@@ -189,41 +188,56 @@ class NotificationService {
 
     if (clickAction === 'REVIEW_COMPLETION' && notificationData.jobId) {
         console.log('🔗 Deep-linking to Completion Review:', notificationData.jobId);
-        router.push({
-          pathname: "/main/requestVerification",
-          params: { jobId: notificationData.jobId, initialTab: 'verify' }
+        DeviceEventEmitter.emit('navigate_from_notification', {
+          screen: 'JobTimer',
+          params: { 
+            jobId: notificationData.jobId, 
+            jobName: notificationData.data?.jobName || "Job Summary",
+            isEmployer: true 
+          }
         });
         return;
+    }
+
+    if (notificationData.data?.type === 'job_published' && notificationData.jobId) {
+      DeviceEventEmitter.emit('navigate_from_notification', {
+        screen: 'JobDetails',
+        params: { jobId: notificationData.jobId }
+      });
+      return;
     }
 
     switch (notificationData.type) {
       case 'verification_code':
         if (notificationData.jobId) {
-          router.push({
-            pathname: "/main/requestVerification",
+          DeviceEventEmitter.emit('navigate_from_notification', {
+            screen: 'RequestVerification',
             params: { jobId: notificationData.jobId }
           });
         }
         break;
       case 'job_update':
-        if (notificationData.jobId) {
-            router.push({
-                pathname: "/main/requestVerification",
-                params: { jobId: notificationData.jobId }
-            });
-        }
-        break;
       case 'application_status':
         if (notificationData.jobId) {
-            router.push({
-                pathname: "/JobDetails",
-                params: { jobId: notificationData.jobId }
+            DeviceEventEmitter.emit('navigate_from_notification', {
+              screen: 'JobDetails',
+              params: { jobId: notificationData.jobId }
             });
         }
         break;
       case 'message':
         if (notificationData.data?.conversationId) {
-          // Navigate to specific chat logic
+          DeviceEventEmitter.emit('navigate_from_notification', {
+            screen: 'ChatScreen',
+            params: {
+              conversationId: notificationData.data.conversationId,
+              participant: {
+                id: notificationData.data.senderId || notificationData.userId,
+                name: notificationData.data.senderName || 'User',
+                avatar: notificationData.data.senderAvatar
+              }
+            }
+          });
         }
         break;
     }

@@ -60,6 +60,7 @@
     "react-native-keyboard-controller": "1.18.5",
     "react-native-mmkv": "^4.1.0",
     "react-native-otp-entry": "^1.8.3",
+    "react-native-otp-verify": "^1.2.0",
     "react-native-pager-view": "6.9.1",
     "react-native-razorpay": "^2.3.1",
     "react-native-reanimated": "~4.1.1",

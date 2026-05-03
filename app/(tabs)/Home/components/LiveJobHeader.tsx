@@ -1,8 +1,9 @@
 import React, { useEffect, useRef } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Animated, Easing, Dimensions } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Animated, Easing, Dimensions, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { useSelector } from 'react-redux';
+import { LinearGradient } from 'expo-linear-gradient';
 import { JobPost } from '../../../../types';
 import { useTheme } from '../../../../contexts/ThemeContext';
 import { isJobOwner } from '../../../../utilities/jobUtils';
@@ -25,45 +26,57 @@ const LiveJobHeader: React.FC<LiveJobHeaderProps> = ({
     const userData = useSelector((state: any) => state.authentication.userData);
     const userId = userData?.id || userData?._id;
 
-    // Animation for the "to and fro" slider
+    // Animation for the sweep effect
     const moveAnim = useRef(new Animated.Value(0)).current;
+    // Animation for the pulsing live dot
+    const pulseAnim = useRef(new Animated.Value(1)).current;
 
     useEffect(() => {
-        const startAnimation = () => {
+        const startSweepAnimation = () => {
             Animated.loop(
                 Animated.sequence([
                     Animated.timing(moveAnim, {
                         toValue: 1,
-                        duration: 2000,
-                        easing: Easing.inOut(Easing.ease),
+                        duration: 2500,
+                        easing: Easing.bezier(0.4, 0, 0.2, 1),
                         useNativeDriver: true,
                     }),
-                    Animated.timing(moveAnim, {
-                        toValue: 0,
-                        duration: 2000,
-                        easing: Easing.inOut(Easing.ease),
-                        useNativeDriver: true,
-                    }),
+                    Animated.delay(1000) // pause between sweeps
                 ])
             ).start();
         };
 
-        startAnimation();
-    }, [moveAnim]);
+        const startPulseAnimation = () => {
+            Animated.loop(
+                Animated.sequence([
+                    Animated.timing(pulseAnim, {
+                        toValue: 0.4,
+                        duration: 800,
+                        easing: Easing.inOut(Easing.ease),
+                        useNativeDriver: true,
+                    }),
+                    Animated.timing(pulseAnim, {
+                        toValue: 1,
+                        duration: 800,
+                        easing: Easing.inOut(Easing.ease),
+                        useNativeDriver: true,
+                    })
+                ])
+            ).start();
+        };
+
+        startSweepAnimation();
+        startPulseAnimation();
+    }, [moveAnim, pulseAnim]);
 
     // Interpolate for sliding translation
     const translateX = moveAnim.interpolate({
         inputRange: [0, 1],
-        outputRange: [-width * 0.5, width * 0.5], // Slide across
+        outputRange: [-width * 0.8, width], // Slide across fully
     });
 
     const handlePress = () => {
         const isEmployer = isJobOwner(job, userId);
-
-        console.log('[LiveJobHeader] Navigation:', {
-            isEmployer,
-            currentUserId: userId,
-        });
 
         if (isEmployer && (job.jobStatus === 'open' || job.jobStatus === 'filled')) {
             navigation.navigate("RequestVerification", {
@@ -82,48 +95,59 @@ const LiveJobHeader: React.FC<LiveJobHeaderProps> = ({
     return (
         <TouchableOpacity
             style={styles.container}
-            activeOpacity={0.9}
+            activeOpacity={0.85}
             onPress={handlePress}
         >
-            {/* Gradient Background */}
-            <View style={styles.gradientBackground}>
-                {/* Animated Background Slider Effect */}
-                <View style={styles.animationContainer}>
-                    <Animated.View
-                        style={[
-                            styles.sliderBeam,
-                            {
-                                transform: [{ translateX }],
-                            },
-                        ]}
+            <LinearGradient
+                colors={['#4F46E5', '#7C3AED', '#9333EA']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.gradientBackground}
+            >
+                {/* Animated Light Sweep Effect */}
+                <Animated.View
+                    style={[
+                        styles.sweepContainer,
+                        { transform: [{ translateX }] }
+                    ]}
+                >
+                    <LinearGradient
+                        colors={['rgba(255,255,255,0)', 'rgba(255,255,255,0.3)', 'rgba(255,255,255,0)']}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 0 }}
+                        style={styles.sweepBeam}
                     />
-                </View>
-            </View>
+                </Animated.View>
 
-            <View style={styles.contentContainer}>
-                <View style={styles.topRow}>
-                    <View style={styles.liveBadge}>
-                        <View style={styles.liveDot} />
-                        <Text style={styles.liveText}>LIVE JOB</Text>
-                    </View>
-                    {totalWorkerCount > 0 && (
-                        <View style={styles.counterContainer}>
-                            <Ionicons name="people" size={14} color="white" />
-                            <Text style={styles.counterText}>
-                                {activeWorkerCount}/{totalWorkerCount} Active
-                            </Text>
+                {/* Background Pattern/Texture (Optional subtle circles) */}
+                <View style={styles.circleDecoration1} />
+                <View style={styles.circleDecoration2} />
+
+                <View style={styles.contentContainer}>
+                    <View style={styles.topRow}>
+                        <View style={styles.liveBadge}>
+                            <Animated.View style={[styles.liveDot, { opacity: pulseAnim, transform: [{ scale: pulseAnim }] }]} />
+                            <Text style={styles.liveText}>LIVE JOB</Text>
                         </View>
-                    )}
-                </View>
+                        {totalWorkerCount > 0 && (
+                            <View style={styles.counterContainer}>
+                                <Ionicons name="people" size={14} color="rgba(255,255,255,0.9)" />
+                                <Text style={styles.counterText}>
+                                    {activeWorkerCount}/{totalWorkerCount} Active
+                                </Text>
+                            </View>
+                        )}
+                    </View>
 
-                <View style={styles.jobInfo}>
-                    <Text style={styles.jobName} numberOfLines={1}>{job.name}</Text>
-                    <View style={styles.actionRow}>
-                        <Text style={styles.tapText}>Tap to view details</Text>
-                        <Ionicons name="chevron-forward" size={14} color="rgba(255,255,255,0.9)" />
+                    <View style={styles.jobInfo}>
+                        <Text style={styles.jobName} numberOfLines={1}>{job.name}</Text>
+                        <View style={styles.actionRow}>
+                            <Text style={styles.tapText}>Tap to manage live details</Text>
+                            <Ionicons name="arrow-forward-circle" size={16} color="rgba(255,255,255,0.9)" />
+                        </View>
                     </View>
                 </View>
-            </View>
+            </LinearGradient>
         </TouchableOpacity>
     );
 };
@@ -131,35 +155,58 @@ const LiveJobHeader: React.FC<LiveJobHeaderProps> = ({
 const styles = StyleSheet.create({
     container: {
         width: '100%',
-        paddingVertical: 14,
-        paddingHorizontal: 18,
-        borderBottomLeftRadius: 20,
-        borderBottomRightRadius: 20,
-        overflow: 'hidden',
-        elevation: 6,
-        shadowColor: '#4F46E5',
-        shadowOffset: { width: 0, height: 3 },
-        shadowOpacity: 0.25,
-        shadowRadius: 6,
-        marginBottom: 8,
+        marginBottom: 12,
+        borderRadius: 20,
+        ...Platform.select({
+            ios: {
+                shadowColor: '#7C3AED',
+                shadowOffset: { width: 0, height: 6 },
+                shadowOpacity: 0.35,
+                shadowRadius: 10,
+            },
+            android: {
+                elevation: 8,
+            },
+        }),
     },
     gradientBackground: {
-        ...StyleSheet.absoluteFillObject,
-        backgroundColor: '#4F46E5', // Fallback solid color (Indigo)
-        // Using a linear gradient effect via overlays
+        width: '100%',
+        paddingVertical: 18,
+        paddingHorizontal: 20,
+        borderRadius: 20,
+        overflow: 'hidden',
     },
-    animationContainer: {
+    sweepContainer: {
         ...StyleSheet.absoluteFillObject,
-        opacity: 0.15,
-        justifyContent: 'center',
-        alignItems: 'center',
+        width: 100,
+        height: '200%',
+        top: '-50%',
+        transform: [{ rotate: '20deg' }],
+        zIndex: 0,
     },
-    sliderBeam: {
-        width: '60%',
-        height: '250%',
-        backgroundColor: 'white',
-        transform: [{ rotate: '25deg' }],
-        opacity: 0.4,
+    sweepBeam: {
+        flex: 1,
+        width: '100%',
+    },
+    circleDecoration1: {
+        position: 'absolute',
+        top: -30,
+        right: -20,
+        width: 100,
+        height: 100,
+        borderRadius: 50,
+        backgroundColor: 'rgba(255,255,255,0.1)',
+        zIndex: 0,
+    },
+    circleDecoration2: {
+        position: 'absolute',
+        bottom: -40,
+        left: -20,
+        width: 80,
+        height: 80,
+        borderRadius: 40,
+        backgroundColor: 'rgba(255,255,255,0.08)',
+        zIndex: 0,
     },
     contentContainer: {
         zIndex: 1,
@@ -168,67 +215,74 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        marginBottom: 6,
+        marginBottom: 12,
     },
     liveBadge: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: 'rgba(255,255,255,0.25)',
-        paddingHorizontal: 10,
-        paddingVertical: 5,
-        borderRadius: 14,
+        backgroundColor: 'rgba(255,255,255,0.2)',
+        paddingHorizontal: 12,
+        paddingVertical: 6,
+        borderRadius: 20,
         borderWidth: 1,
         borderColor: 'rgba(255,255,255,0.3)',
     },
     liveDot: {
-        width: 6,
-        height: 6,
-        borderRadius: 3,
+        width: 8,
+        height: 8,
+        borderRadius: 4,
         backgroundColor: '#10B981', // Green for "live"
-        marginRight: 6,
+        marginRight: 8,
         shadowColor: '#10B981',
         shadowOffset: { width: 0, height: 0 },
-        shadowOpacity: 0.8,
-        shadowRadius: 4,
+        shadowOpacity: 1,
+        shadowRadius: 5,
+        elevation: 3,
     },
     liveText: {
         color: 'white',
-        fontSize: 11,
+        fontSize: 12,
         fontWeight: '800',
-        letterSpacing: 0.8,
+        letterSpacing: 1,
     },
     counterContainer: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: 'rgba(255,255,255,0.2)',
-        paddingHorizontal: 8,
-        paddingVertical: 4,
-        borderRadius: 12,
+        backgroundColor: 'rgba(0,0,0,0.15)',
+        paddingHorizontal: 10,
+        paddingVertical: 5,
+        borderRadius: 16,
+        borderWidth: 1,
+        borderColor: 'rgba(255,255,255,0.1)',
     },
     counterText: {
         color: 'white',
-        fontSize: 11,
-        marginLeft: 5,
+        fontSize: 12,
+        marginLeft: 6,
         fontWeight: '600',
+        letterSpacing: 0.5,
     },
     jobInfo: {
         marginTop: 2,
     },
     jobName: {
         color: 'white',
-        fontSize: 17,
-        fontWeight: '700',
-        marginBottom: 3,
-        letterSpacing: 0.3,
+        fontSize: 20,
+        fontWeight: 'bold',
+        marginBottom: 6,
+        letterSpacing: 0.5,
+        textShadowColor: 'rgba(0,0,0,0.2)',
+        textShadowOffset: { width: 0, height: 1 },
+        textShadowRadius: 3,
     },
     actionRow: {
         flexDirection: 'row',
         alignItems: 'center',
     },
     tapText: {
-        color: 'rgba(255,255,255,0.85)',
-        fontSize: 12,
-        marginRight: 4,
+        color: 'rgba(255,255,255,0.9)',
+        fontSize: 13,
+        marginRight: 6,
         fontWeight: '500',
     },
 });

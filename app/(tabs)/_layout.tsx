@@ -1,4 +1,6 @@
-import React from "react";
+import React, { useEffect } from "react";
+import { DeviceEventEmitter } from "react-native";
+import { useNavigation } from "@react-navigation/native";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { createMaterialTopTabNavigator } from "@react-navigation/material-top-tabs";
 
@@ -49,6 +51,23 @@ const ProfileWithErrorBoundary = () => (
 );
 
 export default function TabLayout() {
+  const navigation = useNavigation<any>();
+
+  useEffect(() => {
+    const subscription = DeviceEventEmitter.addListener(
+      'navigate_from_notification',
+      (data) => {
+        if (data.screen) {
+          navigation.navigate(data.screen, data.params);
+        }
+      }
+    );
+
+    return () => {
+      subscription.remove();
+    };
+  }, [navigation]);
+
   return (
     <Tab.Navigator
       tabBar={(props) => <CustomTabBar {...props} />}

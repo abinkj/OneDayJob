@@ -110,6 +110,45 @@ export const createStyles = (colors: ThemeColors) =>
     },
 
     // Location
+    locationCard: {
+      flexDirection: "row",
+      alignItems: "center",
+      backgroundColor: colors.primary + "10",
+      padding: 16,
+      borderRadius: 12,
+      borderWidth: 1,
+      borderColor: colors.primary + "30",
+    },
+    mapIconContainer: {
+      width: 44,
+      height: 44,
+      borderRadius: 22,
+      backgroundColor: colors.white,
+      alignItems: "center",
+      justifyContent: "center",
+      shadowColor: "#000",
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.1,
+      shadowRadius: 4,
+      elevation: 2,
+    },
+    locationTextContainer: {
+      flex: 1,
+      marginLeft: 12,
+      marginRight: 8,
+    },
+    locationTextPrimary: {
+      fontSize: 15,
+      fontWeight: "600",
+      color: colors.black,
+      lineHeight: 22,
+    },
+    tapToViewText: {
+      fontSize: 13,
+      color: colors.primary,
+      marginTop: 4,
+      fontWeight: "600",
+    },
     locationContainer: {
       flexDirection: "row",
       alignItems: "center",
@@ -197,10 +236,13 @@ export const createStyles = (colors: ThemeColors) =>
     },
     contactButton: {
       padding: 12,
-      backgroundColor: colors.white,
-      borderRadius: 8,
-      borderWidth: 1,
-      borderColor: colors.primary,
+      backgroundColor: "#10B981",
+      borderRadius: 24,
+      shadowColor: "#10B981",
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.3,
+      shadowRadius: 6,
+      elevation: 4,
     },
 
     actionContainer: {
