@@ -5,9 +5,9 @@
  * Features instant updates via Socket.IO and optimistic UI transitions.
  */
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { View, Text, ScrollView, RefreshControl } from "react-native";
-import { useRoute } from "@react-navigation/native";
+import { useNavigation, useRoute } from "@react-navigation/native";
 import { Header } from "../../../components/header";
 import { JobDetailsSkeleton } from "../../../components/Shimmer/Skeletons";
 import { useTheme } from "../../../contexts/ThemeContext";
@@ -25,6 +25,8 @@ import { useEmployerDashboard } from "./hooks/useEmployerDashboard";
 import WorkerTimerView from "./components/WorkerTimerView";
 import EmployerDashboardView from "./components/EmployerDashboardView";
 import VerificationPendingView from "./components/VerificationPendingView";
+import { useSelector } from "react-redux";
+import { RootState } from "../../../redux/store";
 
 interface JobTimerRouteParams {
   jobId: string;
@@ -65,6 +67,16 @@ const JobTimerScreen = () => {
     isEmployer ? null : workerSession.session?.session || null,
     isEmployer ? null : workerSession.lastSyncTime,
   );
+
+  const activeJob = useSelector((state: RootState) => state.activeJob);
+  const hasActiveJob = activeJob.isTimerRunning && !!activeJob.activeJobId;
+
+  const navigation = useNavigation();
+  useEffect(() => {
+    navigation.setOptions({
+      gestureEnabled: !hasActiveJob,
+    });
+  }, [hasActiveJob, navigation]);
 
   // Determine loading state
   const loading = isEmployer
@@ -127,7 +139,8 @@ const JobTimerScreen = () => {
     <View style={styles.container}>
       <Header
         title={isEmployer ? "Job Dashboard" : "Job Timer"}
-        showBackButton
+        showBackButton={!hasActiveJob}
+        disableButtonPress={hasActiveJob}
       />
       {loading ? (
         <JobDetailsSkeleton />

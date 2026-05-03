@@ -1352,11 +1352,11 @@ export const syncWorkerTime = async (
     );
 
     const response = await api.put(`/job-timer/sessions/${sessionId}/sync`, {
-      additionalSeconds,
+      additionalSeconds: Math.min(3600, Math.max(0, Math.floor(additionalSeconds))),
       currentStatus,
       heartbeat,
+      timestamp: new Date().toISOString(),
     });
-
     console.log("Worker time synced:", response.data);
     return response;
   } catch (error) {

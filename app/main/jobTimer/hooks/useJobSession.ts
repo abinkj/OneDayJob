@@ -10,7 +10,7 @@ import { AppState, AppStateStatus } from 'react-native';
 import NetInfo from '@react-native-community/netinfo';
 import Toast from 'react-native-toast-message';
 import { useQueryClient } from '@tanstack/react-query';
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
 import {
     getWorkerSession,
     startWorkerSession,
@@ -23,6 +23,7 @@ import { syncQueue } from '../utils/syncQueue';
 import { shouldSendHeartbeat } from '../utils/timeCalculations';
 import timerNotificationService from '../../../../services/timerNotificationService';
 import socketService from '../../../../services/socketService';
+import { clearActiveJob, setActiveJob } from '../../../../redux/reducers/jobReducer';
 
 export interface SessionData {
     session: {
@@ -75,6 +76,7 @@ export const useJobSession = (jobId: string): UseJobSessionReturn => {
     const [queueSize, setQueueSize] = useState(0);
 
     const queryClient = useQueryClient();
+    const dispatch = useDispatch();
     const userData = useSelector((state: any) => state.authentication.userData);
     const userId = userData?.id || userData?._id;
 
@@ -118,8 +120,19 @@ export const useJobSession = (jobId: string): UseJobSessionReturn => {
                 setLastSyncTime(Date.now());
 
                 // If session is active, ensure notification is running (useful on app restart)
-                if (sessionData?.session?.status === 'active' && sessionData?.job?.name) {
-                    timerNotificationService.startOngoingNotification(sessionData.job.name);
+                if (sessionData?.session?.status === 'active' || sessionData?.session?.status === 'paused') {
+                    if (sessionData.session.status === 'active' && sessionData?.job?.name) {
+                        timerNotificationService.startOngoingNotification(sessionData.job.name);
+                    }
+
+                    // Sync to Redux to ensure mainStack and other components know we have an active job
+                    dispatch(setActiveJob({
+                        activeJobId: jobId,
+                        activeJobName: sessionData.job?.name,
+                        employerId: sessionData.employer?._id || sessionData.employer?.id,
+                        employerName: `${sessionData.employer?.firstName || ""} ${sessionData.employer?.lastName || ""}`.trim(),
+                        employerImage: sessionData.employer?.profilePicture,
+                    }));
                 }
             }
         } catch (error: any) {
@@ -302,6 +315,16 @@ export const useJobSession = (jobId: string): UseJobSessionReturn => {
                         }
                     } as SessionData));
                 }
+
+                // Sync to Redux immediately on successful start
+                const newSession = response.data.data;
+                dispatch(setActiveJob({
+                    activeJobId: jobId,
+                    activeJobName: newSession.job?.name || session?.job?.name,
+                    employerId: newSession.employer?._id || newSession.employer?.id || session?.employer?._id,
+                    employerName: `${newSession.employer?.firstName || session?.employer?.firstName || ""} ${newSession.employer?.lastName || session?.employer?.lastName || ""}`.trim(),
+                    employerImage: newSession.employer?.profilePicture || session?.employer?.profilePicture,
+                }));
 
                 await loadSession(true);
                 Toast.show({
@@ -502,6 +525,9 @@ export const useJobSession = (jobId: string): UseJobSessionReturn => {
                 }
 
                 await loadSession(true);
+
+                // Clear active job state in Redux
+                dispatch(clearActiveJob());
 
                 // CRITICAL: Invalidate active job queries to force UI update immediately
                 // This ensures the "Active Job" bar disappears right away

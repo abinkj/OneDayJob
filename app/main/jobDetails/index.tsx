@@ -11,7 +11,7 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation, useRoute } from "@react-navigation/native";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { useTheme } from "../../../contexts/ThemeContext";
 import { createStyles } from "./styles";
 import { JobPost } from "../../../types";
@@ -47,6 +47,7 @@ import {
   handleArrivalAction,
 } from "../../../utilities/jobUtils";
 import { useQueryClient } from "@tanstack/react-query";
+import { setActiveJob } from "../../../redux/reducers/jobReducer";
 
 const JobDetails = () => {
   const { colors } = useTheme();
@@ -171,6 +172,31 @@ const JobDetails = () => {
     } finally {
       setCheckingVerification(false);
     }
+  };
+
+  const dispatch = useDispatch();
+
+  // Inside the canStartWork block's onPress:
+  const handleStartWork = () => {
+    console.log("Starting work for job:", job);
+    dispatch(
+      setActiveJob({
+        activeJobId: job._id,
+        activeJobName: job.name,
+        employerId: job.userId?._id || job.userId?.id || job.userId,
+        employerName:
+          `${job.userId?.firstName || ""} ${job.userId?.lastName || ""}`.trim(),
+        employerImage: job.userId?.profilePicture,
+      }),
+    );
+    navigation.navigate("JobTimer", {
+      jobId: job._id,
+      jobName: job.name,
+      employerId: job.userId?._id || job.userId?.id || job.userId,
+      employerName:
+        `${job.userId?.firstName || ""} ${job.userId?.lastName || ""}`.trim(),
+      employerImage: job.userId?.profilePicture,
+    });
   };
 
   // const handleApply = () => {
@@ -872,19 +898,18 @@ const JobDetails = () => {
                                 backgroundColor: colors.primary,
                               },
                             ]}
-                            onPress={() =>
-                              navigation.navigate("JobTimer", {
-                                jobId: job._id,
-                                jobName: job.name,
-                                employerId:
-                                  job.userId?._id ||
-                                  job.userId?.id ||
-                                  job.userId,
-                                employerName:
-                                  `${job.userId?.firstName || ""} ${job.userId?.lastName || ""}`.trim(),
-                                employerImage: job.userId?.profilePicture,
-                              })
-                            }
+                            onPress={handleStartWork}
+                            // navigation.navigate("JobTimer", {
+                            //   jobId: job._id,
+                            //   jobName: job.name,
+                            //   employerId:
+                            //     job.userId?._id ||
+                            //     job.userId?.id ||
+                            //     job.userId,
+                            //   employerName:
+                            //     `${job.userId?.firstName || ""} ${job.userId?.lastName || ""}`.trim(),
+                            //   employerImage: job.userId?.profilePicture,
+                            // })
                           >
                             <Text style={styles.refreshCodeButtonText}>
                               Go to Timer

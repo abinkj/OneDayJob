@@ -1312,7 +1312,7 @@ const HomeScreen = () => {
                   <Text style={styles.bannerTitle}>
                     Help Is One Click Away –
                   </Text>
-                  <Text style={styles.bannerSubtitle}>Post Your Task Now!</Text>
+                  <Text style={styles.bannerSubtitle}>Post Your Job Now!</Text>
                   <TouchableOpacity
                     style={styles.postNowButton}
                     onPress={() => navigation.navigate("PostJob")}

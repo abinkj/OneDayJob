@@ -6,7 +6,6 @@ import RequestVerification from "@/main/requestVerification";
 import JobDetails from "@/main/jobDetails";
 import JobTimer from "@/main/jobTimer";
 import NewRequest from "@/main/newRequest";
-
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import RequestProfile from "@/main/requestProfile";
 import BankAccountScreen from "@/main/bankAccount";
@@ -19,15 +18,20 @@ import Language from "@/main/language";
 import JobPostingHistory from "@/main/jobPostingHistory";
 import TestSocketScreen from "@/main/testSocket";
 import { useTheme } from "../../contexts/ThemeContext";
+import { useSelector } from "react-redux";
+import { RootState } from "../../redux/store";
 
 const Stack = createNativeStackNavigator();
 
 const MainStack = () => {
   const { colors } = useTheme();
-
+  const activeJob = useSelector((state: RootState) => state.activeJob);
+  const hasActiveJob = activeJob.isTimerRunning && !!activeJob.activeJobId;
+  console.log("activeJob reduxxx",activeJob);
   return (
     <Stack.Navigator
       id={undefined}
+      initialRouteName={hasActiveJob ? "JobTimer" : "MainHome"}
       screenOptions={{
         headerShown: false,
         animation: "slide_from_right",
@@ -36,18 +40,26 @@ const MainStack = () => {
       }}
     >
       <Stack.Screen name="MainHome" component={TabLayout} />
+      
+      <Stack.Screen 
+        name="JobTimer" 
+        component={JobTimer} 
+        options={{ animation: hasActiveJob ? 'fade_from_bottom' : 'slide_from_right' }}
+        initialParams={hasActiveJob ? {
+          jobId: activeJob.activeJobId,
+          jobName: activeJob.activeJobName,
+          employerId: activeJob.employerId,
+          employerName: activeJob.employerName,
+          employerImage: activeJob.employerImage,
+        } : undefined}
+      />
       <Stack.Screen name="ChatScreen" component={ChatScreen} />
       <Stack.Screen name="RequestProfile" component={RequestProfile} />
-      <Stack.Screen
-        name="RequestVerification"
-        component={RequestVerification}
-      />
+      <Stack.Screen name="RequestVerification" component={RequestVerification} />
       <Stack.Screen name="NewRequest" component={NewRequest} />
       <Stack.Screen name="Notification" component={Notification} />
       <Stack.Screen name="EditProfile" component={EditProfile} />
       <Stack.Screen name="JobDetails" component={JobDetails} />
-      <Stack.Screen name="JobTimer" component={JobTimer} />
-      {/* <Stack.Screen name="RequestDetails" component={RequestDetails} /> */}
       <Stack.Screen name="BankAccount" component={BankAccountScreen} />
       <Stack.Screen name="PaymentHistory" component={PaymentHistoryScreen} />
       <Stack.Screen name="Settings" component={Settings} />
@@ -62,4 +74,3 @@ const MainStack = () => {
 };
 
 export default MainStack;
-// This file defines the main stack navigator for the application, which includes the tab layout as a screen.
