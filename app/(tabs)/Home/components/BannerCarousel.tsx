@@ -20,7 +20,7 @@ const BANNER_DATA = [
     id: "1",
     image: require("../../../../assets/images/banner.png"),
     title: "Help Is One Click Away –",
-    subtitle: "Post Your Task Now!",
+    subtitle: "Post Your Job Now!",
     buttonText: "Post Now",
     navigateTo: "PostJob",
   },
