@@ -18,6 +18,7 @@ interface HeaderProps {
   showMessageIcon?: boolean;
   headerRight?: React.ReactNode;
   onBackPress?: () => void;
+  disableButtonPress?: boolean;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -33,6 +34,7 @@ export const Header: React.FC<HeaderProps> = ({
   showMessageIcon = false,
   headerRight,
   onBackPress,
+  disableButtonPress = false,
 }) => {
   const router = useRouter();
   const { colors } = useTheme();
@@ -52,15 +54,24 @@ export const Header: React.FC<HeaderProps> = ({
   return (
     <View style={styles.container}>
       {showBackButton && (
-        <TouchableOpacity style={styles.backIcon} onPress={handleBack}>
+        <TouchableOpacity
+          style={styles.backIcon}
+          onPress={handleBack}
+          disabled={disableButtonPress}
+        >
           <Ionicons name="chevron-back" size={24} color={colors.black} />
         </TouchableOpacity>
       )}
 
-      <View style={{ alignItems: 'center' }}>
+      <View style={{ alignItems: "center" }}>
         <Text style={styles.title}>{title}</Text>
         {!!subtitle && (
-          <Text style={{ fontSize: 12, color: colors.grey, marginTop: 2 }} numberOfLines={1}>{subtitle}</Text>
+          <Text
+            style={{ fontSize: 12, color: colors.grey, marginTop: 2 }}
+            numberOfLines={1}
+          >
+            {subtitle}
+          </Text>
         )}
       </View>
 
@@ -71,19 +82,31 @@ export const Header: React.FC<HeaderProps> = ({
       )}
 
       {showSkipButton && (
-        <TouchableOpacity style={styles.skipIcon} onPress={onSkipPress}>
+        <TouchableOpacity
+          style={styles.skipIcon}
+          onPress={onSkipPress}
+          disabled={disableButtonPress}
+        >
           <Text style={styles.skipText}>Skip</Text>
         </TouchableOpacity>
       )}
 
       {showEditButton && (
-        <TouchableOpacity style={styles.editIcon} onPress={onEditPress}>
+        <TouchableOpacity
+          style={styles.editIcon}
+          onPress={onEditPress}
+          disabled={disableButtonPress}
+        >
           <MaterialIcons name="settings" size={22} color={colors.black} />
         </TouchableOpacity>
       )}
 
       {(showChatButton || showMessageIcon) && (
-        <TouchableOpacity style={styles.chatIcon} onPress={onChatPress}>
+        <TouchableOpacity
+          style={styles.chatIcon}
+          onPress={onChatPress}
+          disabled={disableButtonPress}
+        >
           <Ionicons name="chatbubble-outline" size={22} color={colors.black} />
         </TouchableOpacity>
       )}
@@ -91,64 +114,65 @@ export const Header: React.FC<HeaderProps> = ({
   );
 };
 
-const createStyles = (colors: ThemeColors) => StyleSheet.create({
-  container: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    paddingHorizontal: 16,
-    paddingTop: 16,
-    position: "relative",
-    paddingBottom: 12,
-  },
-  backIcon: {
-    position: "absolute",
-    left: 16,
-    top: 16,
-    zIndex: 1,
-    padding: 20,
-    margin: -20,
-  },
-  editIcon: {
-    position: "absolute",
-    right: 16,
-    top: 16,
-    zIndex: 1,
-    padding: 20,
-    margin: -20,
-  },
-  chatIcon: {
-    position: "absolute",
-    right: 60,
-    top: 16,
-    zIndex: 1,
-    padding: 20,
-    margin: -20,
-  },
-  skipIcon: {
-    position: "absolute",
-    right: 16,
-    top: 16,
-    zIndex: 1,
-    padding: 20,
-    margin: -20,
-  },
-  skipText: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: colors.grey,
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: "600",
-    color: colors.black,
-  },
-  rightContainer: {
-    position: "absolute",
-    right: 16,
-    top: 16,
-    zIndex: 1,
-    padding: 10,
-    margin: -10,
-  },
-});
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    container: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+      paddingHorizontal: 16,
+      paddingTop: 16,
+      position: "relative",
+      paddingBottom: 12,
+    },
+    backIcon: {
+      position: "absolute",
+      left: 16,
+      top: 16,
+      zIndex: 1,
+      padding: 20,
+      margin: -20,
+    },
+    editIcon: {
+      position: "absolute",
+      right: 16,
+      top: 16,
+      zIndex: 1,
+      padding: 20,
+      margin: -20,
+    },
+    chatIcon: {
+      position: "absolute",
+      right: 60,
+      top: 16,
+      zIndex: 1,
+      padding: 20,
+      margin: -20,
+    },
+    skipIcon: {
+      position: "absolute",
+      right: 16,
+      top: 16,
+      zIndex: 1,
+      padding: 20,
+      margin: -20,
+    },
+    skipText: {
+      fontSize: 16,
+      fontWeight: "600",
+      color: colors.grey,
+    },
+    title: {
+      fontSize: 20,
+      fontWeight: "600",
+      color: colors.black,
+    },
+    rightContainer: {
+      position: "absolute",
+      right: 16,
+      top: 16,
+      zIndex: 1,
+      padding: 10,
+      margin: -10,
+    },
+  });

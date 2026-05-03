@@ -34,11 +34,18 @@ import SuccessAnimation from "../../../components/SuccessAnimation";
 import Toast from "react-native-toast-message";
 import { useNotifications } from "../../../contexts/NotificationContext";
 import { JobDetailsSkeleton } from "../../../components/Shimmer/Skeletons";
-import * as Location from 'expo-location';
+import * as Location from "expo-location";
 import CustomButton from "../../../components/CustomButton";
 import { CustomAlertManager } from "../../../components/CustomAlert/AlertProvider";
-import { defaultJobCategories, getCategoryIcon } from "../../../constants/JobConstants";
-import { isJobOwner, isAssignedWorker, handleArrivalAction } from "../../../utilities/jobUtils";
+import {
+  defaultJobCategories,
+  getCategoryIcon,
+} from "../../../constants/JobConstants";
+import {
+  isJobOwner,
+  isAssignedWorker,
+  handleArrivalAction,
+} from "../../../utilities/jobUtils";
 import { useQueryClient } from "@tanstack/react-query";
 
 const JobDetails = () => {
@@ -61,12 +68,15 @@ const JobDetails = () => {
   const [showSuccessAnimation, setShowSuccessAnimation] = useState(false);
   const [verificationStatus, setVerificationStatus] = useState<any>(null);
   const [checkingVerification, setCheckingVerification] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   // Notification context
   const { sendJobUpdateNotification } = useNotifications();
 
   const [arrivalLoading, setArrivalLoading] = useState(false);
-  const [currentLocationAddress, setCurrentLocationAddress] = useState<string>("Getting location...");
+  const [currentLocationAddress, setCurrentLocationAddress] = useState<string>(
+    "Getting location...",
+  );
 
   // Helper variables for role-based logic
   const isEmployer = isJobOwner(job, userData?.id || userData?._id);
@@ -77,15 +87,16 @@ const JobDetails = () => {
     const fetchLocation = async () => {
       try {
         const { status } = await Location.requestForegroundPermissionsAsync();
-        if (status === 'granted') {
+        if (status === "granted") {
           const loc = await Location.getCurrentPositionAsync({});
           const reverseGeocode = await Location.reverseGeocodeAsync({
             latitude: loc.coords.latitude,
-            longitude: loc.coords.longitude
+            longitude: loc.coords.longitude,
           });
           if (reverseGeocode.length > 0) {
             const addr = reverseGeocode[0];
-            const displayAddr = `${addr.name || ''} ${addr.street || ''}, ${addr.city || ''}`.trim();
+            const displayAddr =
+              `${addr.name || ""} ${addr.street || ""}, ${addr.city || ""}`.trim();
             setCurrentLocationAddress(displayAddr || "Location found");
           }
         }
@@ -102,7 +113,10 @@ const JobDetails = () => {
       setJob(jobData);
 
       // FIX 4: Only check verification status if job requires verification AND user is not the employer
-      const isEmployerCheck = isJobOwner(jobData, userData?.id || userData?._id);
+      const isEmployerCheck = isJobOwner(
+        jobData,
+        userData?.id || userData?._id,
+      );
       if (jobData.requiresVerification && jobId && !isEmployerCheck) {
         checkVerificationStatus();
       }
@@ -124,10 +138,16 @@ const JobDetails = () => {
       }
     };
 
-    socketService.on("verification-status-updated", handleVerificationStatusUpdated);
+    socketService.on(
+      "verification-status-updated",
+      handleVerificationStatusUpdated,
+    );
 
     return () => {
-      socketService.off("verification-status-updated", handleVerificationStatusUpdated);
+      socketService.off(
+        "verification-status-updated",
+        handleVerificationStatusUpdated,
+      );
     };
   }, [jobId, job?.requiresVerification, isEmployer]);
 
@@ -153,8 +173,6 @@ const JobDetails = () => {
     }
   };
 
-
-
   // const handleApply = () => {
   //   Alert.alert(
   //     "Apply for Job",
@@ -176,8 +194,8 @@ const JobDetails = () => {
       navigation.navigate("BankAccount");
       return;
     }
-
-    setLoading(true);
+    setIsLoading(true);
+    //setLoading(true);
     try {
       const result = await applyJobOffline(jobId);
 
@@ -261,7 +279,7 @@ const JobDetails = () => {
         });
       }
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
@@ -317,7 +335,6 @@ const JobDetails = () => {
     }
   };
 
-
   const handleCall = async () => {
     if (!job?.userId?.phoneNumber) {
       Toast.show({
@@ -372,12 +389,11 @@ const JobDetails = () => {
     return reqs.join(", ");
   };
 
-
   const handleArrival = async () => {
     const result = await handleArrivalAction(jobId, setArrivalLoading);
     if (result.success) {
       // Invalidate queries to sync with backend
-      queryClient.invalidateQueries({ queryKey: ['jobs'] });
+      queryClient.invalidateQueries({ queryKey: ["jobs"] });
       // Immediately refresh local verification status
       checkVerificationStatus();
     }
@@ -398,21 +414,31 @@ const JobDetails = () => {
               "Reason for Reporting",
               "Please select a reason:",
               [
-                { text: "Inappropriate", onPress: () => submitJobReport(jobId, "Inappropriate Content") },
-                { text: "Scam/Fraud", onPress: () => submitJobReport(jobId, "Scam") },
-                { text: "Misleading", onPress: () => submitJobReport(jobId, "False Information") },
-                { text: "Cancel", style: "cancel" }
+                {
+                  text: "Inappropriate",
+                  onPress: () =>
+                    submitJobReport(jobId, "Inappropriate Content"),
+                },
+                {
+                  text: "Scam/Fraud",
+                  onPress: () => submitJobReport(jobId, "Scam"),
+                },
+                {
+                  text: "Misleading",
+                  onPress: () => submitJobReport(jobId, "False Information"),
+                },
+                { text: "Cancel", style: "cancel" },
               ],
-              { type: "info" }
+              { type: "info" },
             );
-          }
+          },
         },
         {
           text: "Cancel",
-          style: "cancel"
-        }
+          style: "cancel",
+        },
       ],
-      { type: "warning", dismissable: true }
+      { type: "warning", dismissable: true },
     );
   };
 
@@ -420,9 +446,19 @@ const JobDetails = () => {
     try {
       const { reportJob } = require("../../../services/api");
       await reportJob(id, reason);
-      CustomAlertManager.show("Report Submitted", "Thank you for the feedback. We will review this listing shortly.", [], { type: "success" });
+      CustomAlertManager.show(
+        "Report Submitted",
+        "Thank you for the feedback. We will review this listing shortly.",
+        [],
+        { type: "success" },
+      );
     } catch (error) {
-      CustomAlertManager.show("Report Submitted", "We will review this listing shortly.", [], { type: "success" });
+      CustomAlertManager.show(
+        "Report Submitted",
+        "We will review this listing shortly.",
+        [],
+        { type: "success" },
+      );
     }
   };
 
@@ -461,9 +497,14 @@ const JobDetails = () => {
         title="Job Details"
         showBackButton
         showChatButton
+        disableButtonPress={isLoading}
         onChatPress={handleChat}
         headerRight={
-          <TouchableOpacity onPress={handleReportJob} style={{ marginLeft: 10 }}>
+          <TouchableOpacity
+            onPress={handleReportJob}
+            style={{ marginLeft: 10 }}
+            disabled={!isLoading}
+          >
             <Ionicons name="flag-outline" size={22} color={colors.red} />
           </TouchableOpacity>
         }
@@ -526,19 +567,21 @@ const JobDetails = () => {
               style={[
                 styles.locationText,
                 !job.isRemote &&
-                !(
-                  job.jobStatus === "completed" || job.status === "completed"
-                ) && {
-                  color: colors.primary,
-                  textDecorationLine: "underline",
-                },
+                  !(
+                    job.jobStatus === "completed" || job.status === "completed"
+                  ) && {
+                    color: colors.primary,
+                    textDecorationLine: "underline",
+                  },
               ]}
             >
               {job.isRemote
                 ? "Remote Work"
-                : `${job.location?.address || ""}${job.location?.city ? ", " + job.location.city : ""
-                }${job.location?.state ? ", " + job.location.state : ""}${job.location?.country ? ", " + job.location.country : ""
-                }`}
+                : `${job.location?.address || ""}${
+                    job.location?.city ? ", " + job.location.city : ""
+                  }${job.location?.state ? ", " + job.location.state : ""}${
+                    job.location?.country ? ", " + job.location.country : ""
+                  }`}
             </Text>
           </TouchableOpacity>
         </View>
@@ -596,15 +639,15 @@ const JobDetails = () => {
               <Text style={styles.detailValue}>
                 {job.createdAt
                   ? (() => {
-                    const date = new Date(job.createdAt);
-                    const day = String(date.getDate()).padStart(2, "0");
-                    const month = String(date.getMonth() + 1).padStart(
-                      2,
-                      "0",
-                    );
-                    const year = date.getFullYear();
-                    return `${day}/${month}/${year}`;
-                  })()
+                      const date = new Date(job.createdAt);
+                      const day = String(date.getDate()).padStart(2, "0");
+                      const month = String(date.getMonth() + 1).padStart(
+                        2,
+                        "0",
+                      );
+                      const year = date.getFullYear();
+                      return `${day}/${month}/${year}`;
+                    })()
                   : "N/A"}
               </Text>
             </View>
@@ -615,29 +658,46 @@ const JobDetails = () => {
         {isEmployer && job?.requiresVerification && (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Manage Workers</Text>
-            <View style={{
-              backgroundColor: colors.primary + '10',
-              padding: 16,
-              borderRadius: 12,
-              borderWidth: 1,
-              borderColor: colors.primary + '20'
-            }}>
-              <Text style={{ fontSize: 13, color: colors.grey, marginBottom: 12 }}>
-                Assigned workers must reach the location and be verified by you before the timer starts.
+            <View
+              style={{
+                backgroundColor: colors.primary + "10",
+                padding: 16,
+                borderRadius: 12,
+                borderWidth: 1,
+                borderColor: colors.primary + "20",
+              }}
+            >
+              <Text
+                style={{ fontSize: 13, color: colors.grey, marginBottom: 12 }}
+              >
+                Assigned workers must reach the location and be verified by you
+                before the timer starts.
               </Text>
               <TouchableOpacity
                 style={{
                   backgroundColor: colors.primary,
                   paddingVertical: 12,
                   borderRadius: 10,
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  justifyContent: 'center',
+                  flexDirection: "row",
+                  alignItems: "center",
+                  justifyContent: "center",
                 }}
-                onPress={() => navigation.navigate('RequestVerification', { jobId, jobName: job.name })}
+                onPress={() =>
+                  navigation.navigate("RequestVerification", {
+                    jobId,
+                    jobName: job.name,
+                  })
+                }
               >
-                <Ionicons name="checkmark-circle-outline" size={18} color="#fff" style={{ marginRight: 8 }} />
-                <Text style={{ color: '#fff', fontWeight: '700' }}>Verify Arrived Workers</Text>
+                <Ionicons
+                  name="checkmark-circle-outline"
+                  size={18}
+                  color="#fff"
+                  style={{ marginRight: 8 }}
+                />
+                <Text style={{ color: "#fff", fontWeight: "700" }}>
+                  Verify Arrived Workers
+                </Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -653,7 +713,12 @@ const JobDetails = () => {
                 <View style={styles.verificationStatusRow}>
                   <Ionicons name="checkmark-circle" size={24} color="#10B981" />
                   <View style={styles.verificationStatusInfo}>
-                    <Text style={[styles.verificationStatusText, { color: "#10B981" }]}>
+                    <Text
+                      style={[
+                        styles.verificationStatusText,
+                        { color: "#10B981" },
+                      ]}
+                    >
                       Job Completed
                     </Text>
                     <Text style={styles.verificationMessageText}>
@@ -665,62 +730,116 @@ const JobDetails = () => {
             ) : checkingVerification ? (
               <View style={styles.verificationLoadingContainer}>
                 <ActivityIndicator size="small" color={colors.primary} />
-                <Text style={styles.verificationLoadingText}>Checking arrival status...</Text>
+                <Text style={styles.verificationLoadingText}>
+                  Checking arrival status...
+                </Text>
               </View>
             ) : (
               <View style={styles.verificationStatusContainer}>
                 {/* Status based on arrivalStatus from API */}
                 {(() => {
-                  const arrivalStatus = verificationStatus?.arrivalStatus || 'pending';
-                  const canStartWork = verificationStatus?.canStartWork || false;
+                  const arrivalStatus =
+                    verificationStatus?.arrivalStatus || "pending";
+                  const canStartWork =
+                    verificationStatus?.canStartWork || false;
 
-                  if (arrivalStatus === 'pending') {
+                  if (arrivalStatus === "pending") {
                     return (
                       <View style={styles.verificationStatusRow}>
-                        <Ionicons name="location-outline" size={24} color="#F59E0B" />
+                        <Ionicons
+                          name="location-outline"
+                          size={24}
+                          color="#F59E0B"
+                        />
                         <View style={styles.verificationStatusInfo}>
-                          <Text style={[styles.verificationStatusText, { color: "#F59E0B" }]}>
+                          <Text
+                            style={[
+                              styles.verificationStatusText,
+                              { color: "#F59E0B" },
+                            ]}
+                          >
                             Arrival Required
                           </Text>
                           <Text style={styles.verificationMessageText}>
-                            You must reach the job site and mark your arrival to proceed.
+                            You must reach the job site and mark your arrival to
+                            proceed.
                           </Text>
                           <TouchableOpacity
-                            style={[styles.refreshCodeButtonLarge, { marginTop: 12, backgroundColor: '#10B981' }]}
+                            style={[
+                              styles.refreshCodeButtonLarge,
+                              { marginTop: 12, backgroundColor: "#10B981" },
+                            ]}
                             onPress={handleArrival}
                             disabled={arrivalLoading}
                           >
                             {arrivalLoading ? (
                               <ActivityIndicator size="small" color="#fff" />
                             ) : (
-                              <Text style={styles.refreshCodeButtonText}>I Have Reached the Location</Text>
+                              <Text style={styles.refreshCodeButtonText}>
+                                I Have Reached the Location
+                              </Text>
                             )}
                           </TouchableOpacity>
-                          <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 8 }}>
-                            <Ionicons name="navigate-outline" size={14} color={colors.grey} />
-                            <Text style={{ fontSize: 12, color: colors.grey, marginLeft: 4 }}>
+                          <View
+                            style={{
+                              flexDirection: "row",
+                              alignItems: "center",
+                              marginTop: 8,
+                            }}
+                          >
+                            <Ionicons
+                              name="navigate-outline"
+                              size={14}
+                              color={colors.grey}
+                            />
+                            <Text
+                              style={{
+                                fontSize: 12,
+                                color: colors.grey,
+                                marginLeft: 4,
+                              }}
+                            >
                               Current: {currentLocationAddress}
                             </Text>
                           </View>
                         </View>
                       </View>
                     );
-                  } else if (arrivalStatus === 'arrived' && !canStartWork) {
+                  } else if (arrivalStatus === "arrived" && !canStartWork) {
                     return (
                       <View style={styles.verificationStatusRow}>
-                        <ActivityIndicator size="small" color="#10B981" style={{ marginRight: 10 }} />
+                        <ActivityIndicator
+                          size="small"
+                          color="#10B981"
+                          style={{ marginRight: 10 }}
+                        />
                         <View style={styles.verificationStatusInfo}>
-                          <Text style={[styles.verificationStatusText, { color: "#10B981" }]}>
+                          <Text
+                            style={[
+                              styles.verificationStatusText,
+                              { color: "#10B981" },
+                            ]}
+                          >
                             Arrived ✅
                           </Text>
                           <Text style={styles.verificationMessageText}>
-                            Waiting for employer to approve your arrival. If the employer is nearby, you can ask them to verify you on their "Verify" tab.
+                            Waiting for employer to approve your arrival. If the
+                            employer is nearby, you can ask them to verify you
+                            on their "Verify" tab.
                           </Text>
                           <TouchableOpacity
-                            style={[styles.refreshCodeButtonLarge, { marginTop: 12, backgroundColor: colors.primary }]}
+                            style={[
+                              styles.refreshCodeButtonLarge,
+                              {
+                                marginTop: 12,
+                                backgroundColor: colors.primary,
+                              },
+                            ]}
                             onPress={checkVerificationStatus}
                           >
-                            <Text style={styles.refreshCodeButtonText}>Refresh Status</Text>
+                            <Text style={styles.refreshCodeButtonText}>
+                              Refresh Status
+                            </Text>
                           </TouchableOpacity>
                         </View>
                       </View>
@@ -728,25 +847,48 @@ const JobDetails = () => {
                   } else if (canStartWork) {
                     return (
                       <View style={styles.verificationStatusRow}>
-                        <Ionicons name="checkmark-circle" size={24} color="#10B981" />
+                        <Ionicons
+                          name="checkmark-circle"
+                          size={24}
+                          color="#10B981"
+                        />
                         <View style={styles.verificationStatusInfo}>
-                          <Text style={[styles.verificationStatusText, { color: "#10B981" }]}>
+                          <Text
+                            style={[
+                              styles.verificationStatusText,
+                              { color: "#10B981" },
+                            ]}
+                          >
                             Verified
                           </Text>
                           <Text style={styles.verificationMessageText}>
                             You are verified and can start working!
                           </Text>
                           <TouchableOpacity
-                            style={[styles.refreshCodeButtonLarge, { marginTop: 12, backgroundColor: colors.primary }]}
-                            onPress={() => navigation.navigate('JobTimer', {
-                              jobId: job._id,
-                              jobName: job.name,
-                              employerId: job.userId?._id || job.userId?.id || job.userId,
-                              employerName: `${job.userId?.firstName || ''} ${job.userId?.lastName || ''}`.trim(),
-                              employerImage: job.userId?.profilePicture
-                            })}
+                            style={[
+                              styles.refreshCodeButtonLarge,
+                              {
+                                marginTop: 12,
+                                backgroundColor: colors.primary,
+                              },
+                            ]}
+                            onPress={() =>
+                              navigation.navigate("JobTimer", {
+                                jobId: job._id,
+                                jobName: job.name,
+                                employerId:
+                                  job.userId?._id ||
+                                  job.userId?.id ||
+                                  job.userId,
+                                employerName:
+                                  `${job.userId?.firstName || ""} ${job.userId?.lastName || ""}`.trim(),
+                                employerImage: job.userId?.profilePicture,
+                              })
+                            }
                           >
-                            <Text style={styles.refreshCodeButtonText}>Go to Timer</Text>
+                            <Text style={styles.refreshCodeButtonText}>
+                              Go to Timer
+                            </Text>
                           </TouchableOpacity>
                         </View>
                       </View>
@@ -803,7 +945,6 @@ const JobDetails = () => {
             </TouchableOpacity>
           </View>
         </View>
-
       </ScrollView>
 
       {/* Action Buttons - Hide for Employer */}
@@ -815,20 +956,20 @@ const JobDetails = () => {
           ]}
         >
           {applied ||
-            job.hasApplied ||
-            isAccepted ||
-            (job.applicants &&
-              Array.isArray(job.applicants) &&
-              job.applicants.some(
-                (applicant: any) =>
-                  applicant === userData?.id ||
-                  applicant === userData?._id ||
-                  applicant?.id === userData?.id ||
-                  applicant?._id === userData?._id,
-              )) ? (
+          job.hasApplied ||
+          isAccepted ||
+          (job.applicants &&
+            Array.isArray(job.applicants) &&
+            job.applicants.some(
+              (applicant: any) =>
+                applicant === userData?.id ||
+                applicant === userData?._id ||
+                applicant?.id === userData?.id ||
+                applicant?._id === userData?._id,
+            )) ? (
             <CustomButton
               text="Applied"
-              onPress={() => { }}
+              onPress={() => {}}
               disabled={true}
               color="#ccc"
               style={{ flex: 1 }}
@@ -838,7 +979,7 @@ const JobDetails = () => {
             job.jobStatus === "filled" ? (
             <CustomButton
               text={job.jobStatus === "filled" ? "Job Filled" : "Job Completed"}
-              onPress={() => { }}
+              onPress={() => {}}
               disabled={true}
               color="#ccc"
               style={{ flex: 1 }}
@@ -847,7 +988,7 @@ const JobDetails = () => {
             <CustomButton
               text="Apply"
               onPress={handleApply}
-              isLoading={loading}
+              isLoading={isLoading}
               style={{ flex: 1 }}
             />
           )}
