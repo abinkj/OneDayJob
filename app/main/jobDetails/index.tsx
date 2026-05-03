@@ -292,11 +292,11 @@ const JobDetails = () => {
         err?.message ||
         "Something went wrong";
 
-      if (errorMessage.includes("overlapping this time slot")) {
+      if (errorMessage.includes("overlapping this time slot") || errorMessage.includes("user_1_onDate_1_fromTime_1_toTime_1")) {
         Toast.show({
           type: "error",
           text1: "Application Failed",
-          text2: errorMessage,
+          text2: "You can't apply for multiple jobs in the same time slot",
         });
       } else if (errorMessage.includes("already applied")) {
         // User has already applied - update local state
