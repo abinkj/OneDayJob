@@ -1,5 +1,7 @@
 import React from "react";
 import { View, Text, TouchableOpacity, Image } from "react-native";
+import { CategorySkeleton } from "../../../../components/Shimmer/Skeletons";
+
 
 interface Category {
   id: string;
@@ -12,6 +14,7 @@ interface CategorySelectorProps {
   selectedCategory: string | null;
   onSelect: (categoryId: string, categoryName: string) => void;
   styles: any;
+  loading?: boolean;
 }
 
 const CategorySelector: React.FC<CategorySelectorProps> = ({
@@ -19,7 +22,12 @@ const CategorySelector: React.FC<CategorySelectorProps> = ({
   selectedCategory,
   onSelect,
   styles,
+  loading = false,
 }) => {
+  if (loading) {
+    return <CategorySkeleton />;
+  }
+
   return (
     <View style={{ paddingBottom: 20 }}>
       <Text style={styles.sectionTitle}>Select Category</Text>

@@ -260,6 +260,54 @@ export const ListSkeleton = () => {
   );
 };
 
+// === Category Skeleton (Post Job) ===
+export const CategorySkeleton = () => {
+  const { colors } = useTheme();
+  return (
+    <View style={{ paddingBottom: 20 }}>
+      {/* Title placeholder */}
+      <ShimmerPlaceholder
+        width={150}
+        height={24}
+        style={{ marginBottom: 20, marginLeft: 16 }}
+      />
+
+      {/* Grid placeholder */}
+      <View
+        style={{
+          flexDirection: "row",
+          flexWrap: "wrap",
+          paddingHorizontal: 8,
+          justifyContent: "space-between",
+        }}
+      >
+        {[1, 2, 3, 4, 5, 6, 7, 8,9,10,11,12].map((item) => (
+          <View
+            key={item}
+            style={{
+              width: "30.33%",
+              alignItems: "center",
+              marginBottom: 20,
+            }}
+          >
+            <ShimmerPlaceholder width={60} height={60} borderRadius={12} />
+            <ShimmerPlaceholder
+              width={50}
+              height={14}
+              style={{ marginTop: 8 }}
+            />
+          </View>
+        ))}
+      </View>
+
+      {/* Custom Category Card placeholder */}
+      {/* <View style={{ paddingHorizontal: 16, marginTop: 10 }}>
+        <ShimmerPlaceholder width="100%" height={80} borderRadius={12} />
+      </View> */}
+    </View>
+  );
+};
+
 const styles = StyleSheet.create({
   cardContainer: {
     padding: 16,

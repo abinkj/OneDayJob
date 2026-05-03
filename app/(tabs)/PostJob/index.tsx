@@ -103,6 +103,7 @@ const PostJobScreen = ({ navigation: navProp }) => {
   //const [user, setUser] = useState(null);
   const [categoryMapping, setCategoryMapping] = useState({});
   const [showCategoryPicker, setShowCategoryPicker] = useState(false);
+  const [categoriesLoading, setCategoriesLoading] = useState(true);
   const user = useSelector((state: RootState) => state.authentication.userData);
   // Load categories on component mount
   useEffect(() => {
@@ -153,6 +154,7 @@ const PostJobScreen = ({ navigation: navProp }) => {
 
   // Fixed loadCategories function
   const loadCategories = async () => {
+    setCategoriesLoading(true);
     try {
       const response = await getCategories();
       console.log("Raw API response:", response);
@@ -225,6 +227,8 @@ const PostJobScreen = ({ navigation: navProp }) => {
       });
       setCategoryMapping(identityMapping);
       setJobCategories(defaultJobCategories);
+    } finally {
+      setCategoriesLoading(false);
     }
   };
 
@@ -1092,6 +1096,7 @@ const PostJobScreen = ({ navigation: navProp }) => {
         setSelectedValue(categoryName);
       }}
       styles={styles}
+      loading={categoriesLoading}
     />
   );
 
