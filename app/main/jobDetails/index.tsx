@@ -292,9 +292,9 @@ const JobDetails = () => {
 
     try {
       // Create or get existing conversation with the job poster
-      console.log("Creating conversation with job poster ID:", jobPosterId);
+      //console.log("Creating conversation with job poster ID:", jobPosterId);
       const conversation = await createConversation(jobPosterId);
-      console.log("Conversation created:", conversation);
+      //console.log("Conversation created:", conversation);
 
       // Navigate to chat screen with conversation data
       const navigationParams = {

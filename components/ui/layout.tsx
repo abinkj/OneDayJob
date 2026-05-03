@@ -2,10 +2,11 @@ import { StatusBar, StyleSheet } from "react-native";
 import { useTheme } from "../../contexts/ThemeContext";
 import { SafeAreaView } from "react-native-safe-area-context";
 import OfflineIndicator from "../OfflineIndicator";
-
+import { useAlertInitializer } from "../CustomAlert/AlertProvider";
 
 const AppLayout = ({ children }) => {
   const { theme, colors } = useTheme();
+  useAlertInitializer();
 
   return (
     <SafeAreaView
