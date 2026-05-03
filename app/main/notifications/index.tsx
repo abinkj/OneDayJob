@@ -12,9 +12,11 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../../contexts/ThemeContext';
 import { useNotifications } from '../../../contexts/NotificationContext';
 import { NotificationData } from '../../../services/notificationService';
+import { useNavigation } from '@react-navigation/native';
 import { createStyles } from './styles';
 
 const NotificationScreen = () => {
+  const navigation = useNavigation<any>();
   const {
     notifications,
     unreadCount,
@@ -35,32 +37,67 @@ const NotificationScreen = () => {
   };
 
   const handleNotificationPress = (notification: NotificationData) => {
-    // Mark as read
-    if (notification.jobId) {
-      markAsRead(notification.jobId);
+    // Mark as read using the notification's unique ID, not the jobId
+    if (notification.id || (notification as any)._id) {
+      markAsRead(notification.id || (notification as any)._id);
     }
 
-    // Handle navigation based on notification type
+    const clickAction = notification.data?.clickAction || (notification as any).clickAction;
+
+    // Handle VERIFY_ARRIVAL
+    if (clickAction === 'VERIFY_ARRIVAL' && notification.jobId && notification.data?.workerId) {
+      navigation.navigate("RequestVerification", { 
+        jobId: notification.jobId, 
+        workerId: notification.data.workerId, 
+        initialTab: 'verify' 
+      });
+      return;
+    }
+
+    // Handle REVIEW_COMPLETION
+    if (clickAction === 'REVIEW_COMPLETION' && notification.jobId) {
+      navigation.navigate("RequestVerification", { 
+        jobId: notification.jobId, 
+        initialTab: 'verify' 
+      });
+      return;
+    }
+
+    // Handle Job Published
+    if (notification.data?.type === 'job_published' && notification.jobId) {
+      navigation.navigate("JobDetails", { 
+        jobId: notification.jobId 
+      });
+      return;
+    }
+
+    // Handle fallback navigation based on notification type
     switch (notification.type) {
       case 'verification_code':
         if (notification.jobId) {
-          // Navigate to job details or verification screen
-          console.log('Navigate to verification for job:', notification.jobId);
+          navigation.navigate("RequestVerification", { 
+            jobId: notification.jobId 
+          });
         }
         break;
       case 'job_update':
-        if (notification.jobId) {
-          console.log('Navigate to job details:', notification.jobId);
-        }
-        break;
       case 'application_status':
         if (notification.jobId) {
-          console.log('Navigate to job details:', notification.jobId);
+          navigation.navigate("JobDetails", { 
+            jobId: notification.jobId 
+          });
         }
         break;
       case 'message':
         if (notification.data?.conversationId) {
-          console.log('Navigate to chat:', notification.data.conversationId);
+          navigation.navigate("ChatScreen", { 
+            conversationId: notification.data.conversationId,
+            participant: {
+              id: notification.data.senderId || notification.userId,
+              name: notification.data.senderName || 'User',
+              avatar: notification.data.senderAvatar
+            }
+          });
         }
         break;
     }

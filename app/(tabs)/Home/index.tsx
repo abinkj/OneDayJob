@@ -41,6 +41,7 @@ import { JobCardSkeleton } from "../../../components/Shimmer/Skeletons";
 import { useActiveJob } from "../../../hooks/useActiveJob";
 import LiveJobHeader from "./components/LiveJobHeader";
 import SuccessAnimation from "../../../components/SuccessAnimation";
+import BannerCarousel from "./components/BannerCarousel";
 
 import FilterActionSheet, {
   FilterActionSheetRef,
@@ -1301,27 +1302,8 @@ const HomeScreen = () => {
               )}
             </View>
 
-            {/* Banner */}
-            <View style={styles.bannerContainer}>
-              <ImageBackground
-                style={styles.banner}
-                source={require("../../../assets/images/banner.png")}
-                resizeMode="stretch"
-              >
-                <View style={styles.bannerTextContainer}>
-                  <Text style={styles.bannerTitle}>
-                    Help Is One Click Away –
-                  </Text>
-                  <Text style={styles.bannerSubtitle}>Post Your Job Now!</Text>
-                  <TouchableOpacity
-                    style={styles.postNowButton}
-                    onPress={() => navigation.navigate("PostJob")}
-                  >
-                    <Text style={styles.postNowText}>Post Now</Text>
-                  </TouchableOpacity>
-                </View>
-              </ImageBackground>
-            </View>
+            {/* Banner Carousel */}
+            <BannerCarousel />
 
             {/* Filter Row (normal position) */}
             {!isFilterSticky && renderFilterRow()}
