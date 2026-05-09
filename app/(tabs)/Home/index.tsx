@@ -6,11 +6,9 @@ import {
   TouchableOpacity,
   TextInput,
   FlatList,
-  ImageBackground,
   ActivityIndicator,
   RefreshControl,
   Animated,
-  Modal,
   DeviceEventEmitter,
   BackHandler,
 } from "react-native";
@@ -19,8 +17,8 @@ import { useTheme } from "../../../contexts/ThemeContext";
 import { createStyles } from "./styles";
 import {
   getCurrentLocation as getLocationWithAddress,
-  searchPlacesWithGoogle,        // FIX 3: was searchPlacesFallback — now uses the full Google→Expo chain
-  formatLocationDisplay,         // FIX 5: shared display formatter, removes duplicated splitting logic
+  searchPlacesWithGoogle, // FIX 3: was searchPlacesFallback — now uses the full Google→Expo chain
+  formatLocationDisplay, // FIX 5: shared display formatter, removes duplicated splitting logic
   LocationData,
 } from "../../../services/locationService";
 import { useDispatch, useSelector } from "react-redux";
@@ -29,9 +27,7 @@ import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import { useNotifications } from "../../../contexts/NotificationContext";
 import NotificationBadge from "../../../components/notificationBadge";
 import {
-  getCurrentUser,
   updateUserLocationWithRetry,
-  isAuthenticated,
   getCategoriesForFilter,
   markArrival,
 } from "../../../services/api";
@@ -57,6 +53,7 @@ const formatDistanceDisplay = (meters: number): string => {
   return `${(meters / 1000).toFixed(1)} km`;
 };
 
+// FIX 4: Typed coordinates so location state is not untyped `null`
 type Coordinates = LocationData["coordinates"];
 
 const HomeScreen = () => {
@@ -98,6 +95,10 @@ const HomeScreen = () => {
   const [searchQuery, setSearchQuery] = useState("");
   // FIX 4: typed as Coordinates | null instead of plain null
   const [location, setLocation] = useState<Coordinates | null>(null);
+  // True once location fetch has been attempted (success or failure)
+  const [locationReady, setLocationReady] = useState(false);
+  // User opted to see all jobs even though none are within 100km
+  const [showAllJobs, setShowAllJobs] = useState(false);
   const [locationAddress, setLocationAddress] = useState("Loading location...");
   const [locationDetails, setLocationDetails] = useState({
     specific: "Loading...",
@@ -180,7 +181,7 @@ const HomeScreen = () => {
         Math.sin(dLon / 2) *
         Math.sin(dLon / 2);
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    return Math.round((R * c) * 10) / 10;
+    return Math.round(R * c * 10) / 10;
   };
 
   const processAndSortJobs = (
@@ -244,7 +245,9 @@ const HomeScreen = () => {
 
     const activeJobs = jobsWithMeta.filter((job) => {
       const status = (job.jobStatus || job.status || "").toLowerCase();
-      return !["completed", "cancelled", "expired", "rejected"].includes(status);
+      return !["completed", "cancelled", "expired", "rejected"].includes(
+        status,
+      );
     });
 
     return activeJobs.sort((a, b) => {
@@ -281,11 +284,14 @@ const HomeScreen = () => {
 
       if (!locationData) {
         setLocationAddress("Location unavailable");
+        setLocationReady(true);
         console.warn("[HomeScreen] Failed to get location data");
         return;
       }
 
       setLocation(locationData.coordinates);
+      setLocationReady(true);
+      setShowAllJobs(false); // reset whenever a fresh location is acquired
 
       // FIX 5: use shared formatter — no more duplicated splitting logic here
       const { specific, broad } = formatLocationDisplay(locationData);
@@ -303,7 +309,10 @@ const HomeScreen = () => {
 
       if (userData?.id) {
         try {
-          console.log("[HomeScreen] Updating backend location for user:", userData.id);
+          console.log(
+            "[HomeScreen] Updating backend location for user:",
+            userData.id,
+          );
           await updateUserLocationWithRetry({
             coordinates: {
               latitude: locationData.coordinates.latitude,
@@ -317,12 +326,16 @@ const HomeScreen = () => {
           });
           console.log("[HomeScreen] Backend location updated successfully");
         } catch (updateError) {
-          console.error("[HomeScreen] Backend location update failed:", updateError);
+          console.error(
+            "[HomeScreen] Backend location update failed:",
+            updateError,
+          );
         }
       }
     } catch (error) {
       console.error("[HomeScreen] Error fetching location:", error);
       setLocationAddress("Location unavailable");
+      setLocationReady(true);
       Toast.show({
         type: "error",
         text1: "Location Error",
@@ -380,7 +393,29 @@ const HomeScreen = () => {
     return processAndSortJobs(jobs, location, selectedPriceSort);
   }, [jobs, location, selectedPriceSort]);
 
-  const allJobs = jobsWithDistance;
+  // Jobs within 100km (or remote, or no distance info). Used to decide whether
+  // to show the "no nearby jobs" state vs the generic empty state.
+  const NEARBY_RADIUS_KM = 100;
+  const jobsNearby = useMemo(() => {
+    if (!location) return jobsWithDistance; // no location yet — treat all as nearby
+    return jobsWithDistance.filter(
+      (j) =>
+        j.isRemote ||
+        j.distance === null ||
+        j.distance === undefined ||
+        j.distance <= NEARBY_RADIUS_KM,
+    );
+  }, [jobsWithDistance, location]);
+
+  // True when we have jobs from the API but none are within 100km
+  const noNearbyJobs =
+    locationReady &&
+    !isJobsLoading &&
+    jobsWithDistance.length > 0 &&
+    jobsNearby.length === 0;
+
+  // What actually renders in the list
+  const allJobs = showAllJobs ? jobsWithDistance : jobsNearby;
 
   // FIX 3: handleSearch now uses searchPlacesWithGoogle (Google → Expo fallback)
   // instead of searchPlacesFallback (Expo only)
@@ -403,9 +438,14 @@ const HomeScreen = () => {
         if (userData) {
           try {
             await updateUserLocationWithRetry(selectedLocation);
-            console.log("[HomeScreen] User location updated with searched location");
+            console.log(
+              "[HomeScreen] User location updated with searched location",
+            );
           } catch (updateError) {
-            console.error("[HomeScreen] Failed to update user location in backend:", updateError);
+            console.error(
+              "[HomeScreen] Failed to update user location in backend:",
+              updateError,
+            );
           }
         }
       }
@@ -489,14 +529,16 @@ const HomeScreen = () => {
         const msSinceLastFetch = Date.now() - lastLocationFetchAt.current;
         if (msSinceLastFetch < LOCATION_REFETCH_THROTTLE_MS) {
           console.log(
-            `[HomeScreen] Skipping location fetch — last fetch was ${Math.round(msSinceLastFetch / 1000)}s ago`
+            `[HomeScreen] Skipping location fetch — last fetch was ${Math.round(msSinceLastFetch / 1000)}s ago`,
           );
           refetchJobs();
           return;
         }
 
         try {
-          console.log("[HomeScreen] Home focused — refreshing location and jobs...");
+          console.log(
+            "[HomeScreen] Home focused — refreshing location and jobs...",
+          );
           await fetchCurrentLocation();
           refetchJobs();
         } catch (error) {
@@ -582,7 +624,8 @@ const HomeScreen = () => {
           jobName,
           isEmployer: false,
           employerId: item.userId?._id || item.userId?.id || item.userId,
-          employerName: `${item.userId?.firstName || ""} ${item.userId?.lastName || ""}`.trim(),
+          employerName:
+            `${item.userId?.firstName || ""} ${item.userId?.lastName || ""}`.trim(),
           employerPhoneNumber: item.userId?.phoneNumber,
           employerImage: item.userId?.profilePicture,
         });
@@ -603,7 +646,8 @@ const HomeScreen = () => {
 
       const msg = isSessionNotFound
         ? "The employer hasn't started the job session yet. Please wait for them to start."
-        : error?.response?.data?.message || "Failed to mark arrival. Please try again.";
+        : error?.response?.data?.message ||
+          "Failed to mark arrival. Please try again.";
 
       const dist = error?.response?.data?.data?.distance;
       Toast.show({
@@ -668,7 +712,8 @@ const HomeScreen = () => {
           jobName: item.name,
           isEmployer,
           employerId: jobOwnerId,
-          employerName: `${item.userId?.firstName || ""} ${item.userId?.lastName || ""}`.trim(),
+          employerName:
+            `${item.userId?.firstName || ""} ${item.userId?.lastName || ""}`.trim(),
           employerPhoneNumber: item.userId?.phoneNumber,
           employerImage: item.userId?.profilePicture,
         });
@@ -679,10 +724,7 @@ const HomeScreen = () => {
 
     return (
       <TouchableOpacity
-        style={[
-          styles.jobCard,
-          isInProgress && { borderLeftColor: "#FF9800" },
-        ]}
+        style={[styles.jobCard, isInProgress && { borderLeftColor: "#FF9800" }]}
         onPress={handleJobPress}
       >
         <View style={styles.jobCardHeader}>
@@ -695,7 +737,7 @@ const HomeScreen = () => {
               {item.category?.name || "GENERAL"}
             </Text>
           </View>
-          <View style={{ alignItems: "flex-end" }}>
+          <View style={styles.priceContainer}>
             <Text style={styles.priceText}>₹{item.budget || 0}</Text>
           </View>
         </View>
@@ -705,8 +747,12 @@ const HomeScreen = () => {
             {item.name}
           </Text>
           {isInProgress && (
-            <View style={[styles.statusContainer, { backgroundColor: "#FF9800" }]}>
-              <Text style={[styles.statusText, { color: "#fff" }]}>In Progress</Text>
+            <View
+              style={[styles.statusContainer, styles.statusContainerInProgress]}
+            >
+              <Text style={[styles.statusText, styles.statusTextInProgress]}>
+                In Progress
+              </Text>
             </View>
           )}
         </View>
@@ -714,7 +760,11 @@ const HomeScreen = () => {
         <View style={styles.jobDetailsContainer}>
           {item.distance !== null && item.distance !== undefined && (
             <View style={styles.detailRow}>
-              <Ionicons name="navigate-circle-outline" size={14} color={colors.grey} />
+              <Ionicons
+                name="navigate-circle-outline"
+                size={14}
+                color={colors.grey}
+              />
               <Text style={styles.distanceText}>{item.distance}km away</Text>
             </View>
           )}
@@ -751,33 +801,31 @@ const HomeScreen = () => {
         </View>
 
         {showArrivalFeature && (
-          <View style={{ marginTop: 10 }}>
+          <View style={styles.arrivalButtonContainer}>
             <TouchableOpacity
-              style={{
-                backgroundColor:
-                  (item as any).hasArrived ||
-                  (arrivalLoading && arrivingJobId === (item as any)._id)
-                    ? colors.grey
-                    : "#10B981",
-                paddingVertical: 12,
-                paddingHorizontal: 16,
-                borderRadius: 12,
-                flexDirection: "row",
-                alignItems: "center",
-                justifyContent: "center",
-                shadowColor: "#10B981",
-                shadowOffset: { width: 0, height: 2 },
-                shadowOpacity:
-                  (item as any).hasArrived || arrivalLoading ? 0 : 0.3,
-                shadowRadius: 4,
-                elevation: (item as any).hasArrived || arrivalLoading ? 0 : 3,
-              }}
+              style={[
+                styles.arrivalButton,
+                {
+                  backgroundColor:
+                    (item as any).hasArrived ||
+                    (arrivalLoading && arrivingJobId === (item as any)._id)
+                      ? colors.grey
+                      : "#10B981",
+                  shadowColor: "#10B981",
+                  shadowOffset: { width: 0, height: 2 },
+                  shadowOpacity:
+                    (item as any).hasArrived || arrivalLoading ? 0 : 0.3,
+                  shadowRadius: 4,
+                  elevation: (item as any).hasArrived || arrivalLoading ? 0 : 3,
+                },
+              ]}
               onPress={() =>
                 (item as any).hasArrived
                   ? Toast.show({
                       type: "info",
                       text1: "Waiting for Approval",
-                      text2: "Please ask your employer to verify you on their screen.",
+                      text2:
+                        "Please ask your employer to verify you on their screen.",
                     })
                   : handleArrival(item)
               }
@@ -792,12 +840,14 @@ const HomeScreen = () => {
               ) : (
                 <>
                   <Ionicons
-                    name={(item as any).hasArrived ? "checkmark-circle" : "location"}
+                    name={
+                      (item as any).hasArrived ? "checkmark-circle" : "location"
+                    }
                     size={18}
                     color="#fff"
-                    style={{ marginRight: 8 }}
+                    style={styles.arrivalButtonIcon}
                   />
-                  <Text style={{ color: "#fff", fontWeight: "700", fontSize: 14, letterSpacing: 0.3 }}>
+                  <Text style={styles.arrivalButtonText}>
                     {(item as any).hasArrived
                       ? "Arrived - Waiting for Approval"
                       : "I Have Reached the Location"}
@@ -807,16 +857,21 @@ const HomeScreen = () => {
             </TouchableOpacity>
 
             {(item as any).hasArrived && (
-              <Text style={{ fontSize: 11, color: "#10B981", marginTop: 4, textAlign: "center", fontWeight: "500" }}>
+              <Text style={styles.arrivalSuccessText}>
                 Arrival marked! Ask employer to verify you.
               </Text>
             )}
 
-            <View style={{ marginTop: 6, paddingHorizontal: 4 }}>
-              <View style={{ flexDirection: "row", alignItems: "flex-start" }}>
-                <Ionicons name="navigate" size={12} color={colors.grey} style={{ marginTop: 2 }} />
+            <View style={styles.locationInfoContainer}>
+              <View style={styles.locationInfoRow}>
+                <Ionicons
+                  name="navigate"
+                  size={12}
+                  color={colors.grey}
+                  style={styles.locationInfoIcon}
+                />
                 <Text
-                  style={{ fontSize: 11, color: colors.grey, marginLeft: 4, flex: 1, lineHeight: 15 }}
+                  style={styles.currentLocationText}
                   numberOfLines={2}
                   ellipsizeMode="tail"
                 >
@@ -824,7 +879,7 @@ const HomeScreen = () => {
                 </Text>
               </View>
               {item.distance !== null && item.distance !== undefined && (
-                <Text style={{ fontSize: 10, color: colors.grey, marginLeft: 16, marginTop: 2 }}>
+                <Text style={styles.distanceFromSiteText}>
                   ~{item.distance}km from site
                 </Text>
               )}
@@ -854,20 +909,28 @@ const HomeScreen = () => {
 
     const getSelectedPriceName = () => {
       if (!selectedPriceSort) return "Price";
-      const priceOption = priceOptions.find((opt) => opt.id === selectedPriceSort);
+      const priceOption = priceOptions.find(
+        (opt) => opt.id === selectedPriceSort,
+      );
       return priceOption ? priceOption.name : "Price";
     };
 
     const getSelectedDistanceName = () => {
       if (!selectedDistance) return "Distance";
-      const distanceOption = distanceOptions.find((opt) => opt.id === selectedDistance);
+      const distanceOption = distanceOptions.find(
+        (opt) => opt.id === selectedDistance,
+      );
       return distanceOption ? distanceOption.name : "Distance";
     };
 
     return (
       <View
         ref={filterRowRef}
-        style={[isFilterSticky ? styles.stickyFilterContainer : styles.filtersScrollContainer]}
+        style={[
+          isFilterSticky
+            ? styles.stickyFilterContainer
+            : styles.filtersScrollContainer,
+        ]}
         onLayout={(event) => {
           const { height } = event.nativeEvent.layout;
           setFilterRowHeight(height);
@@ -878,9 +941,21 @@ const HomeScreen = () => {
           showsHorizontalScrollIndicator={false}
           bounces={false}
           data={[
-            { id: "category", name: getSelectedCategoryName(), isSelected: !!selectedCategory },
-            { id: "price", name: getSelectedPriceName(), isSelected: !!selectedPriceSort },
-            { id: "distance", name: getSelectedDistanceName(), isSelected: !!selectedDistance },
+            {
+              id: "category",
+              name: getSelectedCategoryName(),
+              isSelected: !!selectedCategory,
+            },
+            {
+              id: "price",
+              name: getSelectedPriceName(),
+              isSelected: !!selectedPriceSort,
+            },
+            {
+              id: "distance",
+              name: getSelectedDistanceName(),
+              isSelected: !!selectedDistance,
+            },
             { id: "clear", name: "Clear", isSelected: false },
           ]}
           keyExtractor={(item) => item.id}
@@ -890,11 +965,14 @@ const HomeScreen = () => {
               onPress={() => {
                 if (item.id === "category") categorySheetRef.current?.show();
                 else if (item.id === "price") priceSheetRef.current?.show();
-                else if (item.id === "distance") distanceSheetRef.current?.show();
+                else if (item.id === "distance")
+                  distanceSheetRef.current?.show();
                 else if (item.id === "clear") clearAllFilters();
               }}
             >
-              <Text style={getFilterTextStyle(item.isSelected)}>{item.name}</Text>
+              <Text style={getFilterTextStyle(item.isSelected)}>
+                {item.name}
+              </Text>
               {item.id !== "clear" && (
                 <Ionicons
                   name="chevron-down"
@@ -909,37 +987,69 @@ const HomeScreen = () => {
     );
   };
 
-  const renderEmptyState = () => (
-    <View style={{ flex: 1, justifyContent: "center", alignItems: "center", padding: 32, minHeight: 400 }}>
+  // "No jobs within 100km" state — jobs exist but none are nearby
+  const renderNoNearbyJobsState = () => (
+    <View style={styles.emptyStateContainer}>
       <View
-        style={{
-          width: 120, height: 120, borderRadius: 60, backgroundColor: colors.white,
-          justifyContent: "center", alignItems: "center", marginBottom: 24,
-          shadowColor: colors.primary, shadowOffset: { width: 0, height: 8 },
-          shadowOpacity: 0.15, shadowRadius: 16, elevation: 6,
-          borderWidth: 1, borderColor: "rgba(79, 70, 229, 0.1)",
-        }}
+        style={[
+          styles.emptyStateIconWrapper,
+          {
+            backgroundColor: colors.white,
+            shadowColor: "#FF9800",
+            borderColor: "rgba(255, 152, 0, 0.15)",
+          },
+        ]}
+      >
+        <Ionicons name="location-outline" size={60} color="#FF9800" />
+      </View>
+      <Text style={styles.emptyStateTitle}>
+        No Jobs Within {NEARBY_RADIUS_KM}km
+      </Text>
+      <Text style={styles.emptyStateSubtitle}>
+        There are no available jobs near{" "}
+        <Text style={styles.locationHighlight}>
+          {locationDetails.specific || "your location"}
+        </Text>{" "}
+        right now.
+      </Text>
+      <TouchableOpacity
+        style={styles.primaryButton}
+        onPress={() => setShowAllJobs(true)}
+      >
+        <Text style={styles.primaryButtonText}>Show All Jobs Anyway</Text>
+      </TouchableOpacity>
+      <TouchableOpacity style={styles.outlineButton} onPress={onRefresh}>
+        <Text style={styles.outlineButtonText}>Refresh</Text>
+      </TouchableOpacity>
+    </View>
+  );
+
+  // Generic empty state — API returned zero jobs
+  const renderEmptyState = () => (
+    <View style={styles.emptyStateContainer}>
+      <View
+        style={[
+          styles.emptyStateIconWrapper,
+          {
+            backgroundColor: colors.white,
+            shadowColor: colors.primary,
+            borderColor: "rgba(79, 70, 229, 0.1)",
+          },
+        ]}
       >
         <Ionicons name="search" size={60} color={colors.primary} />
       </View>
-      <Text style={{ fontSize: 22, color: colors.black, fontWeight: "700", marginBottom: 12, textAlign: "center" }}>
+      <Text style={styles.emptyStateTitle}>
         {loading ? "Finding Jobs..." : "No Jobs Found"}
       </Text>
-      <Text style={{ fontSize: 16, color: colors.grey, textAlign: "center", lineHeight: 24, marginBottom: 24 }}>
+      <Text style={styles.emptyStateSubtitle}>
         {!userData
           ? "Login to see jobs near you."
           : "Try adjusting your filters or search radius."}
       </Text>
       {!loading && (
-        <TouchableOpacity
-          style={{
-            paddingVertical: 14, paddingHorizontal: 32, backgroundColor: colors.primary,
-            borderRadius: 12, shadowColor: colors.primary, shadowOpacity: 0.3,
-            shadowRadius: 8, shadowOffset: { width: 0, height: 4 }, elevation: 4,
-          }}
-          onPress={onRefresh}
-        >
-          <Text style={{ color: "white", fontSize: 16, fontWeight: "700" }}>Refresh Jobs</Text>
+        <TouchableOpacity style={styles.primaryButton} onPress={onRefresh}>
+          <Text style={styles.primaryButtonText}>Refresh Jobs</Text>
         </TouchableOpacity>
       )}
     </View>
@@ -948,7 +1058,9 @@ const HomeScreen = () => {
   return (
     <View style={styles.container}>
       {isFilterSticky && (
-        <View style={[styles.stickyFilterContainer, { position: "absolute", top: 0, left: 0, right: 0, zIndex: 1000 }]}>
+        <View
+          style={[styles.stickyFilterContainer, styles.stickyFilterAbsolute]}
+        >
           {renderFilterRow()}
         </View>
       )}
@@ -958,8 +1070,11 @@ const HomeScreen = () => {
         data={allJobs}
         renderItem={renderJobCard}
         keyExtractor={(item) => item._id}
-        style={[styles.scrollContainer, isFilterSticky && { paddingTop: filterRowHeight }]}
-        contentContainerStyle={{ paddingBottom: 20 }}
+        style={[
+          styles.scrollContainer,
+          isFilterSticky && { paddingTop: filterRowHeight },
+        ]}
+        contentContainerStyle={styles.flatListContent}
         showsVerticalScrollIndicator={false}
         bounces={false}
         onScroll={Animated.event(
@@ -973,7 +1088,9 @@ const HomeScreen = () => {
           },
         )}
         scrollEventThrottle={16}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
         onEndReached={handleLoadMore}
         onEndReachedThreshold={0.5}
         ListHeaderComponent={
@@ -988,29 +1105,62 @@ const HomeScreen = () => {
               <View style={styles.header}>
                 <View style={styles.locationHeader}>
                   <View style={styles.iconContainer}>
-                    <Ionicons name="location" size={20} color={colors.primary} />
+                    <Ionicons
+                      name="location"
+                      size={20}
+                      color={colors.primary}
+                    />
                   </View>
-                  <View>
-                    <TouchableOpacity style={styles.locationSelector} onPress={fetchCurrentLocation}>
-                      <Text style={styles.locationTitleHeader}>{locationDetails.specific}</Text>
-                      <Ionicons name="chevron-down" size={14} color={colors.black} style={{ marginLeft: 4, marginTop: 2 }} />
+                  <View style={styles.locationTextContainer}>
+                    <TouchableOpacity
+                      style={styles.locationSelector}
+                      onPress={fetchCurrentLocation}
+                    >
+                      <Text
+                        numberOfLines={1}
+                        ellipsizeMode="tail"
+                        style={styles.locationTitleHeader}
+                      >
+                        {locationDetails.specific}
+                      </Text>
+                      <Ionicons
+                        name="chevron-down"
+                        size={14}
+                        color={colors.black}
+                        style={styles.locationChevron}
+                      />
                     </TouchableOpacity>
                     {!!locationDetails.broad && (
-                      <Text style={styles.locationSubtitleHeader} numberOfLines={1}>
+                      <Text
+                        style={styles.locationSubtitleHeader}
+                        numberOfLines={1}
+                      >
                         {locationDetails.broad}
                       </Text>
                     )}
                   </View>
                 </View>
-                <TouchableOpacity onPress={handleNotificationPress} style={{ position: "relative", marginRight: 10 }}>
-                  <Ionicons name="notifications-outline" size={22} color={colors.black} />
+                <TouchableOpacity
+                  onPress={handleNotificationPress}
+                  style={styles.notificationButton}
+                >
+                  <Ionicons
+                    name="notifications-outline"
+                    size={22}
+                    color={colors.black}
+                  />
                   <NotificationBadge />
                 </TouchableOpacity>
               </View>
             )}
 
             <View style={styles.searchContainer}>
-              <Ionicons name="search" size={20} color={colors.grey} style={styles.searchIcon} />
+              <Ionicons
+                name="search"
+                size={20}
+                color={colors.grey}
+                style={styles.searchIcon}
+              />
               <TextInput
                 style={styles.searchInput}
                 placeholder="Search jobs or locations"
@@ -1031,32 +1181,66 @@ const HomeScreen = () => {
 
             {!isFilterSticky && renderFilterRow()}
 
-            {!loading && allJobs.length > 0 && (
-              <View style={styles.resultsContainer}>
-                <Text style={styles.resultsText}>{allJobs.length} jobs found</Text>
-              </View>
-            )}
-
-            {loading && allJobs.length === 0 && (
+            {/* Gate: show shimmer until BOTH location AND jobs are ready */}
+            {(!locationReady || isJobsLoading) && allJobs.length === 0 && (
               <View>
                 <JobCardSkeleton />
                 <JobCardSkeleton />
               </View>
             )}
+
+            {/* "Showing all jobs" banner when user bypassed the proximity filter */}
+            {showAllJobs && jobsWithDistance.length > 0 && (
+              <View style={styles.allJobsBanner}>
+                <Ionicons
+                  name="globe-outline"
+                  size={16}
+                  color="#FF9800"
+                  style={styles.allJobsBannerIcon}
+                />
+                <View style={styles.allJobsBannerContent}>
+                  <Text style={styles.allJobsBannerTitle}>
+                    Showing all {jobsWithDistance.length} jobs
+                  </Text>
+                  <Text style={styles.allJobsBannerSubtitle}>
+                    None found within {NEARBY_RADIUS_KM}km of your location
+                  </Text>
+                </View>
+                <TouchableOpacity onPress={() => setShowAllJobs(false)}>
+                  <Ionicons name="close" size={18} color="#B45309" />
+                </TouchableOpacity>
+              </View>
+            )}
+
+            {/* Results count — only shown once location is ready and jobs are loaded */}
+            {locationReady && !isJobsLoading && allJobs.length > 0 && (
+              <View style={styles.resultsContainer}>
+                <Text style={styles.resultsText}>
+                  {allJobs.length} jobs found
+                </Text>
+              </View>
+            )}
           </>
         }
-        ListEmptyComponent={!loading ? renderEmptyState : null}
+        ListEmptyComponent={
+          // Don't show any empty state until location has been attempted
+          !locationReady || isJobsLoading
+            ? null
+            : noNearbyJobs
+              ? renderNoNearbyJobsState()
+              : renderEmptyState()
+        }
         ListFooterComponent={
           <>
             {isJobsRefetching && allJobs.length > 0 && (
-              <View style={{ padding: 10, alignItems: "center" }}>
+              <View style={styles.loadingIndicatorContainer}>
                 <ActivityIndicator size="small" color={colors.primary} />
               </View>
             )}
             {isFetchingNextPage && (
-              <View style={{ padding: 20, alignItems: "center" }}>
+              <View style={[styles.loadingIndicatorContainer, { padding: 20 }]}>
                 <ActivityIndicator size="large" color={colors.primary} />
-                <Text style={{ marginTop: 10, color: colors.grey }}>Loading more jobs...</Text>
+                <Text style={styles.loadingText}>Loading more jobs...</Text>
               </View>
             )}
           </>

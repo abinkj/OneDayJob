@@ -41,6 +41,7 @@ export const createStyles = (colors: ThemeColors) =>
       fontFamily: "bold",
       color: colors.black,
       lineHeight: 20,
+      flexShrink: 1, // Prevent overlapping with notification button
     },
     locationSubtitleHeader: {
       fontSize: 12,
@@ -48,6 +49,9 @@ export const createStyles = (colors: ThemeColors) =>
       color: colors.grey,
       marginTop: 0,
       lineHeight: 16,
+    },
+    locationTextContainer: {
+      flex: 1,
     },
     searchContainer: {
       flexDirection: "row",
@@ -311,13 +315,13 @@ export const createStyles = (colors: ThemeColors) =>
     },
 
     // Distance Text Style (add to job card)
-    distanceText: {
-      fontSize: 11,
-      color: colors.grey,
-      marginTop: 2,
-      fontWeight: "600",
-      textAlign: "right",
-    },
+    // distanceText: {
+    //   fontSize: 11,
+    //   color: colors.grey,
+    //   marginTop: 2,
+    //   fontWeight: "600",
+    //   textAlign: "right",
+    // },
 
     modalOverlay: {
       flex: 1,
@@ -445,5 +449,196 @@ export const createStyles = (colors: ThemeColors) =>
       fontSize: 14,
       color: colors.grey,
       fontStyle: "italic",
+    },
+
+    // Arrival Feature Styles
+    priceContainer: {
+      alignItems: "flex-end",
+    },
+    statusContainerInProgress: {
+      backgroundColor: "#FF9800",
+    },
+    statusTextInProgress: {
+      color: "#fff",
+    },
+    arrivalButtonContainer: {
+      marginTop: 10,
+    },
+    arrivalButton: {
+      paddingVertical: 12,
+      paddingHorizontal: 16,
+      borderRadius: 12,
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    arrivalButtonIcon: {
+      marginRight: 8,
+    },
+    arrivalButtonText: {
+      color: "#fff",
+      fontWeight: "700",
+      fontSize: 14,
+      letterSpacing: 0.3,
+    },
+    arrivalSuccessText: {
+      fontSize: 11,
+      color: "#10B981",
+      marginTop: 4,
+      textAlign: "center",
+      fontWeight: "500",
+    },
+    locationInfoContainer: {
+      marginTop: 6,
+      paddingHorizontal: 4,
+    },
+    locationInfoRow: {
+      flexDirection: "row",
+      alignItems: "flex-start",
+    },
+    locationInfoIcon: {
+      marginTop: 2,
+    },
+    currentLocationText: {
+      fontSize: 11,
+      color: colors.grey,
+      marginLeft: 4,
+      flex: 1,
+      lineHeight: 15,
+    },
+    distanceFromSiteText: {
+      fontSize: 10,
+      color: colors.grey,
+      marginLeft: 16,
+      marginTop: 2,
+    },
+
+    // Empty/No Nearby State Styles
+    emptyStateContainer: {
+      flex: 1,
+      justifyContent: "center",
+      alignItems: "center",
+      padding: 32,
+      minHeight: 400,
+    },
+    emptyStateIconWrapper: {
+      width: 120,
+      height: 120,
+      borderRadius: 60,
+      justifyContent: "center",
+      alignItems: "center",
+      marginBottom: 24,
+      borderWidth: 1,
+      elevation: 6,
+      shadowOffset: { width: 0, height: 8 },
+      shadowOpacity: 0.15,
+      shadowRadius: 16,
+    },
+    emptyStateTitle: {
+      fontSize: 22,
+      color: colors.black,
+      fontWeight: "700",
+      marginBottom: 10,
+      textAlign: "center",
+    },
+    emptyStateSubtitle: {
+      fontSize: 15,
+      color: colors.grey,
+      textAlign: "center",
+      lineHeight: 22,
+      marginBottom: 28,
+    },
+    locationHighlight: {
+      fontWeight: "600",
+      color: colors.black,
+    },
+    primaryButton: {
+      paddingVertical: 14,
+      paddingHorizontal: 28,
+      backgroundColor: colors.primary,
+      borderRadius: 12,
+      marginBottom: 12,
+      width: "100%",
+      alignItems: "center",
+      shadowColor: colors.primary,
+      shadowOpacity: 0.3,
+      shadowRadius: 8,
+      shadowOffset: { width: 0, height: 4 },
+      elevation: 4,
+    },
+    primaryButtonText: {
+      color: "white",
+      fontSize: 15,
+      fontWeight: "700",
+    },
+    outlineButton: {
+      paddingVertical: 12,
+      paddingHorizontal: 28,
+      borderRadius: 12,
+      width: "100%",
+      alignItems: "center",
+      borderWidth: 1,
+      borderColor: colors.grey + "44",
+    },
+    outlineButtonText: {
+      color: colors.grey,
+      fontSize: 14,
+      fontWeight: "600",
+    },
+
+    // Miscellaneous Styles
+    stickyFilterAbsolute: {
+      position: "absolute",
+      top: 0,
+      left: 0,
+      right: 0,
+      zIndex: 1000,
+    },
+    flatListContent: {
+      paddingBottom: 20,
+    },
+    notificationButton: {
+      position: "relative",
+      marginRight: 10,
+    },
+    locationChevron: {
+      marginLeft: 4,
+      marginTop: 2,
+    },
+    allJobsBanner: {
+      marginHorizontal: 16,
+      marginBottom: 8,
+      paddingVertical: 10,
+      paddingHorizontal: 14,
+      borderRadius: 10,
+      flexDirection: "row",
+      alignItems: "center",
+      backgroundColor: "#FFF3E0",
+      borderWidth: 1,
+      borderColor: "#FF9800",
+    },
+    allJobsBannerIcon: {
+      marginRight: 8,
+    },
+    allJobsBannerContent: {
+      flex: 1,
+    },
+    allJobsBannerTitle: {
+      fontSize: 13,
+      color: "#B45309",
+      fontWeight: "600",
+    },
+    allJobsBannerSubtitle: {
+      fontSize: 12,
+      color: "#B45309",
+      marginTop: 1,
+    },
+    loadingIndicatorContainer: {
+      padding: 10,
+      alignItems: "center",
+    },
+    loadingText: {
+      marginTop: 10,
+      color: colors.grey,
     },
   });
