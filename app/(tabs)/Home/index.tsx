@@ -19,7 +19,9 @@ import { useTheme } from "../../../contexts/ThemeContext";
 import { createStyles } from "./styles";
 import {
   getCurrentLocation as getLocationWithAddress,
-  searchPlacesFallback,
+  searchPlacesWithGoogle,        // FIX 3: was searchPlacesFallback — now uses the full Google→Expo chain
+  formatLocationDisplay,         // FIX 5: shared display formatter, removes duplicated splitting logic
+  LocationData,
 } from "../../../services/locationService";
 import { useDispatch, useSelector } from "react-redux";
 import Toast from "react-native-toast-message";
@@ -33,6 +35,7 @@ import {
   getCategoriesForFilter,
   markArrival,
 } from "../../../services/api";
+import { getHighAccuracyLocation } from "../../../services/locationService"; // FIX 2: reuse service in handleArrival
 import * as Location from "expo-location";
 import { restoreSession } from "../../../utilities/authentication";
 import { JobPost } from "../../../types";
@@ -42,7 +45,6 @@ import { useActiveJob } from "../../../hooks/useActiveJob";
 import LiveJobHeader from "./components/LiveJobHeader";
 import SuccessAnimation from "../../../components/SuccessAnimation";
 import BannerCarousel from "./components/BannerCarousel";
-
 import FilterActionSheet, {
   FilterActionSheetRef,
 } from "../../../components/FilterActionSheet";
@@ -55,6 +57,8 @@ const formatDistanceDisplay = (meters: number): string => {
   return `${(meters / 1000).toFixed(1)} km`;
 };
 
+type Coordinates = LocationData["coordinates"];
+
 const HomeScreen = () => {
   const { sendJobUpdateNotification } = useNotifications();
   const activeJobState = useActiveJob();
@@ -64,7 +68,6 @@ const HomeScreen = () => {
   const [arrivalLoading, setArrivalLoading] = useState(false);
   const [successSubMessage, setSuccessSubMessage] = useState("");
 
-  // Effect to handle success animation for worker completion
   useEffect(() => {
     if (activeJobState.allWorkersCompleted) {
       setSuccessMessage("All Workers Completed!");
@@ -93,7 +96,8 @@ const HomeScreen = () => {
   };
 
   const [searchQuery, setSearchQuery] = useState("");
-  const [location, setLocation] = useState(null);
+  // FIX 4: typed as Coordinates | null instead of plain null
+  const [location, setLocation] = useState<Coordinates | null>(null);
   const [locationAddress, setLocationAddress] = useState("Loading location...");
   const [locationDetails, setLocationDetails] = useState({
     specific: "Loading...",
@@ -108,7 +112,6 @@ const HomeScreen = () => {
   const [isInitialized, setIsInitialized] = useState(false);
   const [isFilterSticky, setIsFilterSticky] = useState(false);
 
-  // Filter sheet refs
   const categorySheetRef = useRef<FilterActionSheetRef>(null);
   const priceSheetRef = useRef<FilterActionSheetRef>(null);
   const distanceSheetRef = useRef<FilterActionSheetRef>(null);
@@ -118,8 +121,6 @@ const HomeScreen = () => {
   const userData = useSelector((state: any) => state.authentication.userData);
   const dispatch = useDispatch();
 
-
-  // Notification context
   const { unreadCount } = useNotifications();
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
@@ -133,7 +134,10 @@ const HomeScreen = () => {
   const BANNER_HEIGHT = 156;
   const STICKY_OFFSET = HEADER_HEIGHT + SEARCH_HEIGHT + BANNER_HEIGHT;
 
-  // Scroll to top when Home tab is tapped while already on Home
+  // FIX 1: Track when location was last fetched to skip redundant fetches on focus
+  const lastLocationFetchAt = useRef<number>(0);
+  const LOCATION_REFETCH_THROTTLE_MS = 30_000; // 30 seconds — matches getLastKnownPositionAsync maxAge
+
   useEffect(() => {
     const subscription = DeviceEventEmitter.addListener(
       "scrollToTop_Home",
@@ -141,11 +145,9 @@ const HomeScreen = () => {
         scrollViewRef.current?.scrollToOffset({ offset: 0, animated: true });
       },
     );
-
     return () => subscription.remove();
   }, []);
 
-  // Filter options
   const priceOptions = [
     { id: null, name: "All Prices" },
     { id: "low-to-high", name: "Price: Low to High" },
@@ -154,17 +156,14 @@ const HomeScreen = () => {
 
   const distanceOptions = [
     { id: null, name: "All Locations" },
-    // { id: "remote", name: "Remote Work" },
     { id: "within-10km", name: "Within 10km" },
     { id: "above-10km", name: "Above 10km" },
   ];
 
   const handleNotificationPress = () => {
-    console.log("Notification icon pressed");
     navigation.navigate("Notification");
   };
 
-  // Helper function to calculate distance between two coordinates
   const calculateDistance = (
     lat1: number,
     lon1: number,
@@ -181,33 +180,29 @@ const HomeScreen = () => {
         Math.sin(dLon / 2) *
         Math.sin(dLon / 2);
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    const distance = R * c;
-    return Math.round(distance * 10) / 10;
+    return Math.round((R * c) * 10) / 10;
   };
 
   const processAndSortJobs = (
     jobs: JobPost[],
-    userLocation: any,
+    userLocation: Coordinates | null, // FIX 4: typed
     priceSort: string | null,
   ) => {
     const NOW = Date.now();
     const ONE_DAY = 24 * 60 * 60 * 1000;
     const SEVEN_DAYS = 7 * ONE_DAY;
 
-    // 1. Map jobs with distance, recency score, and proximity score
     const jobsWithMeta = jobs.map((job) => {
       const loc = job.location as any;
-      let distance = null;
+      let distance: number | null = null;
 
-      // Calculate distance for non-remote jobs
       if (
         !job.isRemote &&
         userLocation &&
         (loc?.coordinates?.coordinates ||
           (loc?.coordinates?.latitude && loc?.coordinates?.longitude))
       ) {
-        let jobLat, jobLng;
-
+        let jobLat: number, jobLng: number;
         if (loc.coordinates.coordinates) {
           jobLng = loc.coordinates.coordinates[0];
           jobLat = loc.coordinates.coordinates[1];
@@ -215,7 +210,6 @@ const HomeScreen = () => {
           jobLat = loc.coordinates.latitude;
           jobLng = loc.coordinates.longitude;
         }
-
         distance = calculateDistance(
           userLocation.latitude,
           userLocation.longitude,
@@ -224,25 +218,16 @@ const HomeScreen = () => {
         );
       }
 
-      // Calculate recency score (0-100)
       const jobAge = NOW - new Date(job.createdAt || NOW).getTime();
       let recencyScore = 100;
-      if (jobAge < ONE_DAY) {
-        recencyScore = 100; // Posted today
-      } else if (jobAge < 3 * ONE_DAY) {
-        recencyScore = 80; // Posted within 3 days
-      } else if (jobAge < SEVEN_DAYS) {
-        recencyScore = 60; // Posted within a week
-      } else if (jobAge < 14 * ONE_DAY) {
-        recencyScore = 40; // Posted within 2 weeks
-      } else {
-        recencyScore = 20; // Older than 2 weeks
-      }
+      if (jobAge >= 14 * ONE_DAY) recencyScore = 20;
+      else if (jobAge >= SEVEN_DAYS) recencyScore = 40;
+      else if (jobAge >= 3 * ONE_DAY) recencyScore = 60;
+      else if (jobAge >= ONE_DAY) recencyScore = 80;
 
-      // Calculate proximity score (0-100)
       let proximityScore = 0;
       if (job.isRemote) {
-        proximityScore = 50; // Remote jobs get medium proximity score
+        proximityScore = 50;
       } else if (distance !== null) {
         if (distance <= 5) proximityScore = 100;
         else if (distance <= 10) proximityScore = 80;
@@ -250,37 +235,24 @@ const HomeScreen = () => {
         else if (distance <= 50) proximityScore = 40;
         else proximityScore = 20;
       } else {
-        proximityScore = 30; // Jobs without location data
+        proximityScore = 30;
       }
 
-      // Combined score: 60% recency + 40% proximity
       const combinedScore = recencyScore * 0.6 + proximityScore * 0.4;
-
       return { ...job, distance, recencyScore, proximityScore, combinedScore };
     });
 
-    // 2. Filter out non-open jobs (Completed, Cancelled, Expired)
     const activeJobs = jobsWithMeta.filter((job) => {
       const status = (job.jobStatus || job.status || "").toLowerCase();
-      // Keep only 'open', 'active', or 'in_progress' (for my jobs)
-      // Hide 'completed', 'cancelled', 'expired'
-      return !["completed", "cancelled", "expired", "rejected"].includes(
-        status,
-      );
+      return !["completed", "cancelled", "expired", "rejected"].includes(status);
     });
 
-    // 3. Multi-tier Sorting
     return activeJobs.sort((a, b) => {
-      // Tier 1: "In Progress" jobs always at the top
       const aStatus = (a.jobStatus || a.status || "").toLowerCase();
       const bStatus = (b.jobStatus || b.status || "").toLowerCase();
-      const aInProgress = aStatus === "in_progress";
-      const bInProgress = bStatus === "in_progress";
+      if (aStatus === "in_progress" && bStatus !== "in_progress") return -1;
+      if (aStatus !== "in_progress" && bStatus === "in_progress") return 1;
 
-      if (aInProgress && !bInProgress) return -1;
-      if (!aInProgress && bInProgress) return 1;
-
-      // Tier 2: Selected Price Sort (if active)
       if (priceSort === "low-to-high") {
         const diff = (a.budget || 0) - (b.budget || 0);
         if (diff !== 0) return diff;
@@ -289,12 +261,10 @@ const HomeScreen = () => {
         if (diff !== 0) return diff;
       }
 
-      // Tier 3: Smart Hybrid Score (60% recency + 40% proximity)
       return b.combinedScore - a.combinedScore;
     });
   };
 
-  // Load categories for filter
   const loadCategories = async () => {
     try {
       const categoriesData = await getCategoriesForFilter();
@@ -304,70 +274,36 @@ const HomeScreen = () => {
     }
   };
 
-
   const fetchCurrentLocation = async () => {
     try {
-      console.log("Fetching current location...");
+      console.log("[HomeScreen] Fetching current location...");
       const locationData = await getLocationWithAddress();
 
       if (!locationData) {
         setLocationAddress("Location unavailable");
-        console.warn("Failed to get location data");
+        console.warn("[HomeScreen] Failed to get location data");
         return;
       }
 
       setLocation(locationData.coordinates);
 
-      // Premium Address Logic - Uber-Style Splitting
-      // Priority: Name (Building/Shop) > Address First Part > District > City
-      let specific = "";
-      if (locationData.name && !locationData.name.match(/^[A-Z0-9]{4,8}\+/)) {
-        specific = locationData.name;
-      } else if (locationData.address) {
-        // If address starts with "P.O" or similar, try to find a better part
-        const parts = locationData.address.split(",").map((p) => p.trim());
-        if (parts[0].toLowerCase() === "p.o" && parts.length > 1) {
-          specific = parts[1]; // Use street if first part is just "P.O"
-        } else {
-          specific = parts[0];
-        }
-      } else {
-        specific =
-          locationData.district || locationData.city || "Current Location";
-      }
-
-      // Construct broad address (Area/City, State)
-      let broadParts = [];
-      const cityDistrict = locationData.district || locationData.city;
-      if (cityDistrict && !specific.includes(cityDistrict))
-        broadParts.push(cityDistrict);
-      if (locationData.state) broadParts.push(locationData.state);
-
-      // Final fallback if broad is still empty
-      if (broadParts.length === 0 && locationData.address) {
-        const parts = locationData.address.split(",").map((p) => p.trim());
-        const remaining = parts.filter(
-          (p) => !p.toLowerCase().includes(specific.toLowerCase()),
-        );
-        if (remaining.length > 0) broadParts.push(remaining[0]);
-      }
-
-      const broad = broadParts.join(", ") || locationData.country || "";
-
+      // FIX 5: use shared formatter — no more duplicated splitting logic here
+      const { specific, broad } = formatLocationDisplay(locationData);
       setLocationDetails({ specific, broad });
-      setLocationAddress(specific); // Keep for legacy compatibility if needed
+      setLocationAddress(specific);
+
       console.log(
-        "Location fetched with high accuracy:",
+        "[HomeScreen] Location fetched with high accuracy:",
         locationData.accuracy ? `${locationData.accuracy}m` : "Unknown",
         locationData,
       );
 
+      // FIX 1: record when we last successfully fetched
+      lastLocationFetchAt.current = Date.now();
+
       if (userData?.id) {
         try {
-          console.log(
-            "Updating backend location for user:",
-            userData.id,
-          );
+          console.log("[HomeScreen] Updating backend location for user:", userData.id);
           await updateUserLocationWithRetry({
             coordinates: {
               latitude: locationData.coordinates.latitude,
@@ -379,13 +315,13 @@ const HomeScreen = () => {
             country: locationData.country,
             zipCode: locationData.zipCode,
           });
-          console.log("Backend location updated successfully");
+          console.log("[HomeScreen] Backend location updated successfully");
         } catch (updateError) {
-          console.error("Backend location update failed:", updateError);
+          console.error("[HomeScreen] Backend location update failed:", updateError);
         }
       }
     } catch (error) {
-      console.error("Error fetching location:", error);
+      console.error("[HomeScreen] Error fetching location:", error);
       setLocationAddress("Location unavailable");
       Toast.show({
         type: "error",
@@ -396,24 +332,18 @@ const HomeScreen = () => {
   };
 
   const filters = useMemo(() => {
-    // For "remote" filter, we don't need user location
     const isRemote = selectedDistance === "remote";
-
     return {
       search: searchQuery.trim() || undefined,
       category: selectedCategory || undefined,
       priceSort: selectedPriceSort || undefined,
-      // Allow distance filter if it's remote OR if we have location
       distance:
         selectedDistance && (location || isRemote)
           ? selectedDistance
           : undefined,
       userLocation:
         selectedDistance && location
-          ? {
-              latitude: location.latitude,
-              longitude: location.longitude,
-            }
+          ? { latitude: location.latitude, longitude: location.longitude }
           : undefined,
     };
   }, [
@@ -425,7 +355,6 @@ const HomeScreen = () => {
     location?.longitude,
   ]);
 
-  // Use TanStack Query infinite hook
   const {
     data,
     isLoading: isJobsLoading,
@@ -437,19 +366,15 @@ const HomeScreen = () => {
     isFetchingNextPage,
   } = useJobPostings(filters);
 
-  // Flatten paginated data
   const jobs = useMemo(() => {
     if (!data?.pages) return [];
     return data.pages.flatMap((page) => page.jobs);
   }, [data]);
 
-  // Sync loading state
   useEffect(() => {
     setLoading(isJobsLoading);
   }, [isJobsLoading]);
 
-  // Process jobs with distance calculation (backend already sorted by priority)
-  // We only add distance info here, NOT filter by location
   const jobsWithDistance = useMemo(() => {
     if (!jobs) return [];
     return processAndSortJobs(jobs, location, selectedPriceSort);
@@ -457,71 +382,35 @@ const HomeScreen = () => {
 
   const allJobs = jobsWithDistance;
 
-  // Handle search
+  // FIX 3: handleSearch now uses searchPlacesWithGoogle (Google → Expo fallback)
+  // instead of searchPlacesFallback (Expo only)
   const handleSearch = async () => {
-    if (!searchQuery.trim()) {
-      // The hook will automatically refetch when searchQuery changes
-      return;
-    }
+    if (!searchQuery.trim()) return;
 
     try {
       setLoading(true);
-      // First try to search for places if it looks like a location
-      const searchResults = await searchPlacesFallback(searchQuery);
+      const searchResults = await searchPlacesWithGoogle(searchQuery);
+
       if (searchResults.length > 0) {
         const selectedLocation = searchResults[0];
         setLocation(selectedLocation.coordinates);
 
-        // Premium Address Logic for Search
-        const specific =
-          selectedLocation.address ||
-          selectedLocation.name ||
-          selectedLocation.district ||
-          selectedLocation.city ||
-          "Selected Location";
-
-        let broadParts = [];
-        if (
-          selectedLocation.district &&
-          !specific.includes(selectedLocation.district)
-        )
-          broadParts.push(selectedLocation.district);
-        if (selectedLocation.city && !specific.includes(selectedLocation.city))
-          broadParts.push(selectedLocation.city);
-        if (selectedLocation.state) broadParts.push(selectedLocation.state);
-
-        if (broadParts.length === 0 && selectedLocation.address) {
-          const parts = selectedLocation.address
-            .split(",")
-            .map((p) => p.trim());
-          const remainingParts = parts.filter(
-            (p) => !p.toLowerCase().includes(specific.toLowerCase()),
-          );
-          if (remainingParts.length > 0) broadParts.push(remainingParts[0]);
-        }
-
-        const broad = broadParts.join(", ") || selectedLocation.country || "";
-
+        // FIX 5: use shared formatter for searched locations too
+        const { specific, broad } = formatLocationDisplay(selectedLocation);
         setLocationDetails({ specific, broad });
         setLocationAddress(specific);
 
         if (userData) {
           try {
             await updateUserLocationWithRetry(selectedLocation);
-            console.log(
-              "User location updated in backend with searched location",
-            );
+            console.log("[HomeScreen] User location updated with searched location");
           } catch (updateError) {
-            console.error(
-              "Failed to update user location in backend:",
-              updateError,
-            );
+            console.error("[HomeScreen] Failed to update user location in backend:", updateError);
           }
         }
       }
-      // The hook will automatically refetch when searchQuery or location changes
     } catch (error) {
-      console.error("Error searching:", error);
+      console.error("[HomeScreen] Error searching:", error);
     } finally {
       setLoading(false);
     }
@@ -531,10 +420,11 @@ const HomeScreen = () => {
     setRefreshing(true);
     try {
       await dispatch(restoreSession() as any);
+      lastLocationFetchAt.current = 0; // FIX 1: force a fresh fetch on manual refresh
       await fetchCurrentLocation();
       await refetchJobs();
     } catch (error) {
-      console.error("Error during refresh:", error);
+      console.error("[HomeScreen] Error during refresh:", error);
       Toast.show({
         type: "error",
         text1: "Refresh Failed",
@@ -545,7 +435,6 @@ const HomeScreen = () => {
     }
   };
 
-  // Filter handlers
   const handleCategoryFilter = (categoryId) => {
     setSelectedCategory(categoryId === selectedCategory ? null : categoryId);
   };
@@ -565,10 +454,8 @@ const HomeScreen = () => {
     setSearchQuery("");
   };
 
-  // Handle infinite scroll - load more jobs
   const handleLoadMore = () => {
     if (hasNextPage && !isFetchingNextPage) {
-      console.log("Loading more jobs...");
       fetchNextPage();
     }
   };
@@ -578,14 +465,14 @@ const HomeScreen = () => {
   useEffect(() => {
     const initializeApp = async () => {
       try {
-        console.log("Initializing HomeScreen...");
+        console.log("[HomeScreen] Initializing...");
         setLoading(true);
         await dispatch(restoreSession() as any);
         await loadCategories();
         setIsInitialized(true);
-        console.log("HomeScreen initialization complete");
+        console.log("[HomeScreen] Initialization complete");
       } catch (error) {
-        console.error("Error during initialization:", error);
+        console.error("[HomeScreen] Error during initialization:", error);
         setIsInitialized(true);
       }
     };
@@ -593,23 +480,27 @@ const HomeScreen = () => {
     initializeApp();
   }, [dispatch]);
 
-  // TanStack Query automatically handles refetching on focus with refetchOnWindowFocus
-  // No need for manual throttling - the staleTime configuration prevents excessive refetches
-
-  // Refetch jobs and location when screen comes into focus
+  // FIX 1: Throttle location fetch on focus — skip if fetched within the last 30s
   useFocusEffect(
     useCallback(() => {
       const fetchLocationAndRefetch = async () => {
         if (!isInitialized) return;
-        try {
+
+        const msSinceLastFetch = Date.now() - lastLocationFetchAt.current;
+        if (msSinceLastFetch < LOCATION_REFETCH_THROTTLE_MS) {
           console.log(
-            "📍 Home screen focused, refreshing location and jobs...",
+            `[HomeScreen] Skipping location fetch — last fetch was ${Math.round(msSinceLastFetch / 1000)}s ago`
           );
+          refetchJobs();
+          return;
+        }
+
+        try {
+          console.log("[HomeScreen] Home focused — refreshing location and jobs...");
           await fetchCurrentLocation();
-          // Force a refetch of jobs to ensure fresh data
           refetchJobs();
         } catch (error) {
-          console.error("Error refreshing on focus:", error);
+          console.error("[HomeScreen] Error refreshing on focus:", error);
         }
       };
 
@@ -617,15 +508,12 @@ const HomeScreen = () => {
     }, [isInitialized, refetchJobs]),
   );
 
-  // Double back to exit logic
   const backPressedOnce = useRef(false);
 
   useFocusEffect(
     useCallback(() => {
       const onBackPress = () => {
-        if (backPressedOnce.current) {
-          return false; // Let default behavior happen (exit)
-        }
+        if (backPressedOnce.current) return false;
 
         backPressedOnce.current = true;
         Toast.show({
@@ -638,7 +526,7 @@ const HomeScreen = () => {
           backPressedOnce.current = false;
         }, 1000);
 
-        return true; // Prevent default behavior
+        return true;
       };
 
       const subscription = BackHandler.addEventListener(
@@ -650,11 +538,9 @@ const HomeScreen = () => {
     }, []),
   );
 
-  // OPTIMIZED: Debounce filter changes to avoid excessive API calls
-  // Note: TanStack Query handles caching and deduping, but we can keep a small debounce if needed for the search input specifically.
-  // For now, we rely on the state changes triggering the hook.
-
-  // Handle "I Have Arrived" button press
+  // FIX 2: handleArrival uses getHighAccuracyLocation from the service instead of
+  // a bare getCurrentPositionAsync — gets retry logic, cache path, and consistent
+  // accuracy. Permission is still checked here since this is a discrete user action.
   const handleArrival = async (item: any) => {
     const jobId = item._id;
     const jobName = item.name;
@@ -662,9 +548,8 @@ const HomeScreen = () => {
       setArrivalLoading(true);
       setArrivingJobId(jobId);
 
-      // 1. Get current GPS location
       const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== "granted") {
+      if (status !== Location.PermissionStatus.GRANTED) {
         Toast.show({
           type: "error",
           text1: "Location Permission Required",
@@ -679,14 +564,11 @@ const HomeScreen = () => {
         visibilityTime: 1500,
       });
 
-      const loc = await Location.getCurrentPositionAsync({
-        accuracy: Location.Accuracy.High,
-      });
-
+      // FIX 2: was Location.getCurrentPositionAsync({ accuracy: High }) with no retry
+      const loc = await getHighAccuracyLocation();
       const { latitude, longitude } = loc.coords;
       console.log("[Arrival] Current location:", { latitude, longitude });
 
-      // 2. Call arrival API
       const response = await markArrival(jobId, latitude, longitude);
 
       if (response.data?.success) {
@@ -695,7 +577,6 @@ const HomeScreen = () => {
           text1: "Arrival Marked! ✅",
           text2: `You are ${formatDistanceDisplay(response.data.data?.distance || 0)} from the job site. Waiting for employer approval.`,
         });
-        // Navigate to JobTimer to see the waiting state
         navigation.navigate("JobTimer", {
           jobId,
           jobName,
@@ -716,15 +597,13 @@ const HomeScreen = () => {
         });
       }
     } catch (error: any) {
-      console.log("[Arrival] Error status:", error?.response?.status);
       const isSessionNotFound =
         error?.response?.status === 404 &&
         error?.response?.data?.error?.message?.includes("session");
 
       const msg = isSessionNotFound
         ? "The employer hasn't started the job session yet. Please wait for them to start."
-        : error?.response?.data?.message ||
-          "Failed to mark arrival. Please try again.";
+        : error?.response?.data?.message || "Failed to mark arrival. Please try again.";
 
       const dist = error?.response?.data?.data?.distance;
       Toast.show({
@@ -756,7 +635,6 @@ const HomeScreen = () => {
       item.jobStatus?.toLowerCase() === "completed" ||
       item.status?.toLowerCase() === "completed";
 
-    // Determine if current user is the employer (job creator) or a worker
     const jobItem = item as any;
     const jobOwnerId =
       jobItem.userId?._id ||
@@ -785,17 +663,10 @@ const HomeScreen = () => {
 
     const handleJobPress = () => {
       if (isInProgress) {
-        console.log("Job ownership check:", {
-          userDataId: userData?.id,
-          jobOwnerId,
-          isEmployer,
-          jobName: item.name,
-        });
-
         navigation.navigate("JobTimer", {
           jobId: item._id,
           jobName: item.name,
-          isEmployer: isEmployer,
+          isEmployer,
           employerId: jobOwnerId,
           employerName: `${item.userId?.firstName || ""} ${item.userId?.lastName || ""}`.trim(),
           employerPhoneNumber: item.userId?.phoneNumber,
@@ -810,8 +681,7 @@ const HomeScreen = () => {
       <TouchableOpacity
         style={[
           styles.jobCard,
-          isInProgress && { borderLeftColor: "#FF9800" }, // Keep colored border for In Progress
-          // Default border color is Primary (Active jobs)
+          isInProgress && { borderLeftColor: "#FF9800" },
         ]}
         onPress={handleJobPress}
       >
@@ -834,32 +704,21 @@ const HomeScreen = () => {
           <Text style={styles.jobTitle} numberOfLines={2}>
             {item.name}
           </Text>
-          {isInProgress ? (
-            <View
-              style={[styles.statusContainer, { backgroundColor: "#FF9800" }]}
-            >
-              <Text style={[styles.statusText, { color: "#fff" }]}>
-                In Progress
-              </Text>
+          {isInProgress && (
+            <View style={[styles.statusContainer, { backgroundColor: "#FF9800" }]}>
+              <Text style={[styles.statusText, { color: "#fff" }]}>In Progress</Text>
             </View>
-          ) : null}
-          {/* Removed status badge for 'Active' jobs to clean up UI */}
+          )}
         </View>
 
         <View style={styles.jobDetailsContainer}>
           {item.distance !== null && item.distance !== undefined && (
             <View style={styles.detailRow}>
-              <Ionicons
-                name="navigate-circle-outline"
-                size={14}
-                color={colors.grey}
-              />
+              <Ionicons name="navigate-circle-outline" size={14} color={colors.grey} />
               <Text style={styles.distanceText}>{item.distance}km away</Text>
             </View>
           )}
-
           <View style={styles.locationContainer}>
-            {/* <Ionicons name="location-sharp" size={16} color={colors.primary} /> */}
             <Text style={styles.locationText} numberOfLines={1}>
               {item.isRemote
                 ? "Remote Work"
@@ -891,7 +750,6 @@ const HomeScreen = () => {
           </Text>
         </View>
 
-        {/* Arrival Button for Workers on Accepted/In-Progress Jobs */}
         {showArrivalFeature && (
           <View style={{ marginTop: 10 }}>
             <TouchableOpacity
@@ -919,8 +777,7 @@ const HomeScreen = () => {
                   ? Toast.show({
                       type: "info",
                       text1: "Waiting for Approval",
-                      text2:
-                        "Please ask your employer to verify you on their screen.",
+                      text2: "Please ask your employer to verify you on their screen.",
                     })
                   : handleArrival(item)
               }
@@ -935,21 +792,12 @@ const HomeScreen = () => {
               ) : (
                 <>
                   <Ionicons
-                    name={
-                      (item as any).hasArrived ? "checkmark-circle" : "location"
-                    }
+                    name={(item as any).hasArrived ? "checkmark-circle" : "location"}
                     size={18}
                     color="#fff"
                     style={{ marginRight: 8 }}
                   />
-                  <Text
-                    style={{
-                      color: "#fff",
-                      fontWeight: "700",
-                      fontSize: 14,
-                      letterSpacing: 0.3,
-                    }}
-                  >
+                  <Text style={{ color: "#fff", fontWeight: "700", fontSize: 14, letterSpacing: 0.3 }}>
                     {(item as any).hasArrived
                       ? "Arrived - Waiting for Approval"
                       : "I Have Reached the Location"}
@@ -959,35 +807,16 @@ const HomeScreen = () => {
             </TouchableOpacity>
 
             {(item as any).hasArrived && (
-              <Text
-                style={{
-                  fontSize: 11,
-                  color: "#10B981",
-                  marginTop: 4,
-                  textAlign: "center",
-                  fontWeight: "500",
-                }}
-              >
+              <Text style={{ fontSize: 11, color: "#10B981", marginTop: 4, textAlign: "center", fontWeight: "500" }}>
                 Arrival marked! Ask employer to verify you.
               </Text>
             )}
 
             <View style={{ marginTop: 6, paddingHorizontal: 4 }}>
               <View style={{ flexDirection: "row", alignItems: "flex-start" }}>
-                <Ionicons
-                  name="navigate"
-                  size={12}
-                  color={colors.grey}
-                  style={{ marginTop: 2 }}
-                />
+                <Ionicons name="navigate" size={12} color={colors.grey} style={{ marginTop: 2 }} />
                 <Text
-                  style={{
-                    fontSize: 11,
-                    color: colors.grey,
-                    marginLeft: 4,
-                    flex: 1,
-                    lineHeight: 15,
-                  }}
+                  style={{ fontSize: 11, color: colors.grey, marginLeft: 4, flex: 1, lineHeight: 15 }}
                   numberOfLines={2}
                   ellipsizeMode="tail"
                 >
@@ -995,14 +824,7 @@ const HomeScreen = () => {
                 </Text>
               </View>
               {item.distance !== null && item.distance !== undefined && (
-                <Text
-                  style={{
-                    fontSize: 10,
-                    color: colors.grey,
-                    marginLeft: 16,
-                    marginTop: 2,
-                  }}
-                >
+                <Text style={{ fontSize: 10, color: colors.grey, marginLeft: 16, marginTop: 2 }}>
                   ~{item.distance}km from site
                 </Text>
               )}
@@ -1032,28 +854,20 @@ const HomeScreen = () => {
 
     const getSelectedPriceName = () => {
       if (!selectedPriceSort) return "Price";
-      const priceOption = priceOptions.find(
-        (opt) => opt.id === selectedPriceSort,
-      );
+      const priceOption = priceOptions.find((opt) => opt.id === selectedPriceSort);
       return priceOption ? priceOption.name : "Price";
     };
 
     const getSelectedDistanceName = () => {
       if (!selectedDistance) return "Distance";
-      const distanceOption = distanceOptions.find(
-        (opt) => opt.id === selectedDistance,
-      );
+      const distanceOption = distanceOptions.find((opt) => opt.id === selectedDistance);
       return distanceOption ? distanceOption.name : "Distance";
     };
 
     return (
       <View
         ref={filterRowRef}
-        style={[
-          isFilterSticky
-            ? styles.stickyFilterContainer
-            : styles.filtersScrollContainer,
-        ]}
+        style={[isFilterSticky ? styles.stickyFilterContainer : styles.filtersScrollContainer]}
         onLayout={(event) => {
           const { height } = event.nativeEvent.layout;
           setFilterRowHeight(height);
@@ -1064,21 +878,9 @@ const HomeScreen = () => {
           showsHorizontalScrollIndicator={false}
           bounces={false}
           data={[
-            {
-              id: "category",
-              name: getSelectedCategoryName(),
-              isSelected: !!selectedCategory,
-            },
-            {
-              id: "price",
-              name: getSelectedPriceName(),
-              isSelected: !!selectedPriceSort,
-            },
-            {
-              id: "distance",
-              name: getSelectedDistanceName(),
-              isSelected: !!selectedDistance,
-            },
+            { id: "category", name: getSelectedCategoryName(), isSelected: !!selectedCategory },
+            { id: "price", name: getSelectedPriceName(), isSelected: !!selectedPriceSort },
+            { id: "distance", name: getSelectedDistanceName(), isSelected: !!selectedDistance },
             { id: "clear", name: "Clear", isSelected: false },
           ]}
           keyExtractor={(item) => item.id}
@@ -1088,14 +890,11 @@ const HomeScreen = () => {
               onPress={() => {
                 if (item.id === "category") categorySheetRef.current?.show();
                 else if (item.id === "price") priceSheetRef.current?.show();
-                else if (item.id === "distance")
-                  distanceSheetRef.current?.show();
+                else if (item.id === "distance") distanceSheetRef.current?.show();
                 else if (item.id === "clear") clearAllFilters();
               }}
             >
-              <Text style={getFilterTextStyle(item.isSelected)}>
-                {item.name}
-              </Text>
+              <Text style={getFilterTextStyle(item.isSelected)}>{item.name}</Text>
               {item.id !== "clear" && (
                 <Ionicons
                   name="chevron-down"
@@ -1111,55 +910,22 @@ const HomeScreen = () => {
   };
 
   const renderEmptyState = () => (
-    <View
-      style={{
-        flex: 1,
-        justifyContent: "center",
-        alignItems: "center",
-        padding: 32,
-        minHeight: 400,
-      }}
-    >
+    <View style={{ flex: 1, justifyContent: "center", alignItems: "center", padding: 32, minHeight: 400 }}>
       <View
         style={{
-          width: 120,
-          height: 120,
-          borderRadius: 60,
-          backgroundColor: colors.white,
-          justifyContent: "center",
-          alignItems: "center",
-          marginBottom: 24,
-          shadowColor: colors.primary,
-          shadowOffset: { width: 0, height: 8 },
-          shadowOpacity: 0.15,
-          shadowRadius: 16,
-          elevation: 6,
-          borderWidth: 1,
-          borderColor: "rgba(79, 70, 229, 0.1)",
+          width: 120, height: 120, borderRadius: 60, backgroundColor: colors.white,
+          justifyContent: "center", alignItems: "center", marginBottom: 24,
+          shadowColor: colors.primary, shadowOffset: { width: 0, height: 8 },
+          shadowOpacity: 0.15, shadowRadius: 16, elevation: 6,
+          borderWidth: 1, borderColor: "rgba(79, 70, 229, 0.1)",
         }}
       >
         <Ionicons name="search" size={60} color={colors.primary} />
       </View>
-      <Text
-        style={{
-          fontSize: 22,
-          color: colors.black,
-          fontWeight: "700",
-          marginBottom: 12,
-          textAlign: "center",
-        }}
-      >
+      <Text style={{ fontSize: 22, color: colors.black, fontWeight: "700", marginBottom: 12, textAlign: "center" }}>
         {loading ? "Finding Jobs..." : "No Jobs Found"}
       </Text>
-      <Text
-        style={{
-          fontSize: 16,
-          color: colors.grey,
-          textAlign: "center",
-          lineHeight: 24,
-          marginBottom: 24,
-        }}
-      >
+      <Text style={{ fontSize: 16, color: colors.grey, textAlign: "center", lineHeight: 24, marginBottom: 24 }}>
         {!userData
           ? "Login to see jobs near you."
           : "Try adjusting your filters or search radius."}
@@ -1167,21 +933,13 @@ const HomeScreen = () => {
       {!loading && (
         <TouchableOpacity
           style={{
-            paddingVertical: 14,
-            paddingHorizontal: 32,
-            backgroundColor: colors.primary,
-            borderRadius: 12,
-            shadowColor: colors.primary,
-            shadowOpacity: 0.3,
-            shadowRadius: 8,
-            shadowOffset: { width: 0, height: 4 },
-            elevation: 4,
+            paddingVertical: 14, paddingHorizontal: 32, backgroundColor: colors.primary,
+            borderRadius: 12, shadowColor: colors.primary, shadowOpacity: 0.3,
+            shadowRadius: 8, shadowOffset: { width: 0, height: 4 }, elevation: 4,
           }}
           onPress={onRefresh}
         >
-          <Text style={{ color: "white", fontSize: 16, fontWeight: "700" }}>
-            Refresh Jobs
-          </Text>
+          <Text style={{ color: "white", fontSize: 16, fontWeight: "700" }}>Refresh Jobs</Text>
         </TouchableOpacity>
       )}
     </View>
@@ -1189,28 +947,18 @@ const HomeScreen = () => {
 
   return (
     <View style={styles.container}>
-      {/* Sticky Filter Row - positioned absolutely when sticky */}
       {isFilterSticky && (
-        <View
-          style={[
-            styles.stickyFilterContainer,
-            { position: "absolute", top: 0, left: 0, right: 0, zIndex: 1000 },
-          ]}
-        >
+        <View style={[styles.stickyFilterContainer, { position: "absolute", top: 0, left: 0, right: 0, zIndex: 1000 }]}>
           {renderFilterRow()}
         </View>
       )}
 
-      {/* Main List Content */}
       <Animated.FlatList
         ref={scrollViewRef}
         data={allJobs}
         renderItem={renderJobCard}
         keyExtractor={(item) => item._id}
-        style={[
-          styles.scrollContainer,
-          isFilterSticky && { paddingTop: filterRowHeight },
-        ]}
+        style={[styles.scrollContainer, isFilterSticky && { paddingTop: filterRowHeight }]}
         contentContainerStyle={{ paddingBottom: 20 }}
         showsVerticalScrollIndicator={false}
         bounces={false}
@@ -1225,14 +973,11 @@ const HomeScreen = () => {
           },
         )}
         scrollEventThrottle={16}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-        }
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
         onEndReached={handleLoadMore}
         onEndReachedThreshold={0.5}
         ListHeaderComponent={
           <>
-            {/* Header */}
             {activeJobState.job ? (
               <LiveJobHeader
                 job={activeJobState.job}
@@ -1243,59 +988,29 @@ const HomeScreen = () => {
               <View style={styles.header}>
                 <View style={styles.locationHeader}>
                   <View style={styles.iconContainer}>
-                    <Ionicons
-                      name="location"
-                      size={20}
-                      color={colors.primary}
-                    />
+                    <Ionicons name="location" size={20} color={colors.primary} />
                   </View>
                   <View>
-                    <TouchableOpacity
-                      style={styles.locationSelector}
-                      onPress={fetchCurrentLocation}
-                    >
-                      <Text style={styles.locationTitleHeader}>
-                        {locationDetails.specific}
-                      </Text>
-                      <Ionicons
-                        name="chevron-down"
-                        size={14}
-                        color={colors.black}
-                        style={{ marginLeft: 4, marginTop: 2 }}
-                      />
+                    <TouchableOpacity style={styles.locationSelector} onPress={fetchCurrentLocation}>
+                      <Text style={styles.locationTitleHeader}>{locationDetails.specific}</Text>
+                      <Ionicons name="chevron-down" size={14} color={colors.black} style={{ marginLeft: 4, marginTop: 2 }} />
                     </TouchableOpacity>
                     {!!locationDetails.broad && (
-                      <Text
-                        style={styles.locationSubtitleHeader}
-                        numberOfLines={1}
-                      >
+                      <Text style={styles.locationSubtitleHeader} numberOfLines={1}>
                         {locationDetails.broad}
                       </Text>
                     )}
                   </View>
                 </View>
-                <TouchableOpacity
-                  onPress={handleNotificationPress}
-                  style={{ position: "relative", marginRight: 10 }}
-                >
-                  <Ionicons
-                    name="notifications-outline"
-                    size={22}
-                    color={colors.black}
-                  />
+                <TouchableOpacity onPress={handleNotificationPress} style={{ position: "relative", marginRight: 10 }}>
+                  <Ionicons name="notifications-outline" size={22} color={colors.black} />
                   <NotificationBadge />
                 </TouchableOpacity>
               </View>
             )}
 
-            {/* Search Bar */}
             <View style={styles.searchContainer}>
-              <Ionicons
-                name="search"
-                size={20}
-                color={colors.grey}
-                style={styles.searchIcon}
-              />
+              <Ionicons name="search" size={20} color={colors.grey} style={styles.searchIcon} />
               <TextInput
                 style={styles.searchInput}
                 placeholder="Search jobs or locations"
@@ -1312,22 +1027,16 @@ const HomeScreen = () => {
               )}
             </View>
 
-            {/* Banner Carousel */}
             <BannerCarousel />
 
-            {/* Filter Row (normal position) */}
             {!isFilterSticky && renderFilterRow()}
 
-            {/* Job Results Summary */}
             {!loading && allJobs.length > 0 && (
               <View style={styles.resultsContainer}>
-                <Text style={styles.resultsText}>
-                  {allJobs.length} jobs found
-                </Text>
+                <Text style={styles.resultsText}>{allJobs.length} jobs found</Text>
               </View>
             )}
 
-            {/* Initial Shimmer Loading */}
             {loading && allJobs.length === 0 && (
               <View>
                 <JobCardSkeleton />
@@ -1347,14 +1056,13 @@ const HomeScreen = () => {
             {isFetchingNextPage && (
               <View style={{ padding: 20, alignItems: "center" }}>
                 <ActivityIndicator size="large" color={colors.primary} />
-                <Text style={{ marginTop: 10, color: colors.grey }}>
-                  Loading more jobs...
-                </Text>
+                <Text style={{ marginTop: 10, color: colors.grey }}>Loading more jobs...</Text>
               </View>
             )}
           </>
         }
       />
+
       <SuccessAnimation
         visible={showSuccessAnimation}
         message={successMessage}

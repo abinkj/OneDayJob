@@ -152,7 +152,7 @@ export default BannerCarousel;
 const styles = StyleSheet.create({
   container: {
     marginTop: 8,
-    marginBottom: 16 * DeviceDimensions.heightRatio,
+    marginBottom: 4 * DeviceDimensions.heightRatio,
     width: "100%",
   },
   bannerContainer: {

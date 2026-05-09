@@ -2,7 +2,7 @@ import { StyleSheet } from "react-native";
 import DeviceDimensions from "../../../constants/DeviceDimenions";
 import { ThemeColors } from "../../../constants/Colors";
 
-export const createStyles = (colors: ThemeColors) => StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
@@ -12,3 +12,4 @@ export const createStyles = (colors: ThemeColors) => StyleSheet.create({
   },
 });
 
+export default {createStyles};

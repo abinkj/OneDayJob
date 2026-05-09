@@ -18,10 +18,10 @@ const RootStackLayout = () => {
   const { isLoggedIn, kycStatus, hasSeenOnboarding, isProfileComplete, isSuspended } =
     useSelector((state: any) => state.authentication);
 
-  console.log("isLoggedIn", isLoggedIn);
-  console.log("kycStatus", kycStatus);
-  console.log("hasSeenOnboarding", hasSeenOnboarding);
-  console.log("isProfileComplete", isProfileComplete);
+  // console.log("isLoggedIn", isLoggedIn);
+  // console.log("kycStatus", kycStatus);
+  // console.log("hasSeenOnboarding", hasSeenOnboarding);
+  // console.log("isProfileComplete", isProfileComplete);
   // console.log("Kyc stats", kycStatus);
   const [isLoading, setIsLoading] = useState(true);
 

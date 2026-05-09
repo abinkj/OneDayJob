@@ -25,7 +25,6 @@ import {
   // uploadJobPhotos
 } from "../../../services/api"; // Adjust the path according to your project structure
 import { LocationData } from "../../../services/locationService";
-import { testLocationService } from "../../../services/locationService";
 import Toast from "react-native-toast-message";
 import { useAlert } from "../../../components/CustomAlert/AlertProvider";
 import {
@@ -103,12 +102,6 @@ const PostJobScreen = ({ navigation: navProp }) => {
   // Load categories on component mount
   useEffect(() => {
     loadCategories();
-    console.log("userrrrrrr", JSON.stringify(user, null, 2));
-
-    // Test location service
-    testLocationService().then((result) => {
-      console.log("Location service test result:", result);
-    });
   }, []);
   // useEffect(() => {
   //   const fetchUser = async () => {

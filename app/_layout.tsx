@@ -30,15 +30,15 @@ export default function RootLayout() {
   useEffect(() => {
     const initializeApp = async () => {
       try {
-        console.log("🔐 Initializing secure storage...");
+        //console.log("🔐 Initializing secure storage...");
         await initializeStorage();
-        console.log("✅ Secure storage initialized");
+        //console.log("✅ Secure storage initialized");
 
-        console.log("🔌 Initializing global socket connection...");
+        //console.log("🔌 Initializing global socket connection...");
         await socketService.connect();
-        console.log("✅ Global socket connection initialized");
+        //console.log("✅ Global socket connection initialized");
       } catch (error) {
-        console.error("❌ Failed to initialize app services:", error);
+        //console.error("❌ Failed to initialize app services:", error);
       }
     };
 
