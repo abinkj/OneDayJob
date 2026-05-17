@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { View, StyleSheet, ActivityIndicator, Text } from "react-native";
+import { View, StyleSheet, ActivityIndicator, Text, Platform } from "react-native";
 import { useRoute } from "@react-navigation/native";
 import { Header } from "../../../components/header";
 import { ThemeColors } from "../../../constants/Colors";
@@ -58,7 +58,7 @@ const PrivacyPolicy = () => {
           style={styles.webview}
           originWhitelist={["*"]}
           bounces={false}
-          decelerationRate="fast"
+          decelerationRate={Platform.OS === "ios" ? "normal" : undefined}
           onLoadStart={() => setLoading(true)}
           onLoadEnd={() => setLoading(false)}
         />

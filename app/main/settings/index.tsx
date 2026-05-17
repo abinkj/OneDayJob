@@ -372,12 +372,12 @@ const Settings: React.FC = () => {
             }
             onPress={() => navigation.navigate("Language")}
           />
-          <SettingsItem
+          {/* <SettingsItem
             icon="flash-outline"
             title="Socket IO Test"
             subtitle="Diagnostics & Data Stream test"
             onPress={() => navigation.navigate("TestSocket")}
-          />
+          /> */}
         </SettingsSection>
         <SettingsSection title={"Job Postings"}>
           <SettingsItem

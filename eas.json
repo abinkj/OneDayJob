@@ -6,30 +6,44 @@
   "build": {
     "development": {
       "developmentClient": true,
-      "distribution": "internal"
+      "distribution": "internal",
+      "channel": "development"
     },
     "preview": {
       "distribution": "internal",
+      "channel": "preview",
       "android": {
         "buildType": "apk"
       },
+      "ios": {
+        "simulator": false
+      },
       "env": {
         "EXPO_PUBLIC_API_URL": "https://api.zoopol.com/api/",
-        "EXPO_PUBLIC_GOOGLE_PLACES_API_KEY": "AIzaSyDD0b3hU5q5IjOgjnBGGN7UEvk3sApEI5w"
+        "EXPO_PUBLIC_GOOGLE_PLACES_API_KEY": "GOOGLE_PLACES_API_KEY"
       }
     },
     "production": {
-      "android": {
-        "buildType": "apk"
-      },
       "autoIncrement": true,
+      "channel": "production",
+      "android": {
+        "buildType": "app-bundle"
+      },
+      "ios": {
+        "credentialsSource": "remote"
+      },
       "env": {
         "EXPO_PUBLIC_API_URL": "https://api.zoopol.com/api/",
-        "EXPO_PUBLIC_GOOGLE_PLACES_API_KEY": "AIzaSyDD0b3hU5q5IjOgjnBGGN7UEvk3sApEI5w"
+        "EXPO_PUBLIC_GOOGLE_PLACES_API_KEY": "GOOGLE_PLACES_API_KEY"
       }
     }
   },
   "submit": {
-    "production": {}
+    "production": {
+      "android": {
+        "serviceAccountKeyPath": "./google-service-account.json",
+        "track": "internal"
+      }
+    }
   }
 }
