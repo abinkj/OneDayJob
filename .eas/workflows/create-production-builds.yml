@@ -9,12 +9,12 @@ on:
 
 jobs:
   # runs on development branch
-  build_development:
-    if: ${{ github.ref == 'refs/heads/development' }}
-    type: build
-    params:
-      platform: android
-      profile: development
+#  build_development:
+#    if: ${{ github.ref == 'refs/heads/development' }}
+#    type: build
+#    params:
+#      platform: android
+#      profile: development
 
   # runs on staging branch
   build_preview:
