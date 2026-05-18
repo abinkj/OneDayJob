@@ -1,0 +1,40 @@
+name: Zoopol EAS Builds
+
+on:
+  push:
+    branches:
+      - development
+      - staging
+      - main
+
+jobs:
+  # runs on development branch
+  build_development:
+    if: ${{ github.ref == 'refs/heads/development' }}
+    type: build
+    params:
+      platform: android
+      profile: development
+
+  # runs on staging branch
+  build_preview:
+    if: ${{ github.ref == 'refs/heads/staging' }}
+    type: build
+    params:
+      platform: android
+      profile: preview
+
+  # runs on main branch
+  build_android:
+    if: ${{ github.ref == 'refs/heads/main' }}
+    type: build
+    params:
+      platform: android
+      profile: production
+
+  build_ios:
+    if: ${{ github.ref == 'refs/heads/main' }}
+    type: build
+    params:
+      platform: ios
+      profile: production
