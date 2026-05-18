@@ -159,15 +159,8 @@ const Onboarding = () => {
         </View>
 
         <CustomButton
-          text={
-            loading
-              ? "..."
-              : currentIndex === slides.length - 1
-                ? "Get Started"
-                : "Next"
-          }
+          text={currentIndex === slides.length - 1 ? "Get Started" : "Next "}
           onPress={handleNext}
-          disabled={loading}
           color={Colors.blue}
         />
       </View>

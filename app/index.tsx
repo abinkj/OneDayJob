@@ -5,6 +5,7 @@ import { Provider } from "react-redux";
 import RootStackLayout from "./navigation";
 import { store } from "../redux/store";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
+import { useOTAUpdate } from "../hooks/useOTAupdates";
 
 export default function Index() {
   const [fontsLoaded] = useFonts({
@@ -25,6 +26,8 @@ export default function Index() {
   //   return null;
   // }
 
+  useOTAUpdate();
+  
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <RootStackLayout />
