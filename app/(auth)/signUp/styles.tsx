@@ -1,6 +1,7 @@
 import { StyleSheet } from "react-native";
 import DeviceDimensions from "../../../constants/DeviceDimenions";
 import { ThemeColors } from "../../../constants/Colors";
+import { fontSizes } from "../../../themes/fonts";
 
 export const createStyles = (colors: ThemeColors) => StyleSheet.create({
   container: {
@@ -19,14 +20,14 @@ export const createStyles = (colors: ThemeColors) => StyleSheet.create({
     width: '100%',
   },
   title: {
-    fontSize: 28, // Slightly smaller to fit if needed, or keep 32
+    fontSize: fontSizes.size28, // Slightly smaller to fit if needed, or keep 32
     fontFamily: "bold",
     color: colors.black,
     marginBottom: 8,
     textAlign: "center",
   },
   subtitle: {
-    fontSize: 16,
+    fontSize: fontSizes.size16,
     lineHeight: 24,
     textAlign: "center",
     fontFamily: "regular",
@@ -48,7 +49,7 @@ export const createStyles = (colors: ThemeColors) => StyleSheet.create({
     marginBottom: 20,
   },
   inputLabel: {
-    fontSize: 14,
+    fontSize: fontSizes.size14,
     fontFamily: "medium",
     color: colors.black,
     marginBottom: 8,
@@ -76,7 +77,7 @@ export const createStyles = (colors: ThemeColors) => StyleSheet.create({
     borderColor: colors.primary,
   },
   countryCode: {
-    fontSize: 16,
+    fontSize: fontSizes.size16,
     fontFamily: "medium",
     color: colors.black,
     marginRight: 12,
@@ -86,7 +87,7 @@ export const createStyles = (colors: ThemeColors) => StyleSheet.create({
   },
   input: {
     flex: 1,
-    fontSize: 16,
+    fontSize: fontSizes.size16,
     fontFamily: "regular",
     color: colors.black,
     height: '100%',
@@ -115,7 +116,7 @@ export const createStyles = (colors: ThemeColors) => StyleSheet.create({
   },
   buttonText: {
     color: colors.white,
-    fontSize: 18,
+    fontSize: fontSizes.size18,
     fontFamily: "bold",
   },
   footer: {
@@ -125,12 +126,12 @@ export const createStyles = (colors: ThemeColors) => StyleSheet.create({
     alignItems: 'center',
   },
   footerText: {
-    fontSize: 14,
+    fontSize: fontSizes.size14,
     color: colors.grey,
     fontFamily: "regular",
   },
   createAccount: {
-    fontSize: 14,
+    fontSize: fontSizes.size14,
     color: colors.blue,
     fontFamily: "bold",
     marginLeft: 4,

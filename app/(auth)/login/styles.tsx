@@ -1,6 +1,7 @@
 import { StyleSheet } from "react-native";
 import DeviceDimensions from "../../../constants/DeviceDimenions";
 import { ThemeColors } from "../../../constants/Colors";
+import { fontSizes } from "../../../themes/fonts";
 
 export const createStyles = (colors: ThemeColors) =>
   StyleSheet.create({
@@ -20,7 +21,7 @@ export const createStyles = (colors: ThemeColors) =>
       width: "100%",
     },
     title: {
-      fontSize: 32,
+      fontSize: fontSizes.size32,
       fontFamily: "bold",
       color: colors.black,
       marginBottom: 12,
@@ -28,7 +29,7 @@ export const createStyles = (colors: ThemeColors) =>
       lineHeight: 40,
     },
     subtitle: {
-      fontSize: 16,
+      fontSize: fontSizes.size16,
       lineHeight: 24,
       textAlign: "center",
       fontFamily: "regular",
@@ -47,7 +48,7 @@ export const createStyles = (colors: ThemeColors) =>
       marginBottom: 30,
     },
     inputLabel: {
-      fontSize: 14,
+      fontSize: fontSizes.size14,
       fontFamily: "medium",
       color: colors.black,
       marginBottom: 8,
@@ -72,7 +73,7 @@ export const createStyles = (colors: ThemeColors) =>
       borderColor: colors.primary,
     },
     countryCode: {
-      fontSize: 16,
+      fontSize: fontSizes.size16,
       fontFamily: "medium",
       color: colors.black,
       marginRight: 12,
@@ -82,7 +83,7 @@ export const createStyles = (colors: ThemeColors) =>
     },
     input: {
       flex: 1,
-      fontSize: 16,
+      fontSize: fontSizes.size16,
       fontFamily: "regular",
       color: colors.black,
       height: "100%",
@@ -108,7 +109,7 @@ export const createStyles = (colors: ThemeColors) =>
     },
     buttonText: {
       color: colors.white,
-      fontSize: 18,
+      fontSize: fontSizes.size18,
       fontFamily: "bold",
     },
     footer: {
@@ -118,19 +119,19 @@ export const createStyles = (colors: ThemeColors) =>
       alignItems: "center",
     },
     footerText: {
-      fontSize: 14,
+      fontSize: fontSizes.size14,
       color: colors.grey,
       fontFamily: "regular",
       textAlign: "center",
     },
     createAccount: {
-      fontSize: 14,
+      fontSize: fontSizes.size14,
       color: colors.blue,
       fontFamily: "bold",
       marginLeft: 4,
     },
     subtitleOtp: {
-      fontSize: 16,
+      fontSize: fontSizes.size16,
       lineHeight: 24,
       textAlign: "center",
       fontFamily: "regular",

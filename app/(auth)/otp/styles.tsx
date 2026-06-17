@@ -1,6 +1,7 @@
 import { StyleSheet } from "react-native";
 import DeviceDimensions from "../../../constants/DeviceDimenions";
 import { ThemeColors } from "../../../constants/Colors";
+import { fontSizes } from "../../../themes/fonts";
 
 export const createStyles = (colors: ThemeColors) => StyleSheet.create({
   container: {
@@ -19,14 +20,14 @@ export const createStyles = (colors: ThemeColors) => StyleSheet.create({
     width: '100%',
   },
   title: {
-    fontSize: 28,
+    fontSize: fontSizes.size28,
     fontFamily: "bold",
     color: colors.black,
     marginBottom: 12,
     textAlign: "center",
   },
   subtitle: {
-    fontSize: 16,
+    fontSize: fontSizes.size16,
     lineHeight: 24,
     textAlign: "center",
     fontFamily: "regular",
@@ -34,7 +35,7 @@ export const createStyles = (colors: ThemeColors) => StyleSheet.create({
     maxWidth: '80%',
   },
   subtitleOtp: {
-    fontSize: 16,
+    fontSize: fontSizes.size16,
     lineHeight: 24,
     textAlign: "center",
     fontFamily: "regular",
@@ -77,7 +78,7 @@ export const createStyles = (colors: ThemeColors) => StyleSheet.create({
     transform: [{ scale: 1.05 }], // Subtle scale effect on focus
   },
   pinCodeText: {
-    fontSize: 24,
+    fontSize: fontSizes.size24,
     fontFamily: "bold",
     color: colors.black,
     textAlign: "center",
@@ -90,7 +91,7 @@ export const createStyles = (colors: ThemeColors) => StyleSheet.create({
     alignItems: 'center',
   },
   resendText: {
-    fontSize: 14,
+    fontSize: fontSizes.size14,
     color: colors.grey,
     textAlign: "center",
     fontFamily: "regular",
@@ -124,7 +125,7 @@ export const createStyles = (colors: ThemeColors) => StyleSheet.create({
   },
   buttonText: {
     color: colors.white,
-    fontSize: 18,
+    fontSize: fontSizes.size18,
     fontFamily: "bold",
   },
 
@@ -139,7 +140,7 @@ export const createStyles = (colors: ThemeColors) => StyleSheet.create({
   },
   text: {
     marginTop: 20,
-    fontSize: 24,
+    fontSize: fontSizes.size24,
     color: colors.black,
     fontFamily: "bold",
   },
@@ -173,7 +174,7 @@ export const createStyles = (colors: ThemeColors) => StyleSheet.create({
     elevation: 8,
   },
   logoText: {
-    fontSize: 48,
+    fontSize: fontSizes.size48,
     fontFamily: "bold",
     color: colors.white,
   },
@@ -182,12 +183,12 @@ export const createStyles = (colors: ThemeColors) => StyleSheet.create({
     height: 70,
   },
   brandName: {
-    fontSize: 32,
+    fontSize: fontSizes.size32,
     fontFamily: "bold",
     marginBottom: 12,
   },
   loadingText: {
-    fontSize: 16,
+    fontSize: fontSizes.size16,
     fontFamily: "regular",
     marginBottom: 24,
   },

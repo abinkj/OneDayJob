@@ -42,4 +42,6 @@ export const fontSizes = {
   size34: actuatedNormalize(34),
   size35: actuatedNormalize(35),
   size36: actuatedNormalize(36),
+  size40: actuatedNormalize(40),
+  size48: actuatedNormalize(48),
 };

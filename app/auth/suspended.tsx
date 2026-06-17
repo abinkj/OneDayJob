@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, Linking } from 
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useTheme } from '../../contexts/ThemeContext';
+import { fontSizes } from '../../themes/fonts';
 
 export default function SuspendedScreen() {
   const { colors } = useTheme();
@@ -72,13 +73,13 @@ const styles = StyleSheet.create({
     marginBottom: 30,
   },
   title: {
-    fontSize: 28,
+    fontSize: fontSizes.size28,
     fontWeight: 'bold',
     marginBottom: 15,
     textAlign: 'center',
   },
   description: {
-    fontSize: 16,
+    fontSize: fontSizes.size16,
     textAlign: 'center',
     lineHeight: 24,
     marginBottom: 40,
@@ -91,12 +92,12 @@ const styles = StyleSheet.create({
     marginBottom: 30,
   },
   infoTitle: {
-    fontSize: 18,
+    fontSize: fontSizes.size18,
     fontWeight: '600',
     marginBottom: 10,
   },
   infoText: {
-    fontSize: 14,
+    fontSize: fontSizes.size14,
     lineHeight: 20,
     marginBottom: 20,
   },
@@ -109,14 +110,14 @@ const styles = StyleSheet.create({
   },
   supportButtonText: {
     color: 'white',
-    fontSize: 16,
+    fontSize: fontSizes.size16,
     fontWeight: 'bold',
   },
   logoutButton: {
     padding: 15,
   },
   logoutText: {
-    fontSize: 16,
+    fontSize: fontSizes.size16,
     fontWeight: '600',
   },
 });

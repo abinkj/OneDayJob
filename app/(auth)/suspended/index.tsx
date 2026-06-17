@@ -6,6 +6,7 @@ import { logoutUser } from "../../../utilities/authentication";
 import { useTheme } from "../../../contexts/ThemeContext";
 import Animated, { FadeInDown, FadeInUp } from "react-native-reanimated";
 import { Header } from "../../../components/header";
+import { fontSizes } from "../../../themes/fonts";
 
 const SuspendedScreen = () => {
   const { colors } = useTheme();
@@ -120,12 +121,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   title: {
-    fontSize: 28,
+    fontSize: fontSizes.size28,
     fontWeight: "bold",
     marginBottom: 15,
   },
   subtitle: {
-    fontSize: 16,
+    fontSize: fontSizes.size16,
     textAlign: "center",
     lineHeight: 24,
     marginBottom: 30,
@@ -139,7 +140,7 @@ const styles = StyleSheet.create({
   },
   infoText: {
     flex: 1,
-    fontSize: 14,
+    fontSize: fontSizes.size14,
     marginLeft: 10,
     lineHeight: 20,
   },
@@ -161,7 +162,7 @@ const styles = StyleSheet.create({
   },
   contactButtonText: {
     color: "white",
-    fontSize: 18,
+    fontSize: fontSizes.size18,
     fontWeight: "bold",
   },
   logoutButton: {
@@ -170,7 +171,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   logoutButtonText: {
-    fontSize: 16,
+    fontSize: fontSizes.size16,
     fontWeight: "600",
   },
   footer: {
@@ -178,7 +179,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   footerText: {
-    fontSize: 12,
+    fontSize: fontSizes.size12,
   },
 });
 
