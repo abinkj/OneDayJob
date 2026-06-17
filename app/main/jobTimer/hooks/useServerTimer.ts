@@ -119,3 +119,5 @@ export const useServerTimer = (
         forceUpdate,
     };
 };
+
+export default () => null;

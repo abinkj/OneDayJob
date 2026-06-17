@@ -121,3 +121,5 @@ export const hasSignificantDrift = (
 ): boolean => {
     return Math.abs(clientTime - serverTime) > threshold;
 };
+
+export default () => null;

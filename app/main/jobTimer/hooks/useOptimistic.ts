@@ -87,3 +87,5 @@ export function useOptimistic<T>(initialData: T | null = null): UseOptimisticRet
         reset,
     };
 }
+
+export default () => null;

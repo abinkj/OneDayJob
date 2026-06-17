@@ -117,3 +117,5 @@ export const createStyles = (colors: ThemeColors) =>
             color: colors.white,
         },
     });
+
+export default () => null;

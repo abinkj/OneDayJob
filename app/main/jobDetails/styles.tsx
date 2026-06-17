@@ -448,3 +448,5 @@ export const createStyles = (colors: ThemeColors) =>
       fontStyle: "italic",
     },
   });
+
+export default () => null;

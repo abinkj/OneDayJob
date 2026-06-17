@@ -1073,3 +1073,5 @@ export const createStyles = (colors: ThemeColors) => StyleSheet.create({
     fontFamily: 'regular',
   },
 });
+
+export default () => null;

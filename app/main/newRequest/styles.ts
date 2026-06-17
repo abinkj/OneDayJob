@@ -286,3 +286,5 @@ export const createStyles = (colors: any) =>
       //alignItems: "center",
     },
   });
+
+export default () => null;

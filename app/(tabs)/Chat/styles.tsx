@@ -11,3 +11,5 @@ export const createStyles = (colors: ThemeColors) => StyleSheet.create({
     //marginTop: 22 * DeviceDimensions.heightRatio,
   },
 });
+
+export default () => null;

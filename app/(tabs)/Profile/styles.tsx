@@ -357,4 +357,6 @@ export const createStyles = (colors: ThemeColors) => StyleSheet.create({
   },
 });
 
+export default () => null;
+
 

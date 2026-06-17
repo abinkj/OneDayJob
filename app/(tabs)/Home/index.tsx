@@ -45,6 +45,7 @@ import FilterActionSheet, {
   FilterActionSheetRef,
 } from "../../../components/FilterActionSheet";
 import { getCategoryIcon } from "../../../constants/JobConstants";
+import { handleArrivalAction } from "../../../utilities/jobUtils";
 
 // Helper to format distance for display (e.g. 3167m -> 3.2km)
 const formatDistanceDisplay = (meters: number): string => {
@@ -580,90 +581,23 @@ const HomeScreen = () => {
     }, []),
   );
 
-  // FIX 2: handleArrival uses getHighAccuracyLocation from the service instead of
-  // a bare getCurrentPositionAsync — gets retry logic, cache path, and consistent
-  // accuracy. Permission is still checked here since this is a discrete user action.
   const handleArrival = async (item: any) => {
     const jobId = item._id;
     const jobName = item.name;
-    try {
-      setArrivalLoading(true);
-      setArrivingJobId(jobId);
-
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== Location.PermissionStatus.GRANTED) {
-        Toast.show({
-          type: "error",
-          text1: "Location Permission Required",
-          text2: "Please enable location access to mark your arrival.",
-        });
-        return;
-      }
-
-      Toast.show({
-        type: "info",
-        text1: "Getting your location...",
-        visibilityTime: 1500,
+    setArrivingJobId(jobId);
+    const result = await handleArrivalAction(jobId, setArrivalLoading);
+    setArrivingJobId(null);
+    if (result.success) {
+      navigation.navigate("JobTimer", {
+        jobId,
+        jobName,
+        isEmployer: false,
+        employerId: item.userId?._id || item.userId?.id || item.userId,
+        employerName:
+          `${item.userId?.firstName || ""} ${item.userId?.lastName || ""}`.trim(),
+        employerPhoneNumber: item.userId?.phoneNumber,
+        employerImage: item.userId?.profilePicture,
       });
-
-      // FIX 2: was Location.getCurrentPositionAsync({ accuracy: High }) with no retry
-      const loc = await getHighAccuracyLocation();
-      const { latitude, longitude } = loc.coords;
-      console.log("[Arrival] Current location:", { latitude, longitude });
-
-      const response = await markArrival(jobId, latitude, longitude);
-
-      if (response.data?.success) {
-        Toast.show({
-          type: "success",
-          text1: "Arrival Marked! ✅",
-          text2: `You are ${formatDistanceDisplay(response.data.data?.distance || 0)} from the job site. Waiting for employer approval.`,
-        });
-        navigation.navigate("JobTimer", {
-          jobId,
-          jobName,
-          isEmployer: false,
-          employerId: item.userId?._id || item.userId?.id || item.userId,
-          employerName:
-            `${item.userId?.firstName || ""} ${item.userId?.lastName || ""}`.trim(),
-          employerPhoneNumber: item.userId?.phoneNumber,
-          employerImage: item.userId?.profilePicture,
-        });
-      } else {
-        const dist = response.data?.data?.distance;
-        Toast.show({
-          type: "error",
-          text1: "Too Far Away",
-          text2: dist
-            ? `You are ${formatDistanceDisplay(dist)} away. Move within 500m of the job site.`
-            : response.data?.message || "Could not verify your location.",
-        });
-      }
-    } catch (error: any) {
-      const isSessionNotFound =
-        error?.response?.status === 404 &&
-        error?.response?.data?.error?.message?.includes("session");
-
-      const msg = isSessionNotFound
-        ? "The employer hasn't started the job session yet. Please wait for them to start."
-        : error?.response?.data?.message ||
-          "Failed to mark arrival. Please try again.";
-
-      const dist = error?.response?.data?.data?.distance;
-      Toast.show({
-        type: "error",
-        text1: dist
-          ? "Too Far Away"
-          : isSessionNotFound
-            ? "Wait for Employer"
-            : "Arrival Failed",
-        text2: dist
-          ? `You are ${formatDistanceDisplay(dist)} away. Move within 500m of the job site.`
-          : msg,
-      });
-    } finally {
-      setArrivalLoading(false);
-      setArrivingJobId(null);
     }
   };
 

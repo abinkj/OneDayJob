@@ -679,3 +679,5 @@ export const useJobSession = (jobId: string): UseJobSessionReturn => {
         syncHeartbeat,
     };
 };
+
+export default () => null;

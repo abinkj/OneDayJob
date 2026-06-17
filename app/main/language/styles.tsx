@@ -45,3 +45,5 @@ export const createStyles = (colors: ThemeColors) =>
       alignItems: "center",
     },
   });
+
+export default () => null;

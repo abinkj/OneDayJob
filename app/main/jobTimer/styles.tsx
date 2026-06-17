@@ -267,3 +267,5 @@ export const createStyles = (colors: ThemeColors) => StyleSheet.create({
     marginLeft: 6,
   },
 });
+
+export default () => null;

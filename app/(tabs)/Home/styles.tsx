@@ -642,3 +642,5 @@ export const createStyles = (colors: ThemeColors) =>
       color: colors.grey,
     },
   });
+
+export default () => null;

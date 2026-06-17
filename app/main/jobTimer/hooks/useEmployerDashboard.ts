@@ -310,3 +310,5 @@ export const useEmployerDashboard = (jobId: string): UseEmployerDashboardReturn 
         submitWorkerRating,
     };
 };
+
+export default () => null;

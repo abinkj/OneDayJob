@@ -126,3 +126,5 @@ class SyncQueue {
 
 // Singleton instance
 export const syncQueue = new SyncQueue();
+
+export default () => null;

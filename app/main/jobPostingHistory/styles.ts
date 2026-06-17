@@ -54,3 +54,5 @@ export const createStyles = (colors: ThemeColors) => StyleSheet.create({
     marginTop: 2,
   },
 });
+
+export default () => null;
