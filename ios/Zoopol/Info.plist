@@ -28,7 +28,7 @@
         <key>CFBundleURLSchemes</key>
         <array>
           <string>zoopol</string>
-          <string>com.zoopol.app</string>
+          <string>com.zoopol1.app</string>
         </array>
       </dict>
       <dict>
@@ -64,10 +64,11 @@
     <key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
     <string>Allow $(PRODUCT_NAME) to access your location to help find nearby jobs and provide accurate navigation to job sites.</string>
     <key>NSLocationAlwaysUsageDescription</key>
-    <string>Allow $(PRODUCT_NAME) to access your location to help find nearby jobs and provide accurate navigation to job sites.</string>
+    <string>Allow $(PRODUCT_NAME) to access your location</string>
     <key>NSLocationWhenInUseUsageDescription</key>
     <string>Allow $(PRODUCT_NAME) to access your location to show available jobs in your immediate area.</string>
-
+    <key>NSMicrophoneUsageDescription</key>
+    <string>Allow $(PRODUCT_NAME) to access your microphone</string>
     <key>NSPhotoLibraryUsageDescription</key>
     <string>Allow $(PRODUCT_NAME) to access your photos to let you upload a profile picture and add relevant photos to job listings.</string>
     <key>NSUserActivityTypes</key>

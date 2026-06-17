@@ -1,4 +1,4 @@
-package com.zoopol.app
+package com.zoopol1.app
 
 import android.app.Application
 import android.content.res.Configuration

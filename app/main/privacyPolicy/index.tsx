@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
-import { View, StyleSheet, ActivityIndicator, Text, Platform } from "react-native";
-import { useRoute } from "@react-navigation/native";
+import { View, StyleSheet, ActivityIndicator, Text } from "react-native";
+import { useRoute, useNavigation } from "@react-navigation/native";
 import { Header } from "../../../components/header";
 import { ThemeColors } from "../../../constants/Colors";
-import WebView from "react-native-webview";
+import * as WebBrowser from "expo-web-browser";
 import { useTheme } from "../../../contexts/ThemeContext";
 import NetInfo from "@react-native-community/netinfo";
 import { fontSizes } from "../../../themes/fonts";
@@ -11,8 +11,10 @@ import { fontSizes } from "../../../themes/fonts";
 const PrivacyPolicy = () => {
   const [isConnected, setIsConnected] = useState(true);
   const [loading, setLoading] = useState(true);
+  const [errorOccurred, setErrorOccurred] = useState(false);
 
   const route = useRoute<any>();
+  const navigation = useNavigation<any>();
   const { url, title } = route.params || {};
   const { colors } = useTheme();
 
@@ -28,6 +30,42 @@ const PrivacyPolicy = () => {
 
   const displayUrl = url || "https://www.zoopol.com/privacy-policy";
   const displayTitle = title || "Privacy Policy";
+
+  useEffect(() => {
+    if (!isConnected) return;
+
+    let isMounted = true;
+
+    const openBrowser = async () => {
+      setLoading(true);
+      try {
+        await WebBrowser.openBrowserAsync(displayUrl, {
+          toolbarColor: colors.white,
+          controlsColor: colors.primary,
+          preferredBarTintColor: colors.white,
+          preferredControlTintColor: colors.primary,
+          showTitle: true,
+          enableBarCollapsing: true,
+        });
+      } catch (error) {
+        console.error("Failed to open web browser:", error);
+        if (isMounted) {
+          setErrorOccurred(true);
+        }
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+          navigation.goBack();
+        }
+      }
+    };
+
+    openBrowser();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [isConnected, displayUrl, navigation, colors]);
 
   if (!isConnected) {
     return (
@@ -52,21 +90,12 @@ const PrivacyPolicy = () => {
     <View style={styles.container}>
       <Header title={displayTitle} showBackButton />
 
-      <View style={{ flex: 1 }}>
-        <WebView
-          source={{ uri: displayUrl }}
-          style={styles.webview}
-          originWhitelist={["https://*"]}
-          bounces={false}
-          decelerationRate={Platform.OS === "ios" ? "normal" : undefined}
-          onLoadStart={() => setLoading(true)}
-          onLoadEnd={() => setLoading(false)}
-        />
-
-        {loading && (
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color={colors.primary} />
-          </View>
+      <View style={styles.loadingContainer}>
+        {loading && <ActivityIndicator size="large" color={colors.primary} />}
+        {errorOccurred && (
+          <Text style={{ color: colors.black, fontSize: fontSizes.size16 }}>
+            Failed to open browser.
+          </Text>
         )}
       </View>
     </View>
@@ -79,16 +108,8 @@ const createStyles = (colors: ThemeColors) =>
       flex: 1,
       backgroundColor: colors.background,
     },
-    webview: {
-      flex: 1,
-      backgroundColor: colors.background,
-    },
     loadingContainer: {
-      position: "absolute",
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
+      flex: 1,
       justifyContent: "center",
       alignItems: "center",
       backgroundColor: colors.background,
@@ -96,3 +117,4 @@ const createStyles = (colors: ThemeColors) =>
   });
 
 export default PrivacyPolicy;
+
