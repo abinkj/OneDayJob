@@ -540,3 +540,43 @@ export const validateHourlyRate = (
     status: true,
   };
 };
+
+export const validateIfscCode = (ifsc: string): { ifscError: string; status: boolean } => {
+  if (isEmpty(ifsc)) {
+    return {
+      ifscError: "Please enter IFSC code",
+      status: false,
+    };
+  }
+  if (ifsc.length !== 11) {
+    return {
+      ifscError: "Please enter a valid 11-character IFSC code",
+      status: false,
+    };
+  }
+  return {
+    ifscError: "",
+    status: true,
+  };
+};
+
+export const validateUpiId = (upi: string): { upiError: string; status: boolean } => {
+  if (isEmpty(upi)) {
+    return {
+      upiError: "Please enter UPI ID",
+      status: false,
+    };
+  }
+  const upiRegex = /^[a-zA-Z0-9.\-_]{2,}@[a-zA-Z]{2,}$/;
+  if (!upiRegex.test(upi)) {
+    return {
+      upiError: "Please enter a valid UPI ID (e.g., user@paytm)",
+      status: false,
+    };
+  }
+  return {
+    upiError: "",
+    status: true,
+  };
+};
+

@@ -46,6 +46,9 @@ import {
   isJobOwner,
   isAssignedWorker,
   handleArrivalAction,
+  formatDateDDMMYYYY,
+  formatTimePreference,
+  format24to12h,
 } from "../../../utilities/jobUtils";
 import { useQueryClient } from "@tanstack/react-query";
 import { setActiveJob } from "../../../redux/reducers/jobReducer";
@@ -416,20 +419,7 @@ const JobDetails = () => {
     }
   };
 
-  const formatTimePreference = (timePrefs: string[]) => {
-    if (!timePrefs || timePrefs.length === 0) return "Flexible";
-    return timePrefs
-      .map((time) => time.charAt(0).toUpperCase() + time.slice(1))
-      .join(", ");
-  };
 
-  const format24to12h = (time24: string | undefined) => {
-    if (!time24) return "";
-    const [hour, minute] = time24.split(":").map(Number);
-    const amPm = hour >= 12 ? "PM" : "AM";
-    const hour12 = hour % 12 || 12;
-    return `${hour12}:${String(minute).padStart(2, "0")} ${amPm}`;
-  };
 
   const formatRequirements = (reqs: string[]) => {
     if (!reqs || reqs.length === 0) return "No specific requirements";
@@ -688,18 +678,7 @@ const JobDetails = () => {
               <Ionicons name="calendar-outline" size={20} color={colors.grey} />
               <Text style={styles.detailLabel}>Posted</Text>
               <Text style={styles.detailValue}>
-                {job.createdAt
-                  ? (() => {
-                      const date = new Date(job.createdAt);
-                      const day = String(date.getDate()).padStart(2, "0");
-                      const month = String(date.getMonth() + 1).padStart(
-                        2,
-                        "0",
-                      );
-                      const year = date.getFullYear();
-                      return `${day}/${month}/${year}`;
-                    })()
-                  : "N/A"}
+                {job.createdAt ? formatDateDDMMYYYY(job.createdAt) : "N/A"}
               </Text>
             </View>
           </View>
@@ -762,12 +741,12 @@ const JobDetails = () => {
             {job.isCompletedByWorker ? (
               <View style={styles.verificationStatusContainer}>
                 <View style={styles.verificationStatusRow}>
-                  <Ionicons name="checkmark-circle" size={24} color="#10B981" />
+                  <Ionicons name="checkmark-circle" size={24} color={colors.darkGreen} />
                   <View style={styles.verificationStatusInfo}>
                     <Text
                       style={[
                         styles.verificationStatusText,
-                        { color: "#10B981" },
+                        { color: colors.darkGreen },
                       ]}
                     >
                       Job Completed
@@ -818,7 +797,7 @@ const JobDetails = () => {
                           <TouchableOpacity
                             style={[
                               styles.refreshCodeButtonLarge,
-                              { marginTop: 12, backgroundColor: "#10B981" },
+                              { marginTop: 12, backgroundColor: colors.darkGreen },
                             ]}
                             onPress={handleArrival}
                             disabled={arrivalLoading}
@@ -861,14 +840,14 @@ const JobDetails = () => {
                       <View style={styles.verificationStatusRow}>
                         <ActivityIndicator
                           size="small"
-                          color="#10B981"
+                          color={colors.darkGreen}
                           style={{ marginRight: 10 }}
                         />
                         <View style={styles.verificationStatusInfo}>
                           <Text
                             style={[
                               styles.verificationStatusText,
-                              { color: "#10B981" },
+                              { color: colors.darkGreen },
                             ]}
                           >
                             Arrived ✅
@@ -901,13 +880,13 @@ const JobDetails = () => {
                         <Ionicons
                           name="checkmark-circle"
                           size={24}
-                          color="#10B981"
+                          color={colors.darkGreen}
                         />
                         <View style={styles.verificationStatusInfo}>
                           <Text
                             style={[
                               styles.verificationStatusText,
-                              { color: "#10B981" },
+                              { color: colors.darkGreen },
                             ]}
                           >
                             Verified

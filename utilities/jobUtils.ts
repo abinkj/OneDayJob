@@ -186,3 +186,41 @@ export const handleArrivalAction = async (
     setLoading(false);
   }
 };
+
+/**
+ * Format an ISO date string or Date object to "DD/MM/YYYY" format.
+ */
+export const formatDateDDMMYYYY = (dateStr?: string | Date): string => {
+  if (!dateStr) return '';
+  const date = new Date(dateStr);
+  if (isNaN(date.getTime())) return '';
+  const day = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const year = date.getFullYear();
+  return `${day}/${month}/${year}`;
+};
+
+/**
+ * Format time preference array into capitalized comma-separated string
+ */
+export const formatTimePreference = (timePrefs: string[]): string => {
+  if (!timePrefs || timePrefs.length === 0) return 'Flexible';
+  return timePrefs
+    .map((time) => time.charAt(0).toUpperCase() + time.slice(1))
+    .join(', ');
+};
+
+/**
+ * Convert 24-hour time string (e.g., "14:30") to 12-hour format with AM/PM (e.g., "2:30 PM")
+ */
+export const format24to12h = (time24?: string): string => {
+  if (!time24) return '';
+  const [hourStr, minuteStr] = time24.split(':');
+  const hour = Number(hourStr);
+  const minute = Number(minuteStr);
+  if (isNaN(hour) || isNaN(minute)) return '';
+  const amPm = hour >= 12 ? 'PM' : 'AM';
+  const hour12 = hour % 12 || 12;
+  return `${hour12}:${String(minute).padStart(2, '0')} ${amPm}`;
+};
+

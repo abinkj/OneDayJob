@@ -12,6 +12,7 @@ import {
   getEmployerDisplayStatus,
 } from "../../utilities/statusUtils";
 import { useTheme } from "../../contexts/ThemeContext";
+import { formatDateDDMMYYYY, formatTimePreference } from "../../utilities/jobUtils";
 
 const JobCard = ({
   data,
@@ -117,12 +118,7 @@ const JobCard = ({
     }${location.country ? ", " + location.country : ""}`
     : location?.country || "Remote";
 
-  const formatTimePreference = (timePrefs: string[]) => {
-    if (!timePrefs || timePrefs.length === 0) return "Flexible";
-    return timePrefs
-      .map((time) => time.charAt(0).toUpperCase() + time.slice(1))
-      .join(", ");
-  };
+
 
   const formatRequirements = (reqs: string[]) => {
     if (!reqs || reqs.length === 0) return "No specific requirements";
@@ -187,15 +183,7 @@ const JobCard = ({
           style={{ marginLeft: 14 }}
         />
         <Text style={styles.metaText}>
-          {createdAt
-            ? (() => {
-              const date = new Date(createdAt);
-              const day = String(date.getDate()).padStart(2, '0');
-              const month = String(date.getMonth() + 1).padStart(2, '0');
-              const year = date.getFullYear();
-              return `${day}/${month}/${year}`;
-            })()
-            : "N/A"}
+          {createdAt ? formatDateDDMMYYYY(createdAt) : "N/A"}
         </Text>
       </View>
 

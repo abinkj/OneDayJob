@@ -45,7 +45,12 @@ import FilterActionSheet, {
   FilterActionSheetRef,
 } from "../../../components/FilterActionSheet";
 import { getCategoryIcon } from "../../../constants/JobConstants";
-import { handleArrivalAction } from "../../../utilities/jobUtils";
+import {
+  handleArrivalAction,
+  formatDateDDMMYYYY,
+  isJobOwner,
+  isAssignedWorker,
+} from "../../../utilities/jobUtils";
 
 // Helper to format distance for display (e.g. 3167m -> 3.2km)
 const formatDistanceDisplay = (meters: number): string => {
@@ -620,22 +625,12 @@ const HomeScreen = () => {
       jobItem.postedBy?._id ||
       jobItem.postedBy?.id ||
       jobItem.createdBy ||
-      jobItem.ownerId;
-    const isEmployer =
-      (userData?.id && jobOwnerId && userData.id === jobOwnerId) ||
-      (userData?._id && jobOwnerId && userData._id === jobOwnerId) ||
-      (userData?.id && item.userId?._id && item.userId._id === userData.id) ||
-      (userData?._id && item.userId?._id && item.userId._id === userData._id) ||
-      (userData?.id && item.userId === userData.id) ||
-      (userData?._id && item.userId === userData?._id);
+      jobItem.ownerId ||
+      (typeof jobItem.userId === "string" ? jobItem.userId : "");
 
-    const isAccepted =
-      (item as any)?.assignedUsers?.some((u: any) => {
-        const uId = typeof u === "string" ? u : u._id || u.id;
-        return uId === userData?.id || uId === userData?._id;
-      }) ||
-      (item?.assignedUsers as any)?.includes(userData?.id) ||
-      (item?.assignedUsers as any)?.includes(userData?._id);
+    const userId = userData?.id || userData?._id;
+    const isEmployer = isJobOwner(item, userId);
+    const isAccepted = isAssignedWorker(item, userId);
 
     const showArrivalFeature = !isEmployer && isAccepted && !isCompleted;
 
@@ -722,15 +717,7 @@ const HomeScreen = () => {
             </Text>
           </View>
           <Text style={styles.timeAgoText}>
-            {item.createdAt
-              ? (() => {
-                  const date = new Date(item.createdAt);
-                  const day = String(date.getDate()).padStart(2, "0");
-                  const month = String(date.getMonth() + 1).padStart(2, "0");
-                  const year = date.getFullYear();
-                  return `${day}/${month}/${year}`;
-                })()
-              : "Recently"}
+            {item.createdAt ? formatDateDDMMYYYY(item.createdAt) : "Recently"}
           </Text>
         </View>
 
@@ -744,8 +731,8 @@ const HomeScreen = () => {
                     (item as any).hasArrived ||
                     (arrivalLoading && arrivingJobId === (item as any)._id)
                       ? colors.grey
-                      : "#10B981",
-                  shadowColor: "#10B981",
+                      : colors.darkGreen,
+                  shadowColor: colors.darkGreen,
                   shadowOffset: { width: 0, height: 2 },
                   shadowOpacity:
                     (item as any).hasArrived || arrivalLoading ? 0 : 0.3,

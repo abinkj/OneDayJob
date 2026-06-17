@@ -236,9 +236,9 @@ export const createStyles = (colors: ThemeColors) =>
     },
     contactButton: {
       padding: 12,
-      backgroundColor: "#10B981",
+      backgroundColor: colors.darkGreen,
       borderRadius: 24,
-      shadowColor: "#10B981",
+      shadowColor: colors.darkGreen,
       shadowOffset: { width: 0, height: 4 },
       shadowOpacity: 0.3,
       shadowRadius: 6,

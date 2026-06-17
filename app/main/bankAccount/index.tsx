@@ -22,6 +22,7 @@ import {
 import Toast from "react-native-toast-message";
 import { skipKyc, completeKyc, updateUser } from "../../../redux/reducers/authReducers";
 import { saveKycStatus, saveUserData, normalizeUser } from "../../../utilities/mmkvStore";
+import { validateIfscCode, validateUpiId } from "../../../utilities/formValidation";
 
 const BankAccount = () => {
   const navigation = useNavigation<any>();
@@ -187,11 +188,12 @@ const BankAccount = () => {
       return false;
     }
 
-    if (!ifscCode.trim() || ifscCode.length !== 11) {
+    const ifscValidation = validateIfscCode(ifscCode);
+    if (!ifscValidation.status) {
       Toast.show({
         type: "error",
         text1: "Validation Error",
-        text2: "Please enter a valid 11-character IFSC code",
+        text2: ifscValidation.ifscError,
       });
       return false;
     }
@@ -209,26 +211,15 @@ const BankAccount = () => {
   };
 
   const validateUpiDetails = () => {
-    if (!upiId.trim()) {
+    const upiValidation = validateUpiId(upiId);
+    if (!upiValidation.status) {
       Toast.show({
         type: "error",
         text1: "Validation Error",
-        text2: "Please enter UPI ID",
+        text2: upiValidation.upiError,
       });
       return false;
     }
-
-    // Basic UPI ID validation (format: user@bank)
-    const upiRegex = /^[a-zA-Z0-9.\-_]{2,}@[a-zA-Z]{2,}$/;
-    if (!upiRegex.test(upiId)) {
-      Toast.show({
-        type: "error",
-        text1: "Validation Error",
-        text2: "Please enter a valid UPI ID (e.g., user@paytm)",
-      });
-      return false;
-    }
-
     return true;
   };
 
