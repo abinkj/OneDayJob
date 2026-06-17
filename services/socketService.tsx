@@ -3,7 +3,7 @@ import NetInfo from "@react-native-community/netinfo"; // ← ADD THIS
 import { getAccessToken } from "../utilities/secureStore";
 
 const API_URL =
-  process.env.EXPO_PUBLIC_API_URL || "http://192.168.1.5:8000/api";
+  process.env.EXPO_PUBLIC_API_URL || "https://api.zoopol.com/api/";
 const SOCKET_URL = API_URL.replace(/\/api\/?$/, "");
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────

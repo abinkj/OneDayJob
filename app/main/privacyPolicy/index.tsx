@@ -26,7 +26,7 @@ const PrivacyPolicy = () => {
     return unsubscribe;
   }, []);
 
-  const displayUrl = url || "https://www.google.com";
+  const displayUrl = url || "https://www.zoopol.com/privacy-policy";
   const displayTitle = title || "Privacy Policy";
 
   if (!isConnected) {
@@ -56,7 +56,7 @@ const PrivacyPolicy = () => {
         <WebView
           source={{ uri: displayUrl }}
           style={styles.webview}
-          originWhitelist={["*"]}
+          originWhitelist={["https://*"]}
           bounces={false}
           decelerationRate={Platform.OS === "ios" ? "normal" : undefined}
           onLoadStart={() => setLoading(true)}

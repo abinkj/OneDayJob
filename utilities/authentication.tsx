@@ -17,6 +17,7 @@ import {
 } from "./mmkvStore";
 import { saveToken, clearTokens } from "./secureStore";
 import type { KycStatus } from "../redux/reducers/authReducers";
+import socketService from "../services/socketService";
 
 // ✅ Log user in and update Redux + secure storage
 export const loginUser =
@@ -28,6 +29,11 @@ export const loginUser =
       if (userData.isSuspended || userData.role === "suspended") {
         dispatch(setSuspended(true));
       }
+      
+      // Establishes secure socket connection under the new token credentials
+      socketService.connect().catch(err => {
+        console.error("Socket connection failed on login:", err);
+      });
     } catch (error) {
       console.error("Login error:", error);
       throw error;
@@ -37,6 +43,9 @@ export const loginUser =
 // ✅ Clear storage + Redux state
 export const logoutUser = () => async (dispatch) => {
   try {
+    // Disconnect active socket session before erasing token credentials
+    socketService.disconnect();
+    
     await clearTokens();
     await clearUserData();
     await clearKycStatus();

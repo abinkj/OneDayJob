@@ -28,7 +28,6 @@ class TimerNotificationService {
       android: {
         channelId: this.channelId,
         ongoing: true, // Prevents user from dismissing
-        asForegroundService: true, // Required for long-running tasks on Android
         importance: AndroidImportance.HIGH,
         pressAction: {
           id: 'default',
@@ -47,9 +46,6 @@ class TimerNotificationService {
   async stopNotification(jobName: string) {
     const notificationId = `timer_${jobName}`;
     await notifee.cancelNotification(notificationId);
-    if (Platform.OS === 'android') {
-      await notifee.stopForegroundService();
-    }
   }
 }
 

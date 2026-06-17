@@ -86,8 +86,13 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
       });
 
       // Step 2: Open Razorpay checkout
-      const razorpayKeyId =
-        process.env.EXPO_PUBLIC_RAZORPAY_KEY_ID || "rzp_test_RMzqDiXiJLzbEv";
+      const razorpayKeyId = process.env.EXPO_PUBLIC_RAZORPAY_KEY_ID;
+
+      if (!razorpayKeyId) {
+        throw new Error(
+          "Payment gateway is not configured correctly. Razorpay Key ID is missing."
+        );
+      }
 
       const options = {
         description: `Payment for ${jobName}`,
