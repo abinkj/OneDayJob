@@ -25,6 +25,7 @@ import ImagePickerActionSheet, {
 } from "../../../components/imagePickerActionSheet";
 import Images from "../../../utilities/images";
 import Toast from "react-native-toast-message";
+import { fontSizes } from "../../../themes/fonts";
 
 const ProfileCompletion = () => {
   const [firstName, setFirstName] = useState("");
@@ -151,13 +152,13 @@ const ProfileCompletion = () => {
       marginBottom: 40,
     },
     title: {
-      fontSize: 32,
+      fontSize: fontSizes.size32,
       fontWeight: "bold",
       color: colors.black,
       marginBottom: 8,
     },
     subtitle: {
-      fontSize: 16,
+      fontSize: fontSizes.size16,
       color: colors.grey,
       lineHeight: 24,
     },
@@ -189,7 +190,7 @@ const ProfileCompletion = () => {
       marginBottom: 20,
     },
     label: {
-      fontSize: 14,
+      fontSize: fontSizes.size14,
       fontWeight: "600",
       color: colors.black,
       marginBottom: 8,
@@ -198,7 +199,7 @@ const ProfileCompletion = () => {
       backgroundColor: colors.white,
       borderRadius: 12,
       padding: 16,
-      fontSize: 16,
+      fontSize: fontSizes.size16,
       color: colors.black,
       borderWidth: 1,
       borderColor: colors.grey,

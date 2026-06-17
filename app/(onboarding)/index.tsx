@@ -22,6 +22,7 @@ import { saveHasSeenOnboarding } from "../../utilities/mmkvStore";
 import CustomButton from "../../components/CustomButton";
 import { Colors } from "../../constants/Colors";
 import { LinearGradient } from "expo-linear-gradient";
+import { fontSizes } from "../../themes/fonts";
 
 const { width } = Dimensions.get("window");
 
@@ -178,7 +179,7 @@ const styles = StyleSheet.create({
     marginTop: "5%",
   },
   skipText: {
-    fontSize: 18,
+    fontSize: fontSizes.size18,
     color: "black",
     fontWeight: "500",
   },
@@ -199,7 +200,7 @@ const styles = StyleSheet.create({
     height: width,
   },
   title: {
-    fontSize: 38,
+    fontSize: fontSizes.size38,
     fontWeight: "600",
     color: "#fff",
     textAlign: "center",
