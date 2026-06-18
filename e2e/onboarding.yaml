@@ -1,0 +1,14 @@
+appId: com.zoopol1.app
+---
+- clearState
+- launchApp
+- assertVisible: "Welcome to Zoopol"
+- tapOn: "Next "
+- assertVisible: "Need Help? Post a Job Instantly"
+- tapOn: "Next "
+- assertVisible: "Looking for Work Nearby?"
+- tapOn: "Next "
+- assertVisible: "Let's Get You Started"
+- tapOn: "Get Started"
+- assertVisible: "Welcome Back"
+- assertVisible: "Enter your mobile number to continue"

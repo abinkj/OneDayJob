@@ -1,0 +1,15 @@
+appId: com.zoopol1.app
+---
+- clearState
+- launchApp
+- tapOn: "Skip"
+- assertVisible: "Welcome Back"
+- tapOn: "Enter 10-digit number"
+# Input the test phone number
+- inputText: "9876543210"
+- tapOn: "Send OTP"
+# Verify we land on the OTP screen
+- assertVisible: "Verify Account"
+# Type 6-digit OTP code (Maestro automatically targets the active/focused input)
+- inputText: "123456"
+- tapOn: "Verify"
