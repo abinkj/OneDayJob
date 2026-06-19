@@ -13,6 +13,7 @@ import notificationService, {
 import { getUserData } from "../utilities/mmkvStore";
 import socketService from "../services/socketService";
 import * as notificationApi from "../services/notificationApi";
+import { useSelector } from "react-redux";
 
 interface NotificationContextType {
   // Permission state
@@ -66,6 +67,7 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({
   const [notifications, setNotifications] = useState<NotificationData[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [isInitialized, setIsInitialized] = useState(false);
+  const { isLoggedIn } = useSelector((state: any) => state.authentication);
 
   // Initialize notification service
   useEffect(() => {
@@ -79,8 +81,8 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({
             await notificationService.getNotificationPermissions();
           setPermission(currentPermission);
 
-          // Register device with backend if permissions are granted
-          if (currentPermission.granted) {
+          // Register device with backend if permissions are granted and user is logged in
+          if (currentPermission.granted && isLoggedIn) {
             await notificationService.registerDeviceWithBackend();
           }
 
@@ -92,19 +94,27 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({
     };
 
     initializeNotifications();
-  }, []);
+  }, [isLoggedIn]);
 
-  // Fetch notifications from backend on initialization
+  // Clear notification state on logout
   useEffect(() => {
-    if (isInitialized) {
+    if (!isLoggedIn) {
+      setNotifications([]);
+      setUnreadCount(0);
+    }
+  }, [isLoggedIn]);
+
+  // Fetch notifications from backend on initialization or when user logs in
+  useEffect(() => {
+    if (isInitialized && isLoggedIn) {
       refreshNotifications();
     }
-  }, [isInitialized]);
+  }, [isInitialized, isLoggedIn]);
 
   // Handle app state changes
   useEffect(() => {
     const handleAppStateChange = (nextAppState: AppStateStatus) => {
-      if (nextAppState === "active" && isInitialized) {
+      if (nextAppState === "active" && isInitialized && isLoggedIn) {
         // App became active, refresh notifications
         refreshNotifications();
       }
@@ -115,17 +125,14 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({
       handleAppStateChange
     );
     return () => subscription?.remove();
-  }, [isInitialized]);
+  }, [isInitialized, isLoggedIn]);
 
   // Set up socket event listeners for real-time notifications
   useEffect(() => {
-    if (!isInitialized) return;
-
-    console.log("🎧 Setting up socket event listeners for notifications...");
+    if (!isInitialized || !isLoggedIn) return;
 
     // Handle new application notifications (for employers)
     const handleNewApplication = (data: any) => {
-      console.log("📋 New application notification received:", data);
       const notification: NotificationData = {
         type: "application_status",
         title: "📋 New Application Received",
@@ -141,7 +148,6 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({
 
     // Handle application status updates (for employees)
     const handleApplicationStatus = (data: any) => {
-      console.log("📊 Application status notification received:", data);
       const statusText = data.status === "accepted" ? "accepted" : "rejected";
       const notification: NotificationData = {
         type: "application_status",
@@ -158,7 +164,6 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({
 
     // Handle verification code notifications (for employees)
     const handleVerificationCode = (data: any) => {
-      console.log("🔑 Verification code notification received:", data);
       const notification: NotificationData = {
         type: "verification_code",
         title: "🔑 Verification Code Received",
@@ -179,12 +184,11 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({
 
     // Cleanup event listeners
     return () => {
-      console.log("🧹 Cleaning up socket event listeners...");
       socketService.off("new_application", handleNewApplication);
       socketService.off("application_status_update", handleApplicationStatus);
       socketService.off("verification-status-updated", handleApplicationStatus);
     };
-  }, [isInitialized]);
+  }, [isInitialized, isLoggedIn]);
 
   // Request notification permissions
   const requestPermission = async (): Promise<boolean> => {
@@ -209,7 +213,6 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({
   // Explicitly register device (e.g. after login)
   const registerDevice = async (): Promise<void> => {
     try {
-      console.log("📱 Registering device for notifications...");
       // Ensure we have a token first
       const token = await notificationService.ensureToken();
 
@@ -217,16 +220,13 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({
         // Register with backend
         const success = await notificationService.registerDeviceWithBackend();
         if (success) {
-          console.log("✅ Device successfully registered for notifications");
           // Update permission state
           const newPermission = await notificationService.getNotificationPermissions();
           setPermission(newPermission);
         }
-      } else {
-        console.log("⚠️ Could not get push token for registration");
       }
     } catch (error) {
-      console.error("❌ Error registering device:", error);
+      console.error("Error registering device:", error);
     }
   };
 
@@ -328,8 +328,6 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({
       // Update state
       setNotifications([]);
       setUnreadCount(0);
-
-      console.log('✅ All notifications cleared');
     } catch (error) {
       console.error("Error clearing notifications:", error);
     }
@@ -377,7 +375,6 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({
 
     try {
       await notificationApi.markAllNotificationsAsRead();
-      console.log('✅ Marked all notifications as read');
     } catch (error) {
       console.error('Failed to mark all notifications as read on backend:', error);
       // Could revert here, but re-fetching later will correct it
@@ -387,15 +384,11 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({
   // Refresh notifications from backend
   const refreshNotifications = async (): Promise<void> => {
     try {
-      console.log('🔄 Refreshing notifications from backend...');
       const response = await notificationApi.getNotificationHistory(1, 50);
-
-      console.log('API Response structure:', response ? Object.keys(response) : 'null', JSON.stringify(response, null, 2));
 
       // The backend returns { success: true, data: { notifications, total, page, hasMore } }
       // The api.tsx returns response.data, so we get { success, data: { notifications, ... } }
       if (response && response.data && response.data.notifications && Array.isArray(response.data.notifications)) {
-        console.log(`Found ${response.data.notifications.length} notifications`);
         const fetchedNotifications: NotificationData[] = response.data.notifications.map(n => ({
           id: n.id,
           type: n.type as any,
@@ -407,16 +400,12 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({
           read: n.read
         }));
 
-        console.log('Parsed notifications count:', fetchedNotifications.length);
         setNotifications(fetchedNotifications);
 
         // Calculate unread count
         const unread = fetchedNotifications.filter(n => !n.read).length;
         setUnreadCount(unread);
-
-        console.log(`✅ Fetched ${fetchedNotifications.length} notifications (${unread} unread)`);
       } else {
-        console.log('📭 No notifications array in response');
         setNotifications([]);
         setUnreadCount(0);
       }

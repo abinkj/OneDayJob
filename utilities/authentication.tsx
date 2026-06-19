@@ -75,6 +75,11 @@ export const restoreSession = () => async (dispatch) => {
         dispatch(setSuspended(true));
       }
 
+      // Connect to the socket after successfully restoring the session
+      socketService.connect().catch((err) => {
+        console.error("Socket connection failed on session restore:", err);
+      });
+
       return user;
     } else {
       console.log("No user data found, session not restored.");

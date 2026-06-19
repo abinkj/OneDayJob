@@ -116,8 +116,6 @@ class SocketService {
         return null;
       }
 
-      console.log("🔌 Socket Configuration:", { API_URL, SOCKET_URL, hasToken: !!token });
-
       this.socket = io(SOCKET_URL, {
         auth: { token },
         transports: ["polling", "websocket"],

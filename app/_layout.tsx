@@ -6,7 +6,6 @@ import { Stack } from "expo-router";
 import Toast from "react-native-toast-message";
 import toastConfig from "../components/customToast";
 import { NotificationProvider } from "../contexts/NotificationContext";
-import socketService from "../services/socketService";
 import { initializeStorage } from "../utilities/mmkvStore";
 import "../utilities/i18n";
 
@@ -26,30 +25,6 @@ export default function RootLayout() {
       .then(() => setReady(true))
       .catch(console.error);
   }, []);
-
-  useEffect(() => {
-    const initializeApp = async () => {
-      try {
-        //console.log("🔐 Initializing secure storage...");
-        await initializeStorage();
-        //console.log("✅ Secure storage initialized");
-
-        //console.log("🔌 Initializing global socket connection...");
-        await socketService.connect();
-        //console.log("✅ Global socket connection initialized");
-      } catch (error) {
-        //console.error("❌ Failed to initialize app services:", error);
-      }
-    };
-
-    initializeApp();
-
-    return () => {
-      console.log("Disconnecting global socket...");
-      socketService.disconnect();
-    };
-  }, []);
-
   return (
     <Provider store={store}>
       <PersistGate loading={null} persistor={persistor}>

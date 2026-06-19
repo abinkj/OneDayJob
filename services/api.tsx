@@ -80,13 +80,6 @@ api.interceptors.request.use(
       const token = await getAccessToken();
       // ... rest of the original logic
 
-      console.log("API Request:", {
-        method: config.method?.toUpperCase(),
-        url: config.url,
-        hasToken: !!token,
-        tokenPreview: token ? token : "No token",
-      });
-
       if (token) {
         config.headers.Authorization = `Bearer ${token}`;
       } else {
@@ -108,11 +101,6 @@ api.interceptors.request.use(
 // ─── RESPONSE INTERCEPTOR ────────────────────────────────────────────────────
 api.interceptors.response.use(
   (response) => {
-    console.log("API Response Success:", {
-      status: response.status,
-      url: response.config.url,
-      method: response.config.method?.toUpperCase(),
-    });
     return response;
   },
   async (error) => {
