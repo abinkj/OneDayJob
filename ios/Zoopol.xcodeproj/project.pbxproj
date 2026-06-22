@@ -21,7 +21,7 @@
 		13B07F961A680F5B00A75B9A /* Zoopol.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Zoopol.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = Zoopol/Images.xcassets; sourceTree = "<group>"; };
 		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = Zoopol/Info.plist; sourceTree = "<group>"; };
-		3737E41AD72BAFB8A5DC79B9 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; name = PrivacyInfo.xcprivacy; path = Zoopol/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		3737E41AD72BAFB8A5DC79B9 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xml; name = PrivacyInfo.xcprivacy; path = Zoopol/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		826849A6F6AAC40A1D290E2B /* Pods-Zoopol.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Zoopol.release.xcconfig"; path = "Target Support Files/Pods-Zoopol/Pods-Zoopol.release.xcconfig"; sourceTree = "<group>"; };
 		840B20E6B6E3709E379E740D /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-Zoopol/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
 		AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = SplashScreen.storyboard; path = Zoopol/SplashScreen.storyboard; sourceTree = "<group>"; };
@@ -119,7 +119,6 @@
 				0398851B07DF29B53EF70B1B /* Pods-Zoopol.debug.xcconfig */,
 				826849A6F6AAC40A1D290E2B /* Pods-Zoopol.release.xcconfig */,
 			);
-			name = Pods;
 			path = Pods;
 			sourceTree = "<group>";
 		};
@@ -411,6 +410,7 @@
 					"FB_SONARKIT_ENABLED=1",
 				);
 				INFOPLIST_FILE = Zoopol/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = Zoopol;
 				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -442,6 +442,7 @@
 				CODE_SIGN_ENTITLEMENTS = Zoopol/Zoopol.entitlements;
 				CURRENT_PROJECT_VERSION = 1;
 				INFOPLIST_FILE = Zoopol/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = Zoopol;
 				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",

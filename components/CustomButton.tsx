@@ -86,7 +86,7 @@ const CustomButton: React.FC<CustomButtonProps> = ({
 const createStyles = (colors: ThemeColors) =>
   StyleSheet.create({
     button: {
-      padding: 12,
+      //padding: 12,
       borderRadius: 12,
       alignItems: "center",
       justifyContent: "center",
@@ -103,7 +103,7 @@ const createStyles = (colors: ThemeColors) =>
     },
     buttonText: {
       fontSize: fontSizes.size16,
-      lineHeight: fontSizes.size16,
+      //lineHeight: fontSizes.size16,
       fontFamily: "bold",
       color: "white",
     },

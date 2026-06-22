@@ -26,11 +26,11 @@ export const createStyles = (colors: ThemeColors) =>
       color: colors.black,
       marginBottom: 12,
       textAlign: "center",
-      lineHeight: 40,
+      //lineHeight: 40,
     },
     subtitle: {
       fontSize: fontSizes.size16,
-      lineHeight: 24,
+      //lineHeight: 24,
       textAlign: "center",
       fontFamily: "regular",
       color: colors.grey,
