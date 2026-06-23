@@ -12,6 +12,8 @@ export default function Index() {
     regular: require("../assets/fonts/Roboto-Regular.ttf"),
     medium: require("../assets/fonts/Roboto-Medium.ttf"),
     bold: require("../assets/fonts/Roboto-Bold.ttf"),
+    italic: require("../assets/fonts/Roboto-Italic.ttf"),
+    light: require("../assets/fonts/Roboto-Light.ttf"),
   });
 
   //const onboardingComplete = false;

@@ -105,8 +105,7 @@ export const createStyles = (colors: ThemeColors) =>
     typingText: {
       color: colors.grey,
       fontSize: fontSizes.size14,
-      fontFamily: "regular",
-      fontStyle: "italic",
+      fontFamily: "italic",
     },
   });
 

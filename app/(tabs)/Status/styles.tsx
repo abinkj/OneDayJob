@@ -67,8 +67,7 @@ export const createStyles = (colors: ThemeColors) => StyleSheet.create({
   statusDescription: {
     fontSize: fontSizes.size10,
     color: colors.subGrey,
-    fontFamily: 'regular',
-    fontStyle: 'italic',
+    fontFamily: 'italic',
     marginTop: 2,
   },
 });

@@ -450,8 +450,7 @@ export const createStyles = (colors: ThemeColors) =>
     endOfResultsText: {
       fontSize: fontSizes.size14,
       color: colors.grey,
-      fontFamily: "regular",
-      fontStyle: "italic",
+      fontFamily: "italic",
     },
 
     // Arrival Feature Styles
