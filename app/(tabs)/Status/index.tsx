@@ -43,6 +43,7 @@ import { createStyles } from "./styles";
 import { useTheme } from "../../../contexts/ThemeContext";
 import Toast from "react-native-toast-message";
 import { isJobOwner, isAssignedWorker, isJobToday, isJobLiveOrDueToday, formatJobDate } from "../../../utilities/jobUtils";
+import { fontSizes } from "../../../themes/fonts";
 
 type Route = {
   key: string;
@@ -218,7 +219,7 @@ const MyPostTab = () => {
         }}
       >
         <Ionicons name="document-outline" size={64} color={colors.grey} />
-        <Text style={{ fontSize: 18, color: colors.grey, marginTop: 16 }}>
+        <Text style={{ fontSize: fontSizes.size18, fontFamily: "regular", color: colors.grey, marginTop: 16 }}>
           {selectedStatus
             ? `No ${selectedStatus.toLowerCase()} jobs`
             : "No job posts yet"}
@@ -243,7 +244,7 @@ const MyPostTab = () => {
         <View style={{ paddingHorizontal: 16, marginTop: 16 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
             <View style={{ backgroundColor: '#F59E0B', width: 4, height: 16, borderRadius: 2 }} />
-            <Text style={{ fontSize: 16, fontWeight: '700', color: colors.black, marginLeft: 8 }}>Live Now</Text>
+            <Text style={{ fontSize: fontSizes.size16, fontFamily: 'bold', color: colors.black, marginLeft: 8 }}>Live Now</Text>
           </View>
           {activeEmployerJobs.map(job => (
             <TouchableOpacity 
@@ -266,16 +267,16 @@ const MyPostTab = () => {
               onPress={() => handleNext(job._id)}
             >
               <View style={{ flex: 1 }}>
-                <Text style={{ fontSize: 15, fontWeight: '700', color: colors.black }} numberOfLines={1}>{job.name}</Text>
+                <Text style={{ fontSize: fontSizes.size15, fontFamily: 'bold', color: colors.black }} numberOfLines={1}>{job.name}</Text>
                 <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 4 }}>
-                  <Text style={{ fontSize: 13, color: '#F59E0B', fontWeight: '600' }}>
+                  <Text style={{ fontSize: fontSizes.size13, color: '#F59E0B', fontFamily: 'medium' }}>
                     {job.jobStatus === 'in_progress' ? 'Running' : 'Ready to Start'}
                   </Text>
-                  <Text style={{ fontSize: 13, color: colors.grey }}> • {job.applicantCount || 0} Workers</Text>
+                  <Text style={{ fontSize: fontSizes.size13, color: colors.grey, fontFamily: 'regular' }}> • {job.applicantCount || 0} Workers</Text>
                 </View>
               </View>
               <View style={{ backgroundColor: '#F59E0B', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8 }}>
-                <Text style={{ color: colors.white, fontWeight: '700', fontSize: 13 }}>Verify</Text>
+                <Text style={{ color: colors.white, fontFamily: 'bold', fontSize: fontSizes.size13 }}>Verify</Text>
               </View>
             </TouchableOpacity>
           ))}
@@ -512,7 +513,7 @@ const AppliedTab = () => {
         }}
       >
         <Ionicons name="document-outline" size={64} color={colors.grey} />
-        <Text style={{ fontSize: 18, color: colors.grey, marginTop: 16 }}>
+        <Text style={{ fontSize: fontSizes.size18, fontFamily: "regular", color: colors.grey, marginTop: 16 }}>
           {selectedStatus
             ? `No ${selectedStatus.toLowerCase()} applications`
             : "No applied jobs yet"}
@@ -537,7 +538,7 @@ const AppliedTab = () => {
         <View style={{ paddingHorizontal: 16, marginTop: 16 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
             <View style={{ backgroundColor: colors.primary, width: 4, height: 16, borderRadius: 2 }} />
-            <Text style={{ fontSize: 16, fontWeight: '700', color: colors.black, marginLeft: 8 }}>Live Now</Text>
+            <Text style={{ fontSize: fontSizes.size16, fontFamily: 'bold', color: colors.black, marginLeft: 8 }}>Live Now</Text>
           </View>
           {activeWorkerJobs.map(app => (
             <TouchableOpacity 
@@ -560,16 +561,16 @@ const AppliedTab = () => {
               onPress={() => app.job.jobStatus === 'in_progress' ? handleSummary(app.job._id, app.job.name) : handleNext(app.job)}
             >
               <View style={{ flex: 1 }}>
-                <Text style={{ fontSize: 15, fontWeight: '700', color: colors.black }} numberOfLines={1}>{app.job.name}</Text>
+                <Text style={{ fontSize: fontSizes.size15, fontFamily: 'bold', color: colors.black }} numberOfLines={1}>{app.job.name}</Text>
                 <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 4 }}>
-                  <Text style={{ fontSize: 13, color: colors.primary, fontWeight: '600' }}>
+                  <Text style={{ fontSize: fontSizes.size13, color: colors.primary, fontFamily: 'medium' }}>
                     {app.job.jobStatus === 'in_progress' ? 'Running' : 'Ready to Start'}
                   </Text>
-                  <Text style={{ fontSize: 13, color: colors.grey }}> • {app.job.locationName || 'Location site'}</Text>
+                  <Text style={{ fontSize: fontSizes.size13, color: colors.grey, fontFamily: 'regular' }}> • {app.job.locationName || 'Location site'}</Text>
                 </View>
               </View>
               <View style={{ backgroundColor: colors.primary, paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8 }}>
-                <Text style={{ color: colors.white, fontWeight: '700', fontSize: 13 }}>
+                <Text style={{ color: colors.white, fontFamily: 'bold', fontSize: fontSizes.size13 }}>
                   {app.job.jobStatus === 'in_progress' ? 'Timer' : 'Arrive'}
                 </Text>
               </View>

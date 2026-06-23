@@ -1,6 +1,7 @@
 import { StyleSheet } from "react-native";
 import DeviceDimensions from "../../../constants/DeviceDimenions";
 import { ThemeColors } from "../../../constants/Colors";
+import { fontSizes } from "../../../themes/fonts";
 
 export const createStyles = (colors: ThemeColors) => StyleSheet.create({
   container: {
@@ -31,8 +32,8 @@ export const createStyles = (colors: ThemeColors) => StyleSheet.create({
     borderColor: colors.primary,
   },
   name: {
-    fontSize: 22,
-    fontWeight: "700",
+    fontSize: fontSizes.size22,
+    fontFamily: "bold",
     marginTop: 8,
     marginBottom: 4,
     color: colors.black,
@@ -48,9 +49,9 @@ export const createStyles = (colors: ThemeColors) => StyleSheet.create({
     borderRadius: 20,
   },
   locationText: {
-    fontSize: 14,
+    fontSize: fontSizes.size14,
     color: colors.primary,
-    fontWeight: "600",
+    fontFamily: "medium",
     marginLeft: 4,
   },
   statsContainer: {
@@ -66,23 +67,23 @@ export const createStyles = (colors: ThemeColors) => StyleSheet.create({
     alignItems: "center",
   },
   statLabel: {
-    fontSize: 11,
+    fontSize: fontSizes.size11,
     color: colors.grey, // Static grey usually fine, or update to colors.grey
     marginBottom: 6,
-    fontWeight: "600",
+    fontFamily: "medium",
     letterSpacing: 1,
     textTransform: "uppercase",
   },
   statNumber: {
-    fontSize: 22,
-    fontWeight: "800",
+    fontSize: fontSizes.size22,
+    fontFamily: "bold",
     color: colors.primary,
   },
   statSubLabel: {
-    fontSize: 11,
+    fontSize: fontSizes.size11,
     color: colors.subGrey,
     marginTop: 4,
-    fontWeight: "500",
+    fontFamily: "regular",
   },
   completionRateContainer: {
     flexDirection: "row",
@@ -115,13 +116,14 @@ export const createStyles = (colors: ThemeColors) => StyleSheet.create({
     borderColor: colors.border,
   },
   dropdownText: {
-    fontSize: 16,
-    fontWeight: "600",
+    fontSize: fontSizes.size16,
+    fontFamily: "medium",
     color: colors.black,
   },
   dropdownDetail: {
-    fontSize: 14,
+    fontSize: fontSizes.size14,
     color: colors.subGrey,
+    fontFamily: "regular",
     marginBottom: 8,
   },
   reviewContainer: {
@@ -155,8 +157,8 @@ export const createStyles = (colors: ThemeColors) => StyleSheet.create({
     marginLeft: 12,
   },
   reviewerName: {
-    fontWeight: "700",
-    fontSize: 16,
+    fontFamily: "bold",
+    fontSize: fontSizes.size16,
     marginBottom: 2,
     color: colors.black,
   },
@@ -167,14 +169,16 @@ export const createStyles = (colors: ThemeColors) => StyleSheet.create({
     marginRight: 2,
   },
   reviewDate: {
-    fontSize: 12,
+    fontSize: fontSizes.size12,
     color: colors.grey,
+    fontFamily: "regular",
     alignSelf: "flex-start",
     marginTop: 4,
   },
   reviewText: {
-    fontSize: 14,
+    fontSize: fontSizes.size14,
     lineHeight: 22,
+    fontFamily: "regular",
     color: colors.black, // Maybe colors.subGrey
   },
   seeAllButton: {
@@ -188,8 +192,8 @@ export const createStyles = (colors: ThemeColors) => StyleSheet.create({
   },
   seeAllText: {
     color: colors.primary,
-    fontSize: 16,
-    fontWeight: "700",
+    fontSize: fontSizes.size16,
+    fontFamily: "bold",
   },
   experienceContainer: {
     backgroundColor: colors.white,
@@ -210,8 +214,8 @@ export const createStyles = (colors: ThemeColors) => StyleSheet.create({
     alignItems: "center",
   },
   dropdownTitle: {
-    fontSize: 16,
-    fontWeight: "600",
+    fontSize: fontSizes.size16,
+    fontFamily: "medium",
     color: colors.black,
   },
   dropdownContent: {
@@ -265,8 +269,8 @@ export const createStyles = (colors: ThemeColors) => StyleSheet.create({
     flex: 1,
   },
   bankDetailsTitle: {
-    fontSize: 18,
-    fontWeight: "700",
+    fontSize: fontSizes.size18,
+    fontFamily: "bold",
     color: colors.black,
   },
   editIconButton: {
@@ -283,14 +287,14 @@ export const createStyles = (colors: ThemeColors) => StyleSheet.create({
     borderBottomColor: colors.address2,
   },
   bankDetailsLabel: {
-    fontSize: 14,
+    fontSize: fontSizes.size14,
     color: colors.grey,
-    fontWeight: "500",
+    fontFamily: "medium",
   },
   bankDetailsValue: {
-    fontSize: 15,
+    fontSize: fontSizes.size15,
     color: colors.black,
-    fontWeight: "600",
+    fontFamily: "medium",
     flex: 1,
     textAlign: "right",
     marginLeft: 16,
@@ -306,9 +310,9 @@ export const createStyles = (colors: ThemeColors) => StyleSheet.create({
     borderRadius: 12,
   },
   editBankButtonText: {
-    fontSize: 15,
+    fontSize: fontSizes.size15,
     color: colors.primary,
-    fontWeight: "700",
+    fontFamily: "bold",
   },
   addBankCard: {
     backgroundColor: colors.white,
@@ -326,18 +330,19 @@ export const createStyles = (colors: ThemeColors) => StyleSheet.create({
     borderColor: "rgba(79, 70, 229, 0.1)",
   },
   addBankTitle: {
-    fontSize: 18,
-    fontWeight: "700",
+    fontSize: fontSizes.size18,
+    fontFamily: "bold",
     color: colors.black,
     marginTop: 16,
     marginBottom: 8,
   },
   addBankText: {
-    fontSize: 14,
+    fontSize: fontSizes.size14,
     color: colors.grey,
     textAlign: "center",
     marginBottom: 20,
     lineHeight: 20,
+    fontFamily: "regular",
   },
   addBankButton: {
     backgroundColor: colors.primary,
@@ -352,11 +357,9 @@ export const createStyles = (colors: ThemeColors) => StyleSheet.create({
   },
   addBankButtonText: {
     color: colors.white,
-    fontSize: 16,
-    fontWeight: "700",
+    fontSize: fontSizes.size16,
+    fontFamily: "bold",
   },
 });
 
 export default () => null;
-
-

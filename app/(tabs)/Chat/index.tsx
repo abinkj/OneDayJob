@@ -84,52 +84,14 @@ export default function Chat() {
             />
           }
           ListEmptyComponent={
-            <View
-              style={{
-                flex: 1,
-                justifyContent: "center",
-                alignItems: "center",
-                marginTop: 100,
-                paddingHorizontal: 32,
-              }}
-            >
-              <View
-                style={{
-                  width: 120,
-                  height: 120,
-                  borderRadius: 60,
-                  backgroundColor: colors.categoryBox,
-                  justifyContent: "center",
-                  alignItems: "center",
-                  marginBottom: 24,
-                  shadowColor: colors.primary,
-                  shadowOffset: { width: 0, height: 4 },
-                  shadowOpacity: 0.2,
-                  shadowRadius: 8,
-                  elevation: 4,
-                }}
-              >
+            <View style={styles.emptyContainer}>
+              <View style={styles.emptyIconContainer}>
                 <Ionicons name="chatbubbles" size={60} color={colors.primary} />
               </View>
-              <Text
-                style={{
-                  color: colors.black,
-                  fontSize: 22,
-                  fontWeight: "700",
-                  marginBottom: 12,
-                  textAlign: "center",
-                }}
-              >
+              <Text style={styles.emptyTitle}>
                 No Chats Yet
               </Text>
-              <Text
-                style={{
-                  color: colors.grey,
-                  fontSize: 16,
-                  textAlign: "center",
-                  lineHeight: 24,
-                }}
-              >
+              <Text style={styles.emptySubtitle}>
                 Connect with employers or job seekers to start a conversation.
               </Text>
             </View>

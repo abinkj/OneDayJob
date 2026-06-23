@@ -35,7 +35,7 @@ export const createStyles = (colors: ThemeColors) =>
     languageText: {
       fontSize: 16,
       fontWeight: "500",
-      marginLeft: 15,
+      marginLeft: 0,
     },
     iconContainer: {
       width: 40,

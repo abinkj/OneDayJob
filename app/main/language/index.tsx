@@ -14,9 +14,8 @@ const Language: React.FC = () => {
   const styles = createStyles(colors);
 
   const languages = [
-    { code: "en", name: t("languages.en"), icon: "🇺🇸" },
-    { code: "es", name: t("languages.es"), icon: "🇪🇸" },
-    { code: "ml", name: t("languages.ml"), icon: "🇮🇳" },
+    { code: "en", name: t("languages.en") },
+    { code: "ml", name: t("languages.ml") },
   ];
 
   const handleLanguageSelect = (code: string) => {
@@ -45,7 +44,6 @@ const Language: React.FC = () => {
                 activeOpacity={0.7}
               >
                 <View style={styles.languageInfo}>
-                  <Text style={{ fontSize: 24 }}>{item.icon}</Text>
                   <Text style={[styles.languageText, { color: colors.black }]}>
                     {item.name}
                   </Text>

@@ -1,6 +1,7 @@
 import { StyleSheet } from "react-native";
 import { ThemeColors } from "../../../constants/Colors";
 import DeviceDimensions from "../../../constants/DeviceDimenions";
+import { fontSizes } from "../../../themes/fonts";
 
 export const createStyles = (colors: ThemeColors) => StyleSheet.create({
   container: {
@@ -15,7 +16,7 @@ export const createStyles = (colors: ThemeColors) => StyleSheet.create({
     marginBottom: 16 * DeviceDimensions.heightRatio,
   },
   headerTitle: {
-    fontSize: 18,
+    fontSize: fontSizes.size18,
     fontFamily: 'bold',
     color: colors.black,
   },
@@ -44,25 +45,24 @@ export const createStyles = (colors: ThemeColors) => StyleSheet.create({
     flex: 1,
   },
   sectionTitle: {
-    fontSize: 16,
+    fontSize: fontSizes.size16,
     fontFamily: 'bold',
     color: colors.black,
     marginBottom: 8 * DeviceDimensions.heightRatio,
   },
   sectionTitle2: {
-    fontSize: 16,
+    fontSize: fontSizes.size16,
     fontFamily: 'bold',
     color: colors.subGrey,
     marginBottom: 8 * DeviceDimensions.heightRatio,
   },
   vaccancyTitle: {
-    fontSize: 16,
+    fontSize: fontSizes.size16,
     fontFamily: 'regular',
     color: colors.subGrey,
     marginBottom: 8 * DeviceDimensions.heightRatio,
   },
   categoryGrid: {
-
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginBottom: 30 * DeviceDimensions.heightRatio,
@@ -75,7 +75,6 @@ export const createStyles = (colors: ThemeColors) => StyleSheet.create({
     paddingHorizontal: 20,
   },
   CategoryView: {
-
     height: 96 * DeviceDimensions.heightRatio,
     marginBottom: 40 * DeviceDimensions.heightRatio,
     width: `30%`,
@@ -136,7 +135,7 @@ export const createStyles = (colors: ThemeColors) => StyleSheet.create({
     height: 30 * DeviceDimensions.heightRatio,
   },
   categoryNameStep2: {
-    fontSize: 12,
+    fontSize: fontSizes.size12,
     fontFamily: 'medium',
     color: colors.grey,
     textAlign: 'center',
@@ -188,25 +187,25 @@ export const createStyles = (colors: ThemeColors) => StyleSheet.create({
     flex: 1,
   },
   customCategoryTitle: {
-    fontSize: 16,
+    fontSize: fontSizes.size16,
     fontFamily: 'bold',
     color: colors.black,
     marginBottom: 4,
   },
   customCategorySubtitle: {
-    fontSize: 12,
+    fontSize: fontSizes.size12,
     fontFamily: 'regular',
     color: colors.subGrey,
     lineHeight: 16,
   },
   categoryText: {
-    fontSize: 16,
+    fontSize: fontSizes.size16,
     fontFamily: 'medium',
     color: colors.black,
     marginBottom: 26,
   },
   categoryName: {
-    fontSize: 14,
+    fontSize: fontSizes.size14,
     fontFamily: 'regular',
     color: colors.black,
     textAlign: 'center',
@@ -219,7 +218,7 @@ export const createStyles = (colors: ThemeColors) => StyleSheet.create({
     borderRadius: 8,
     paddingHorizontal: 12 * DeviceDimensions.widthRatio,
     paddingVertical: 12 * DeviceDimensions.heightRatio,
-    fontSize: 16,
+    fontSize: fontSizes.size16,
     fontFamily: 'regular',
     color: colors.black,
     borderWidth: 1,
@@ -229,7 +228,7 @@ export const createStyles = (colors: ThemeColors) => StyleSheet.create({
     backgroundColor: colors.white,
     borderRadius: 8,
     padding: 12 * DeviceDimensions.widthRatio,
-    fontSize: 16,
+    fontSize: fontSizes.size16,
     fontFamily: 'regular',
     color: colors.black,
     borderWidth: 1,
@@ -238,7 +237,7 @@ export const createStyles = (colors: ThemeColors) => StyleSheet.create({
     textAlignVertical: 'top',
   },
   inputHelper: {
-    fontSize: 12,
+    fontSize: fontSizes.size12,
     fontFamily: 'regular',
     color: colors.subGrey,
     marginTop: 4 * DeviceDimensions.heightRatio,
@@ -250,12 +249,11 @@ export const createStyles = (colors: ThemeColors) => StyleSheet.create({
     backgroundColor: colors.white,
     borderRadius: 8,
     padding: 16 * DeviceDimensions.widthRatio,
-    //marginBottom: 16 * DeviceDimensions.heightRatio,
     borderWidth: 1,
     borderColor: '#E0E0E0',
   },
   optionText: {
-    fontSize: 16,
+    fontSize: fontSizes.size16,
     fontFamily: 'regular',
     color: colors.black,
     marginLeft: 8 * DeviceDimensions.widthRatio,
@@ -272,11 +270,10 @@ export const createStyles = (colors: ThemeColors) => StyleSheet.create({
     marginTop: 20 * DeviceDimensions.heightRatio,
   },
   switchLabel: {
-    fontSize: 16,
+    fontSize: fontSizes.size16,
     fontFamily: 'medium',
     color: colors.black,
     flex: 1,
-
   },
   vacancyContainer: {
     marginBottom: 24 * DeviceDimensions.heightRatio,
@@ -292,14 +289,13 @@ export const createStyles = (colors: ThemeColors) => StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
     height: 50 * DeviceDimensions.heightRatio,
-
   },
   counterButton: {
     justifyContent: 'center',
     alignItems: 'center',
   },
   counterButtonText: {
-    fontSize: 24,
+    fontSize: fontSizes.size24,
     fontFamily: 'bold',
     color: colors.black,
     marginLeft: 30 * DeviceDimensions.widthRatio,
@@ -310,7 +306,7 @@ export const createStyles = (colors: ThemeColors) => StyleSheet.create({
     flex: 1,
   },
   counterValue: {
-    fontSize: 16,
+    fontSize: fontSizes.size16,
     fontFamily: 'regular',
     color: colors.black,
     marginLeft: 12 * DeviceDimensions.widthRatio,
@@ -325,18 +321,18 @@ export const createStyles = (colors: ThemeColors) => StyleSheet.create({
   },
   addressInput: {
     flex: 1,
-    fontSize: 16,
+    fontSize: fontSizes.size16,
     fontFamily: 'regular',
     color: colors.black,
     marginLeft: 8 * DeviceDimensions.widthRatio,
   },
   addressHelperText: {
-    fontSize: 12,
+    fontSize: fontSizes.size12,
     fontFamily: 'regular',
     color: colors.grey,
   },
   dateText: {
-    fontSize: 14,
+    fontSize: fontSizes.size14,
     fontFamily: 'medium',
     color: colors.black,
     marginBottom: 8,
@@ -377,7 +373,7 @@ export const createStyles = (colors: ThemeColors) => StyleSheet.create({
     backgroundColor: colors.white,
   },
   timeOptionText: {
-    fontSize: 14,
+    fontSize: fontSizes.size14,
     fontFamily: 'regular',
     color: colors.black,
     flex: 1,
@@ -396,32 +392,28 @@ export const createStyles = (colors: ThemeColors) => StyleSheet.create({
     alignItems: 'center',
     padding: 16 * DeviceDimensions.widthRatio,
     backgroundColor: colors.white,
-
     // Shadow for iOS
     shadowColor: '#000',
     shadowOffset: { width: 2, height: 2 },
     shadowOpacity: 0.12,
     shadowRadius: 12,
-
     // Shadow for Android
     elevation: 4,
   },
-
   selectedTimeSlot: {
     backgroundColor: colors.primary,
   },
   timeSlotIcon: {
     width: 50 * DeviceDimensions.widthRatio,
     height: 50 * DeviceDimensions.heightRatio,
-
   },
   timeSlotName: {
-    fontSize: 16,
+    fontSize: fontSizes.size16,
     fontFamily: 'medium',
     marginBottom: 4 * DeviceDimensions.heightRatio,
   },
   timeSlotTime: {
-    fontSize: 14,
+    fontSize: fontSizes.size14,
     fontFamily: 'regular',
   },
   timePickerContainer: {
@@ -445,13 +437,13 @@ export const createStyles = (colors: ThemeColors) => StyleSheet.create({
     padding: 8 * DeviceDimensions.widthRatio,
   },
   timePickerValue: {
-    fontSize: 24,
+    fontSize: fontSizes.size24,
     fontFamily: 'bold',
     color: colors.black,
     marginVertical: 8 * DeviceDimensions.heightRatio,
   },
   timePickerSeparator: {
-    fontSize: 24,
+    fontSize: fontSizes.size24,
     fontFamily: 'bold',
     color: colors.black,
     marginHorizontal: 16 * DeviceDimensions.widthRatio,
@@ -470,12 +462,12 @@ export const createStyles = (colors: ThemeColors) => StyleSheet.create({
     backgroundColor: colors.primary,
   },
   amPmText: {
-    fontSize: 16,
+    fontSize: fontSizes.size16,
     fontFamily: 'medium',
     color: colors.black,
   },
   amPmText2: {
-    fontSize: 16,
+    fontSize: fontSizes.size16,
     fontFamily: 'medium',
     color: colors.white,
   },
@@ -489,12 +481,12 @@ export const createStyles = (colors: ThemeColors) => StyleSheet.create({
     borderRadius: 12,
   },
   currencySymbol: {
-    fontSize: 36,
+    fontSize: fontSizes.size36,
     fontFamily: 'bold',
     color: colors.black,
   },
   currencyText: {
-    fontSize: 36,
+    fontSize: fontSizes.size36,
     fontFamily: 'bold',
     color: colors.black,
   },
@@ -520,7 +512,7 @@ export const createStyles = (colors: ThemeColors) => StyleSheet.create({
     elevation: 2,
   },
   numpadButtonText: {
-    fontSize: 24,
+    fontSize: fontSizes.size24,
     fontFamily: 'bold',
     color: colors.black,
   },
@@ -532,14 +524,14 @@ export const createStyles = (colors: ThemeColors) => StyleSheet.create({
     marginTop: 16 * DeviceDimensions.heightRatio,
   },
   nextButtonText: {
-    fontSize: 16,
+    fontSize: fontSizes.size16,
     fontFamily: 'bold',
     color: colors.white,
   },
   dropContainer: {
     backgroundColor: colors.white,
     borderRadius: 8,
-    fontSize: 16,
+    fontSize: fontSizes.size16,
     fontFamily: 'regular',
     color: colors.black,
     borderWidth: 1,
@@ -547,7 +539,6 @@ export const createStyles = (colors: ThemeColors) => StyleSheet.create({
     overflow: 'hidden', // Important for picker border radius
     marginBottom: 19 * DeviceDimensions.heightRatio,
     paddingHorizontal: 12 * DeviceDimensions.widthRatio,
-
   },
   picker: {
     width: '100%',
@@ -580,7 +571,7 @@ export const createStyles = (colors: ThemeColors) => StyleSheet.create({
     borderBottomColor: '#F0F0F0',
   },
   requirementText: {
-    fontSize: 14,
+    fontSize: fontSizes.size14,
     fontFamily: 'regular',
     color: colors.black,
     marginLeft: 8 * DeviceDimensions.widthRatio,
@@ -593,7 +584,6 @@ export const createStyles = (colors: ThemeColors) => StyleSheet.create({
   photoContainer: {
     marginRight: 8 * DeviceDimensions.widthRatio,
   },
-
   buttonContainer: {
     marginTop: 24 * DeviceDimensions.heightRatio,
     marginBottom: 16 * DeviceDimensions.heightRatio,
@@ -617,7 +607,7 @@ export const createStyles = (colors: ThemeColors) => StyleSheet.create({
     marginBottom: 16 * DeviceDimensions.heightRatio,
   },
   modalTitle: {
-    fontSize: 18,
+    fontSize: fontSizes.size18,
     fontFamily: 'medium',
     color: colors.black,
   },
@@ -632,7 +622,7 @@ export const createStyles = (colors: ThemeColors) => StyleSheet.create({
     borderRadius: 8,
     paddingHorizontal: 12 * DeviceDimensions.widthRatio,
     paddingVertical: 12 * DeviceDimensions.heightRatio,
-    fontSize: 16,
+    fontSize: fontSizes.size16,
     fontFamily: 'regular',
     color: colors.black,
     borderWidth: 1,
@@ -654,8 +644,8 @@ export const createStyles = (colors: ThemeColors) => StyleSheet.create({
     borderBottomColor: '#F0F0F0',
   },
   selectedTimeText: {
-    fontSize: 16,
-    fontWeight: '500',
+    fontSize: fontSizes.size16,
+    fontFamily: 'medium',
     color: colors.primary,
     textAlign: 'center',
     marginBottom: 10,
@@ -691,8 +681,8 @@ export const createStyles = (colors: ThemeColors) => StyleSheet.create({
     marginBottom: 15,
   },
   previewTitle: {
-    fontSize: 18,
-    fontWeight: '600',
+    fontSize: fontSizes.size18,
+    fontFamily: 'medium',
     color: colors.black,
   },
   previewActions: {
@@ -710,8 +700,8 @@ export const createStyles = (colors: ThemeColors) => StyleSheet.create({
   },
   statusText: {
     color: colors.darkGreen,
-    fontSize: 14,
-    fontWeight: '500',
+    fontSize: fontSizes.size14,
+    fontFamily: 'medium',
     marginRight: 4,
   },
   menuContainer: {
@@ -736,8 +726,9 @@ export const createStyles = (colors: ThemeColors) => StyleSheet.create({
   },
   menuText: {
     marginLeft: 12,
-    fontSize: 16,
+    fontSize: fontSizes.size16,
     color: colors.black,
+    fontFamily: 'regular',
   },
   profileSection: {
     flexDirection: 'row',
@@ -756,17 +747,17 @@ export const createStyles = (colors: ThemeColors) => StyleSheet.create({
   },
   avatarText: {
     color: colors.white,
-    fontWeight: '600',
-    fontSize: 14,
+    fontFamily: 'medium',
+    fontSize: fontSizes.size14,
   },
   userName: {
-    fontSize: 16,
+    fontSize: fontSizes.size16,
     color: colors.black,
-    fontWeight: '500',
+    fontFamily: 'medium',
   },
   jobTitlePreview: {
-    fontSize: 26,
-    fontWeight: 'bold',
+    fontSize: fontSizes.size26,
+    fontFamily: 'bold',
     color: colors.black,
     marginTop: 12 * DeviceDimensions.heightRatio,
     marginBottom: 4 * DeviceDimensions.heightRatio,
@@ -782,19 +773,16 @@ export const createStyles = (colors: ThemeColors) => StyleSheet.create({
     alignSelf: 'flex-start',
     marginTop: 12 * DeviceDimensions.heightRatio,
   },
-
   categoryBadgeText: {
     color: colors.black,
     marginLeft: 6,
-    fontSize: 12,
+    fontSize: fontSizes.size12,
     fontFamily: 'medium',
   },
   separator: {
     height: 1,
     backgroundColor: colors.grey,
     justifyContent: 'flex-end'
-
-
   },
   detailsSection: {
     marginTop: 20 * DeviceDimensions.heightRatio,
@@ -803,25 +791,25 @@ export const createStyles = (colors: ThemeColors) => StyleSheet.create({
     marginTop: 20 * DeviceDimensions.heightRatio,
   },
   detailLabel: {
-    fontSize: 14,
+    fontSize: fontSizes.size14,
     color: colors.grey,
-    fontWeight: 'medium',
+    fontFamily: 'medium',
     marginBottom: 4,
   },
   detailValue: {
-    fontSize: 18,
+    fontSize: fontSizes.size18,
     color: colors.black,
-    fontWeight: 'bold'
+    fontFamily: 'bold',
   },
   budget: {
-    fontSize: 24,
+    fontSize: fontSizes.size24,
     color: colors.black,
-    fontWeight: 'bold'
+    fontFamily: 'bold',
   },
   descriptionValue: {
-    fontSize: 16,
+    fontSize: fontSizes.size16,
     color: colors.black,
-    fontWeight: 'bold',
+    fontFamily: 'bold',
     marginBottom: 20 * DeviceDimensions.heightRatio
   },
   photosScrollView: {
@@ -852,8 +840,9 @@ export const createStyles = (colors: ThemeColors) => StyleSheet.create({
   },
   requirementTextPreview: {
     marginLeft: 8,
-    fontSize: 16,
+    fontSize: fontSizes.size16,
     color: colors.black,
+    fontFamily: 'regular',
   },
   bottomActions: {
     flexDirection: 'row',
@@ -868,9 +857,9 @@ export const createStyles = (colors: ThemeColors) => StyleSheet.create({
   },
   editButtonText: {
     marginLeft: 8,
-    fontSize: 16,
+    fontSize: fontSizes.size16,
     color: colors.grey,
-    fontWeight: '500',
+    fontFamily: 'medium',
   },
   removeButton: {
     flexDirection: 'row',
@@ -878,9 +867,9 @@ export const createStyles = (colors: ThemeColors) => StyleSheet.create({
   },
   removeButtonText: {
     marginLeft: 8,
-    fontSize: 16,
+    fontSize: fontSizes.size16,
     color: 'red',
-    fontWeight: '500',
+    fontFamily: 'medium',
   },
   nameContainer: {
     flexDirection: 'row',
@@ -949,12 +938,11 @@ export const createStyles = (colors: ThemeColors) => StyleSheet.create({
     marginBottom: 20 * DeviceDimensions.heightRatio,
   },
   timeRangeLabel: {
-    fontSize: 16,
+    fontSize: fontSizes.size16,
     fontFamily: 'medium',
     color: colors.black,
     marginBottom: 8 * DeviceDimensions.heightRatio,
   },
-
   // Premium Category Card
   selectedCategoryCard: {
     flexDirection: 'row',
@@ -985,7 +973,7 @@ export const createStyles = (colors: ThemeColors) => StyleSheet.create({
     flex: 1,
   },
   categoryLabel: {
-    fontSize: 12,
+    fontSize: fontSizes.size12,
     color: colors.grey,
     fontFamily: 'medium',
     marginBottom: 4,
@@ -993,7 +981,7 @@ export const createStyles = (colors: ThemeColors) => StyleSheet.create({
     letterSpacing: 0.5,
   },
   categoryValue: {
-    fontSize: 16,
+    fontSize: fontSizes.size16,
     color: colors.black,
     fontFamily: 'bold',
   },
@@ -1004,10 +992,9 @@ export const createStyles = (colors: ThemeColors) => StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
   },
-
   // Premium Input Fields
   inputLabel: {
-    fontSize: 14,
+    fontSize: fontSizes.size14,
     color: colors.black,
     fontFamily: 'bold',
     marginBottom: 8 * DeviceDimensions.heightRatio,
@@ -1020,19 +1007,18 @@ export const createStyles = (colors: ThemeColors) => StyleSheet.create({
     borderColor: '#E8E8E8',
     marginBottom: 8 * DeviceDimensions.heightRatio,
     marginTop: 4 * DeviceDimensions.heightRatio,
-    // Focus state logic will be handled inline or via state
   },
   premiumInput: {
     paddingHorizontal: 16 * DeviceDimensions.widthRatio,
     paddingVertical: 16 * DeviceDimensions.heightRatio,
-    fontSize: 16,
+    fontSize: fontSizes.size16,
     color: colors.black,
     fontFamily: 'regular',
   },
   premiumTextArea: {
     paddingHorizontal: 16 * DeviceDimensions.widthRatio,
     paddingVertical: 16 * DeviceDimensions.heightRatio,
-    fontSize: 16,
+    fontSize: fontSizes.size16,
     color: colors.black,
     fontFamily: 'regular',
     minHeight: 120,
@@ -1055,20 +1041,20 @@ export const createStyles = (colors: ThemeColors) => StyleSheet.create({
     marginBottom: 16,
   },
   currencyPrefix: {
-    fontSize: 40,
-    fontWeight: 'bold',
+    fontSize: fontSizes.size40,
+    fontFamily: 'bold',
     color: colors.black,
     marginRight: 8,
   },
   budgetInput: {
-    fontSize: 48,
-    fontWeight: 'bold',
+    fontSize: fontSizes.size48,
+    fontFamily: 'bold',
     color: colors.black,
     minWidth: 100,
     textAlign: 'center',
   },
   budgetHelperText: {
-    fontSize: 14,
+    fontSize: fontSizes.size14,
     color: colors.grey,
     fontFamily: 'regular',
   },

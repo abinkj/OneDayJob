@@ -11,6 +11,7 @@ import {
 import { useNavigation } from "@react-navigation/native";
 import { useTheme } from "../../../../contexts/ThemeContext";
 import DeviceDimensions from "../../../../constants/DeviceDimenions";
+import { fontSizes } from "../../../../themes/fonts";
 
 const { width } = Dimensions.get("window");
 const BANNER_WIDTH = width - 32; // Assuming 16 horizontal padding on each side
@@ -171,7 +172,7 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
   },
   bannerTitle: {
-    fontSize: 20,
+    fontSize: fontSizes.size20,
     fontFamily: "bold",
     color: "#FFFFFF",
     textShadowColor: 'rgba(0, 0, 0, 0.3)',
@@ -179,7 +180,7 @@ const styles = StyleSheet.create({
     textShadowRadius: 3,
   },
   bannerSubtitle: {
-    fontSize: 14,
+    fontSize: fontSizes.size14,
     fontFamily: "regular",
     color: "#FFFFFF",
     marginTop: 4 * DeviceDimensions.heightRatio,
@@ -204,7 +205,7 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   postNowText: {
-    fontSize: 12,
+    fontSize: fontSizes.size12,
     fontFamily: "bold",
   },
   paginationContainer: {

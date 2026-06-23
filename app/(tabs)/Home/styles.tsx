@@ -1,6 +1,7 @@
 import { StyleSheet } from "react-native";
 import DeviceDimensions from "../../../constants/DeviceDimenions";
 import { ThemeColors } from "../../../constants/Colors";
+import { fontSizes } from "../../../themes/fonts";
 
 export const createStyles = (colors: ThemeColors) =>
   StyleSheet.create({
@@ -37,14 +38,14 @@ export const createStyles = (colors: ThemeColors) =>
       alignItems: "center",
     },
     locationTitleHeader: {
-      fontSize: 16,
+      fontSize: fontSizes.size16,
       fontFamily: "bold",
       color: colors.black,
       lineHeight: 20,
       flexShrink: 1, // Prevent overlapping with notification button
     },
     locationSubtitleHeader: {
-      fontSize: 12,
+      fontSize: fontSizes.size12,
       fontFamily: "medium",
       color: colors.grey,
       marginTop: 0,
@@ -68,7 +69,7 @@ export const createStyles = (colors: ThemeColors) =>
     },
     searchInput: {
       flex: 1,
-      fontSize: 14,
+      fontSize: fontSizes.size14,
       fontFamily: "regular",
       color: colors.black,
     },
@@ -91,7 +92,7 @@ export const createStyles = (colors: ThemeColors) =>
       paddingVertical: 16,
     },
     bannerTitle: {
-      fontSize: 20,
+      fontSize: fontSizes.size20,
       fontFamily: "bold",
       color: colors.white, // Keep as white for banner potentially
       textShadowColor: "rgba(0, 0, 0, 0.2)",
@@ -99,7 +100,7 @@ export const createStyles = (colors: ThemeColors) =>
       textShadowRadius: 2,
     },
     bannerSubtitle: {
-      fontSize: 14,
+      fontSize: fontSizes.size14,
       fontFamily: "regular",
       color: colors.white,
       marginTop: 4 * DeviceDimensions.heightRatio,
@@ -122,7 +123,7 @@ export const createStyles = (colors: ThemeColors) =>
     },
     postNowText: {
       color: colors.primary,
-      fontSize: 12,
+      fontSize: fontSizes.size12,
       fontFamily: "bold",
     },
     bannerImage: {
@@ -169,7 +170,7 @@ export const createStyles = (colors: ThemeColors) =>
       elevation: 1,
     },
     filterText: {
-      fontSize: 13,
+      fontSize: fontSizes.size13,
       fontFamily: "medium",
       color: colors.black,
       marginRight: 4 * DeviceDimensions.widthRatio,
@@ -214,19 +215,19 @@ export const createStyles = (colors: ThemeColors) =>
       marginRight: 6 * DeviceDimensions.widthRatio,
     },
     categoryText: {
-      fontSize: 12,
+      fontSize: fontSizes.size12,
       fontFamily: "bold",
       color: colors.primary,
       textTransform: "uppercase",
       letterSpacing: 0.5,
     },
     priceText: {
-      fontSize: 18,
+      fontSize: fontSizes.size18,
       fontFamily: "bold",
       color: colors.primary,
     },
     jobTitle: {
-      fontSize: 17,
+      fontSize: fontSizes.size17,
       fontFamily: "bold",
       color: colors.black,
       marginBottom: 12 * DeviceDimensions.heightRatio,
@@ -247,7 +248,7 @@ export const createStyles = (colors: ThemeColors) =>
       gap: 4,
     },
     distanceText: {
-      fontSize: 12,
+      fontSize: fontSizes.size12,
       fontFamily: "medium",
       color: colors.grey,
     },
@@ -266,7 +267,7 @@ export const createStyles = (colors: ThemeColors) =>
       // borderRadius: 8,
     },
     locationText: {
-      fontSize: 13,
+      fontSize: fontSizes.size13,
       fontFamily: "medium",
       color: colors.grey,
       // marginLeft: 4 * DeviceDimensions.widthRatio,
@@ -290,12 +291,12 @@ export const createStyles = (colors: ThemeColors) =>
       gap: 6,
     },
     vacanciesText: {
-      fontSize: 12,
+      fontSize: fontSizes.size12,
       fontFamily: "medium",
       color: colors.grey, // Changed to grey to be less distracting
     },
     timeAgoText: {
-      fontSize: 12,
+      fontSize: fontSizes.size12,
       fontFamily: "medium",
       color: colors.grey,
     },
@@ -308,7 +309,7 @@ export const createStyles = (colors: ThemeColors) =>
       alignItems: "center",
     },
     statusText: {
-      fontSize: 11,
+      fontSize: fontSizes.size11,
       fontFamily: "bold",
       color: colors.black,
       textTransform: "uppercase",
@@ -350,8 +351,8 @@ export const createStyles = (colors: ThemeColors) =>
       borderBottomColor: colors.addressGrey,
     },
     modalTitle: {
-      fontSize: 20,
-      fontWeight: "bold",
+      fontSize: fontSizes.size20,
+      fontFamily: "bold",
       color: colors.black,
     },
     modalOption: {
@@ -367,13 +368,13 @@ export const createStyles = (colors: ThemeColors) =>
       backgroundColor: colors.categoryBox + "40", // 40% opacity
     },
     modalOptionText: {
-      fontSize: 16,
+      fontSize: fontSizes.size16,
       color: colors.black,
-      fontWeight: "500",
+      fontFamily: "medium",
     },
     selectedOptionText: {
       color: colors.primary,
-      fontWeight: "bold",
+      fontFamily: "bold",
     },
 
     // Active filters styles
@@ -388,8 +389,8 @@ export const createStyles = (colors: ThemeColors) =>
       borderColor: colors.addressGrey,
     },
     activeFiltersTitle: {
-      fontSize: 13,
-      fontWeight: "600",
+      fontSize: fontSizes.size13,
+      fontFamily: "medium",
       color: colors.primary,
       marginBottom: 8,
       textTransform: "uppercase",
@@ -411,9 +412,10 @@ export const createStyles = (colors: ThemeColors) =>
       marginBottom: 4,
     },
     activeFilterText: {
-      fontSize: 12,
+      fontSize: fontSizes.size12,
       color: colors.primary,
       marginRight: 4,
+      fontFamily: "regular",
     },
 
     // Results and pagination styles
@@ -422,9 +424,9 @@ export const createStyles = (colors: ThemeColors) =>
       paddingVertical: 8,
     },
     resultsText: {
-      fontSize: 14,
+      fontSize: fontSizes.size14,
       color: colors.grey,
-      fontWeight: "500",
+      fontFamily: "medium",
     },
     loadMoreContainer: {
       alignItems: "center",
@@ -438,16 +440,17 @@ export const createStyles = (colors: ThemeColors) =>
     },
     loadMoreText: {
       color: "white",
-      fontSize: 16,
-      fontWeight: "500",
+      fontSize: fontSizes.size16,
+      fontFamily: "medium",
     },
     endOfResultsContainer: {
       alignItems: "center",
       paddingVertical: 16,
     },
     endOfResultsText: {
-      fontSize: 14,
+      fontSize: fontSizes.size14,
       color: colors.grey,
+      fontFamily: "regular",
       fontStyle: "italic",
     },
 
@@ -477,16 +480,16 @@ export const createStyles = (colors: ThemeColors) =>
     },
     arrivalButtonText: {
       color: "#fff",
-      fontWeight: "700",
-      fontSize: 14,
+      fontFamily: "bold",
+      fontSize: fontSizes.size14,
       letterSpacing: 0.3,
     },
     arrivalSuccessText: {
-      fontSize: 11,
+      fontSize: fontSizes.size11,
       color: "#10B981",
       marginTop: 4,
       textAlign: "center",
-      fontWeight: "500",
+      fontFamily: "medium",
     },
     locationInfoContainer: {
       marginTop: 6,
@@ -500,17 +503,19 @@ export const createStyles = (colors: ThemeColors) =>
       marginTop: 2,
     },
     currentLocationText: {
-      fontSize: 11,
+      fontSize: fontSizes.size11,
       color: colors.grey,
       marginLeft: 4,
       flex: 1,
       lineHeight: 15,
+      fontFamily: "regular",
     },
     distanceFromSiteText: {
-      fontSize: 10,
+      fontSize: fontSizes.size10,
       color: colors.grey,
       marginLeft: 16,
       marginTop: 2,
+      fontFamily: "regular",
     },
 
     // Empty/No Nearby State Styles
@@ -535,21 +540,22 @@ export const createStyles = (colors: ThemeColors) =>
       shadowRadius: 16,
     },
     emptyStateTitle: {
-      fontSize: 22,
+      fontSize: fontSizes.size22,
       color: colors.black,
-      fontWeight: "700",
+      fontFamily: "bold",
       marginBottom: 10,
       textAlign: "center",
     },
     emptyStateSubtitle: {
-      fontSize: 15,
+      fontSize: fontSizes.size15,
       color: colors.grey,
       textAlign: "center",
       lineHeight: 22,
       marginBottom: 28,
+      fontFamily: "regular",
     },
     locationHighlight: {
-      fontWeight: "600",
+      fontFamily: "medium",
       color: colors.black,
     },
     primaryButton: {
@@ -568,8 +574,8 @@ export const createStyles = (colors: ThemeColors) =>
     },
     primaryButtonText: {
       color: "white",
-      fontSize: 15,
-      fontWeight: "700",
+      fontSize: fontSizes.size15,
+      fontFamily: "bold",
     },
     outlineButton: {
       paddingVertical: 12,
@@ -582,8 +588,8 @@ export const createStyles = (colors: ThemeColors) =>
     },
     outlineButtonText: {
       color: colors.grey,
-      fontSize: 14,
-      fontWeight: "600",
+      fontSize: fontSizes.size14,
+      fontFamily: "medium",
     },
 
     // Miscellaneous Styles
@@ -624,14 +630,15 @@ export const createStyles = (colors: ThemeColors) =>
       flex: 1,
     },
     allJobsBannerTitle: {
-      fontSize: 13,
+      fontSize: fontSizes.size13,
       color: "#B45309",
-      fontWeight: "600",
+      fontFamily: "medium",
     },
     allJobsBannerSubtitle: {
-      fontSize: 12,
+      fontSize: fontSizes.size12,
       color: "#B45309",
       marginTop: 1,
+      fontFamily: "regular",
     },
     loadingIndicatorContainer: {
       padding: 10,
@@ -640,6 +647,7 @@ export const createStyles = (colors: ThemeColors) =>
     loadingText: {
       marginTop: 10,
       color: colors.grey,
+      fontFamily: "regular",
     },
   });
 

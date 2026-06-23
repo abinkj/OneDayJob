@@ -7,6 +7,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { JobPost } from '../../../../types';
 import { useTheme } from '../../../../contexts/ThemeContext';
 import { isJobOwner } from '../../../../utilities/jobUtils';
+import { fontSizes } from '../../../../themes/fonts';
 
 interface LiveJobHeaderProps {
     job: JobPost;
@@ -241,8 +242,8 @@ const styles = StyleSheet.create({
     },
     liveText: {
         color: 'white',
-        fontSize: 12,
-        fontWeight: '800',
+        fontSize: fontSizes.size12,
+        fontFamily: 'bold',
         letterSpacing: 1,
     },
     counterContainer: {
@@ -257,9 +258,9 @@ const styles = StyleSheet.create({
     },
     counterText: {
         color: 'white',
-        fontSize: 12,
+        fontSize: fontSizes.size12,
         marginLeft: 6,
-        fontWeight: '600',
+        fontFamily: 'medium',
         letterSpacing: 0.5,
     },
     jobInfo: {
@@ -267,8 +268,8 @@ const styles = StyleSheet.create({
     },
     jobName: {
         color: 'white',
-        fontSize: 20,
-        fontWeight: 'bold',
+        fontSize: fontSizes.size20,
+        fontFamily: 'bold',
         marginBottom: 6,
         letterSpacing: 0.5,
         textShadowColor: 'rgba(0,0,0,0.2)',
@@ -281,9 +282,9 @@ const styles = StyleSheet.create({
     },
     tapText: {
         color: 'rgba(255,255,255,0.9)',
-        fontSize: 13,
+        fontSize: fontSizes.size13,
         marginRight: 6,
-        fontWeight: '500',
+        fontFamily: 'medium',
     },
 });
 

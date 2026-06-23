@@ -1,6 +1,7 @@
 import { StyleSheet } from "react-native";
 import { ThemeColors } from "../../../constants/Colors";
 import DeviceDimensions from "../../../constants/DeviceDimenions";
+import { fontSizes } from "../../../themes/fonts";
 
 export const createStyles = (colors: ThemeColors) => StyleSheet.create({
   listContent: {
@@ -27,8 +28,8 @@ export const createStyles = (colors: ThemeColors) => StyleSheet.create({
     alignItems: "center",
   },
   label: {
-    fontSize: 16,
-    fontWeight: "500",
+    fontSize: fontSizes.size16,
+    fontFamily: "medium",
   },
   active: {
     color: colors.black,
@@ -58,14 +59,15 @@ export const createStyles = (colors: ThemeColors) => StyleSheet.create({
     alignItems: 'center',
   },
   statusText: {
-    fontSize: 12,
-    fontWeight: '600',
+    fontSize: fontSizes.size12,
+    fontFamily: 'medium',
     marginLeft: 4,
     color: colors.black,
   },
   statusDescription: {
-    fontSize: 10,
+    fontSize: fontSizes.size10,
     color: colors.subGrey,
+    fontFamily: 'regular',
     fontStyle: 'italic',
     marginTop: 2,
   },
