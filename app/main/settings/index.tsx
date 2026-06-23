@@ -11,6 +11,7 @@ import CustomSwitch from "../../../components/CustomSwich";
 import { Image } from "expo-image";
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
+import * as WebBrowser from "expo-web-browser";
 import { useDispatch, useSelector } from "react-redux";
 // import { Colors } from "../../../constants/Colors";
 import { useTheme } from "../../../contexts/ThemeContext";
@@ -405,20 +406,14 @@ const Settings: React.FC = () => {
             icon="document-text-outline"
             title={t("settings.termsConditions")}
             onPress={() => {
-              navigation.navigate("PrivacyPolicy", {
-                url: strings.APP_TERMS_CONDITIONS,
-                title: t("settings.termsConditions"),
-              });
+              WebBrowser.openBrowserAsync(strings.APP_TERMS_CONDITIONS);
             }}
           />
           <SettingsItem
             icon="shield-checkmark-outline"
             title={t("settings.privacyPolicy")}
             onPress={() => {
-              navigation.navigate("PrivacyPolicy", {
-                url: strings.APP_PRIVACY_POLICY,
-                title: t("settings.privacyPolicy"),
-              });
+              WebBrowser.openBrowserAsync(strings.APP_PRIVACY_POLICY);
             }}
           />
           <SettingsItem
