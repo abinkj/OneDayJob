@@ -20,6 +20,7 @@ import { useRoute } from "@react-navigation/native";
 import socketService from "../../../services/socketService";
 import { useHeaderHeight } from "@react-navigation/elements";
 import Images from "../../../utilities/images";
+import { fontSizes } from "../../../themes/fonts";
 
 import {
   useMessages,
@@ -68,7 +69,6 @@ const ChatAvatar: React.FC<ChatAvatarProps> = ({
     : "?";
 
   const isValidUri = uri && uri.startsWith("http");
-  console.log(uri)
 
   return (
     <TouchableOpacity
@@ -100,7 +100,7 @@ const ChatAvatar: React.FC<ChatAvatarProps> = ({
         <Text
           style={{
             fontSize: size * 0.35,
-            fontWeight: "600",
+            fontFamily: "medium",
             color: colors.primary,
           }}
         >
@@ -416,8 +416,8 @@ export default function ChatScreen() {
         },
       }}
       textStyle={{
-        right: { color: colors.white, fontSize: 16 },
-        left: { color: colors.black, fontSize: 16 },
+        right: { color: colors.white, fontSize: fontSizes.size16, fontFamily: "regular" },
+        left: { color: colors.black, fontSize: fontSizes.size16, fontFamily: "regular" },
       }}
       renderTicks={(currentMessage) => {
         if (currentMessage.user._id === currentUserId) {
@@ -459,8 +459,8 @@ export default function ChatScreen() {
     <Time
       {...props}
       timeTextStyle={{
-        right: { color: "rgba(255,255,255,0.7)", fontSize: 10 },
-        left: { color: colors.grey, fontSize: 10 },
+        right: { color: "rgba(255,255,255,0.7)", fontSize: fontSizes.size10, fontFamily: "regular" },
+        left: { color: colors.grey, fontSize: fontSizes.size10, fontFamily: "regular" },
       }}
     />
   );

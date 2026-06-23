@@ -1,5 +1,6 @@
 import { StyleSheet } from "react-native";
 import { ThemeColors } from "../../../constants/Colors";
+import { fontSizes } from "../../../themes/fonts";
 
 export const createStyles = (colors: ThemeColors) =>
   StyleSheet.create({
@@ -9,7 +10,8 @@ export const createStyles = (colors: ThemeColors) =>
     },
     dateLabel: {
       alignSelf: "center",
-      fontSize: 12,
+      fontSize: fontSizes.size12,
+      fontFamily: "regular",
       marginVertical: 10,
       color: colors.grey,
     },
@@ -40,11 +42,12 @@ export const createStyles = (colors: ThemeColors) =>
     },
     messageText: {
       color: colors.white,
-      fontWeight: "400",
-      fontSize: 16,
+      fontFamily: "regular",
+      fontSize: fontSizes.size16,
     },
     messageTime: {
-      fontSize: 10,
+      fontSize: fontSizes.size10,
+      fontFamily: "regular",
       color: colors.grey,
       alignSelf: "flex-end",
     },
@@ -81,6 +84,8 @@ export const createStyles = (colors: ThemeColors) =>
     },
     input: {
       flex: 1,
+      fontSize: fontSizes.size16,
+      fontFamily: "regular",
       color: colors.black,
     },
     sendIcon: {
@@ -99,7 +104,8 @@ export const createStyles = (colors: ThemeColors) =>
     },
     typingText: {
       color: colors.grey,
-      fontSize: 14,
+      fontSize: fontSizes.size14,
+      fontFamily: "regular",
       fontStyle: "italic",
     },
   });
