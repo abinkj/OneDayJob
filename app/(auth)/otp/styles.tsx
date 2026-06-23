@@ -202,3 +202,5 @@ export const createStyles = (colors: ThemeColors) => StyleSheet.create({
     borderRadius: 4,
   },
 });
+
+export default createStyles;

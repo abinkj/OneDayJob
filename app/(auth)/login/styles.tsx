@@ -141,3 +141,5 @@ export const createStyles = (colors: ThemeColors) =>
       paddingHorizontal: 16,
     },
   });
+
+export default createStyles;
