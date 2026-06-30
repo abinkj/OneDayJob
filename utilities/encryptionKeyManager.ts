@@ -32,12 +32,10 @@ export const getOrCreateEncryptionKey = async (): Promise<string> => {
         const existingKey = await SecureStore.getItemAsync(MMKV_ENCRYPTION_KEY_STORAGE_KEY);
 
         if (existingKey) {
-            console.log('✅ MMKV encryption key loaded from secure storage');
             return existingKey;
         }
 
         // No existing key found - generate a new one
-        console.log('🔑 Generating new MMKV encryption key...');
         const newKey = await generateSecureKey();
 
         // Store the key securely

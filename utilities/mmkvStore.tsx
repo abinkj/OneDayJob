@@ -18,10 +18,8 @@ export const initializeStorage = async (): Promise<void> => {
 
   initializationPromise = (async () => {
     try {
-      console.log("🔐 Initializing MMKV with secure encryption...");
       const encryptionKey = await getOrCreateEncryptionKey();
       storageInstance = createMMKV({ id: "mmkvStore", encryptionKey });
-      console.log("✅ MMKV storage initialized successfully");
     } catch (error) {
       // Reset so the next call can retry instead of hanging on a rejected promise
       initializationPromise = null;
