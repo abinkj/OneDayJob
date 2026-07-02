@@ -133,8 +133,7 @@ const Otp = () => {
 
   const route = useRoute();
   const navigation = useNavigation<any>();
-  //const { phoneNumber } = route.params as RouteParams;
-  const phoneNumber =10
+  const { phoneNumber } = route.params as RouteParams;
   const dispatch = useDispatch();
   const { showAlert } = useAlert();
 
