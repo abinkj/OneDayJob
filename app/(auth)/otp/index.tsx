@@ -132,7 +132,8 @@ const Otp = () => {
 
   const route = useRoute();
   const navigation = useNavigation<any>();
-  const { phoneNumber } = route.params as RouteParams;
+  //const { phoneNumber } = route.params as RouteParams;
+  const phoneNumber =10
   const dispatch = useDispatch();
   const { showAlert } = useAlert();
 
@@ -369,11 +370,6 @@ const Otp = () => {
             <Animated.View
               style={[
                 styles.logoCircleInner,
-                {
-                  backgroundColor: colors.white,
-                  borderWidth: 2,
-                  borderColor: colors.primary,
-                },
                 logoAnimatedStyle,
               ]}
             >
@@ -387,22 +383,14 @@ const Otp = () => {
 
           <Animated.View
             entering={FadeInDown.delay(200).duration(600)}
-            style={{ overflow: "hidden", position: "relative" }}
+            style={styles.brandNameContainer}
           >
             <Animated.Text style={[styles.brandName, { color: colors.black }]}>
               Zoopol
             </Animated.Text>
             <Animated.View
               style={[
-                {
-                  position: "absolute",
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  bottom: 0,
-                  backgroundColor: "rgba(255, 255, 255, 0.3)",
-                  width: 50,
-                },
+                styles.shimmerEffect,
                 shimmerAnimatedStyle,
               ]}
             />
@@ -410,7 +398,7 @@ const Otp = () => {
 
           <Animated.Text
             entering={FadeInDown.delay(300).duration(600)}
-            style={[styles.loadingText, { color: colors.grey }]}
+            style={styles.loadingText}
           >
             Setting up your account...
           </Animated.Text>
@@ -442,19 +430,14 @@ const Otp = () => {
         >
           <Text style={styles.title}>Verify Account</Text>
           <Text style={styles.subtitleOtp}>Enter the 6-digit code sent to</Text>
-          <Text
-            style={[
-              styles.subtitle,
-              { fontFamily: "bold", color: colors.black },
-            ]}
-          >
+          <Text style={styles.phoneNumberText}>
             {phoneNumber}
           </Text>
         </Animated.View>
 
         <Animated.View
           entering={FadeInDown.delay(400).duration(1000).springify()}
-          style={{ width: "100%", alignItems: "center" }}
+          style={styles.inputWrapper}
         >
           <OtpInput
             numberOfDigits={6}
@@ -471,6 +454,8 @@ const Otp = () => {
             onFilled={(text) => setOtp(text)}
             textInputProps={{
               accessibilityLabel: "One-Time Password",
+              textContentType: "oneTimeCode",
+              autoComplete: "sms-otp",
             }}
             theme={{
               containerStyle: styles.containerOtp,
@@ -484,7 +469,7 @@ const Otp = () => {
             <Text style={styles.resendText}>
               Didn't receive the code?{" "}
               <Text
-                style={[styles.resendButton, isResending && { opacity: 0.5 }]}
+                style={[styles.resendButton, isResending && styles.disabledOpacity]}
                 onPress={handleResendOtp}
               >
                 {isResending ? "Sending..." : "Resend"}
@@ -492,7 +477,7 @@ const Otp = () => {
             </Text>
           </View>
 
-          <View style={{ width: "100%", marginTop: 20 }}>
+          <View style={styles.buttonContainer}>
             <CustomButton
               onPress={handleVerifyOtp}
               disabled={isLoading || otp.length !== 6}

@@ -164,6 +164,9 @@ export const createStyles = (colors: ThemeColors) => StyleSheet.create({
     borderRadius: 50,
     justifyContent: "center",
     alignItems: "center",
+    backgroundColor: colors.white,
+    borderWidth: 2,
+    borderColor: colors.primary,
     shadowColor: colors.primary,
     shadowOffset: {
       width: 0,
@@ -187,9 +190,23 @@ export const createStyles = (colors: ThemeColors) => StyleSheet.create({
     fontFamily: "bold",
     marginBottom: 12,
   },
+  brandNameContainer: {
+    overflow: "hidden",
+    position: "relative",
+  },
+  shimmerEffect: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "rgba(255, 255, 255, 0.3)",
+    width: 50,
+  },
   loadingText: {
     fontSize: fontSizes.size16,
     fontFamily: "regular",
+    color: colors.grey,
     marginBottom: 24,
   },
   dotsContainer: {
@@ -200,6 +217,25 @@ export const createStyles = (colors: ThemeColors) => StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
+  },
+  phoneNumberText: {
+    fontSize: fontSizes.size16,
+    lineHeight: 24,
+    textAlign: "center",
+    fontFamily: "bold",
+    color: colors.black,
+    maxWidth: '80%',
+  },
+  inputWrapper: {
+    width: "100%",
+    alignItems: "center",
+  },
+  buttonContainer: {
+    width: "100%",
+    marginTop: 20,
+  },
+  disabledOpacity: {
+    opacity: 0.5,
   },
 });
 
