@@ -202,6 +202,7 @@ const ProfileCompletion = () => {
           onChangeText={setFirstName}
           autoCapitalize="words"
           autoCorrect={false}
+          maxLength={30}
         />
 
         <LabeledInput
@@ -212,6 +213,7 @@ const ProfileCompletion = () => {
           onChangeText={setLastName}
           autoCapitalize="words"
           autoCorrect={false}
+          maxLength={30}
         />
 
         <View style={styles.buttonContainer}>

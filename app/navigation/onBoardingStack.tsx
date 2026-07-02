@@ -15,7 +15,7 @@ const OnBoardingStack = () => {
         animation: "slide_from_right",
         gestureEnabled: true,
       }}
-      initialRouteName="ProfileCompletion"
+      initialRouteName="Login"
     >
       <Stack.Screen name="Login" component={Login} />
       <Stack.Screen name="Signup" component={SignUp} />
