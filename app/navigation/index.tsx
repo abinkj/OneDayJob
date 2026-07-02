@@ -7,7 +7,7 @@ import MainStack from "./mainStack";
 import OnBoardingStack from "./onBoardingStack";
 import KycStack from "./kycStack";
 import { restoreSession } from "../../utilities/authentication";
-import ProfileCompletion from "@/(onboarding)/profileCompletion";
+import ProfileCompletion from "@/(auth)/profileCompletion";
 import IntroStack from "./introStack";
 import SuspendedScreen from "../(auth)/suspended";
 
@@ -15,8 +15,13 @@ const RootStack = createNativeStackNavigator();
 
 const RootStackLayout = () => {
   const dispatch = useDispatch();
-  const { isLoggedIn, kycStatus, hasSeenOnboarding, isProfileComplete, isSuspended } =
-    useSelector((state: any) => state.authentication);
+  const {
+    isLoggedIn,
+    kycStatus,
+    hasSeenOnboarding,
+    isProfileComplete,
+    isSuspended,
+  } = useSelector((state: any) => state.authentication);
 
   // console.log("isLoggedIn", isLoggedIn);
   // console.log("kycStatus", kycStatus);

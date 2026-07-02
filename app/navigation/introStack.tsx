@@ -1,7 +1,7 @@
 import React from "react";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import Onboarding from "../(onboarding)";
-import ProfileCompletion from "@/(onboarding)/profileCompletion";
+import ProfileCompletion from "@/(auth)/profileCompletion";
 
 const Stack = createNativeStackNavigator();
 

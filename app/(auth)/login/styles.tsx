@@ -12,7 +12,7 @@ export const createStyles = (colors: ThemeColors) =>
     scrollContent: {
       flexGrow: 1,
       alignItems: "center",
-      paddingHorizontal: 24,
+      paddingHorizontal: 16,
       paddingTop: 40,
     },
     headerContainer: {

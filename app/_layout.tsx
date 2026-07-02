@@ -14,6 +14,7 @@ import { queryClient } from "../services/queryClient";
 import AppLayout from "../components/ui/layout";
 import { AlertProvider } from "../components/CustomAlert/AlertProvider";
 import { ThemeProvider } from "../contexts/ThemeContext";
+import { KeyboardProvider } from "react-native-keyboard-controller";
 
 import NetworkSyncBootstrap from "../offline/NetworkSyncBootstrap";
 
@@ -31,14 +32,16 @@ export default function RootLayout() {
         {/* <NetworkSyncBootstrap /> */}
         <QueryClientProvider client={queryClient}>
           <NotificationProvider>
-            <AlertProvider>
-              <ThemeProvider>
-                <AppLayout>
-                  <Stack screenOptions={{ headerShown: false }} />
-                  <Toast config={toastConfig} />
-                </AppLayout>
-              </ThemeProvider>
-            </AlertProvider>
+            <KeyboardProvider>
+              <AlertProvider>
+                <ThemeProvider>
+                  <AppLayout>
+                    <Stack screenOptions={{ headerShown: false }} />
+                    <Toast config={toastConfig} />
+                  </AppLayout>
+                </ThemeProvider>
+              </AlertProvider>
+            </KeyboardProvider>
           </NotificationProvider>
         </QueryClientProvider>
       </PersistGate>

@@ -4,11 +4,9 @@ import {
   Text,
   TouchableOpacity,
   StyleSheet,
-  ScrollView,
-  Platform,
-  KeyboardAvoidingView,
   Image,
 } from "react-native";
+import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import { OtpInput } from "react-native-otp-entry";
 import { useTheme } from "../../../contexts/ThemeContext";
 import { verifyOtp, requestOtp } from "../../../services/api";
@@ -431,15 +429,13 @@ const Otp = () => {
   }
 
   return (
-    <KeyboardAvoidingView
+    <KeyboardAwareScrollView
       style={styles.container}
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      contentContainerStyle={styles.scrollContent}
+      showsVerticalScrollIndicator={false}
+      bounces={false}
+      keyboardShouldPersistTaps="handled"
     >
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-        bounces={false}
-      >
         <Animated.View
           entering={FadeInDown.delay(200).duration(1000).springify()}
           style={styles.headerContainer}
@@ -505,8 +501,7 @@ const Otp = () => {
             />
           </View>
         </Animated.View>
-      </ScrollView>
-    </KeyboardAvoidingView>
+    </KeyboardAwareScrollView>
   );
 };
 

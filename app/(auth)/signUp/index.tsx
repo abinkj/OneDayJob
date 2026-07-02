@@ -5,10 +5,8 @@ import {
   TextInput,
   TouchableOpacity,
   Image,
-  KeyboardAvoidingView,
-  ScrollView,
-  Platform,
 } from "react-native";
+import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import { createStyles } from "./styles";
 import { router } from "expo-router";
 import { requestOtp } from "../../../services/api";
@@ -80,16 +78,13 @@ const SignUp = () => {
   };
 
   return (
-    <KeyboardAvoidingView
+    <KeyboardAwareScrollView
       style={styles.container}
-    //behavior={Platform.OS === "ios" ? "padding" : undefined}
+      contentContainerStyle={styles.scrollContent}
+      showsVerticalScrollIndicator={false}
+      bounces={false}
+      keyboardShouldPersistTaps="handled"
     >
-      <ScrollView
-        automaticallyAdjustKeyboardInsets={true}
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-        bounces={false}
-      >
         <Animated.View
           entering={FadeInDown.delay(200).duration(1000).springify()}
           style={styles.headerContainer}
@@ -179,8 +174,7 @@ const SignUp = () => {
             <Text style={styles.createAccount}>Login</Text>
           </TouchableOpacity>
         </Animated.View>
-      </ScrollView>
-    </KeyboardAvoidingView>
+    </KeyboardAwareScrollView>
   );
 };
 

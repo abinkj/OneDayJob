@@ -32,6 +32,7 @@
         "backgroundColor": "#294678"
       },
       "package": "com.zoopol1.app",
+      "softwareKeyboardLayoutMode": "resize",
       "googleServicesFile": "./google-services.json",
       "permissions": [
         "android.permission.ACCESS_COARSE_LOCATION",

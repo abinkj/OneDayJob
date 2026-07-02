@@ -5,10 +5,8 @@ import {
   TextInput,
   TouchableOpacity,
   Image,
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
 } from "react-native";
+import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import { requestOtp } from "../../../services/api";
 import { useNavigation } from "@react-navigation/native";
 import { createStyles } from "./styles";
@@ -66,15 +64,12 @@ const Login = () => {
   };
 
   return (
-    <KeyboardAvoidingView
+    <KeyboardAwareScrollView
       style={styles.container}
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      contentContainerStyle={styles.scrollContent}
+      showsVerticalScrollIndicator={false}
+      keyboardShouldPersistTaps="handled"
     >
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-        bounces={false}
-      >
         <Animated.View
           entering={FadeInDown.delay(200).duration(1000).springify()}
           style={styles.headerContainer}
@@ -140,8 +135,7 @@ const Login = () => {
             <Text style={styles.createAccount}>Create Account</Text>
           </TouchableOpacity>
         </Animated.View>
-      </ScrollView>
-    </KeyboardAvoidingView>
+    </KeyboardAwareScrollView>
   );
 };
 
