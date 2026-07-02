@@ -46,3 +46,16 @@ export const fontSizes = {
   size40: actuatedNormalize(40),
   size48: actuatedNormalize(48),
 };
+
+export const fontFamilies = {
+  regular: "regular",
+  medium: "medium",
+  bold: "bold",
+  italic: "italic",
+  light: "light",
+  thin: "thin",
+};
+
+// Alias to fontWeights for intuitive styling since weights map directly to these loaded families
+export const fontWeights = fontFamilies;
+

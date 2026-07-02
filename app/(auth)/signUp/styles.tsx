@@ -1,7 +1,7 @@
-import { StyleSheet } from "react-native";
+import { StyleSheet, Platform } from "react-native";
 import DeviceDimensions from "../../../constants/DeviceDimenions";
 import { ThemeColors } from "../../../constants/Colors";
-import { fontSizes } from "../../../themes/fonts";
+import { fontSizes, fontFamilies } from "../../../themes/fonts";
 
 export const createStyles = (colors: ThemeColors) => StyleSheet.create({
   container: {
@@ -21,7 +21,7 @@ export const createStyles = (colors: ThemeColors) => StyleSheet.create({
   },
   title: {
     fontSize: fontSizes.size28, // Slightly smaller to fit if needed, or keep 32
-    fontFamily: "bold",
+    fontFamily: fontFamilies.bold,
     color: colors.black,
     marginBottom: 8,
     textAlign: "center",
@@ -30,9 +30,14 @@ export const createStyles = (colors: ThemeColors) => StyleSheet.create({
     fontSize: fontSizes.size16,
     lineHeight: 24,
     textAlign: "center",
-    fontFamily: "regular",
+    fontFamily: fontFamilies.regular,
     color: colors.grey,
     maxWidth: '80%',
+    ...Platform.select({
+      android: {
+        includeFontPadding: false,
+      },
+    }),
   },
   image: {
     width: 180 * DeviceDimensions.widthRatio,
@@ -50,7 +55,7 @@ export const createStyles = (colors: ThemeColors) => StyleSheet.create({
   },
   inputLabel: {
     fontSize: fontSizes.size14,
-    fontFamily: "medium",
+    fontFamily: fontFamilies.medium,
     color: colors.black,
     marginBottom: 8,
     marginLeft: 4,
@@ -78,7 +83,7 @@ export const createStyles = (colors: ThemeColors) => StyleSheet.create({
   },
   countryCode: {
     fontSize: fontSizes.size16,
-    fontFamily: "medium",
+    fontFamily: fontFamilies.medium,
     color: colors.black,
     marginRight: 12,
     paddingRight: 12,
@@ -88,9 +93,14 @@ export const createStyles = (colors: ThemeColors) => StyleSheet.create({
   input: {
     flex: 1,
     fontSize: fontSizes.size16,
-    fontFamily: "regular",
+    fontFamily: fontFamilies.regular,
     color: colors.black,
     height: '100%',
+    ...Platform.select({
+      android: {
+        includeFontPadding: false,
+      },
+    }),
   },
   button: {
     backgroundColor: colors.primary,
@@ -117,7 +127,7 @@ export const createStyles = (colors: ThemeColors) => StyleSheet.create({
   buttonText: {
     color: colors.white,
     fontSize: fontSizes.size18,
-    fontFamily: "bold",
+    fontFamily: fontFamilies.bold,
   },
   footer: {
     flexDirection: "row",
@@ -128,12 +138,12 @@ export const createStyles = (colors: ThemeColors) => StyleSheet.create({
   footerText: {
     fontSize: fontSizes.size14,
     color: colors.grey,
-    fontFamily: "regular",
+    fontFamily: fontFamilies.regular,
   },
   createAccount: {
     fontSize: fontSizes.size14,
     color: colors.blue,
-    fontFamily: "bold",
+    fontFamily: fontFamilies.bold,
     marginLeft: 4,
   },
 });

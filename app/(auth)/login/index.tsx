@@ -2,7 +2,6 @@ import { useState, useMemo } from "react";
 import {
   View,
   Text,
-  TextInput,
   TouchableOpacity,
   Image,
 } from "react-native";
@@ -14,13 +13,13 @@ import Animated, { FadeInDown, FadeInUp } from "react-native-reanimated";
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "../../../contexts/ThemeContext";
 import CustomButton from "../../../components/CustomButton";
+import LabeledInput from "../../../components/labeledTextInput";
 import { useAlert } from "../../../components/CustomAlert/AlertProvider";
 import { validatePhone } from "../../../utilities/formValidation";
 
 const Login = () => {
   const [phone, setPhone] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [isFocused, setIsFocused] = useState(false);
   const navigation = useNavigation<any>();
   const { showAlert } = useAlert();
 
@@ -89,33 +88,22 @@ const Login = () => {
           entering={FadeInDown.delay(400).duration(1000).springify()}
           style={styles.formContainer}
         >
-          <Text style={styles.inputLabel}>Mobile Number</Text>
-          <View
-            style={[
-              styles.inputWrapper,
-              isFocused && styles.inputWrapperFocused,
-            ]}
-          >
-            <Ionicons
-              name="call-outline"
-              size={20}
-              color={isFocused ? colors.primary : colors.grey}
-              style={{ marginRight: 8 }}
-            />
-            <Text style={styles.countryCode}>+91</Text>
-            <TextInput
-              style={styles.input}
-              inputMode="numeric"
-              keyboardType="number-pad"
-              maxLength={10}
-              placeholder="Enter 10-digit number"
-              placeholderTextColor={colors.grey}
-              value={phone}
-              onChangeText={setPhone}
-              onFocus={() => setIsFocused(true)}
-              onBlur={() => setIsFocused(false)}
-            />
-          </View>
+          <LabeledInput
+            title="Mobile Number"
+            placeholder="Enter 10-digit number"
+            value={phone}
+            onChangeText={setPhone}
+            inputMode="numeric"
+            keyboardType="number-pad"
+            maxLength={10}
+            prefix="+91"
+            leftIcon={
+              <Ionicons
+                name="call-outline"
+                size={20}
+              />
+            }
+          />
           <View style={{ marginTop: 20 }}>
             <CustomButton
               text={"Send OTP"}

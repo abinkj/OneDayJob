@@ -2,7 +2,8 @@ import React, { useEffect, useState } from "react";
 import { Provider } from "react-redux";
 import { store, persistor } from "../redux/store";
 import { PersistGate } from "redux-persist/integration/react";
-import { Stack } from "expo-router";
+import { Stack, SplashScreen } from "expo-router";
+import { useFonts } from "expo-font";
 import Toast from "react-native-toast-message";
 import toastConfig from "../components/customToast";
 import { NotificationProvider } from "../contexts/NotificationContext";
@@ -18,14 +19,36 @@ import { KeyboardProvider } from "react-native-keyboard-controller";
 
 import NetworkSyncBootstrap from "../offline/NetworkSyncBootstrap";
 
+// Prevent the splash screen from auto-hiding before asset loading is complete.
+SplashScreen.preventAutoHideAsync();
+
 export default function RootLayout() {
   const [ready, setReady] = useState(false);
+  const [fontsLoaded, fontError] = useFonts({
+    regular: require("../assets/fonts/Roboto-Regular.ttf"),
+    medium: require("../assets/fonts/Roboto-Medium.ttf"),
+    bold: require("../assets/fonts/Roboto-Bold.ttf"),
+    italic: require("../assets/fonts/Roboto-Italic.ttf"),
+    light: require("../assets/fonts/Roboto-Light.ttf"),
+    thin: require("../assets/fonts/Roboto-Thin.ttf"),
+  });
 
   useEffect(() => {
     initializeStorage()
       .then(() => setReady(true))
       .catch(console.error);
   }, []);
+
+  useEffect(() => {
+    if (ready && (fontsLoaded || fontError)) {
+      SplashScreen.hideAsync().catch(console.warn);
+    }
+  }, [ready, fontsLoaded, fontError]);
+
+  if (!ready || (!fontsLoaded && !fontError)) {
+    return null;
+  }
+
   return (
     <Provider store={store}>
       <PersistGate loading={null} persistor={persistor}>
