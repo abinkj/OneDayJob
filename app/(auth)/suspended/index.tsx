@@ -7,6 +7,7 @@ import { useTheme } from "../../../contexts/ThemeContext";
 import Animated, { FadeInDown, FadeInUp } from "react-native-reanimated";
 import { Header } from "../../../components/header";
 import { fontSizes } from "../../../themes/fonts";
+import { strings } from "../../../utilities/strings";
 
 const SuspendedScreen = () => {
   const { colors } = useTheme();
@@ -23,7 +24,7 @@ const SuspendedScreen = () => {
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
-      <Header title="Account Status" />
+      <Header title={strings.auth.suspended.headerTitle} />
       
       <View style={styles.content}>
         <Animated.View 
@@ -42,15 +43,15 @@ const SuspendedScreen = () => {
           entering={FadeInUp.delay(200).duration(800)}
           style={styles.textContainer}
         >
-          <Text style={[styles.title, { color: colors.black }]}>Account Suspended</Text>
+          <Text style={[styles.title, { color: colors.black }]}>{strings.auth.suspended.title}</Text>
           <Text style={[styles.subtitle, { color: colors.grey }]}>
-            Your account has been suspended due to a violation of our community guidelines and safety policies.
+            {strings.auth.suspended.subtitle}
           </Text>
           
           <View style={[styles.infoBox, { backgroundColor: colors.categoryBox }]}>
             <Ionicons name="information-circle-outline" size={20} color={colors.primary} />
             <Text style={[styles.infoText, { color: colors.black }]}>
-              Access to gig matching and chat features has been restricted to protect our community.
+              {strings.auth.suspended.infoBox}
             </Text>
           </View>
         </Animated.View>
@@ -63,21 +64,21 @@ const SuspendedScreen = () => {
             style={[styles.contactButton, { backgroundColor: colors.primary }]}
             onPress={handleContactSupport}
           >
-            <Text style={styles.contactButtonText}>Contact Support</Text>
+            <Text style={styles.contactButtonText}>{strings.auth.suspended.contactSupport}</Text>
           </TouchableOpacity>
           
           <TouchableOpacity 
             style={styles.logoutButton}
             onPress={handleLogout}
           >
-            <Text style={[styles.logoutButtonText, { color: colors.primary }]}>Logout</Text>
+            <Text style={[styles.logoutButtonText, { color: colors.primary }]}>{strings.auth.suspended.signOut}</Text>
           </TouchableOpacity>
         </Animated.View>
       </View>
 
       <View style={styles.footer}>
         <Text style={[styles.footerText, { color: colors.grey }]}>
-          OneDayJob Trust & Safety Team
+          {strings.auth.suspended.footerTeam}
         </Text>
       </View>
     </SafeAreaView>

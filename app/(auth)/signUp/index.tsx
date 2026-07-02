@@ -17,6 +17,7 @@ import CustomButton from "../../../components/CustomButton";
 import LabeledInput from "../../../components/labeledTextInput";
 import { useAlert } from "../../../components/CustomAlert/AlertProvider";
 import { validateName, validatePhone } from "../../../utilities/formValidation";
+import { strings } from "../../../utilities/strings";
 
 const SignUp = () => {
   const [phone, setPhone] = useState("");
@@ -34,7 +35,7 @@ const SignUp = () => {
     if (!nameValidation.status) {
       showAlert({
         type: "error",
-        title: "Error",
+        title: strings.auth.signup.invalidNameTitle,
         message: nameValidation.nameError,
       });
       return;
@@ -45,7 +46,7 @@ const SignUp = () => {
     if (!phoneValidation.status) {
       showAlert({
         type: "error",
-        title: "Error",
+        title: strings.auth.signup.invalidNumberTitle,
         message: phoneValidation.phoneError,
       });
       return;
@@ -68,8 +69,8 @@ const SignUp = () => {
       );
       showAlert({
         type: "error",
-        title: "Error",
-        message: "Failed to send OTP. Please try again.",
+        title: strings.auth.signup.errorTitle,
+        message: strings.auth.signup.errorMessage,
       });
     } finally {
       setIsLoading(false);
@@ -93,8 +94,8 @@ const SignUp = () => {
             source={require("../../../assets/images/onboarding/ob4.png")}
             style={styles.image}
           />
-          <Text style={styles.title}>Create Account</Text>
-          <Text style={styles.subtitle}>Enter your details to get started</Text>
+          <Text style={styles.title}>{strings.auth.signup.title}</Text>
+          <Text style={styles.subtitle}>{strings.auth.signup.subtitle}</Text>
         </Animated.View>
 
         <Animated.View
@@ -102,8 +103,8 @@ const SignUp = () => {
           style={styles.formContainer}
         >
           <LabeledInput
-            title="Full Name"
-            placeholder="Enter your name"
+            title={strings.auth.signup.labelName}
+            placeholder={strings.auth.signup.placeholderName}
             value={name}
             onChangeText={setName}
             leftIcon={
@@ -115,8 +116,8 @@ const SignUp = () => {
           />
 
           <LabeledInput
-            title="Mobile Number"
-            placeholder="Enter 10-digit number"
+            title={strings.auth.signup.labelPhone}
+            placeholder={strings.auth.signup.placeholderPhone}
             value={phone}
             onChangeText={setPhone}
             keyboardType="number-pad"
@@ -133,7 +134,7 @@ const SignUp = () => {
             onPress={handleGetOtp}
             disabled={isLoading}
             isLoading={isLoading}
-            text={"Send OTP"}
+            text={strings.auth.signup.sendCode}
           />
         </Animated.View>
 
@@ -141,9 +142,9 @@ const SignUp = () => {
           entering={FadeInUp.delay(600).duration(1000).springify()}
           style={styles.footer}
         >
-          <Text style={styles.footerText}>Already have an account?</Text>
+          <Text style={styles.footerText}>{strings.auth.signup.haveAccountCta}</Text>
           <TouchableOpacity onPress={() => navigation.goBack()}>
-            <Text style={styles.createAccount}>Login</Text>
+            <Text style={styles.createAccount}>{strings.auth.signup.loginAction}</Text>
           </TouchableOpacity>
         </Animated.View>
     </KeyboardAwareScrollView>

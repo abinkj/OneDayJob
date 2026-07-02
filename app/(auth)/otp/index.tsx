@@ -36,6 +36,7 @@ import { useAlert } from "../../../components/CustomAlert/AlertProvider";
 import { validateOtpCode } from "../../../utilities/formValidation";
 import { useNotifications } from "../../../contexts/NotificationContext";
 import { completeKyc, completeProfile } from "../../../redux/reducers/authReducers";
+import { strings } from "../../../utilities/strings";
 
 interface RouteParams {
   phoneNumber: string;
@@ -198,7 +199,7 @@ const Otp = () => {
     if (!otpValidation.status) {
       showAlert({
         type: "error",
-        title: "Error",
+        title: strings.auth.otp.verificationFailedTitle,
         message: otpValidation.otpError,
       });
       return;
@@ -261,16 +262,16 @@ const Otp = () => {
             setIsSettingUp(false);
             showAlert({
               type: "error",
-              title: "Setup Failed",
-              message: "An error occurred while setting up your account. Please try again.",
+              title: strings.auth.otp.setupFailedTitle,
+              message: strings.auth.otp.setupFailedMessage,
             });
           }
         }, 1000);
       } else {
         showAlert({
           type: "error",
-          title: "Error",
-          message: response.data.message || "OTP verification failed",
+          title: strings.auth.otp.verificationFailedTitle,
+          message: response.data.message || strings.auth.otp.defaultVerificationError,
         });
       }
     } catch (error) {
@@ -295,7 +296,7 @@ const Otp = () => {
 
       showAlert({
         type: "error",
-        title: "Error",
+        title: strings.auth.otp.verificationFailedTitle,
         message: errorMessage,
       });
     } finally {
@@ -314,8 +315,8 @@ const Otp = () => {
 
       showAlert({
         type: "success",
-        title: "Success",
-        message: "OTP has been resent to your mobile number.",
+        title: strings.auth.otp.resendSuccessTitle,
+        message: strings.auth.otp.resendSuccessMessage,
       });
       setOtp("");
     } catch (error) {
@@ -328,7 +329,7 @@ const Otp = () => {
 
       showAlert({
         type: "error",
-        title: "Error",
+        title: strings.auth.otp.resendErrorTitle,
         message: errorMessage,
       });
     } finally {
@@ -348,7 +349,7 @@ const Otp = () => {
           resizeMode="contain"
           testID="otp-success-animation"
         />
-        <Text style={styles.text}>Verified Successfully</Text>
+        <Text style={styles.text}>{strings.auth.otp.success}</Text>
       </View>
     );
   }
@@ -400,7 +401,7 @@ const Otp = () => {
             entering={FadeInDown.delay(300).duration(600)}
             style={styles.loadingText}
           >
-            Setting up your account...
+            {strings.auth.otp.settingUp}
           </Animated.Text>
 
           <Animated.View
@@ -428,8 +429,8 @@ const Otp = () => {
           entering={FadeInDown.delay(200).duration(1000).springify()}
           style={styles.headerContainer}
         >
-          <Text style={styles.title}>Verify Account</Text>
-          <Text style={styles.subtitleOtp}>Enter the 6-digit code sent to</Text>
+          <Text style={styles.title}>{strings.auth.otp.title}</Text>
+          <Text style={styles.subtitleOtp}>{strings.auth.otp.subtitle}</Text>
           <Text style={styles.phoneNumberText}>
             {phoneNumber}
           </Text>
@@ -467,12 +468,12 @@ const Otp = () => {
 
           <View style={styles.resendContainer}>
             <Text style={styles.resendText}>
-              Didn't receive the code?{" "}
+              {strings.auth.otp.resendPrompt}{" "}
               <Text
                 style={[styles.resendButton, isResending && styles.disabledOpacity]}
                 onPress={handleResendOtp}
               >
-                {isResending ? "Sending..." : "Resend"}
+                {isResending ? strings.auth.otp.resending : strings.auth.otp.resend}
               </Text>
             </Text>
           </View>
@@ -482,7 +483,7 @@ const Otp = () => {
               onPress={handleVerifyOtp}
               disabled={isLoading || otp.length !== 6}
               isLoading={isLoading}
-              text={"Verify"}
+              text={strings.auth.otp.confirm}
             />
           </View>
         </Animated.View>

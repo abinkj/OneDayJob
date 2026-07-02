@@ -24,6 +24,7 @@ import Images from "../../../utilities/images";
 import Toast from "react-native-toast-message";
 import { createStyles } from "./styles";
 import { validateName } from "../../../utilities/formValidation";
+import { strings } from "../../../utilities/strings";
 
 const ProfileCompletion = () => {
   const [firstName, setFirstName] = useState("");
@@ -106,8 +107,8 @@ const ProfileCompletion = () => {
       if (imageUri && imageUri.startsWith("file://")) {
         Toast.show({
           type: "info",
-          text1: "Uploading Image",
-          text2: "Please wait...",
+          text1: strings.auth.profileCompletion.uploadingTitle,
+          text2: strings.auth.profileCompletion.uploadingSub,
         });
 
         try {
@@ -167,9 +168,9 @@ const ProfileCompletion = () => {
         entering={FadeInDown.delay(200).duration(1000).springify()}
         style={styles.headerContainer}
       >
-        <Text style={styles.title}>Complete Your Profile</Text>
+        <Text style={styles.title}>{strings.auth.profileCompletion.title}</Text>
         <Text style={styles.subtitle}>
-          Add your name to get started. Profile picture is optional.
+          {strings.auth.profileCompletion.subtitle}
         </Text>
       </Animated.View>
 
@@ -195,8 +196,8 @@ const ProfileCompletion = () => {
         </View>
 
         <LabeledInput
-          title="First Name"
-          placeholder="Enter your first name"
+          title={strings.auth.profileCompletion.labelFirstName}
+          placeholder={strings.auth.profileCompletion.placeholderFirstName}
           placeholderTextColor={colors.grey}
           value={firstName}
           onChangeText={setFirstName}
@@ -206,8 +207,8 @@ const ProfileCompletion = () => {
         />
 
         <LabeledInput
-          title="Last Name"
-          placeholder="Enter your last name"
+          title={strings.auth.profileCompletion.labelLastName}
+          placeholder={strings.auth.profileCompletion.placeholderLastName}
           placeholderTextColor={colors.grey}
           value={lastName}
           onChangeText={setLastName}
@@ -221,7 +222,7 @@ const ProfileCompletion = () => {
             onPress={handleCompleteProfile}
             disabled={isLoading}
             isLoading={isLoading}
-            text="Continue"
+            text={strings.auth.profileCompletion.continue}
           />
         </View>
       </Animated.View>
@@ -230,7 +231,7 @@ const ProfileCompletion = () => {
         ref={imagePickerRef}
         onImageSelected={handleImageSelected}
         onError={handleImageError}
-        title="Add Profile Picture"
+        title={strings.auth.profileCompletion.choosePhoto}
         primaryColor={colors.primary}
       />
     </KeyboardAwareScrollView>

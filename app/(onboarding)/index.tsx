@@ -24,28 +24,29 @@ import CustomButton from "../../components/CustomButton";
 import { Colors } from "../../constants/Colors";
 import { LinearGradient } from "expo-linear-gradient";
 import { fontSizes, fontFamilies } from "../../themes/fonts";
+import { strings } from "../../utilities/strings";
 
 const { width } = Dimensions.get("window");
 
 const slides = [
   {
     id: "1",
-    title: "Welcome to Zoopol",
+    title: strings.onboarding.slides[0].title,
     image: require("../../assets/images/onboarding/ob1.png"),
   },
   {
     id: "2",
-    title: "Need Help? Post a Job Instantly",
+    title: strings.onboarding.slides[1].title,
     image: require("../../assets/images/onboarding/ob2.png"),
   },
   {
     id: "3",
-    title: "Looking for Work Nearby?",
+    title: strings.onboarding.slides[2].title,
     image: require("../../assets/images/onboarding/ob3.png"),
   },
   {
     id: "4",
-    title: "Let's Get You Started",
+    title: strings.onboarding.slides[3].title,
     image: require("../../assets/images/onboarding/ob4.png"),
   },
 ];
@@ -124,7 +125,7 @@ const Onboarding = () => {
     <LinearGradient colors={["white", Colors.primary]} style={styles.container}>
       <View style={styles.skipContainer}>
         <TouchableOpacity onPress={handleSkip}>
-          <Text style={styles.skipText}>Skip</Text>
+          <Text style={styles.skipText}>{strings.onboarding.buttons.skip}</Text>
         </TouchableOpacity>
       </View>
 
@@ -161,7 +162,7 @@ const Onboarding = () => {
         </View>
 
         <CustomButton
-          text={currentIndex === slides.length - 1 ? "Get Started" : "Next "}
+          text={currentIndex === slides.length - 1 ? strings.onboarding.buttons.getStarted : strings.onboarding.buttons.next}
           onPress={handleNext}
           color={Colors.blue}
         />

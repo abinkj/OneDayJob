@@ -16,6 +16,7 @@ import CustomButton from "../../../components/CustomButton";
 import LabeledInput from "../../../components/labeledTextInput";
 import { useAlert } from "../../../components/CustomAlert/AlertProvider";
 import { validatePhone } from "../../../utilities/formValidation";
+import { strings } from "../../../utilities/strings";
 
 const Login = () => {
   const [phone, setPhone] = useState("");
@@ -32,7 +33,7 @@ const Login = () => {
     if (!phoneValidation.status) {
       showAlert({
         type: "error",
-        title: "Error",
+        title: strings.auth.login.validationTitle,
         message: phoneValidation.phoneError,
       });
       return;
@@ -54,8 +55,8 @@ const Login = () => {
       );
       showAlert({
         type: "error",
-        title: "Error",
-        message: "Failed to send OTP. Please try again.",
+        title: strings.auth.login.errorTitle,
+        message: strings.auth.login.errorMessage,
       });
     } finally {
       setIsLoading(false);
@@ -78,9 +79,9 @@ const Login = () => {
             source={require("../../../assets/images/onboarding/ob1.png")}
             style={styles.image}
           />
-          <Text style={styles.title}>Welcome Back</Text>
+          <Text style={styles.title}>{strings.auth.login.title}</Text>
           <Text style={styles.subtitle}>
-            Enter your mobile number to continue
+            {strings.auth.login.subtitle}
           </Text>
         </Animated.View>
 
@@ -89,8 +90,8 @@ const Login = () => {
           style={styles.formContainer}
         >
           <LabeledInput
-            title="Mobile Number"
-            placeholder="Enter 10-digit number"
+            title={strings.auth.login.labelPhone}
+            placeholder={strings.auth.login.placeholderPhone}
             value={phone}
             onChangeText={setPhone}
             inputMode="numeric"
@@ -106,7 +107,7 @@ const Login = () => {
           />
           <View style={{ marginTop: 20 }}>
             <CustomButton
-              text={"Send OTP"}
+              text={strings.auth.login.sendCode}
               onPress={handleGetOtp}
               isLoading={isLoading}
               color={colors.primary}
@@ -118,9 +119,9 @@ const Login = () => {
           entering={FadeInUp.delay(600).duration(1000).springify()}
           style={styles.footer}
         >
-          <Text style={styles.footerText}>Don’t have an account?</Text>
+          <Text style={styles.footerText}>{strings.auth.login.footerText}</Text>
           <TouchableOpacity onPress={() => navigation.navigate("Signup")}>
-            <Text style={styles.createAccount}>Create Account</Text>
+            <Text style={styles.createAccount}>{strings.auth.login.createAccountAction}</Text>
           </TouchableOpacity>
         </Animated.View>
     </KeyboardAwareScrollView>
