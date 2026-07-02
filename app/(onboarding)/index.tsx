@@ -7,6 +7,7 @@ import {
   Dimensions,
   TouchableOpacity,
   Image,
+  Platform,
 } from "react-native";
 import { useDispatch } from "react-redux";
 import Animated, {
@@ -22,7 +23,7 @@ import { saveHasSeenOnboarding } from "../../utilities/mmkvStore";
 import CustomButton from "../../components/CustomButton";
 import { Colors } from "../../constants/Colors";
 import { LinearGradient } from "expo-linear-gradient";
-import { fontSizes } from "../../themes/fonts";
+import { fontSizes, fontFamilies } from "../../themes/fonts";
 
 const { width } = Dimensions.get("window");
 
@@ -175,19 +176,19 @@ const styles = StyleSheet.create({
   },
   skipContainer: {
     alignItems: "flex-end",
-    marginRight: "5%",
+    marginRight: 16,
     marginTop: "5%",
   },
   skipText: {
-    fontSize: fontSizes.size18,
-    color: "black",
-    fontWeight: "500",
+    fontSize: fontSizes.size16,
+    color: Colors.switchBorder,
+    fontFamily: fontFamilies.bold,
   },
   slide: {
     width,
     alignItems: "center",
     justifyContent: "center",
-    paddingHorizontal: 20,
+    paddingHorizontal: 16,
     marginTop: -60,
   },
   imageContainer: {
@@ -201,11 +202,16 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: fontSizes.size38,
-    fontWeight: "600",
+    fontFamily: fontFamilies.bold,
     color: "#fff",
     textAlign: "center",
     marginBottom: 10,
     lineHeight: 50,
+    ...Platform.select({
+      android: {
+        includeFontPadding: false,
+      },
+    }),
   },
   footer: {
     paddingHorizontal: 16,
