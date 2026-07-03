@@ -1,7 +1,7 @@
-import { StyleSheet } from "react-native";
+import { StyleSheet, Platform } from "react-native";
 import DeviceDimensions from "../../../constants/DeviceDimenions";
 import { ThemeColors } from "../../../constants/Colors";
-import { fontSizes } from "../../../themes/fonts";
+import { fontSizes, fontFamilies } from "../../../themes/fonts";
 
 export const createStyles = (colors: ThemeColors) => StyleSheet.create({
   container: {
@@ -33,11 +33,17 @@ export const createStyles = (colors: ThemeColors) => StyleSheet.create({
   },
   name: {
     fontSize: fontSizes.size22,
-    fontFamily: "bold",
+    fontFamily: fontFamilies.bold,
     marginTop: 8,
     marginBottom: 4,
     color: colors.black,
     letterSpacing: 0.5,
+    lineHeight: fontSizes.size28,
+    ...Platform.select({
+      android: {
+        includeFontPadding: false,
+      },
+    }),
   },
   locationContainer: {
     flexDirection: "row",
@@ -51,8 +57,14 @@ export const createStyles = (colors: ThemeColors) => StyleSheet.create({
   locationText: {
     fontSize: fontSizes.size14,
     color: colors.primary,
-    fontFamily: "medium",
+    fontFamily: fontFamilies.medium,
     marginLeft: 4,
+    lineHeight: fontSizes.size18,
+    ...Platform.select({
+      android: {
+        includeFontPadding: false,
+      },
+    }),
   },
   statsContainer: {
     flexDirection: "row",
@@ -70,20 +82,38 @@ export const createStyles = (colors: ThemeColors) => StyleSheet.create({
     fontSize: fontSizes.size11,
     color: colors.grey, // Static grey usually fine, or update to colors.grey
     marginBottom: 6,
-    fontFamily: "medium",
+    fontFamily: fontFamilies.medium,
     letterSpacing: 1,
     textTransform: "uppercase",
+    lineHeight: fontSizes.size15,
+    ...Platform.select({
+      android: {
+        includeFontPadding: false,
+      },
+    }),
   },
   statNumber: {
     fontSize: fontSizes.size22,
-    fontFamily: "bold",
+    fontFamily: fontFamilies.bold,
     color: colors.primary,
+    lineHeight: fontSizes.size28,
+    ...Platform.select({
+      android: {
+        includeFontPadding: false,
+      },
+    }),
   },
   statSubLabel: {
     fontSize: fontSizes.size11,
     color: colors.subGrey,
     marginTop: 4,
-    fontFamily: "regular",
+    fontFamily: fontFamilies.regular,
+    lineHeight: fontSizes.size15,
+    ...Platform.select({
+      android: {
+        includeFontPadding: false,
+      },
+    }),
   },
   completionRateContainer: {
     flexDirection: "row",
@@ -117,14 +147,26 @@ export const createStyles = (colors: ThemeColors) => StyleSheet.create({
   },
   dropdownText: {
     fontSize: fontSizes.size16,
-    fontFamily: "medium",
+    fontFamily: fontFamilies.medium,
     color: colors.black,
+    lineHeight: fontSizes.size22,
+    ...Platform.select({
+      android: {
+        includeFontPadding: false,
+      },
+    }),
   },
   dropdownDetail: {
     fontSize: fontSizes.size14,
     color: colors.subGrey,
-    fontFamily: "regular",
+    fontFamily: fontFamilies.regular,
     marginBottom: 8,
+    lineHeight: fontSizes.size18,
+    ...Platform.select({
+      android: {
+        includeFontPadding: false,
+      },
+    }),
   },
   reviewContainer: {
     backgroundColor: colors.white,
@@ -157,10 +199,16 @@ export const createStyles = (colors: ThemeColors) => StyleSheet.create({
     marginLeft: 12,
   },
   reviewerName: {
-    fontFamily: "bold",
+    fontFamily: fontFamilies.bold,
     fontSize: fontSizes.size16,
     marginBottom: 2,
     color: colors.black,
+    lineHeight: fontSizes.size22,
+    ...Platform.select({
+      android: {
+        includeFontPadding: false,
+      },
+    }),
   },
   stars: {
     flexDirection: "row",
@@ -171,15 +219,26 @@ export const createStyles = (colors: ThemeColors) => StyleSheet.create({
   reviewDate: {
     fontSize: fontSizes.size12,
     color: colors.grey,
-    fontFamily: "regular",
+    fontFamily: fontFamilies.regular,
     alignSelf: "flex-start",
     marginTop: 4,
+    lineHeight: fontSizes.size16,
+    ...Platform.select({
+      android: {
+        includeFontPadding: false,
+      },
+    }),
   },
   reviewText: {
     fontSize: fontSizes.size14,
-    lineHeight: 22,
-    fontFamily: "regular",
+    lineHeight: fontSizes.size22,
+    fontFamily: fontFamilies.regular,
     color: colors.black, // Maybe colors.subGrey
+    ...Platform.select({
+      android: {
+        includeFontPadding: false,
+      },
+    }),
   },
   seeAllButton: {
     backgroundColor: colors.categoryBox, // Light primary
@@ -193,7 +252,13 @@ export const createStyles = (colors: ThemeColors) => StyleSheet.create({
   seeAllText: {
     color: colors.primary,
     fontSize: fontSizes.size16,
-    fontFamily: "bold",
+    fontFamily: fontFamilies.bold,
+    lineHeight: fontSizes.size22,
+    ...Platform.select({
+      android: {
+        includeFontPadding: false,
+      },
+    }),
   },
   experienceContainer: {
     backgroundColor: colors.white,
@@ -215,8 +280,14 @@ export const createStyles = (colors: ThemeColors) => StyleSheet.create({
   },
   dropdownTitle: {
     fontSize: fontSizes.size16,
-    fontFamily: "medium",
+    fontFamily: fontFamilies.medium,
     color: colors.black,
+    lineHeight: fontSizes.size22,
+    ...Platform.select({
+      android: {
+        includeFontPadding: false,
+      },
+    }),
   },
   dropdownContent: {
     paddingTop: 12,
@@ -270,8 +341,14 @@ export const createStyles = (colors: ThemeColors) => StyleSheet.create({
   },
   bankDetailsTitle: {
     fontSize: fontSizes.size18,
-    fontFamily: "bold",
+    fontFamily: fontFamilies.bold,
     color: colors.black,
+    lineHeight: fontSizes.size24,
+    ...Platform.select({
+      android: {
+        includeFontPadding: false,
+      },
+    }),
   },
   editIconButton: {
     padding: 8,
@@ -289,15 +366,27 @@ export const createStyles = (colors: ThemeColors) => StyleSheet.create({
   bankDetailsLabel: {
     fontSize: fontSizes.size14,
     color: colors.grey,
-    fontFamily: "medium",
+    fontFamily: fontFamilies.medium,
+    lineHeight: fontSizes.size18,
+    ...Platform.select({
+      android: {
+        includeFontPadding: false,
+      },
+    }),
   },
   bankDetailsValue: {
     fontSize: fontSizes.size15,
     color: colors.black,
-    fontFamily: "medium",
+    fontFamily: fontFamilies.medium,
     flex: 1,
     textAlign: "right",
     marginLeft: 16,
+    lineHeight: fontSizes.size20,
+    ...Platform.select({
+      android: {
+        includeFontPadding: false,
+      },
+    }),
   },
   editBankButton: {
     flexDirection: "row",
@@ -312,7 +401,13 @@ export const createStyles = (colors: ThemeColors) => StyleSheet.create({
   editBankButtonText: {
     fontSize: fontSizes.size15,
     color: colors.primary,
-    fontFamily: "bold",
+    fontFamily: fontFamilies.bold,
+    lineHeight: fontSizes.size20,
+    ...Platform.select({
+      android: {
+        includeFontPadding: false,
+      },
+    }),
   },
   addBankCard: {
     backgroundColor: colors.white,
@@ -331,18 +426,29 @@ export const createStyles = (colors: ThemeColors) => StyleSheet.create({
   },
   addBankTitle: {
     fontSize: fontSizes.size18,
-    fontFamily: "bold",
+    fontFamily: fontFamilies.bold,
     color: colors.black,
     marginTop: 16,
     marginBottom: 8,
+    lineHeight: fontSizes.size24,
+    ...Platform.select({
+      android: {
+        includeFontPadding: false,
+      },
+    }),
   },
   addBankText: {
     fontSize: fontSizes.size14,
     color: colors.grey,
     textAlign: "center",
     marginBottom: 20,
-    lineHeight: 20,
-    fontFamily: "regular",
+    lineHeight: fontSizes.size20,
+    fontFamily: fontFamilies.regular,
+    ...Platform.select({
+      android: {
+        includeFontPadding: false,
+      },
+    }),
   },
   addBankButton: {
     backgroundColor: colors.primary,
@@ -358,7 +464,13 @@ export const createStyles = (colors: ThemeColors) => StyleSheet.create({
   addBankButtonText: {
     color: colors.white,
     fontSize: fontSizes.size16,
-    fontFamily: "bold",
+    fontFamily: fontFamilies.bold,
+    lineHeight: fontSizes.size22,
+    ...Platform.select({
+      android: {
+        includeFontPadding: false,
+      },
+    }),
   },
 });
 

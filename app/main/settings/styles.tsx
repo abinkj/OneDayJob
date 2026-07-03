@@ -1,6 +1,7 @@
-import { StyleSheet } from "react-native";
+import { StyleSheet, Platform } from "react-native";
 import { Colors } from "../../../constants/Colors";
 import DeviceDimensions from "../../../constants/DeviceDimenions";
+import { fontSizes, fontFamilies } from "../../../themes/fonts";
 
 const styles = StyleSheet.create({
   container: {
@@ -44,26 +45,45 @@ const styles = StyleSheet.create({
     marginLeft: 16 * DeviceDimensions.widthRatio,
   },
   profileName: {
-    fontSize: 18,
-    fontWeight: "600",
+    fontSize: fontSizes.size18,
+    fontFamily: fontFamilies.bold,
     color: Colors.black,
     marginBottom: 4,
+    lineHeight: fontSizes.size24,
+    ...Platform.select({
+      android: {
+        includeFontPadding: false,
+      },
+    }),
   },
   profileEmail: {
-    fontSize: 14,
+    fontSize: fontSizes.size14,
+    fontFamily: fontFamilies.regular,
     color: Colors.grey,
+    lineHeight: fontSizes.size20,
+    ...Platform.select({
+      android: {
+        includeFontPadding: false,
+      },
+    }),
   },
   section: {
     marginTop: 16 * DeviceDimensions.heightRatio,
   },
   sectionTitle: {
-    fontSize: 13,
-    fontWeight: "600",
+    fontSize: fontSizes.size13,
+    fontFamily: fontFamilies.bold,
     color: Colors.grey,
     textTransform: "uppercase",
     letterSpacing: 0.5,
     marginHorizontal: 16 * DeviceDimensions.widthRatio,
     marginBottom: 8 * DeviceDimensions.heightRatio,
+    lineHeight: fontSizes.size18,
+    ...Platform.select({
+      android: {
+        includeFontPadding: false,
+      },
+    }),
   },
   sectionContent: {
     backgroundColor: Colors.white,
@@ -107,15 +127,28 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   settingsItemTitle: {
-    fontSize: 16,
-    fontWeight: "500",
+    fontSize: fontSizes.size16,
+    fontFamily: fontFamilies.medium,
     color: Colors.black,
     marginBottom: 2,
+    lineHeight: fontSizes.size22,
+    ...Platform.select({
+      android: {
+        includeFontPadding: false,
+      },
+    }),
   },
   settingsItemSubtitle: {
-    fontSize: 13,
+    fontSize: fontSizes.size13,
+    fontFamily: fontFamilies.regular,
     color: Colors.grey,
     marginTop: 2,
+    lineHeight: fontSizes.size18,
+    ...Platform.select({
+      android: {
+        includeFontPadding: false,
+      },
+    }),
   },
   dangerText: {
     color: Colors.red,

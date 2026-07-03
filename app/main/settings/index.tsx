@@ -140,12 +140,12 @@ const Settings: React.FC = () => {
   const handleLogout = () => {
     showAlert({
       type: "warning",
-      title: "Logout",
-      message: "Are you sure you want to log out?",
+      title: t("settings.logoutAlertTitle"),
+      message: t("settings.logoutAlertMessage"),
       buttons: [
-        { text: "Cancel", style: "cancel" },
+        { text: t("common.cancel"), style: "cancel" },
         {
-          text: "Logout",
+          text: t("settings.logout"),
           style: "destructive",
           onPress: () => {
             dispatch(logoutUser() as any);
@@ -158,13 +158,12 @@ const Settings: React.FC = () => {
   const handleDeleteAccount = () => {
     showAlert({
       type: "warning",
-      title: "Delete Account",
-      message:
-        "Are you sure you want to delete your account? This action cannot be undone and you will lose all your data.",
+      title: t("settings.deleteAlertTitle"),
+      message: t("settings.deleteAlertMessage"),
       buttons: [
-        { text: "Cancel", style: "cancel" },
+        { text: t("common.cancel"), style: "cancel" },
         {
-          text: "Delete",
+          text: t("settings.deleteAccount"),
           style: "destructive",
           onPress: async () => {
             try {
@@ -177,8 +176,8 @@ const Settings: React.FC = () => {
 
               Toast.show({
                 type: "success",
-                text1: "Account Deleted",
-                text2: "Your account has been deleted successfully",
+                text1: t("settings.deleteSuccessTitle"),
+                text2: t("settings.deleteSuccessMessage"),
               });
 
               dispatch(logoutUser() as any);
@@ -186,8 +185,8 @@ const Settings: React.FC = () => {
               console.error("Error deleting account:", error);
               Toast.show({
                 type: "error",
-                text1: "Error",
-                text2: "Failed to delete account. Please try again.",
+                text1: t("settings.deleteErrorTitle"),
+                text2: t("settings.deleteErrorMessage"),
               });
             } finally {
               setIsLoading(false);
@@ -201,7 +200,7 @@ const Settings: React.FC = () => {
   if (isLoading) {
     return (
       <View style={[styles.container, { backgroundColor: colors.background }]}>
-        <Header title="Settings" showBackButton />
+        <Header title={t("settings.title")} showBackButton />
         <ProfileSkeleton />
       </View>
     );
@@ -380,10 +379,11 @@ const Settings: React.FC = () => {
             onPress={() => navigation.navigate("TestSocket")}
           /> */}
         </SettingsSection>
-        <SettingsSection title={"Job Postings"}>
+        <SettingsSection title={t("settings.jobPostings")}>
           <SettingsItem
             icon="log-out-outline"
-            title={"Job Posting History"}
+            title={t("settings.jobPostingHistory")}
+            subtitle={t("settings.jobPostingHistorySub")}
             onPress={() => navigation.navigate("JobPostingHistory")}
             showArrow={false}
           />
@@ -398,7 +398,7 @@ const Settings: React.FC = () => {
               Toast.show({
                 type: "info",
                 text1: t("settings.comingSoon"),
-                text2: "Help center will be available soon",
+                text2: t("settings.comingSoonSub"),
               });
             }}
           />
@@ -431,7 +431,7 @@ const Settings: React.FC = () => {
         </SettingsSection>
 
         {/* Danger Zone */}
-        <SettingsSection title={t("settings.logout")}>
+        <SettingsSection title={t("settings.sessionSection")}>
           <SettingsItem
             icon="log-out-outline"
             title={t("settings.logout")}

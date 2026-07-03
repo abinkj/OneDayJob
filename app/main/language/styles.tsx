@@ -1,5 +1,6 @@
-import { StyleSheet } from "react-native";
+import { StyleSheet, Platform } from "react-native";
 import { ThemeColors } from "../../../contexts/ThemeContext";
+import { fontSizes, fontFamilies } from "../../../themes/fonts";
 
 export const createStyles = (colors: ThemeColors) =>
   StyleSheet.create({
@@ -33,9 +34,15 @@ export const createStyles = (colors: ThemeColors) =>
       alignItems: "center",
     },
     languageText: {
-      fontSize: 16,
-      fontWeight: "500",
+      fontSize: fontSizes.size16,
+      fontFamily: fontFamilies.medium,
       marginLeft: 0,
+      lineHeight: fontSizes.size22,
+      ...Platform.select({
+        android: {
+          includeFontPadding: false,
+        },
+      }),
     },
     iconContainer: {
       width: 40,
