@@ -40,5 +40,19 @@
         <data android:scheme="exp+zoopol"/>
       </intent-filter>
     </activity>
+    <activity
+        android:name="com.razorpay.DeeplinkActivity"
+        android:exported="true"
+        android:theme="@style/CheckoutTheme"
+        tools:node="replace">
+        <intent-filter>
+            <action android:name="android.intent.action.VIEW" />
+            <category android:name="android.intent.category.DEFAULT" />
+            <category android:name="android.intent.category.BROWSABLE" />
+            <data
+                android:host="com.zoopol1.app"
+                android:scheme="razorpay" />
+        </intent-filter>
+    </activity>
   </application>
 </manifest>
