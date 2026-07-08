@@ -34,7 +34,9 @@
     "deleteSuccessTitle": "Account deleted",
     "deleteSuccessMessage": "Your account has been deleted. We're sorry to see you go.",
     "deleteErrorTitle": "Couldn't delete account",
-    "deleteErrorMessage": "Please check your connection and try again."
+    "deleteErrorMessage": "Please check your connection and try again.",
+    "testScreen": "Test Screen",
+    "testScreenSub": "Navigate to the test screen"
   },
   "common": {
     "cancel": "Cancel",
