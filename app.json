@@ -22,7 +22,11 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.zoopol1.app",
       "infoPlist": {
-        "LSApplicationQueriesSchemes": ["tel", "mailto", "sms"]
+        "LSApplicationQueriesSchemes": [
+          "tel",
+          "mailto",
+          "sms"
+        ]
       }
     },
     "scheme": "zoopol",
@@ -86,7 +90,15 @@
           "cameraPermission": "Allow $(PRODUCT_NAME) to access your camera to take a profile picture or document job-related tasks."
         }
       ],
-      "expo-web-browser"
+      "expo-web-browser",
+      [
+        "@sentry/react-native/expo",
+        {
+          "url": "https://sentry.io/",
+          "project": "react-native",
+          "organization": "zoopol"
+        }
+      ]
     ],
     "notification": {
       "icon": "./assets/notification-icon.png",

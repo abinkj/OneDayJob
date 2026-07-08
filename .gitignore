@@ -51,3 +51,5 @@ ios/oneday.xcodeproj/project.xcworkspace/xcuserdata/
 *.apk
 *.aab
 build-*.apk
+
+.env.local

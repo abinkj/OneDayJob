@@ -18,11 +18,31 @@ import { ThemeProvider } from "../contexts/ThemeContext";
 import { KeyboardProvider } from "react-native-keyboard-controller";
 
 import NetworkSyncBootstrap from "../offline/NetworkSyncBootstrap";
+import * as Sentry from '@sentry/react-native';
+
+Sentry.init({
+  dsn: 'https://204ba6cffa83f7e5bfe1d1191527764f@o4511699183075328.ingest.de.sentry.io/4511699186155600',
+
+  // Adds more context data to events (IP address, cookies, user, etc.)
+  // For more information, visit: https://docs.sentry.io/platforms/react-native/data-management/data-collected/
+  sendDefaultPii: true,
+
+  // Enable Logs
+  enableLogs: true,
+
+  // Configure Session Replay
+  replaysSessionSampleRate: 0.1,
+  replaysOnErrorSampleRate: 1,
+  integrations: [Sentry.mobileReplayIntegration(), Sentry.feedbackIntegration()],
+
+  // uncomment the line below to enable Spotlight (https://spotlightjs.com)
+  // spotlight: __DEV__,
+});
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
 
-export default function RootLayout() {
+export default Sentry.wrap(function RootLayout() {
   const [ready, setReady] = useState(false);
   const [fontsLoaded, fontError] = useFonts({
     regular: require("../assets/fonts/Roboto-Regular.ttf"),
@@ -70,4 +90,4 @@ export default function RootLayout() {
       </PersistGate>
     </Provider>
   );
-}
+});
