@@ -31,9 +31,11 @@ yarn-error.*
 
 # local env files
 .env
-
+.env.local
 # typescript
 *.tsbuildinfo
+
+# google services
 google-services.json
 
 ios/Pods/
