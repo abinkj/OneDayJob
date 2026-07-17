@@ -175,7 +175,6 @@ api.interceptors.response.use(
       return Promise.reject(error);
     }
 
-    // 403 = Forbidden → show error, do NOT logout
     // 403 = Forbidden → show error, do NOT logout unless suspended
     if (error.response?.status === 403) {
       const message = error.response.data?.error?.message || error.response.data?.message || "";
