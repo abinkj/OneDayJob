@@ -142,7 +142,7 @@ api.interceptors.response.use(
         }
 
         const refreshResponse = await axios.post(
-          `${API_BASE_URL}/auth/refresh-token`,
+          `${API_BASE_URL}auth/refresh-token`,
           { refreshToken: refreshTokenValue },
           {
             headers: { "Content-Type": "application/json" },

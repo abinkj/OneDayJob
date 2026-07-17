@@ -18,15 +18,7 @@ export const saveToken = async (accessToken: string, refreshToken?: string) => {
 
 export const getAccessToken = async (): Promise<string | null> => {
   try {
-    const token = await SecureStore.getItemAsync(ACCESS_TOKEN_KEY);
-    // If token has quotes, clean it (temporary fix for existing corrupted tokens)
-    if (token && token.startsWith('"') && token.endsWith('"')) {
-      const cleanToken = token.slice(1, -1); // Remove quotes
-      await SecureStore.setItemAsync(ACCESS_TOKEN_KEY, cleanToken); // Re-save clean token
-      console.log("Cleaned corrupted token");
-      return cleanToken;
-    }
-    return token;
+    return await SecureStore.getItemAsync(ACCESS_TOKEN_KEY);
   } catch (error) {
     console.error("Failed to get access token:", error);
     return null;
@@ -35,14 +27,7 @@ export const getAccessToken = async (): Promise<string | null> => {
 
 export const getRefreshToken = async (): Promise<string | null> => {
   try {
-    const token = await SecureStore.getItemAsync(REFRESH_TOKEN_KEY);
-    // If token has quotes, clean it
-    if (token && token.startsWith('"') && token.endsWith('"')) {
-      const cleanToken = token.slice(1, -1);
-      await SecureStore.setItemAsync(REFRESH_TOKEN_KEY, cleanToken);
-      return cleanToken;
-    }
-    return token;
+    return await SecureStore.getItemAsync(REFRESH_TOKEN_KEY);
   } catch (error) {
     console.error("Failed to get refresh token:", error);
     return null;
