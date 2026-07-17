@@ -22,7 +22,7 @@ jobs:
   #     branch: staging
   #     message: "Staging update"
 
-  # main → production build + OTA update
+  # main → production build + OTA update ye
   build_android:
     if: ${{ github.ref == 'refs/heads/main' }}
     type: build
