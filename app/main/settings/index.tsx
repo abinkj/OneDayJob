@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
 import {
   View,
   Text,
@@ -197,6 +197,45 @@ const Settings: React.FC = () => {
     });
   };
 
+  const handleToggleTheme = useCallback(async (value) => {
+    setIsTogglingTheme(true);
+    // Use requestAnimationFrame to defer the theme change
+    // This prevents UI freeze by allowing the loading state to render first
+    requestAnimationFrame(() => {
+      setTimeout(() => {
+        toggleTheme();
+        // Reset loading state after theme has changed
+        setTimeout(() => {
+          setIsTogglingTheme(false);
+        }, 100);
+      }, 50);
+    });
+  }, [toggleTheme]);
+
+  const handleSavedAddresses = useCallback(() => navigation.navigate("SavedAddresses"), [navigation]);
+  const handleLanguage = useCallback(() => navigation.navigate("Language"), [navigation]);
+  const handleJobPostingHistory = useCallback(() => navigation.navigate("JobPostingHistory"), [navigation]);
+  const handleHelpSupport = useCallback(() => {
+    Toast.show({
+      type: "info",
+      text1: t("settings.comingSoon"),
+      text2: t("settings.comingSoonSub"),
+    });
+  }, [t]);
+  const handleTermsConditions = useCallback(() => {
+    WebBrowser.openBrowserAsync(strings.APP_TERMS_CONDITIONS);
+  }, []);
+  const handlePrivacyPolicy = useCallback(() => {
+    WebBrowser.openBrowserAsync(strings.APP_PRIVACY_POLICY);
+  }, []);
+  const handleAbout = useCallback(() => {
+    Toast.show({
+      type: "info",
+      text1: "OneDayJob",
+      text2: t("settings.version"),
+    });
+  }, [t]);
+
   if (isLoading) {
     return (
       <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -218,51 +257,48 @@ const Settings: React.FC = () => {
         ? { uri: userData.profilePicture }
         : Images.profile.profileImage;
 
+  const renderProfile = useCallback(() => (
+    <View style={[styles.profileCard, { backgroundColor: colors.white }]}>
+      <Image
+        //key={`settings-${userData?.profilePictureUrl || userData?.profilePicture}`}
+        source={profileImageSource}
+        style={[
+          styles.profileImage,
+          { backgroundColor: colors.categoryBox },
+        ]}
+        placeholder={Images.profile.profileImage}
+        placeholderContentFit="cover"
+        contentFit="cover"
+        cachePolicy="memory-disk"
+        //transition={300}
+        onError={(error) => {
+          console.error("Settings image load error:", error);
+          console.error(
+            "Failed to load image URL:",
+            userData?.profilePictureUrl || userData?.profilePicture,
+          );
+        }}
+      />
+      <View style={styles.profileInfo}>
+        <Text style={[styles.profileName, { color: colors.black }]}>
+          {userData?.firstName} {userData?.lastName}
+        </Text>
+        <Text style={[styles.profileEmail, { color: colors.grey }]}>
+          {userData?.phoneNumber}
+        </Text>
+      </View>
+    </View>
+  ), [colors, profileImageSource, userData]);
+
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <Header title={t("settings.title")} showBackButton />
       <ScrollView
         style={styles.scrollView}
         showsVerticalScrollIndicator={false}
-        bounces={false}
       >
         {/* Profile Card */}
-        <TouchableOpacity
-          style={[styles.profileCard, { backgroundColor: colors.white }]}
-          disabled={true}
-          //onPress={handleEditProfile}
-          activeOpacity={0.7}
-        >
-          <Image
-            //key={`settings-${userData?.profilePictureUrl || userData?.profilePicture}`}
-            source={profileImageSource}
-            style={[
-              styles.profileImage,
-              { backgroundColor: colors.categoryBox },
-            ]}
-            placeholder={Images.profile.profileImage}
-            placeholderContentFit="cover"
-            contentFit="cover"
-            cachePolicy="memory-disk"
-            //transition={300}
-            onError={(error) => {
-              console.error("Settings image load error:", error);
-              console.error(
-                "Failed to load image URL:",
-                userData?.profilePictureUrl || userData?.profilePicture,
-              );
-            }}
-          />
-          <View style={styles.profileInfo}>
-            <Text style={[styles.profileName, { color: colors.black }]}>
-              {userData?.firstName} {userData?.lastName}
-            </Text>
-            <Text style={[styles.profileEmail, { color: colors.grey }]}>
-              {userData?.phoneNumber}
-            </Text>
-          </View>
-          {/* <Ionicons name="chevron-forward" size={20} color={colors.grey} /> */}
-        </TouchableOpacity>
+        {renderProfile()}
 
         {/* Account Section */}
         <SettingsSection title={t("settings.account")}>
@@ -276,7 +312,7 @@ const Settings: React.FC = () => {
             icon="location-outline"
             title={t("settings.savedAddresses")}
             subtitle={t("settings.savedAddressesSub")}
-            onPress={() => navigation.navigate("SavedAddresses")}
+            onPress={handleSavedAddresses}
           />
           {/* <SettingsItem
             icon="card-outline"
@@ -342,20 +378,7 @@ const Settings: React.FC = () => {
               ) : (
                 <CustomSwitch
                   value={darkMode}
-                  onValueChange={async (value) => {
-                    setIsTogglingTheme(true);
-                    // Use requestAnimationFrame to defer the theme change
-                    // This prevents UI freeze by allowing the loading state to render first
-                    requestAnimationFrame(() => {
-                      setTimeout(() => {
-                        toggleTheme();
-                        // Reset loading state after theme has changed
-                        setTimeout(() => {
-                          setIsTogglingTheme(false);
-                        }, 100);
-                      }, 50);
-                    });
-                  }}
+                  onValueChange={handleToggleTheme}
                 />
               )
             }
@@ -370,7 +393,7 @@ const Settings: React.FC = () => {
                   ? t("languages.es")
                   : t("languages.ml")
             }
-            onPress={() => navigation.navigate("Language")}
+            onPress={handleLanguage}
           />
           {/* <SettingsItem
             icon="flash-outline"
@@ -384,7 +407,7 @@ const Settings: React.FC = () => {
             icon="log-out-outline"
             title={t("settings.jobPostingHistory")}
             subtitle={t("settings.jobPostingHistorySub")}
-            onPress={() => navigation.navigate("JobPostingHistory")}
+            onPress={handleJobPostingHistory}
             showArrow={false}
           />
         </SettingsSection>
@@ -394,39 +417,23 @@ const Settings: React.FC = () => {
             icon="help-circle-outline"
             title={t("settings.helpSupport")}
             subtitle={t("settings.helpSupportSub")}
-            onPress={() => {
-              Toast.show({
-                type: "info",
-                text1: t("settings.comingSoon"),
-                text2: t("settings.comingSoonSub"),
-              });
-            }}
+            onPress={handleHelpSupport}
           />
           <SettingsItem
             icon="document-text-outline"
             title={t("settings.termsConditions")}
-            onPress={() => {
-              WebBrowser.openBrowserAsync(strings.APP_TERMS_CONDITIONS);
-            }}
+            onPress={handleTermsConditions}
           />
           <SettingsItem
             icon="shield-checkmark-outline"
             title={t("settings.privacyPolicy")}
-            onPress={() => {
-              WebBrowser.openBrowserAsync(strings.APP_PRIVACY_POLICY);
-            }}
+            onPress={handlePrivacyPolicy}
           />
           <SettingsItem
             icon="information-circle-outline"
             title={t("settings.about")}
             subtitle={t("settings.version")}
-            onPress={() => {
-              Toast.show({
-                type: "info",
-                text1: "OneDayJob",
-                text2: t("settings.version"),
-              });
-            }}
+            onPress={handleAbout}
           />
         </SettingsSection>
 
