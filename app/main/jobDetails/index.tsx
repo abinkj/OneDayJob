@@ -51,7 +51,7 @@ import {
   format24to12h,
 } from "../../../utilities/jobUtils";
 import { useQueryClient } from "@tanstack/react-query";
-import { setActiveJob } from "../../../redux/reducers/jobReducer";
+import { setActiveJob } from "../../../redux/slices/jobSlice";
 
 const JobDetails = () => {
   const { colors } = useTheme();

@@ -35,7 +35,7 @@ import CustomButton from "../../../components/CustomButton";
 import { useAlert } from "../../../components/CustomAlert/AlertProvider";
 import { validateOtpCode } from "../../../utilities/formValidation";
 import { useNotifications } from "../../../contexts/NotificationContext";
-import { completeKyc, completeProfile } from "../../../redux/reducers/authReducers";
+import { completeKyc, completeProfile } from "../../../redux/slices/authSlice";
 import { strings } from "../../../utilities/strings";
 
 interface RouteParams {

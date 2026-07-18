@@ -6,7 +6,7 @@ import { setSyncDispatch } from './syncBridge';
 import { processOfflineQueue } from './processOfflineQueue';
 import { AppDispatch, RootState } from '../redux/store';
 import { storage, initializeStorage } from '../utilities/mmkvStore';
-import { hydrateQueue } from '../redux/reducers/offlineSyncSlice';
+import { hydrateQueue } from '../redux/slices/offlineSyncSlice';
 
 const OFFLINE_QUEUE_STORAGE_KEY = 'OFFLINE_SYNC_QUEUE';
 

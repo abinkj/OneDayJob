@@ -5,7 +5,7 @@ import {
   setHasSeenOnboarding,
   completeProfile,
   setSuspended,
-} from "../redux/reducers/authReducers";
+} from "../redux/slices/authSlice";
 import {
   saveUserData,
   clearUserData,
@@ -16,7 +16,7 @@ import {
   getHasSeenOnboarding,
 } from "./mmkvStore";
 import { saveToken, clearTokens } from "./secureStore";
-import type { KycStatus } from "../redux/reducers/authReducers";
+import type { KycStatus } from "../redux/slices/authSlice";
 import socketService from "../services/socketService";
 
 // ✅ Log user in and update Redux + secure storage

@@ -23,7 +23,7 @@ import { syncQueue } from '../utils/syncQueue';
 import { shouldSendHeartbeat } from '../utils/timeCalculations';
 import timerNotificationService from '../../../../services/timerNotificationService';
 import socketService from '../../../../services/socketService';
-import { clearActiveJob, setActiveJob } from '../../../../redux/reducers/jobReducer';
+import { clearActiveJob, setActiveJob } from '../../../../redux/slices/jobSlice';
 
 export interface SessionData {
     session: {

@@ -18,7 +18,7 @@ import Animated, {
   interpolateColor,
   Extrapolation,
 } from "react-native-reanimated";
-import { setHasSeenOnboarding } from "../../redux/reducers/authReducers";
+import { setHasSeenOnboarding } from "../../redux/slices/authSlice";
 import { saveHasSeenOnboarding } from "../../utilities/mmkvStore";
 import CustomButton from "../../components/CustomButton";
 import { Colors } from "../../constants/Colors";

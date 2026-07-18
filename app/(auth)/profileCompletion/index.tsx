@@ -16,7 +16,7 @@ import { useAlert } from "../../../components/CustomAlert/AlertProvider";
 import { updateUserProfile, uploadProfilePicture } from "../../../services/api";
 import { getUserData, saveUserData } from "../../../utilities/mmkvStore";
 import { useTheme } from "../../../contexts/ThemeContext";
-import { login, completeProfile } from "../../../redux/reducers/authReducers";
+import { login, completeProfile } from "../../../redux/slices/authSlice";
 import ImagePickerActionSheet, {
   ImagePickerActionSheetRef,
 } from "../../../components/imagePickerActionSheet";

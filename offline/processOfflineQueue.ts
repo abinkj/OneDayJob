@@ -1,5 +1,5 @@
 import { getSyncDispatch } from './syncBridge';
-import { popRequest, setSyncingStatus, setSyncError } from '../redux/reducers/offlineSyncSlice';
+import { popRequest, setSyncingStatus, setSyncError } from '../redux/slices/offlineSyncSlice';
 import { store } from '../redux/store';
 import { getDeviceOnline } from './networkState';
 import Toast from 'react-native-toast-message';

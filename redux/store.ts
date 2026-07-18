@@ -1,4 +1,6 @@
 import { configureStore, combineReducers } from "@reduxjs/toolkit";
+import { loggerMiddleware } from "./middleware/loggerMiddleware";
+import { analyticsMiddleware } from "./middleware/analyticsMiddleware";
 import {
   persistStore,
   persistReducer,
@@ -6,9 +8,9 @@ import {
 } from "redux-persist";
 import mmkvStorage from "./mmkvStore";
 
-import authenticationReducer from "./reducers/authReducers";
-import offlineSyncReducer from "./reducers/offlineSyncSlice";
-import activeJobReducer from "./reducers/jobReducer";
+import authenticationReducer from "./slices/authSlice";
+import offlineSyncReducer from "./slices/offlineSyncSlice";
+import activeJobReducer from "./slices/jobSlice";
 
 const rootReducer = combineReducers({
   authentication: authenticationReducer,
@@ -31,7 +33,7 @@ export const store = configureStore({
       serializableCheck: {
         ignoredActions: [FLUSH, REHYDRATE, PAUSE, PERSIST, PURGE, REGISTER],
       },
-    }),
+    }).concat(loggerMiddleware, analyticsMiddleware),
 });
 
 export const persistor = persistStore(store);

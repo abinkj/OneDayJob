@@ -7,7 +7,7 @@ import {
 } from "../utilities/secureStore";
 import { normalizeUser, storage } from "../utilities/mmkvStore";
 import { store } from "../redux/store";
-import { logout as logoutAction, setSuspended } from "../redux/reducers/authReducers";
+import { logout as logoutAction, setSuspended } from "../redux/slices/authSlice";
 import NetInfo from "@react-native-community/netinfo";
 
 const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL;
@@ -24,7 +24,7 @@ const api = axios.create({
 import { getDeviceOnline } from "../offline/networkState";
 import { shouldQueueRequest } from "../offline/queuePolicy";
 import { getSyncDispatch } from "../offline/syncBridge";
-import { enqueueRequest } from "../redux/reducers/offlineSyncSlice";
+import { enqueueRequest } from "../redux/slices/offlineSyncSlice";
 import { RequestMethod } from "../offline/types";
 
 api.interceptors.request.use(

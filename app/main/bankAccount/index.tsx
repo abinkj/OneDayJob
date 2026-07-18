@@ -20,7 +20,7 @@ import {
   getCurrentUser,
 } from "../../../services/api";
 import Toast from "react-native-toast-message";
-import { skipKyc, completeKyc, updateUser } from "../../../redux/reducers/authReducers";
+import { skipKyc, completeKyc, updateUser } from "../../../redux/slices/authSlice";
 import { saveKycStatus, saveUserData, normalizeUser } from "../../../utilities/mmkvStore";
 import { validateIfscCode, validateUpiId } from "../../../utilities/formValidation";
 

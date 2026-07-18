@@ -16,7 +16,7 @@ import { uploadProfilePicture } from "../../../services/api";
 import { useUpdateProfile } from "../../../hooks/useProfile";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "../../../redux/store";
-import { updateUser } from "../../../redux/reducers/authReducers";
+import { updateUser } from "../../../redux/slices/authSlice";
 import Toast from "react-native-toast-message";
 import ImagePickerActionSheet, {
   ImagePickerActionSheetRef,
