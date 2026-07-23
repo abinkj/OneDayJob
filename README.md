@@ -296,6 +296,8 @@ EXPO_PUBLIC_GOOGLE_PLACES_API_KEY=AIzaSy_your_google_places_api_key
 - **Smart Server State Caching**: React Query prevents redundant network calls by caching GET queries (such as listing categories). Cache limits are updated dynamically based on view focus events.
 - **Dynamic Multi-part Uploads**: Media attachments are optimized locally. They are transformed using custom image pickers and sent via multi-part data bodies, skipping base64 encoding bloat.
 - **Lazy Module Hydration**: Inside the offline sync engine, Axios references are imported dynamically (`await import('../services/api')`). This avoids cyclic reference chains and improves app startup performance.
+- **Component Rendering Efficiency**: Applied `React.memo` across all frequently updated list items (e.g., Job Cards, Chat Items) and reusable UI leaf components to drastically reduce unnecessary re-renders during active scrolling and state changes.
+- **Codebase Structural Optimization**: Maintained strict file extension boundaries (`.ts` vs `.tsx`) to bypass JSX parsing overhead for pure logic files, and implemented a uniform automated Prettier configuration to ensure syntax consistency.
 
 ---
 
