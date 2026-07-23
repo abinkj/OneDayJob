@@ -1,3 +1,4 @@
+import React, { memo } from "react";
 import { SvgXml } from "react-native-svg";
 import { nextRight, edit } from "../assets/svg/profileSvg";
 import {
@@ -63,4 +64,4 @@ const SvgImage = (props: Props) => {
   return <SvgXml xml={image} width={width} height={height} fill={color} />;
 };
 
-export default SvgImage;
+export default memo(SvgImage);
