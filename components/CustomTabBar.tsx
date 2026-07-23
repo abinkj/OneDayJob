@@ -7,7 +7,6 @@ import {
   Animated,
   DeviceEventEmitter,
 } from "react-native";
-import { useSelector } from "react-redux";
 import DeviceDimensions from "../constants/DeviceDimenions";
 // import { Colors } from "../constants/Colors";
 import { useTheme } from "../contexts/ThemeContext";
@@ -23,10 +22,12 @@ const CustomTabBar = ({ state, descriptors, navigation }) => {
   //const { kycStatus } = useSelector((state: any) => state.authentication);
   const { colors } = useTheme();
 
-  // Animated values for each tab - hooks must be called before any early returns
-  const scales = state.routes.map(
-    (_, i) => useRef(new Animated.Value(i === state.index ? 1.1 : 0.8)).current
-  );
+  // Animated values for each tab - initialized once
+  const scales = useRef(
+    state.routes.map(
+      (_, i) => new Animated.Value(i === state.index ? 1.1 : 0.8)
+    )
+  ).current;
 
   // Animated value for tab bar visibility
   const tabBarTranslateY = useRef(new Animated.Value(0)).current;
@@ -187,4 +188,4 @@ const styles = StyleSheet.create({
   centerButton: { alignItems: "center", justifyContent: "center" },
 });
 
-export default CustomTabBar;
+export default React.memo(CustomTabBar);
