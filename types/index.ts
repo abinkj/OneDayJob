@@ -180,11 +180,11 @@ export interface JobPost {
   applicants?: any[];
   hasApplied?: boolean;
   // Server-computed per-user fields (set by backend in getJobPostings)
-  isEmployer?: boolean;       // true if the current user is the job owner/employer
+  isEmployer?: boolean; // true if the current user is the job owner/employer
   isAssignedWorker?: boolean; // true if the current user is an accepted/assigned worker
   // Arrival state (derived from worker's session in the job list response)
-  hasArrived?: boolean;    // true if this worker has already pressed 'I Have Reached'
-  arrivalStatus?: 'pending' | 'arrived' | 'verified'; // mirrors JobSession.arrivalStatus
+  hasArrived?: boolean; // true if this worker has already pressed 'I Have Reached'
+  arrivalStatus?: "pending" | "arrived" | "verified"; // mirrors JobSession.arrivalStatus
 }
 
 // For backward compatibility and convenience

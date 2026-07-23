@@ -206,16 +206,14 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
             {loadingStatus ? (
               <View style={styles.loadingContainer}>
                 <ActivityIndicator size="large" color={Colors.primary} />
-                <Text style={styles.loadingText}>Loading payment details...</Text>
+                <Text style={styles.loadingText}>
+                  Loading payment details...
+                </Text>
               </View>
             ) : paymentStatus?.hasPaid ? (
               // Already paid
               <View style={styles.paidContainer}>
-                <Ionicons
-                  name="checkmark-circle"
-                  size={64}
-                  color="#4CAF50"
-                />
+                <Ionicons name="checkmark-circle" size={64} color="#4CAF50" />
                 <Text style={styles.paidTitle}>Payment Completed</Text>
                 <Text style={styles.paidText}>
                   This job has already been paid
@@ -257,7 +255,11 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
             ) : paymentStatus?.canPay ? (
               // Can pay
               <View style={styles.payContainer}>
-                <Ionicons name="wallet-outline" size={64} color={Colors.primary} />
+                <Ionicons
+                  name="wallet-outline"
+                  size={64}
+                  color={Colors.primary}
+                />
                 <Text style={styles.payTitle}>Complete Payment</Text>
                 <Text style={styles.paySubtitle}>{jobName}</Text>
 
@@ -282,15 +284,17 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
                     <ActivityIndicator size="small" color={Colors.white} />
                   ) : (
                     <>
-                      <Ionicons name="card-outline" size={20} color={Colors.white} />
+                      <Ionicons
+                        name="card-outline"
+                        size={20}
+                        color={Colors.white}
+                      />
                       <Text style={styles.payButtonText}>Pay Now</Text>
                     </>
                   )}
                 </TouchableOpacity>
 
-                <Text style={styles.secureText}>
-                  🔒 Secured by Razorpay
-                </Text>
+                <Text style={styles.secureText}>🔒 Secured by Razorpay</Text>
               </View>
             ) : (
               // Cannot pay (job not completed)
@@ -475,5 +479,3 @@ const styles = StyleSheet.create({
 });
 
 export default PaymentModal;
-
-

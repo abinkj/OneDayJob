@@ -1,10 +1,5 @@
 import React, { useState, useMemo } from "react";
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  Image,
-} from "react-native";
+import { View, Text, TouchableOpacity, Image } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import { createStyles } from "./styles";
 import { router } from "expo-router";
@@ -85,68 +80,62 @@ const SignUp = () => {
       bounces={false}
       keyboardShouldPersistTaps="handled"
     >
-        <Animated.View
-          entering={FadeInDown.delay(200).duration(1000).springify()}
-          style={styles.headerContainer}
-        >
-          <Image
-            //source={require("../../../assets/placeholder-image.png")}
-            source={require("../../../assets/images/onboarding/ob4.png")}
-            style={styles.image}
-          />
-          <Text style={styles.title}>{strings.auth.signup.title}</Text>
-          <Text style={styles.subtitle}>{strings.auth.signup.subtitle}</Text>
-        </Animated.View>
+      <Animated.View
+        entering={FadeInDown.delay(200).duration(1000).springify()}
+        style={styles.headerContainer}
+      >
+        <Image
+          //source={require("../../../assets/placeholder-image.png")}
+          source={require("../../../assets/images/onboarding/ob4.png")}
+          style={styles.image}
+        />
+        <Text style={styles.title}>{strings.auth.signup.title}</Text>
+        <Text style={styles.subtitle}>{strings.auth.signup.subtitle}</Text>
+      </Animated.View>
 
-        <Animated.View
-          entering={FadeInDown.delay(400).duration(1000).springify()}
-          style={styles.formContainer}
-        >
-          <LabeledInput
-            title={strings.auth.signup.labelName}
-            placeholder={strings.auth.signup.placeholderName}
-            value={name}
-            onChangeText={setName}
-            leftIcon={
-              <Ionicons
-                name="person-outline"
-                size={20}
-              />
-            }
-          />
+      <Animated.View
+        entering={FadeInDown.delay(400).duration(1000).springify()}
+        style={styles.formContainer}
+      >
+        <LabeledInput
+          title={strings.auth.signup.labelName}
+          placeholder={strings.auth.signup.placeholderName}
+          value={name}
+          onChangeText={setName}
+          leftIcon={<Ionicons name="person-outline" size={20} />}
+        />
 
-          <LabeledInput
-            title={strings.auth.signup.labelPhone}
-            placeholder={strings.auth.signup.placeholderPhone}
-            value={phone}
-            onChangeText={setPhone}
-            keyboardType="number-pad"
-            maxLength={10}
-            prefix="+91"
-            leftIcon={
-              <Ionicons
-                name="call-outline"
-                size={20}
-              />
-            }
-          />
-          <CustomButton
-            onPress={handleGetOtp}
-            disabled={isLoading}
-            isLoading={isLoading}
-            text={strings.auth.signup.sendCode}
-          />
-        </Animated.View>
+        <LabeledInput
+          title={strings.auth.signup.labelPhone}
+          placeholder={strings.auth.signup.placeholderPhone}
+          value={phone}
+          onChangeText={setPhone}
+          keyboardType="number-pad"
+          maxLength={10}
+          prefix="+91"
+          leftIcon={<Ionicons name="call-outline" size={20} />}
+        />
+        <CustomButton
+          onPress={handleGetOtp}
+          disabled={isLoading}
+          isLoading={isLoading}
+          text={strings.auth.signup.sendCode}
+        />
+      </Animated.View>
 
-        <Animated.View
-          entering={FadeInUp.delay(600).duration(1000).springify()}
-          style={styles.footer}
-        >
-          <Text style={styles.footerText}>{strings.auth.signup.haveAccountCta}</Text>
-          <TouchableOpacity onPress={() => navigation.goBack()}>
-            <Text style={styles.createAccount}>{strings.auth.signup.loginAction}</Text>
-          </TouchableOpacity>
-        </Animated.View>
+      <Animated.View
+        entering={FadeInUp.delay(600).duration(1000).springify()}
+        style={styles.footer}
+      >
+        <Text style={styles.footerText}>
+          {strings.auth.signup.haveAccountCta}
+        </Text>
+        <TouchableOpacity onPress={() => navigation.goBack()}>
+          <Text style={styles.createAccount}>
+            {strings.auth.signup.loginAction}
+          </Text>
+        </TouchableOpacity>
+      </Animated.View>
     </KeyboardAwareScrollView>
   );
 };

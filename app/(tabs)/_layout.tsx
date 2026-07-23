@@ -55,7 +55,7 @@ export default function TabLayout() {
 
   useEffect(() => {
     const subscription = DeviceEventEmitter.addListener(
-      'navigate_from_notification',
+      "navigate_from_notification",
       (data) => {
         if (data.screen) {
           navigation.navigate(data.screen, data.params);

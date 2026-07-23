@@ -1,10 +1,5 @@
 import { useState, useMemo } from "react";
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  Image,
-} from "react-native";
+import { View, Text, TouchableOpacity, Image } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import { requestOtp } from "../../../services/api";
 import { useNavigation } from "@react-navigation/native";
@@ -70,60 +65,55 @@ const Login = () => {
       showsVerticalScrollIndicator={false}
       keyboardShouldPersistTaps="handled"
     >
-        <Animated.View
-          entering={FadeInDown.delay(200).duration(1000).springify()}
-          style={styles.headerContainer}
-        >
-          <Image
-            //source={require("../../../assets/placeholder-image.png")}
-            source={require("../../../assets/images/onboarding/ob1.png")}
-            style={styles.image}
+      <Animated.View
+        entering={FadeInDown.delay(200).duration(1000).springify()}
+        style={styles.headerContainer}
+      >
+        <Image
+          //source={require("../../../assets/placeholder-image.png")}
+          source={require("../../../assets/images/onboarding/ob1.png")}
+          style={styles.image}
+        />
+        <Text style={styles.title}>{strings.auth.login.title}</Text>
+        <Text style={styles.subtitle}>{strings.auth.login.subtitle}</Text>
+      </Animated.View>
+
+      <Animated.View
+        entering={FadeInDown.delay(400).duration(1000).springify()}
+        style={styles.formContainer}
+      >
+        <LabeledInput
+          title={strings.auth.login.labelPhone}
+          placeholder={strings.auth.login.placeholderPhone}
+          value={phone}
+          onChangeText={setPhone}
+          inputMode="numeric"
+          keyboardType="number-pad"
+          maxLength={10}
+          prefix="+91"
+          leftIcon={<Ionicons name="call-outline" size={20} />}
+        />
+        <View style={{ marginTop: 20 }}>
+          <CustomButton
+            text={strings.auth.login.sendCode}
+            onPress={handleGetOtp}
+            isLoading={isLoading}
+            color={colors.primary}
           />
-          <Text style={styles.title}>{strings.auth.login.title}</Text>
-          <Text style={styles.subtitle}>
-            {strings.auth.login.subtitle}
+        </View>
+      </Animated.View>
+
+      <Animated.View
+        entering={FadeInUp.delay(600).duration(1000).springify()}
+        style={styles.footer}
+      >
+        <Text style={styles.footerText}>{strings.auth.login.footerText}</Text>
+        <TouchableOpacity onPress={() => navigation.navigate("Signup")}>
+          <Text style={styles.createAccount}>
+            {strings.auth.login.createAccountAction}
           </Text>
-        </Animated.View>
-
-        <Animated.View
-          entering={FadeInDown.delay(400).duration(1000).springify()}
-          style={styles.formContainer}
-        >
-          <LabeledInput
-            title={strings.auth.login.labelPhone}
-            placeholder={strings.auth.login.placeholderPhone}
-            value={phone}
-            onChangeText={setPhone}
-            inputMode="numeric"
-            keyboardType="number-pad"
-            maxLength={10}
-            prefix="+91"
-            leftIcon={
-              <Ionicons
-                name="call-outline"
-                size={20}
-              />
-            }
-          />
-          <View style={{ marginTop: 20 }}>
-            <CustomButton
-              text={strings.auth.login.sendCode}
-              onPress={handleGetOtp}
-              isLoading={isLoading}
-              color={colors.primary}
-            />
-          </View>
-        </Animated.View>
-
-        <Animated.View
-          entering={FadeInUp.delay(600).duration(1000).springify()}
-          style={styles.footer}
-        >
-          <Text style={styles.footerText}>{strings.auth.login.footerText}</Text>
-          <TouchableOpacity onPress={() => navigation.navigate("Signup")}>
-            <Text style={styles.createAccount}>{strings.auth.login.createAccountAction}</Text>
-          </TouchableOpacity>
-        </Animated.View>
+        </TouchableOpacity>
+      </Animated.View>
     </KeyboardAwareScrollView>
   );
 };

@@ -140,12 +140,33 @@ const NewRequest = () => {
             <Text style={styles.name}>{item.workerName}</Text>
             <View style={{ flexDirection: "row", alignItems: "center" }}>
               <Ionicons
-                name={isVerified ? "checkmark-circle" : isArrived ? "location" : "time-outline"}
+                name={
+                  isVerified
+                    ? "checkmark-circle"
+                    : isArrived
+                      ? "location"
+                      : "time-outline"
+                }
                 size={14}
-                color={isVerified ? "#4CAF50" : isArrived ? "#FF9800" : colors.grey}
+                color={
+                  isVerified ? "#4CAF50" : isArrived ? "#FF9800" : colors.grey
+                }
               />
-              <Text style={{ marginLeft: 4, color: isVerified ? "#4CAF50" : isArrived ? "#FF9800" : colors.grey }}>
-                {isVerified ? "Verified" : isArrived ? "Arrived" : "Pending Arrival"}
+              <Text
+                style={{
+                  marginLeft: 4,
+                  color: isVerified
+                    ? "#4CAF50"
+                    : isArrived
+                      ? "#FF9800"
+                      : colors.grey,
+                }}
+              >
+                {isVerified
+                  ? "Verified"
+                  : isArrived
+                    ? "Arrived"
+                    : "Pending Arrival"}
               </Text>
             </View>
           </View>
@@ -223,4 +244,3 @@ const NewRequest = () => {
 };
 
 export default NewRequest;
-

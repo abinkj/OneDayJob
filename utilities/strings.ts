@@ -267,7 +267,8 @@ export const strings = {
       createAccountAction: "Create an account",
       validationTitle: "Invalid number",
       errorTitle: "Unable to send code",
-      errorMessage: "We ran into an issue sending the verification code. Please check your connection and try again.",
+      errorMessage:
+        "We ran into an issue sending the verification code. Please check your connection and try again.",
     },
     signup: {
       title: "Join Zoopol",
@@ -282,7 +283,8 @@ export const strings = {
       invalidNameTitle: "Invalid name",
       invalidNumberTitle: "Invalid number",
       errorTitle: "Unable to send code",
-      errorMessage: "We ran into an issue sending the verification code. Please check your connection and try again.",
+      errorMessage:
+        "We ran into an issue sending the verification code. Please check your connection and try again.",
     },
     otp: {
       title: "Verify your phone",
@@ -296,16 +298,19 @@ export const strings = {
       success: "Verified!",
       settingUp: "Setting up your experience...",
       setupFailedTitle: "Setup incomplete",
-      setupFailedMessage: "We couldn't set up your account right now. Please try again in a moment.",
+      setupFailedMessage:
+        "We couldn't set up your account right now. Please try again in a moment.",
       resendSuccessTitle: "Code sent",
-      resendSuccessMessage: "A new verification code is on its way to your phone.",
+      resendSuccessMessage:
+        "A new verification code is on its way to your phone.",
       resendErrorTitle: "Couldn't send code",
       verificationFailedTitle: "Verification failed",
       defaultVerificationError: "Invalid code. Please check and try again.",
     },
     profileCompletion: {
       title: "Tell us about yourself",
-      subtitle: "Introduce yourself to the Zoopol community. A photo is optional.",
+      subtitle:
+        "Introduce yourself to the Zoopol community. A photo is optional.",
       labelFirstName: "First name",
       placeholderFirstName: "e.g., Alex",
       labelLastName: "Last name",
@@ -318,8 +323,10 @@ export const strings = {
     suspended: {
       headerTitle: "Account status",
       title: "Your account is suspended",
-      subtitle: "We suspended your account because activities on it violated our community guidelines and safety policies.",
-      infoBox: "To keep our community safe, access to gigs, matching, and messaging is restricted.",
+      subtitle:
+        "We suspended your account because activities on it violated our community guidelines and safety policies.",
+      infoBox:
+        "To keep our community safe, access to gigs, matching, and messaging is restricted.",
       contactSupport: "Contact Support",
       signOut: "Sign out",
       footerTeam: "Zoopol Trust & Safety Team",

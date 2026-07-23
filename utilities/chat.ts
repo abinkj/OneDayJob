@@ -9,7 +9,7 @@ export const formatTime = (dateString: string): string => {
   const date = new Date(dateString);
   const now = new Date();
   const days = Math.floor(
-    (now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24),
+    (now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24)
   );
   if (days === 0)
     return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });

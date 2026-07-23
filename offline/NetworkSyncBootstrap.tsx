@@ -1,14 +1,14 @@
-import React, { useEffect } from 'react';
-import NetInfo from '@react-native-community/netinfo';
-import { useDispatch, useSelector } from 'react-redux';
-import { setDeviceOnline } from './networkState';
-import { setSyncDispatch } from './syncBridge';
-import { processOfflineQueue } from './processOfflineQueue';
-import { AppDispatch, RootState } from '../redux/store';
-import { storage, initializeStorage } from '../utilities/mmkvStore';
-import { hydrateQueue } from '../redux/reducers/offlineSyncSlice';
+import React, { useEffect } from "react";
+import NetInfo from "@react-native-community/netinfo";
+import { useDispatch, useSelector } from "react-redux";
+import { setDeviceOnline } from "./networkState";
+import { setSyncDispatch } from "./syncBridge";
+import { processOfflineQueue } from "./processOfflineQueue";
+import { AppDispatch, RootState } from "../redux/store";
+import { storage, initializeStorage } from "../utilities/mmkvStore";
+import { hydrateQueue } from "../redux/reducers/offlineSyncSlice";
 
-const OFFLINE_QUEUE_STORAGE_KEY = 'OFFLINE_SYNC_QUEUE';
+const OFFLINE_QUEUE_STORAGE_KEY = "OFFLINE_SYNC_QUEUE";
 
 /**
  * Root-level component to bootstrap the offline synchronization system.
@@ -29,12 +29,14 @@ const NetworkSyncBootstrap: React.FC = () => {
         if (storedQueue) {
           const parsedQueue = JSON.parse(storedQueue);
           if (Array.isArray(parsedQueue) && parsedQueue.length > 0) {
-            console.log(`📦 Hydrating offline queue with ${parsedQueue.length} requests`);
+            console.log(
+              `📦 Hydrating offline queue with ${parsedQueue.length} requests`
+            );
             dispatch(hydrateQueue(parsedQueue));
           }
         }
       } catch (error) {
-        console.error('Failed to hydrate offline queue:', error);
+        console.error("Failed to hydrate offline queue:", error);
       }
     };
 
@@ -42,10 +44,12 @@ const NetworkSyncBootstrap: React.FC = () => {
 
     // Setup NetInfo listener
     const unsubscribe = NetInfo.addEventListener((state) => {
-      const isOnline = !!(state.isConnected && state.isInternetReachable !== false);
+      const isOnline = !!(
+        state.isConnected && state.isInternetReachable !== false
+      );
       setDeviceOnline(isOnline);
-      
-      console.log(`📡 Network is ${isOnline ? 'ONLINE' : 'OFFLINE'}`);
+
+      console.log(`📡 Network is ${isOnline ? "ONLINE" : "OFFLINE"}`);
 
       if (isOnline) {
         processOfflineQueue();
@@ -63,7 +67,7 @@ const NetworkSyncBootstrap: React.FC = () => {
         await initializeStorage();
         storage.set(OFFLINE_QUEUE_STORAGE_KEY, JSON.stringify(queue));
       } catch (error) {
-        console.error('Failed to persist offline queue:', error);
+        console.error("Failed to persist offline queue:", error);
       }
     };
 

@@ -38,7 +38,7 @@ const CustomSwitch = ({ value = false, onValueChange, disabled = false }) => {
             opacity: disabled ? 0.5 : 1,
           },
           !value && {
-            borderWidth: .5, // Reduced border width for cleaner iOS look
+            borderWidth: 0.5, // Reduced border width for cleaner iOS look
             borderColor: Colors.switchBorder,
           },
         ]}

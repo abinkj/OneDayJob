@@ -20,9 +20,20 @@ import {
   getCurrentUser,
 } from "../../../services/api";
 import Toast from "react-native-toast-message";
-import { skipKyc, completeKyc, updateUser } from "../../../redux/reducers/authReducers";
-import { saveKycStatus, saveUserData, normalizeUser } from "../../../utilities/mmkvStore";
-import { validateIfscCode, validateUpiId } from "../../../utilities/formValidation";
+import {
+  skipKyc,
+  completeKyc,
+  updateUser,
+} from "../../../redux/reducers/authReducers";
+import {
+  saveKycStatus,
+  saveUserData,
+  normalizeUser,
+} from "../../../utilities/mmkvStore";
+import {
+  validateIfscCode,
+  validateUpiId,
+} from "../../../utilities/formValidation";
 
 const BankAccount = () => {
   const navigation = useNavigation<any>();

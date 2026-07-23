@@ -26,7 +26,7 @@ const MainStack = () => {
   const { colors } = useTheme();
   const activeJob = useSelector((state: RootState) => state.activeJob);
   const hasActiveJob = activeJob.isTimerRunning && !!activeJob.activeJobId;
-  console.log("activeJob reduxxx",activeJob);
+  //console.log("activeJob reduxxx", activeJob);
   return (
     <Stack.Navigator
       id={undefined}
@@ -39,22 +39,31 @@ const MainStack = () => {
       }}
     >
       <Stack.Screen name="MainHome" component={TabLayout} />
-      
-      <Stack.Screen 
-        name="JobTimer" 
-        component={JobTimer} 
-        options={{ animation: hasActiveJob ? 'fade_from_bottom' : 'slide_from_right' }}
-        initialParams={hasActiveJob ? {
-          jobId: activeJob.activeJobId,
-          jobName: activeJob.activeJobName,
-          employerId: activeJob.employerId,
-          employerName: activeJob.employerName,
-          employerImage: activeJob.employerImage,
-        } : undefined}
+
+      <Stack.Screen
+        name="JobTimer"
+        component={JobTimer}
+        options={{
+          animation: hasActiveJob ? "fade_from_bottom" : "slide_from_right",
+        }}
+        initialParams={
+          hasActiveJob
+            ? {
+                jobId: activeJob.activeJobId,
+                jobName: activeJob.activeJobName,
+                employerId: activeJob.employerId,
+                employerName: activeJob.employerName,
+                employerImage: activeJob.employerImage,
+              }
+            : undefined
+        }
       />
       <Stack.Screen name="ChatScreen" component={ChatScreen} />
       <Stack.Screen name="RequestProfile" component={RequestProfile} />
-      <Stack.Screen name="RequestVerification" component={RequestVerification} />
+      <Stack.Screen
+        name="RequestVerification"
+        component={RequestVerification}
+      />
       <Stack.Screen name="NewRequest" component={NewRequest} />
       <Stack.Screen name="Notification" component={Notification} />
       <Stack.Screen name="EditProfile" component={EditProfile} />

@@ -32,7 +32,7 @@ const EditProfile: React.FC = () => {
   const imagePickerRef = useRef<ImagePickerActionSheetRef>(null);
 
   const userData = useSelector(
-    (state: RootState) => state.authentication.userData,
+    (state: RootState) => state.authentication.userData
   );
 
   const { mutateAsync: updateProfileMutation } = useUpdateProfile();
@@ -41,7 +41,7 @@ const EditProfile: React.FC = () => {
   const [lastName, setLastName] = useState("");
   const [location, setLocation] = useState("");
   const [profileImage, setProfileImage] = useState<string | { uri: string }>(
-    Images.profile.profileImage as unknown as string,
+    Images.profile.profileImage as unknown as string
   );
   const [imageRemoved, setImageRemoved] = useState(false); // ← NEW
   const [isSaving, setIsSaving] = useState(false);
@@ -55,7 +55,7 @@ const EditProfile: React.FC = () => {
     setFirstName(userData.firstName || "");
     setLastName(userData.lastName || "");
     setLocation(
-      (userData.locationText || userData.location?.address || "") as string,
+      (userData.locationText || userData.location?.address || "") as string
     );
 
     const imageSource =

@@ -7,7 +7,10 @@ import {
 } from "../utilities/secureStore";
 import { normalizeUser, storage } from "../utilities/mmkvStore";
 import { store } from "../redux/store";
-import { logout as logoutAction, setSuspended } from "../redux/reducers/authReducers";
+import {
+  logout as logoutAction,
+  setSuspended,
+} from "../redux/reducers/authReducers";
 import NetInfo from "@react-native-community/netinfo";
 
 const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL;
@@ -36,7 +39,7 @@ api.interceptors.request.use(
       // Check if this request should be queued
       if (shouldQueueRequest(config)) {
         console.log("📴 Offline: Queuing request to", config.url);
-        
+
         try {
           const dispatch = getSyncDispatch();
           const queuedRequest = {
@@ -48,9 +51,9 @@ api.interceptors.request.use(
             createdAt: Date.now(),
             retryCount: 0,
           };
-          
+
           dispatch(enqueueRequest(queuedRequest));
-          
+
           // Return a pseudo-success so the caller doesn't catch an error immediately
           // but knows it was queued.
           return Promise.resolve({
@@ -71,7 +74,7 @@ api.interceptors.request.use(
         Object.assign(new Error("No internet connection"), {
           code: "ERR_NETWORK_OFFLINE",
           isOfflineError: true,
-        }),
+        })
       );
     }
 
@@ -95,7 +98,7 @@ api.interceptors.request.use(
   (error) => {
     console.error("Request interceptor error:", error);
     return Promise.reject(error);
-  },
+  }
 );
 
 // ─── RESPONSE INTERCEPTOR ────────────────────────────────────────────────────
@@ -110,7 +113,7 @@ api.interceptors.response.use(
     if (error.isOfflineError || error.code === "ERR_NETWORK_OFFLINE") {
       console.warn(
         "Request blocked — device is offline:",
-        originalRequest?.url,
+        originalRequest?.url
       );
       return Promise.reject(error);
     }
@@ -147,7 +150,7 @@ api.interceptors.response.use(
           {
             headers: { "Content-Type": "application/json" },
             withCredentials: true,
-          },
+          }
         );
 
         const newToken = refreshResponse.data.accessToken;
@@ -177,23 +180,29 @@ api.interceptors.response.use(
 
     // 403 = Forbidden → show error, do NOT logout unless suspended
     if (error.response?.status === 403) {
-      const message = error.response.data?.error?.message || error.response.data?.message || "";
+      const message =
+        error.response.data?.error?.message ||
+        error.response.data?.message ||
+        "";
       if (message.toLowerCase().includes("suspended")) {
         console.warn("Account suspended, redirecting...");
         store.dispatch(setSuspended(true));
         return Promise.reject(error);
       }
-      
+
       // Skip warning for expected verification flow
-      if (!message.toLowerCase().includes("verified") && !message.toLowerCase().includes("verification")) {
+      if (
+        !message.toLowerCase().includes("verified") &&
+        !message.toLowerCase().includes("verification")
+      ) {
         console.warn("Forbidden (403):", message || "Permission denied");
       }
-      
+
       return Promise.reject(error);
     }
 
     return Promise.reject(error);
-  },
+  }
 );
 
 // Enhanced job posting function with validation
@@ -210,7 +219,7 @@ export const createJobPosting = async (data) => {
     // Log the data being sent (for debugging)
     console.log(
       "Creating job posting with data:",
-      JSON.stringify(data, null, 2),
+      JSON.stringify(data, null, 2)
     );
 
     // Ensure arrays are properly formatted
@@ -230,7 +239,7 @@ export const createJobPosting = async (data) => {
     if (data.location && data.location.coordinates) {
       console.log(
         "Original location data:",
-        JSON.stringify(data.location, null, 2),
+        JSON.stringify(data.location, null, 2)
       );
       console.log("Location coordinates:", data.location.coordinates);
 
@@ -241,7 +250,7 @@ export const createJobPosting = async (data) => {
       ) {
         console.error("Missing latitude or longitude in location coordinates");
         throw new Error(
-          "Invalid location coordinates: missing latitude or longitude",
+          "Invalid location coordinates: missing latitude or longitude"
         );
       }
 
@@ -275,7 +284,7 @@ export const createJobPosting = async (data) => {
 
       console.log(
         "Transformed location data:",
-        JSON.stringify(data.location, null, 2),
+        JSON.stringify(data.location, null, 2)
       );
     } else {
       console.warn("No location data or coordinates found in job data");
@@ -415,7 +424,7 @@ export const updateUserLocation = async (locationData) => {
 
     const response = await api.put(
       "/users/update-user-location",
-      locationPayload,
+      locationPayload
     );
 
     console.log("User location updated successfully:", response.data);
@@ -447,7 +456,7 @@ export const getJobsByLocation = async (radius = 10, categoryId = null) => {
 
     const jobsData = response.data?.data || response.data || [];
     console.log(
-      `Jobs by location fetched successfully: ${jobsData.length} jobs`,
+      `Jobs by location fetched successfully: ${jobsData.length} jobs`
     );
 
     // Return the response as-is, let the caller decide whether to fallback
@@ -474,7 +483,7 @@ export const getJobsByLocation = async (radius = 10, categoryId = null) => {
 
 export const getJobPostings = async (
   filters: any = {},
-  signal?: AbortSignal,
+  signal?: AbortSignal
 ) => {
   try {
     const params = new URLSearchParams();
@@ -535,11 +544,11 @@ export const getJobPostingsByUserId = async (
   userId: string,
   page: number = 1,
   limit: number = 10,
-  signal?: AbortSignal,
+  signal?: AbortSignal
 ) => {
   const res = await api.get(
     `jobs/user-posts/${userId}?page=${page}&limit=${limit}`,
-    { signal },
+    { signal }
   );
   return res.data;
 };
@@ -548,11 +557,11 @@ export const getAppliedJobsByUserId = async (
   userId: string,
   page: number = 1,
   limit: number = 10,
-  signal?: AbortSignal,
+  signal?: AbortSignal
 ) => {
   const res = await api.get(
     `applications/user/${userId}/applied-jobs?page=${page}&limit=${limit}`,
-    { signal },
+    { signal }
   );
   return res.data;
 };
@@ -575,7 +584,7 @@ export const applyJob = async (jobId: string) => {
 
 export const selectApplicants = async (
   jobId: string,
-  selectedApplicationIds: string[], // Changed from selectedUserIds
+  selectedApplicationIds: string[] // Changed from selectedUserIds
 ) => {
   const res = await api.post(`/jobs/${jobId}/select-applicants`, {
     selectedApplicationIds, // Changed from selectedUserIds
@@ -585,7 +594,7 @@ export const selectApplicants = async (
 
 export const rejectApplicants = async (
   jobId: string,
-  rejectedApplicationIds: string[], // Changed from selectedUserIds
+  rejectedApplicationIds: string[] // Changed from selectedUserIds
 ) => {
   const res = await api.post(`/jobs/${jobId}/reject-applicants`, {
     rejectedApplicationIds, // Changed from selectedUserIds
@@ -617,7 +626,7 @@ export const updateUserProfile = async (userId: string, profileData: any) => {
 // FIXED: Enhanced location update with retry logic
 export const updateUserLocationWithRetry = async (
   locationData,
-  maxRetries = 3,
+  maxRetries = 3
 ) => {
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
@@ -629,7 +638,7 @@ export const updateUserLocationWithRetry = async (
       console.error(
         `Location update attempt ${attempt} failed:`,
         error.response?.status,
-        error.response?.data,
+        error.response?.data
       );
 
       if (attempt === maxRetries) {
@@ -728,7 +737,7 @@ export const deleteUser = (id) => api.delete(`/users/${id}`);
 export const reportUser = (
   userId: string,
   reason: string,
-  details?: string,
+  details?: string
 ) => {
   return api.post(`/users/${userId}/report`, {
     reason,
@@ -750,14 +759,14 @@ export const blockUser = (userId: string) => {
 export const adminBanUser = (userId: string, reason: string) => {
   return api.post(`/admin/users/${userId}/ban`, {
     reason,
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
   });
 };
 
 // Admin: Unban a user
 export const adminUnbanUser = (userId: string) => {
   return api.post(`/admin/users/${userId}/unban`, {
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
   });
 };
 
@@ -768,10 +777,14 @@ export const adminGetReports = (status?: string, page: number = 1) => {
 };
 
 // Admin: Update report status
-export const adminUpdateReportStatus = (reportId: string, status: string, notes?: string) => {
+export const adminUpdateReportStatus = (
+  reportId: string,
+  status: string,
+  notes?: string
+) => {
   return api.patch(`/admin/reports/${reportId}`, {
     status,
-    adminNotes: notes
+    adminNotes: notes,
   });
 };
 
@@ -822,7 +835,7 @@ export const createConversation = async (participantId: string) => {
 export const sendMessage = async (
   conversationId: string,
   text: string,
-  type: string = "text",
+  type: string = "text"
 ) => {
   try {
     const response = await api.post(
@@ -832,7 +845,7 @@ export const sendMessage = async (
           text: text,
         },
         messageType: type,
-      },
+      }
     );
     return response.data;
   } catch (error) {
@@ -860,7 +873,7 @@ export const markMessagesAsRead = async (conversationId: string) => {
 export const verifyEmployee = async (
   jobId: string,
   employeeId: string,
-  verificationCode: string,
+  verificationCode: string
 ) => {
   try {
     console.log("Verifying employee:", { jobId, employeeId, verificationCode });
@@ -902,14 +915,14 @@ export const getJobVerificationStatus = async (jobId: string) => {
  */
 export const resendVerificationCodes = async (
   jobId: string,
-  reason?: string,
+  reason?: string
 ) => {
   try {
     console.log(
       "Resending verification codes for job:",
       jobId,
       "Reason:",
-      reason,
+      reason
     );
 
     const response = await api.post(`/jobs/${jobId}/resend-codes`, {
@@ -969,7 +982,7 @@ export const getEmployeeVerificationCode = async (jobId: string) => {
 export const markArrival = async (
   jobId: string,
   latitude: number,
-  longitude: number,
+  longitude: number
 ) => {
   try {
     console.log("Marking arrival for job:", jobId, { latitude, longitude });
@@ -1026,7 +1039,7 @@ export const approveWorkerArrival = async (jobId: string, workerId: string) => {
 export const checkArrivalEligibility = async (
   jobId: string,
   latitude: number,
-  longitude: number,
+  longitude: number
 ) => {
   try {
     console.log("Checking arrival eligibility:", jobId, {
@@ -1075,7 +1088,7 @@ export const submitRating = async (data: {
  */
 export const getUserRatings = async (
   userId: string,
-  role: "employer" | "employee",
+  role: "employer" | "employee"
 ) => {
   try {
     console.log(`Getting ratings for user ${userId} as ${role}`);
@@ -1151,14 +1164,14 @@ export const cancelVerification = async (jobId: string) => {
  */
 export const syncAcceptedApplications = async (
   jobId: string,
-  applicationIds: string[],
+  applicationIds: string[]
 ) => {
   try {
     console.log(
       "Syncing accepted applications for job:",
       jobId,
       "Applications:",
-      applicationIds,
+      applicationIds
     );
 
     const response = await selectApplicants(jobId, applicationIds);
@@ -1236,14 +1249,14 @@ export const startWorkerSession = async (jobId: string) => {
  */
 export const getWorkerSession = async (
   jobId: string,
-  includeHistory = false,
+  includeHistory = false
 ) => {
   try {
     console.log(
       "Getting worker session for job:",
       jobId,
       "Include history:",
-      includeHistory,
+      includeHistory
     );
 
     const url = `/job-timer/jobs/${jobId}/sessions/worker?includeHistory=${includeHistory}`;
@@ -1307,7 +1320,7 @@ export const completeWorkerSession = async (sessionId: string, notes = "") => {
       `/job-timer/sessions/${sessionId}/complete`,
       {
         notes,
-      },
+      }
     );
 
     console.log("Worker session completed:", response.data);
@@ -1326,7 +1339,7 @@ export const syncWorkerTime = async (
   sessionId: string,
   additionalSeconds: number,
   currentStatus: string,
-  heartbeat = false,
+  heartbeat = false
 ) => {
   try {
     console.log(
@@ -1335,11 +1348,14 @@ export const syncWorkerTime = async (
       "Additional seconds:",
       additionalSeconds,
       "Status:",
-      currentStatus,
+      currentStatus
     );
 
     const response = await api.put(`/job-timer/sessions/${sessionId}/sync`, {
-      additionalSeconds: Math.min(3600, Math.max(0, Math.floor(additionalSeconds))),
+      additionalSeconds: Math.min(
+        3600,
+        Math.max(0, Math.floor(additionalSeconds))
+      ),
       currentStatus,
       heartbeat,
       timestamp: new Date().toISOString(),
@@ -1390,7 +1406,7 @@ export const formatDuration = (seconds: number): string => {
  */
 export const calculateCompletion = (
   workedSeconds: number,
-  targetHours: number,
+  targetHours: number
 ): number => {
   if (!targetHours) return 0;
   const targetSeconds = targetHours * 3600;
@@ -1428,7 +1444,7 @@ export const createPaymentOrder = async (jobId: string) => {
 export const verifyPayment = async (
   orderId: string,
   paymentId: string,
-  signature: string,
+  signature: string
 ) => {
   try {
     console.log("Verifying payment:", { orderId, paymentId });

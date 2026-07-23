@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -7,15 +7,15 @@ import {
   StyleSheet,
   Switch,
   Alert,
-} from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { Colors } from '../../../constants/Colors';
-import { useNotifications } from '../../../contexts/NotificationContext';
-import { 
-  getNotificationSettings, 
+} from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import { Colors } from "../../../constants/Colors";
+import { useNotifications } from "../../../contexts/NotificationContext";
+import {
+  getNotificationSettings,
   updateNotificationSettings,
-  NotificationSettings 
-} from '../../../services/notificationApi';
+  NotificationSettings,
+} from "../../../services/notificationApi";
 
 const NotificationSettingsScreen = () => {
   const { permission, requestPermission } = useNotifications();
@@ -39,24 +39,27 @@ const NotificationSettingsScreen = () => {
       const userSettings = await getNotificationSettings();
       setSettings(userSettings);
     } catch (error) {
-      console.error('Error loading notification settings:', error);
+      console.error("Error loading notification settings:", error);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleSettingChange = async (key: keyof NotificationSettings, value: boolean) => {
+  const handleSettingChange = async (
+    key: keyof NotificationSettings,
+    value: boolean
+  ) => {
     try {
       setSaving(true);
       const newSettings = { ...settings, [key]: value };
       setSettings(newSettings);
-      
+
       await updateNotificationSettings({ [key]: value });
     } catch (error) {
-      console.error('Error updating notification setting:', error);
+      console.error("Error updating notification setting:", error);
       // Revert the change on error
       setSettings(settings);
-      Alert.alert('Error', 'Failed to update notification setting');
+      Alert.alert("Error", "Failed to update notification setting");
     } finally {
       setSaving(false);
     }
@@ -66,9 +69,9 @@ const NotificationSettingsScreen = () => {
     const granted = await requestPermission();
     if (!granted) {
       Alert.alert(
-        'Permission Required',
-        'To receive notifications, please enable them in your device settings.',
-        [{ text: 'OK' }]
+        "Permission Required",
+        "To receive notifications, please enable them in your device settings.",
+        [{ text: "OK" }]
       );
     }
   };
@@ -92,7 +95,10 @@ const NotificationSettingsScreen = () => {
           value={settings[key]}
           onValueChange={(value) => handleSettingChange(key, value)}
           disabled={saving}
-          trackColor={{ false: Colors.subGrey + '40', true: Colors.blue + '40' }}
+          trackColor={{
+            false: Colors.subGrey + "40",
+            true: Colors.blue + "40",
+          }}
           thumbColor={settings[key] ? Colors.blue : Colors.subGrey}
         />
       </View>
@@ -136,48 +142,48 @@ const NotificationSettingsScreen = () => {
 
       <View style={styles.settingsSection}>
         <Text style={styles.sectionTitle}>Job Notifications</Text>
-        
+
         {renderSettingItem(
-          'verificationCodes',
-          'Verification Codes',
-          'Get notified when verification codes are generated',
-          'key-outline'
+          "verificationCodes",
+          "Verification Codes",
+          "Get notified when verification codes are generated",
+          "key-outline"
         )}
-        
+
         {renderSettingItem(
-          'jobUpdates',
-          'Job Updates',
-          'Receive updates about your job postings',
-          'briefcase-outline'
+          "jobUpdates",
+          "Job Updates",
+          "Receive updates about your job postings",
+          "briefcase-outline"
         )}
-        
+
         {renderSettingItem(
-          'applicationStatus',
-          'Application Status',
-          'Get notified about application status changes',
-          'document-text-outline'
+          "applicationStatus",
+          "Application Status",
+          "Get notified about application status changes",
+          "document-text-outline"
         )}
       </View>
 
       <View style={styles.settingsSection}>
         <Text style={styles.sectionTitle}>Communication</Text>
-        
+
         {renderSettingItem(
-          'messages',
-          'Messages',
-          'Receive notifications for new messages',
-          'chatbubble-outline'
+          "messages",
+          "Messages",
+          "Receive notifications for new messages",
+          "chatbubble-outline"
         )}
       </View>
 
       <View style={styles.settingsSection}>
         <Text style={styles.sectionTitle}>System</Text>
-        
+
         {renderSettingItem(
-          'systemUpdates',
-          'System Updates',
-          'Receive important system notifications',
-          'settings-outline'
+          "systemUpdates",
+          "System Updates",
+          "Receive important system notifications",
+          "settings-outline"
         )}
       </View>
 
@@ -197,8 +203,8 @@ const styles = StyleSheet.create({
   },
   loadingContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   loadingText: {
     fontSize: 16,
@@ -208,11 +214,11 @@ const styles = StyleSheet.create({
     padding: 20,
     backgroundColor: Colors.white,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.subGrey + '20',
+    borderBottomColor: Colors.subGrey + "20",
   },
   headerTitle: {
     fontSize: 24,
-    fontWeight: '600',
+    fontWeight: "600",
     color: Colors.black,
     marginBottom: 4,
   },
@@ -221,9 +227,9 @@ const styles = StyleSheet.create({
     color: Colors.subGrey,
   },
   permissionBanner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Colors.red + '10',
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: Colors.red + "10",
     margin: 16,
     padding: 16,
     borderRadius: 12,
@@ -236,7 +242,7 @@ const styles = StyleSheet.create({
   },
   permissionTitle: {
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: "600",
     color: Colors.red,
     marginBottom: 2,
   },
@@ -253,7 +259,7 @@ const styles = StyleSheet.create({
   permissionButtonText: {
     color: Colors.white,
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   settingsSection: {
     backgroundColor: Colors.white,
@@ -262,7 +268,7 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: "600",
     color: Colors.black,
     marginHorizontal: 16,
     marginBottom: 8,
@@ -271,16 +277,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.subGrey + '10',
+    borderBottomColor: Colors.subGrey + "10",
   },
   settingContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
   },
   settingHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     flex: 1,
   },
   settingText: {
@@ -289,7 +295,7 @@ const styles = StyleSheet.create({
   },
   settingTitle: {
     fontSize: 16,
-    fontWeight: '500',
+    fontWeight: "500",
     color: Colors.black,
     marginBottom: 2,
   },
@@ -300,14 +306,13 @@ const styles = StyleSheet.create({
   },
   footer: {
     padding: 20,
-    alignItems: 'center',
+    alignItems: "center",
   },
   footerText: {
     fontSize: 12,
     color: Colors.subGrey,
-    textAlign: 'center',
+    textAlign: "center",
   },
 });
 
 export default NotificationSettingsScreen;
-

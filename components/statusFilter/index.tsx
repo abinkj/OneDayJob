@@ -88,43 +88,44 @@ const StatusFilter: React.FC<StatusFilterProps> = ({
   );
 };
 
-const createStyles = (colors: ThemeColors) => StyleSheet.create({
-  container: {
-    marginVertical: 8,
-    backgroundColor: colors.background,
-    maxHeight: 50,
-    flexGrow: 0,
-  },
-  contentContainer: {
-    paddingHorizontal: 16,
-    gap: 8,
-  },
-  filterButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 20,
-    backgroundColor: colors.white,
-    borderWidth: 1,
-    borderColor: colors.subGrey + "30",
-    marginRight: 8,
-  },
-  activeFilter: {
-    backgroundColor: colors.blue,
-    borderColor: colors.blue,
-  },
-  filterIcon: {
-    marginRight: 4,
-  },
-  filterText: {
-    fontSize: 12,
-    fontWeight: "500",
-    color: colors.black,
-  },
-  activeFilterText: {
-    color: colors.white,
-  },
-});
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    container: {
+      marginVertical: 8,
+      backgroundColor: colors.background,
+      maxHeight: 50,
+      flexGrow: 0,
+    },
+    contentContainer: {
+      paddingHorizontal: 16,
+      gap: 8,
+    },
+    filterButton: {
+      flexDirection: "row",
+      alignItems: "center",
+      paddingHorizontal: 12,
+      paddingVertical: 8,
+      borderRadius: 20,
+      backgroundColor: colors.white,
+      borderWidth: 1,
+      borderColor: colors.subGrey + "30",
+      marginRight: 8,
+    },
+    activeFilter: {
+      backgroundColor: colors.blue,
+      borderColor: colors.blue,
+    },
+    filterIcon: {
+      marginRight: 4,
+    },
+    filterText: {
+      fontSize: 12,
+      fontWeight: "500",
+      color: colors.black,
+    },
+    activeFilterText: {
+      color: colors.white,
+    },
+  });
 
 export default StatusFilter;

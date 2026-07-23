@@ -78,9 +78,11 @@ const BannerCarousel = () => {
     }
   }).current;
 
-  const viewConfigRef = useRef({ viewAreaCoveragePercentThreshold: 50 }).current;
+  const viewConfigRef = useRef({
+    viewAreaCoveragePercentThreshold: 50,
+  }).current;
 
-  const renderItem = ({ item }: { item: typeof BANNER_DATA[0] }) => {
+  const renderItem = ({ item }: { item: (typeof BANNER_DATA)[0] }) => {
     return (
       <View style={[styles.bannerContainer, { width: BANNER_WIDTH }]}>
         <ImageBackground
@@ -96,7 +98,9 @@ const BannerCarousel = () => {
               style={styles.postNowButton}
               onPress={() => navigation.navigate(item.navigateTo)}
             >
-              <Text style={[styles.postNowText, { color: colors.primary }]}>{item.buttonText}</Text>
+              <Text style={[styles.postNowText, { color: colors.primary }]}>
+                {item.buttonText}
+              </Text>
             </TouchableOpacity>
           </View>
         </ImageBackground>
@@ -122,7 +126,11 @@ const BannerCarousel = () => {
       />
       <View style={styles.paginationContainer}>
         {BANNER_DATA.map((_, i) => {
-          const inputRange = [(i - 1) * BANNER_WIDTH, i * BANNER_WIDTH, (i + 1) * BANNER_WIDTH];
+          const inputRange = [
+            (i - 1) * BANNER_WIDTH,
+            i * BANNER_WIDTH,
+            (i + 1) * BANNER_WIDTH,
+          ];
           const dotWidth = scrollX.interpolate({
             inputRange,
             outputRange: [8, 20, 8],
@@ -175,7 +183,7 @@ const styles = StyleSheet.create({
     fontSize: fontSizes.size20,
     fontFamily: "bold",
     color: "#FFFFFF",
-    textShadowColor: 'rgba(0, 0, 0, 0.3)',
+    textShadowColor: "rgba(0, 0, 0, 0.3)",
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 3,
   },
@@ -185,7 +193,7 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     marginTop: 4 * DeviceDimensions.heightRatio,
     opacity: 0.9,
-    textShadowColor: 'rgba(0, 0, 0, 0.3)',
+    textShadowColor: "rgba(0, 0, 0, 0.3)",
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 2,
   },

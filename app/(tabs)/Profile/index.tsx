@@ -79,7 +79,7 @@ const ReviewItem: React.FC<ReviewItemProps> = ({ review, styles }) => (
 const Profile: React.FC = () => {
   const dispatch = useDispatch();
   const userData = useSelector(
-    (state: RootState) => state.authentication.userData,
+    (state: RootState) => state.authentication.userData
   );
 
   const [reviews, setReviews] = useState<any[]>([]);

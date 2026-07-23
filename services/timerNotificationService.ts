@@ -1,15 +1,18 @@
-import notifee, { AndroidImportance, AndroidVisibility } from '@notifee/react-native';
-import { Platform } from 'react-native';
+import notifee, {
+  AndroidImportance,
+  AndroidVisibility,
+} from "@notifee/react-native";
+import { Platform } from "react-native";
 
 class TimerNotificationService {
-  private channelId: string = 'job_timer_channel';
+  private channelId: string = "job_timer_channel";
 
   async initialize() {
-    if (Platform.OS === 'android') {
+    if (Platform.OS === "android") {
       // Create a channel (required for Android)
       await notifee.createChannel({
         id: this.channelId,
-        name: 'Job Timer',
+        name: "Job Timer",
         importance: AndroidImportance.HIGH,
         visibility: AndroidVisibility.PUBLIC,
       });
@@ -23,14 +26,14 @@ class TimerNotificationService {
 
     await notifee.displayNotification({
       id: notificationId,
-      title: 'Job is Live ⏱️',
+      title: "Job is Live ⏱️",
       body: `Timer is running for: ${jobName}`,
       android: {
         channelId: this.channelId,
         ongoing: true, // Prevents user from dismissing
         importance: AndroidImportance.HIGH,
         pressAction: {
-          id: 'default',
+          id: "default",
         },
       },
       ios: {

@@ -44,7 +44,9 @@ const AddEditAddressScreen: React.FC = () => {
   const isEditing = !!address;
 
   const [label, setLabel] = useState<AddressLabel>("Home");
-  const [selectedLocation, setSelectedLocation] = useState<LocationData | null>(null);
+  const [selectedLocation, setSelectedLocation] = useState<LocationData | null>(
+    null
+  );
   const [isDefault, setIsDefault] = useState(false);
   const [saving, setSaving] = useState(false);
   const [manualAddress, setManualAddress] = useState({

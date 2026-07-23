@@ -1,6 +1,7 @@
 # 💳 Razorpay International Card Fix
 
 ## 🎉 **Great News!**
+
 Your payment flow is working perfectly! The status mismatch fix resolved the payment button issue. Now we just need to fix the card configuration.
 
 ## 🔍 **Issue: "No International Card Can Be Used"**
@@ -59,14 +60,15 @@ const options = {
   theme: { color: Colors.primary },
   // Add these options for international cards
   notes: {
-    international_cards: "enabled"
-  }
+    international_cards: "enabled",
+  },
 };
 ```
 
 ## 🧪 **Test Cards to Use**
 
 ### **Indian Test Cards (Recommended)**
+
 ```javascript
 // Success Cards
 Visa: 4111 1111 1111 1111
@@ -83,6 +85,7 @@ Name: Test User
 ```
 
 ### **International Test Cards (If enabled)**
+
 ```javascript
 // Success Cards
 Visa: 4111 1111 1111 1111
@@ -118,6 +121,7 @@ RAZORPAY_KEY_SECRET=1XMO9FFvxPRbgaLOCPf6CW11
 ## 🚀 **Expected Results**
 
 ### **With Indian Test Cards:**
+
 - ✅ Payment modal opens
 - ✅ Razorpay checkout loads
 - ✅ Card details accepted
@@ -126,6 +130,7 @@ RAZORPAY_KEY_SECRET=1XMO9FFvxPRbgaLOCPf6CW11
 - ✅ Job status updates
 
 ### **With International Cards (if enabled):**
+
 - ✅ Same as above
 - ✅ International cards work
 

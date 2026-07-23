@@ -119,7 +119,7 @@ const Settings: React.FC = () => {
   const navigation = useNavigation<any>();
   const dispatch = useDispatch();
   const userData = useSelector(
-    (state: RootState) => state.authentication.userData,
+    (state: RootState) => state.authentication.userData
   );
 
   // Removed: user, isProfileLoading states — userData from Redux is the source of truth
@@ -197,24 +197,36 @@ const Settings: React.FC = () => {
     });
   };
 
-  const handleToggleTheme = useCallback(async (value) => {
-    setIsTogglingTheme(true);
-    // Use requestAnimationFrame to defer the theme change
-    // This prevents UI freeze by allowing the loading state to render first
-    requestAnimationFrame(() => {
-      setTimeout(() => {
-        toggleTheme();
-        // Reset loading state after theme has changed
+  const handleToggleTheme = useCallback(
+    async (value) => {
+      setIsTogglingTheme(true);
+      // Use requestAnimationFrame to defer the theme change
+      // This prevents UI freeze by allowing the loading state to render first
+      requestAnimationFrame(() => {
         setTimeout(() => {
-          setIsTogglingTheme(false);
-        }, 100);
-      }, 50);
-    });
-  }, [toggleTheme]);
+          toggleTheme();
+          // Reset loading state after theme has changed
+          setTimeout(() => {
+            setIsTogglingTheme(false);
+          }, 100);
+        }, 50);
+      });
+    },
+    [toggleTheme]
+  );
 
-  const handleSavedAddresses = useCallback(() => navigation.navigate("SavedAddresses"), [navigation]);
-  const handleLanguage = useCallback(() => navigation.navigate("Language"), [navigation]);
-  const handleJobPostingHistory = useCallback(() => navigation.navigate("JobPostingHistory"), [navigation]);
+  const handleSavedAddresses = useCallback(
+    () => navigation.navigate("SavedAddresses"),
+    [navigation]
+  );
+  const handleLanguage = useCallback(
+    () => navigation.navigate("Language"),
+    [navigation]
+  );
+  const handleJobPostingHistory = useCallback(
+    () => navigation.navigate("JobPostingHistory"),
+    [navigation]
+  );
   const handleHelpSupport = useCallback(() => {
     Toast.show({
       type: "info",
@@ -257,38 +269,38 @@ const Settings: React.FC = () => {
         ? { uri: userData.profilePicture }
         : Images.profile.profileImage;
 
-  const renderProfile = useCallback(() => (
-    <View style={[styles.profileCard, { backgroundColor: colors.white }]}>
-      <Image
-        //key={`settings-${userData?.profilePictureUrl || userData?.profilePicture}`}
-        source={profileImageSource}
-        style={[
-          styles.profileImage,
-          { backgroundColor: colors.categoryBox },
-        ]}
-        placeholder={Images.profile.profileImage}
-        placeholderContentFit="cover"
-        contentFit="cover"
-        cachePolicy="memory-disk"
-        //transition={300}
-        onError={(error) => {
-          console.error("Settings image load error:", error);
-          console.error(
-            "Failed to load image URL:",
-            userData?.profilePictureUrl || userData?.profilePicture,
-          );
-        }}
-      />
-      <View style={styles.profileInfo}>
-        <Text style={[styles.profileName, { color: colors.black }]}>
-          {userData?.firstName} {userData?.lastName}
-        </Text>
-        <Text style={[styles.profileEmail, { color: colors.grey }]}>
-          {userData?.phoneNumber}
-        </Text>
+  const renderProfile = useCallback(
+    () => (
+      <View style={[styles.profileCard, { backgroundColor: colors.white }]}>
+        <Image
+          //key={`settings-${userData?.profilePictureUrl || userData?.profilePicture}`}
+          source={profileImageSource}
+          style={[styles.profileImage, { backgroundColor: colors.categoryBox }]}
+          placeholder={Images.profile.profileImage}
+          placeholderContentFit="cover"
+          contentFit="cover"
+          cachePolicy="memory-disk"
+          //transition={300}
+          onError={(error) => {
+            console.error("Settings image load error:", error);
+            console.error(
+              "Failed to load image URL:",
+              userData?.profilePictureUrl || userData?.profilePicture
+            );
+          }}
+        />
+        <View style={styles.profileInfo}>
+          <Text style={[styles.profileName, { color: colors.black }]}>
+            {userData?.firstName} {userData?.lastName}
+          </Text>
+          <Text style={[styles.profileEmail, { color: colors.grey }]}>
+            {userData?.phoneNumber}
+          </Text>
+        </View>
       </View>
-    </View>
-  ), [colors, profileImageSource, userData]);
+    ),
+    [colors, profileImageSource, userData]
+  );
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>

@@ -12,7 +12,10 @@ import {
   getEmployerDisplayStatus,
 } from "../../utilities/statusUtils";
 import { useTheme } from "../../contexts/ThemeContext";
-import { formatDateDDMMYYYY, formatTimePreference } from "../../utilities/jobUtils";
+import {
+  formatDateDDMMYYYY,
+  formatTimePreference,
+} from "../../utilities/jobUtils";
 
 const JobCard = ({
   data,
@@ -114,11 +117,10 @@ const JobCard = ({
   });
 
   const formattedLocation = location?.address
-    ? `${location.address}${location.city ? ", " + location.city : ""}${location.state ? ", " + location.state : ""
-    }${location.country ? ", " + location.country : ""}`
+    ? `${location.address}${location.city ? ", " + location.city : ""}${
+        location.state ? ", " + location.state : ""
+      }${location.country ? ", " + location.country : ""}`
     : location?.country || "Remote";
-
-
 
   const formatRequirements = (reqs: string[]) => {
     if (!reqs || reqs.length === 0) return "No specific requirements";
@@ -237,7 +239,12 @@ const JobCard = ({
             style={[styles.button, styles.summaryButton]}
             onPress={() => onSummary && onSummary()}
           >
-            <Ionicons name="document-text-outline" size={16} color={colors.white} style={{ marginRight: 6 }} />
+            <Ionicons
+              name="document-text-outline"
+              size={16}
+              color={colors.white}
+              style={{ marginRight: 6 }}
+            />
             <Text style={styles.buttonText}>View Summary</Text>
           </TouchableOpacity>
         ) : (
@@ -295,148 +302,149 @@ const JobCard = ({
   );
 };
 
-const createStyles = (colors: ThemeColors) => StyleSheet.create({
-  card: {
-    backgroundColor: colors.white,
-    borderRadius: 16,
-    padding: 12,
-    shadowColor: "#000",
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2,
-    marginVertical: 8,
-    width: "100%",
-  },
-  headerRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginBottom: 12,
-  },
-  categoryContainer: {
-    backgroundColor: colors.blue + "20",
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: 12,
-  },
-  category: {
-    fontSize: 10,
-    fontWeight: "600",
-    color: colors.blue,
-  },
-  statusTag: {
-    backgroundColor: colors.whiteBack,
-    paddingHorizontal: 19,
-    paddingVertical: 4,
-    borderRadius: 12,
-  },
-  statusText: {
-    fontSize: 12,
-    fontWeight: "600",
-    color: colors.black,
-  },
-  title: {
-    fontSize: 16,
-    fontWeight: "600",
-    marginBottom: 8,
-    color: colors.black,
-  },
-  description: {
-    fontSize: 14,
-    color: colors.subGrey,
-    marginBottom: 8,
-    lineHeight: 20,
-  },
-  metaRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 8,
-  },
-  price: {
-    color: colors.blue,
-    fontWeight: "600",
-    fontSize: 14,
-  },
-  separator: {
-    marginHorizontal: 8,
-    color: colors.subGrey,
-  },
-  slots: {
-    fontSize: 14,
-    color: colors.subGrey,
-  },
-  metaText: {
-    fontSize: 14,
-    color: colors.subGrey,
-    fontWeight: "400",
-    marginLeft: 4,
-  },
-  metaLocation: {
-    fontSize: 14,
-    color: colors.subGrey,
-    fontWeight: "400",
-    marginLeft: 4,
-    flex: 1,
-  },
-  flexibleText: {
-    fontSize: 12,
-    color: colors.blue,
-    fontWeight: "500",
-  },
-  bottomRow: {
-    flexDirection: "row",
-    justifyContent: "flex-end",
-    alignItems: "center",
-    marginTop: 12,
-  },
-  bottomRow1: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginTop: 12,
-  },
-  avatars: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  avatar: {
-    width: 18,
-    height: 18,
-    borderRadius: 30,
-    marginRight: -5,
-  },
-  requestText: {
-    marginLeft: 8,
-    fontSize: 12,
-    color: colors.subGrey,
-    fontWeight: "500",
-  },
-  button: {
-    backgroundColor: colors.primary,
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    alignItems: "center",
-    justifyContent: "center",
-    shadowColor: colors.primary,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  summaryButton: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  buttonText: {
-    fontSize: 12,
-    fontWeight: "600",
-    color: colors.white,
-  },
-  paymentButtonContent: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-});
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    card: {
+      backgroundColor: colors.white,
+      borderRadius: 16,
+      padding: 12,
+      shadowColor: "#000",
+      shadowOpacity: 0.05,
+      shadowRadius: 8,
+      elevation: 2,
+      marginVertical: 8,
+      width: "100%",
+    },
+    headerRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      marginBottom: 12,
+    },
+    categoryContainer: {
+      backgroundColor: colors.blue + "20",
+      paddingHorizontal: 12,
+      paddingVertical: 4,
+      borderRadius: 12,
+    },
+    category: {
+      fontSize: 10,
+      fontWeight: "600",
+      color: colors.blue,
+    },
+    statusTag: {
+      backgroundColor: colors.whiteBack,
+      paddingHorizontal: 19,
+      paddingVertical: 4,
+      borderRadius: 12,
+    },
+    statusText: {
+      fontSize: 12,
+      fontWeight: "600",
+      color: colors.black,
+    },
+    title: {
+      fontSize: 16,
+      fontWeight: "600",
+      marginBottom: 8,
+      color: colors.black,
+    },
+    description: {
+      fontSize: 14,
+      color: colors.subGrey,
+      marginBottom: 8,
+      lineHeight: 20,
+    },
+    metaRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      marginBottom: 8,
+    },
+    price: {
+      color: colors.blue,
+      fontWeight: "600",
+      fontSize: 14,
+    },
+    separator: {
+      marginHorizontal: 8,
+      color: colors.subGrey,
+    },
+    slots: {
+      fontSize: 14,
+      color: colors.subGrey,
+    },
+    metaText: {
+      fontSize: 14,
+      color: colors.subGrey,
+      fontWeight: "400",
+      marginLeft: 4,
+    },
+    metaLocation: {
+      fontSize: 14,
+      color: colors.subGrey,
+      fontWeight: "400",
+      marginLeft: 4,
+      flex: 1,
+    },
+    flexibleText: {
+      fontSize: 12,
+      color: colors.blue,
+      fontWeight: "500",
+    },
+    bottomRow: {
+      flexDirection: "row",
+      justifyContent: "flex-end",
+      alignItems: "center",
+      marginTop: 12,
+    },
+    bottomRow1: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+      marginTop: 12,
+    },
+    avatars: {
+      flexDirection: "row",
+      alignItems: "center",
+    },
+    avatar: {
+      width: 18,
+      height: 18,
+      borderRadius: 30,
+      marginRight: -5,
+    },
+    requestText: {
+      marginLeft: 8,
+      fontSize: 12,
+      color: colors.subGrey,
+      fontWeight: "500",
+    },
+    button: {
+      backgroundColor: colors.primary,
+      borderRadius: 12,
+      paddingHorizontal: 16,
+      paddingVertical: 12,
+      alignItems: "center",
+      justifyContent: "center",
+      shadowColor: colors.primary,
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.2,
+      shadowRadius: 8,
+      elevation: 4,
+    },
+    summaryButton: {
+      flexDirection: "row",
+      alignItems: "center",
+    },
+    buttonText: {
+      fontSize: 12,
+      fontWeight: "600",
+      color: colors.white,
+    },
+    paymentButtonContent: {
+      flexDirection: "row",
+      alignItems: "center",
+    },
+  });
 
 export default JobCard;

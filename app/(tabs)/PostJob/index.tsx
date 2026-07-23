@@ -47,7 +47,7 @@ const PostJobScreen = ({ navigation: navProp }) => {
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const navigation = useNavigation();
-  const { kycStatus } = useSelector((state:any) => state.authentication);
+  const { kycStatus } = useSelector((state: any) => state.authentication);
   const { showAlert } = useAlert();
   const scrollViewRef = useRef<ScrollView>(null);
 
@@ -62,7 +62,7 @@ const PostJobScreen = ({ navigation: navProp }) => {
   const [canBeDoneRemotely, setCanBeDoneRemotely] = useState(false);
   const [taskAddress, setTaskAddress] = useState("");
   const [selectedLocation, setSelectedLocation] = useState<LocationData | null>(
-    null,
+    null
   );
   const [selectedTimePreferences, setSelectedTimePreferences] = useState([]); // Changed to array
   const [budget, setBudget] = useState(null);
@@ -162,7 +162,7 @@ const PostJobScreen = ({ navigation: navProp }) => {
 
             // Find matching default category by name (case insensitive)
             const matchingDefault = defaultJobCategories.find(
-              (def) => def.name.toLowerCase() === category.name.toLowerCase(),
+              (def) => def.name.toLowerCase() === category.name.toLowerCase()
             );
 
             if (matchingDefault) {
@@ -422,7 +422,7 @@ const PostJobScreen = ({ navigation: navProp }) => {
     dateString: string,
     hour: string,
     minute: string,
-    amPm: "AM" | "PM",
+    amPm: "AM" | "PM"
   ) => {
     // Parse the date string (format: "YYYY-MM-DD")
     const [year, month, day] = dateString.split("-").map(Number);
@@ -443,19 +443,19 @@ const PostJobScreen = ({ navigation: navProp }) => {
       hour24,
       parseInt(minute, 10),
       0,
-      0,
+      0
     );
 
     // Convert automatically to UTC string
     const utcString = localDate.toISOString();
 
     console.log(
-      `🕐 Input: ${dateString} ${hour}:${minute} ${amPm} (IST assumed)`,
+      `🕐 Input: ${dateString} ${hour}:${minute} ${amPm} (IST assumed)`
     );
     console.log(
       `   Local time (IST): ${localDate.toLocaleString("en-IN", {
         timeZone: "Asia/Kolkata",
-      })}`,
+      })}`
     );
     console.log(`   UTC time: ${utcString}`);
 
@@ -504,7 +504,7 @@ const PostJobScreen = ({ navigation: navProp }) => {
     if (!canBeDoneRemotely && selectedLocation) {
       console.log(
         "Adding location to job data:",
-        JSON.stringify(selectedLocation, null, 2),
+        JSON.stringify(selectedLocation, null, 2)
       );
       jobData.location = selectedLocation;
     } else {
@@ -512,7 +512,7 @@ const PostJobScreen = ({ navigation: navProp }) => {
         "No location data added - remote:",
         canBeDoneRemotely,
         "selectedLocation:",
-        !!selectedLocation,
+        !!selectedLocation
       );
     }
 
@@ -524,7 +524,7 @@ const PostJobScreen = ({ navigation: navProp }) => {
         scheduleDate.toISOString().split("T")[0],
         fromHour,
         fromMinute,
-        fromAmPm as "AM" | "PM",
+        fromAmPm as "AM" | "PM"
       );
       jobData.onDate = dateTime;
       // jobData.scheduleType = "on"; // Removed as backend doesn't support it anymore
@@ -640,7 +640,7 @@ const PostJobScreen = ({ navigation: navProp }) => {
       const jobData = formatJobData();
       console.log(
         "Final job data being sent:",
-        JSON.stringify(jobData, null, 2),
+        JSON.stringify(jobData, null, 2)
       );
 
       const response = await createJobPosting(jobData);
@@ -1495,7 +1495,7 @@ const PostJobScreen = ({ navigation: navProp }) => {
     const getTimePreferenceName = () => {
       if (selectedTimePreferences.length === 0) return "Flexible";
       const timeSlot = timeSlots.find(
-        (slot) => slot.id === selectedTimePreferences[0],
+        (slot) => slot.id === selectedTimePreferences[0]
       );
       return timeSlot ? timeSlot.name : "Flexible";
     };
@@ -1513,11 +1513,11 @@ const PostJobScreen = ({ navigation: navProp }) => {
         if (fromHour && toHour && isExactTime) {
           const fromTime = `${fromHour}:${String(fromMinute).padStart(
             2,
-            "0",
+            "0"
           )} ${fromAmPm}`;
           const toTime = `${toHour}:${String(toMinute).padStart(
             2,
-            "0",
+            "0"
           )} ${toAmPm}`;
           result += ` ${fromTime} - ${toTime}`;
         } else if (
@@ -1525,7 +1525,7 @@ const PostJobScreen = ({ navigation: navProp }) => {
           selectedTimePreferences.length > 0
         ) {
           const timeSlot = timeSlots.find(
-            (slot) => slot.id === selectedTimePreferences[0],
+            (slot) => slot.id === selectedTimePreferences[0]
           );
           if (timeSlot) {
             result += ` (${timeSlot.time})`;
@@ -1643,22 +1643,22 @@ const PostJobScreen = ({ navigation: navProp }) => {
         <View style={styles.previewCard}>
           <View style={styles.previewLeftSection}>
             <View style={styles.profileSection}>
-                {/* <Image
+              {/* <Image
                    style={styles.avatarContainer}
                    source={{ uri: user.profilePictureUrl || user.profileImage }}
 
                 /> */}
 
-                <Image
-                  //key={`settings-${userData?.profilePictureUrl || userData?.profilePicture}`}
-                  source={{ uri: user.profilePictureUrl || user.profileImage }}
-                  style={[styles.avatarContainer]}
-                  placeholder={Images.profile.profileImage}
-                  placeholderContentFit="cover"
-                  contentFit="cover"
-                  cachePolicy="memory-disk"
-                  //transition={300}
-                />
+              <Image
+                //key={`settings-${userData?.profilePictureUrl || userData?.profilePicture}`}
+                source={{ uri: user.profilePictureUrl || user.profileImage }}
+                style={[styles.avatarContainer]}
+                placeholder={Images.profile.profileImage}
+                placeholderContentFit="cover"
+                contentFit="cover"
+                cachePolicy="memory-disk"
+                //transition={300}
+              />
               <Text style={styles.userName}>
                 {user?.firstName && user?.lastName
                   ? `${user.firstName} ${user.lastName}`

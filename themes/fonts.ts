@@ -54,4 +54,3 @@ export const fontFamilies = {
 
 // Alias to fontWeights for intuitive styling since weights map directly to these loaded families
 export const fontWeights = fontFamilies;
-

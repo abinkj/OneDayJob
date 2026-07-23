@@ -109,7 +109,11 @@ const LocationSearch: React.FC<LocationSearchProps> = ({
       const location = await getCurrentLocation();
       if (location) {
         // Premium: Use specific name for the input display
-        const specific = location.district || location.name || location.city || location.address;
+        const specific =
+          location.district ||
+          location.name ||
+          location.city ||
+          location.address;
         setSearchText(specific);
 
         onLocationSelect(location);
@@ -136,21 +140,31 @@ const LocationSearch: React.FC<LocationSearchProps> = ({
 
   // Handle suggestion selection
   const handleSuggestionSelect = (suggestion: LocationData) => {
-    console.log('Suggestion selected:', suggestion);
+    console.log("Suggestion selected:", suggestion);
 
     // Premium: Use specific name for the input display
-    const specific = suggestion.district || suggestion.name || suggestion.city || suggestion.address;
+    const specific =
+      suggestion.district ||
+      suggestion.name ||
+      suggestion.city ||
+      suggestion.address;
 
-    console.log('Setting search text to:', specific);
+    console.log("Setting search text to:", specific);
     setSearchText(specific);
-    console.log('Calling onLocationSelect with:', suggestion);
+    console.log("Calling onLocationSelect with:", suggestion);
     onLocationSelect(suggestion);
     setShowSuggestions(false);
     setIsInputFocused(false);
   };
 
   // Render suggestion item
-  const renderSuggestion = ({ item, index }: { item: LocationData; index: number }) => {
+  const renderSuggestion = ({
+    item,
+    index,
+  }: {
+    item: LocationData;
+    index: number;
+  }) => {
     // Premium Display Logic
     const specific = item.district || item.name || item.city || item.address;
 
@@ -158,7 +172,7 @@ const LocationSearch: React.FC<LocationSearchProps> = ({
     let broadParts = [];
     if (item.city && item.city !== specific) broadParts.push(item.city);
     if (item.state) broadParts.push(item.state);
-    const broad = broadParts.join(', ') || item.country || "";
+    const broad = broadParts.join(", ") || item.country || "";
 
     return (
       <TouchableOpacity
@@ -245,7 +259,7 @@ const LocationSearch: React.FC<LocationSearchProps> = ({
                 color={isGettingCurrentLocation ? colors.grey : colors.primary}
               />
               <Text style={styles.quickSelectText}>
-                {isGettingCurrentLocation ? 'Getting...' : 'Current'}
+                {isGettingCurrentLocation ? "Getting..." : "Current"}
               </Text>
             </TouchableOpacity>
           )}
@@ -272,7 +286,9 @@ const LocationSearch: React.FC<LocationSearchProps> = ({
             <View style={styles.emptyStateContainer}>
               <Ionicons name="search-outline" size={32} color={colors.border} />
               <Text style={styles.emptyStateText}>No locations found</Text>
-              <Text style={styles.emptyStateSubText}>Try a different search term</Text>
+              <Text style={styles.emptyStateSubText}>
+                Try a different search term
+              </Text>
             </View>
           ) : (
             <FlatList
@@ -302,7 +318,7 @@ const LocationSearch: React.FC<LocationSearchProps> = ({
               city: address.city,
               state: address.state,
               country: address.country,
-              zipCode: address.zipCode || '',
+              zipCode: address.zipCode || "",
               coordinates: {
                 latitude: address.coordinates.latitude,
                 longitude: address.coordinates.longitude,
@@ -315,7 +331,7 @@ const LocationSearch: React.FC<LocationSearchProps> = ({
           onAddNew={() => {
             setShowSavedAddressModal(false);
             // Navigate to AddEditAddress screen
-            (navigation as any).navigate('AddEditAddress');
+            (navigation as any).navigate("AddEditAddress");
           }}
         />
       )}
@@ -323,138 +339,139 @@ const LocationSearch: React.FC<LocationSearchProps> = ({
   );
 };
 
-const createStyles = (colors: ThemeColors) => StyleSheet.create({
-  container: {
-    position: "relative",
-    zIndex: 1000,
-  },
-  searchContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-  },
-  inputContainer: {
-    flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: colors.white,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 12,
-    gap: 8,
-  },
-  input: {
-    flex: 1,
-    fontSize: 16,
-    color: colors.black,
-  },
-  currentLocationButton: {
-    backgroundColor: colors.primary,
-    padding: 12,
-    borderRadius: 8,
-    justifyContent: "center",
-    alignItems: "center",
-    minWidth: 44,
-  },
-  suggestionsContainer: {
-    position: "absolute",
-    top: "100%",
-    left: 0,
-    right: 0,
-    backgroundColor: colors.white,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 12,
-    marginTop: 8,
-    maxHeight: 240,
-    overflow: "hidden",
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 4,
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    container: {
+      position: "relative",
+      zIndex: 1000,
     },
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
-    elevation: 8,
-  },
-  suggestionsList: {
-    flex: 1,
-  },
-  suggestionItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-    gap: 12,
-    backgroundColor: colors.white,
-  },
-  lastSuggestionItem: {
-    borderBottomWidth: 0,
-  },
-  suggestionIconContainer: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: colors.categoryBox,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  suggestionTextContainer: {
-    flex: 1,
-  },
-  suggestionMainText: {
-    fontSize: 15,
-    color: colors.black,
-    fontWeight: "600",
-    marginBottom: 2,
-  },
-  suggestionSubText: {
-    fontSize: 13,
-    color: colors.grey,
-  },
-  emptyStateContainer: {
-    alignItems: "center",
-    justifyContent: "center",
-    paddingVertical: 32,
-    paddingHorizontal: 20,
-    gap: 8,
-  },
-  emptyStateText: {
-    fontSize: 15,
-    color: colors.black,
-    fontWeight: "500",
-  },
-  emptyStateSubText: {
-    fontSize: 13,
-    color: colors.grey,
-  },
-  quickSelectContainer: {
-    flexDirection: "row",
-    gap: 8,
-    marginTop: 12,
-  },
-  quickSelectButton: {
-    flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: colors.categoryBox,
-    paddingVertical: 10,
-    paddingHorizontal: 12,
-    borderRadius: 8,
-    gap: 6,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  quickSelectText: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: colors.primary,
-  },
-});
+    searchContainer: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 10,
+    },
+    inputContainer: {
+      flex: 1,
+      flexDirection: "row",
+      alignItems: "center",
+      backgroundColor: colors.white,
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderRadius: 8,
+      paddingHorizontal: 12,
+      paddingVertical: 12,
+      gap: 8,
+    },
+    input: {
+      flex: 1,
+      fontSize: 16,
+      color: colors.black,
+    },
+    currentLocationButton: {
+      backgroundColor: colors.primary,
+      padding: 12,
+      borderRadius: 8,
+      justifyContent: "center",
+      alignItems: "center",
+      minWidth: 44,
+    },
+    suggestionsContainer: {
+      position: "absolute",
+      top: "100%",
+      left: 0,
+      right: 0,
+      backgroundColor: colors.white,
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderRadius: 12,
+      marginTop: 8,
+      maxHeight: 240,
+      overflow: "hidden",
+      shadowColor: "#000",
+      shadowOffset: {
+        width: 0,
+        height: 4,
+      },
+      shadowOpacity: 0.15,
+      shadowRadius: 8,
+      elevation: 8,
+    },
+    suggestionsList: {
+      flex: 1,
+    },
+    suggestionItem: {
+      flexDirection: "row",
+      alignItems: "center",
+      paddingHorizontal: 16,
+      paddingVertical: 14,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border,
+      gap: 12,
+      backgroundColor: colors.white,
+    },
+    lastSuggestionItem: {
+      borderBottomWidth: 0,
+    },
+    suggestionIconContainer: {
+      width: 32,
+      height: 32,
+      borderRadius: 16,
+      backgroundColor: colors.categoryBox,
+      justifyContent: "center",
+      alignItems: "center",
+    },
+    suggestionTextContainer: {
+      flex: 1,
+    },
+    suggestionMainText: {
+      fontSize: 15,
+      color: colors.black,
+      fontWeight: "600",
+      marginBottom: 2,
+    },
+    suggestionSubText: {
+      fontSize: 13,
+      color: colors.grey,
+    },
+    emptyStateContainer: {
+      alignItems: "center",
+      justifyContent: "center",
+      paddingVertical: 32,
+      paddingHorizontal: 20,
+      gap: 8,
+    },
+    emptyStateText: {
+      fontSize: 15,
+      color: colors.black,
+      fontWeight: "500",
+    },
+    emptyStateSubText: {
+      fontSize: 13,
+      color: colors.grey,
+    },
+    quickSelectContainer: {
+      flexDirection: "row",
+      gap: 8,
+      marginTop: 12,
+    },
+    quickSelectButton: {
+      flex: 1,
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+      backgroundColor: colors.categoryBox,
+      paddingVertical: 10,
+      paddingHorizontal: 12,
+      borderRadius: 8,
+      gap: 6,
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+    quickSelectText: {
+      fontSize: 14,
+      fontWeight: "600",
+      color: colors.primary,
+    },
+  });
 
 export default LocationSearch;

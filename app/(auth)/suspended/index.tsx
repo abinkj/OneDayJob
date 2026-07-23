@@ -1,5 +1,12 @@
 import React from "react";
-import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, Linking } from "react-native";
+import {
+  View,
+  Text,
+  StyleSheet,
+  SafeAreaView,
+  TouchableOpacity,
+  Linking,
+} from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useDispatch, useSelector } from "react-redux";
 import { logoutUser } from "../../../utilities/authentication";
@@ -19,19 +26,26 @@ const SuspendedScreen = () => {
   };
 
   const handleContactSupport = () => {
-    Linking.openURL("mailto:support@zoopol.com?subject=Account Suspension Appeal - " + (userData?.phoneNumber || ""));
+    Linking.openURL(
+      "mailto:support@zoopol.com?subject=Account Suspension Appeal - " +
+        (userData?.phoneNumber || "")
+    );
   };
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: colors.background }]}
+    >
       <Header title={strings.auth.suspended.headerTitle} />
-      
+
       <View style={styles.content}>
-        <Animated.View 
+        <Animated.View
           entering={FadeInDown.duration(800).springify()}
           style={styles.iconContainer}
         >
-          <View style={[styles.iconCircle, { backgroundColor: colors.red + "15" }]}>
+          <View
+            style={[styles.iconCircle, { backgroundColor: colors.red + "15" }]}
+          >
             <Ionicons name="shield-outline" size={80} color={colors.red} />
             <View style={[styles.alertBadge, { backgroundColor: colors.red }]}>
               <Ionicons name="close" size={20} color="white" />
@@ -39,39 +53,48 @@ const SuspendedScreen = () => {
           </View>
         </Animated.View>
 
-        <Animated.View 
+        <Animated.View
           entering={FadeInUp.delay(200).duration(800)}
           style={styles.textContainer}
         >
-          <Text style={[styles.title, { color: colors.black }]}>{strings.auth.suspended.title}</Text>
+          <Text style={[styles.title, { color: colors.black }]}>
+            {strings.auth.suspended.title}
+          </Text>
           <Text style={[styles.subtitle, { color: colors.grey }]}>
             {strings.auth.suspended.subtitle}
           </Text>
-          
-          <View style={[styles.infoBox, { backgroundColor: colors.categoryBox }]}>
-            <Ionicons name="information-circle-outline" size={20} color={colors.primary} />
+
+          <View
+            style={[styles.infoBox, { backgroundColor: colors.categoryBox }]}
+          >
+            <Ionicons
+              name="information-circle-outline"
+              size={20}
+              color={colors.primary}
+            />
             <Text style={[styles.infoText, { color: colors.black }]}>
               {strings.auth.suspended.infoBox}
             </Text>
           </View>
         </Animated.View>
 
-        <Animated.View 
+        <Animated.View
           entering={FadeInUp.delay(400).duration(800)}
           style={styles.buttonContainer}
         >
-          <TouchableOpacity 
+          <TouchableOpacity
             style={[styles.contactButton, { backgroundColor: colors.primary }]}
             onPress={handleContactSupport}
           >
-            <Text style={styles.contactButtonText}>{strings.auth.suspended.contactSupport}</Text>
+            <Text style={styles.contactButtonText}>
+              {strings.auth.suspended.contactSupport}
+            </Text>
           </TouchableOpacity>
-          
-          <TouchableOpacity 
-            style={styles.logoutButton}
-            onPress={handleLogout}
-          >
-            <Text style={[styles.logoutButtonText, { color: colors.primary }]}>{strings.auth.suspended.signOut}</Text>
+
+          <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+            <Text style={[styles.logoutButtonText, { color: colors.primary }]}>
+              {strings.auth.suspended.signOut}
+            </Text>
           </TouchableOpacity>
         </Animated.View>
       </View>

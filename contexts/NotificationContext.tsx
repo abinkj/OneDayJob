@@ -221,7 +221,8 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({
         const success = await notificationService.registerDeviceWithBackend();
         if (success) {
           // Update permission state
-          const newPermission = await notificationService.getNotificationPermissions();
+          const newPermission =
+            await notificationService.getNotificationPermissions();
           setPermission(newPermission);
         }
       }
@@ -229,8 +230,6 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({
       console.error("Error registering device:", error);
     }
   };
-
-
 
   // Send job update notification
   const sendJobUpdateNotification = async (
@@ -342,7 +341,7 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({
     try {
       await notificationApi.deleteNotification(notificationId);
     } catch (error) {
-      console.error('Failed to delete notification:', error);
+      console.error("Failed to delete notification:", error);
       // Could revert state here if needed, but low risk
     }
   };
@@ -352,7 +351,8 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({
     // Update local state optimistically
     setNotifications((prev) =>
       prev.map((notification) =>
-        (notification.id === notificationId || notification.jobId === notificationId)
+        notification.id === notificationId ||
+        notification.jobId === notificationId
           ? { ...notification, read: true }
           : notification
       )
@@ -360,8 +360,8 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({
     setUnreadCount((prev) => Math.max(0, prev - 1));
 
     // Call backend API to persist the change
-    notificationApi.markNotificationAsRead(notificationId).catch(error => {
-      console.error('Failed to mark notification as read on backend:', error);
+    notificationApi.markNotificationAsRead(notificationId).catch((error) => {
+      console.error("Failed to mark notification as read on backend:", error);
     });
   };
 
@@ -376,7 +376,10 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({
     try {
       await notificationApi.markAllNotificationsAsRead();
     } catch (error) {
-      console.error('Failed to mark all notifications as read on backend:', error);
+      console.error(
+        "Failed to mark all notifications as read on backend:",
+        error
+      );
       // Could revert here, but re-fetching later will correct it
     }
   };
@@ -388,29 +391,35 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({
 
       // The backend returns { success: true, data: { notifications, total, page, hasMore } }
       // The api.tsx returns response.data, so we get { success, data: { notifications, ... } }
-      if (response && response.data && response.data.notifications && Array.isArray(response.data.notifications)) {
-        const fetchedNotifications: NotificationData[] = response.data.notifications.map(n => ({
-          id: n.id,
-          type: n.type as any,
-          title: n.title,
-          body: n.body,
-          data: n.data,
-          jobId: n.jobId,
-          timestamp: n.timestamp,
-          read: n.read
-        }));
+      if (
+        response &&
+        response.data &&
+        response.data.notifications &&
+        Array.isArray(response.data.notifications)
+      ) {
+        const fetchedNotifications: NotificationData[] =
+          response.data.notifications.map((n) => ({
+            id: n.id,
+            type: n.type as any,
+            title: n.title,
+            body: n.body,
+            data: n.data,
+            jobId: n.jobId,
+            timestamp: n.timestamp,
+            read: n.read,
+          }));
 
         setNotifications(fetchedNotifications);
 
         // Calculate unread count
-        const unread = fetchedNotifications.filter(n => !n.read).length;
+        const unread = fetchedNotifications.filter((n) => !n.read).length;
         setUnreadCount(unread);
       } else {
         setNotifications([]);
         setUnreadCount(0);
       }
     } catch (error) {
-      console.error('Error refreshing notifications:', error);
+      console.error("Error refreshing notifications:", error);
       setNotifications([]);
       setUnreadCount(0);
     }

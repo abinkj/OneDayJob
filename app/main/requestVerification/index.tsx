@@ -10,9 +10,7 @@ import {
   RefreshControl,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import {
-  NavigationState,
-} from "react-native-tab-view";
+import { NavigationState } from "react-native-tab-view";
 import {
   useNavigation,
   useRoute,
@@ -83,13 +81,12 @@ const RequestsVerifyTab = ({
         if (autoVerifyWorkerId && !hasInitiallyLoaded) {
           const workerToVerify = workerList.find(
             (w: any) =>
-              w.workerId === autoVerifyWorkerId &&
-              w.arrivalStatus === "arrived",
+              w.workerId === autoVerifyWorkerId && w.arrivalStatus === "arrived"
           );
           if (workerToVerify) {
             console.log(
               "🔗 AUTO-VERIFYING worker from deep-link:",
-              autoVerifyWorkerId,
+              autoVerifyWorkerId
             );
             // We set hasInitiallyLoaded to true early to prevent any potential loops
             setHasInitiallyLoaded(true);
@@ -114,7 +111,7 @@ const RequestsVerifyTab = ({
         setRefreshing(false);
       }
     },
-    [jobId, onCountUpdate, onDataUpdate],
+    [jobId, onCountUpdate, onDataUpdate]
   );
 
   useEffect(() => {
@@ -413,7 +410,11 @@ const RequestsVerifyTab = ({
                     borderColor: colors.darkGreen + "30",
                   }}
                 >
-                  <Ionicons name="checkmark-circle" size={24} color={colors.darkGreen} />
+                  <Ionicons
+                    name="checkmark-circle"
+                    size={24}
+                    color={colors.darkGreen}
+                  />
                   <View style={{ marginLeft: 12, flex: 1 }}>
                     <Text
                       style={{
@@ -565,7 +566,9 @@ const RequestsVerifyTab = ({
                   {isArrived && (
                     <TouchableOpacity
                       style={{
-                        backgroundColor: isApproving ? colors.grey : colors.darkGreen,
+                        backgroundColor: isApproving
+                          ? colors.grey
+                          : colors.darkGreen,
                         paddingVertical: 10,
                         paddingHorizontal: 18,
                         borderRadius: 10,
@@ -699,15 +702,19 @@ const RequestVerification = () => {
   useEffect(() => {
     let socket: any = null;
     try {
-      const socketService = require('../../../services/socketService').default;
+      const socketService = require("../../../services/socketService").default;
       socket = socketService?.socket;
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
     if (!socket) return;
     const onWorkerArrived = () => {
-      setRefreshTrigger(prev => prev + 1);
+      setRefreshTrigger((prev) => prev + 1);
     };
-    socket.on('worker-arrived', onWorkerArrived);
-    return () => { socket.off('worker-arrived', onWorkerArrived); };
+    socket.on("worker-arrived", onWorkerArrived);
+    return () => {
+      socket.off("worker-arrived", onWorkerArrived);
+    };
   }, []);
 
   // const [routes] = useState([ // TABVIEW COMMENTED
@@ -721,7 +728,7 @@ const RequestVerification = () => {
       setAcceptedCount(accepted);
       setVerifiedCount(verified);
     },
-    [],
+    []
   );
 
   // Global refresh function that triggers data refresh in all tabs
@@ -753,7 +760,7 @@ const RequestVerification = () => {
         // } // TABVIEW COMMENTED
       }
     },
-    [initialDataLoaded],
+    [initialDataLoaded]
   );
 
   // Handle data changes after initial load (e.g., when users are accepted)
@@ -762,7 +769,7 @@ const RequestVerification = () => {
       console.log("📊 Data updated:", data);
       // Just log the data update, no automatic tab switching
     },
-    [],
+    []
   );
 
   // Reset when navigating to this screen
@@ -775,7 +782,7 @@ const RequestVerification = () => {
       setVerifiedCount(0);
       // setIndex(0); // TABVIEW COMMENTED
       console.log("🔄 Screen focused - resetting state");
-    }, []), // Remove automatic refresh to prevent double loading
+    }, []) // Remove automatic refresh to prevent double loading
   );
 
   // const renderScene = ({ route }) => { // TABVIEW COMMENTED
@@ -857,7 +864,11 @@ const RequestVerification = () => {
 
   return (
     <View style={styles.container}>
-      <Header showBackButton={true} title={jobName ? `Verify Workers` : 'Request Verification'} subtitle={jobName || undefined} />
+      <Header
+        showBackButton={true}
+        title={jobName ? `Verify Workers` : "Request Verification"}
+        subtitle={jobName || undefined}
+      />
       {/* TABVIEW COMMENTED
       <TabView
         navigationState={{ index, routes }}

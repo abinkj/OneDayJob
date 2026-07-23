@@ -17,29 +17,29 @@ const renderToast = (
     type === "success"
       ? styles.successContainer
       : type === "error"
-      ? styles.errorContainer
-      : styles.infoContainer;
+        ? styles.errorContainer
+        : styles.infoContainer;
 
   const textStyle =
     type === "success"
       ? styles.successText
       : type === "error"
-      ? styles.errorText
-      : styles.infoText;
+        ? styles.errorText
+        : styles.infoText;
 
   const subTextStyle =
     type === "success"
       ? styles.successSubText
       : type === "error"
-      ? styles.errorSubText
-      : styles.infoSubText;
+        ? styles.errorSubText
+        : styles.infoSubText;
 
   const iconName =
     type === "success"
       ? "checkmark-circle"
       : type === "error"
-      ? "close-circle"
-      : "information-circle";
+        ? "close-circle"
+        : "information-circle";
 
   const iconColor =
     type === "success" ? "#12B76A" : type === "error" ? "#F04438" : "#2E90FA";

@@ -49,7 +49,11 @@ const Language: React.FC = () => {
                   </Text>
                 </View>
                 {isSelected && (
-                  <Ionicons name="checkmark-circle" size={24} color={colors.blue} />
+                  <Ionicons
+                    name="checkmark-circle"
+                    size={24}
+                    color={colors.blue}
+                  />
                 )}
               </TouchableOpacity>
             );

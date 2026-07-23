@@ -28,9 +28,10 @@ const ShimmerPlaceholder: React.FC<ShimmerPlaceholderProps> = ({
   const { theme, colors } = useTheme();
   const translateX = useSharedValue(-100);
 
-  const shimmerColors: [string, string, string] = theme === "dark"
-    ? ["#2C2C2C", "#3A3A3A", "#2C2C2C"]
-    : ["#E0E0E0", "#F5F5F5", "#E0E0E0"];
+  const shimmerColors: [string, string, string] =
+    theme === "dark"
+      ? ["#2C2C2C", "#3A3A3A", "#2C2C2C"]
+      : ["#E0E0E0", "#F5F5F5", "#E0E0E0"];
 
   const backgroundColor = theme === "dark" ? "#2C2C2C" : "#E0E0E0";
 
@@ -56,7 +57,13 @@ const ShimmerPlaceholder: React.FC<ShimmerPlaceholderProps> = ({
   }
 
   return (
-    <View style={[styles.container, { width, height, borderRadius, backgroundColor }, style]}>
+    <View
+      style={[
+        styles.container,
+        { width, height, borderRadius, backgroundColor },
+        style,
+      ]}
+    >
       <Animated.View style={[styles.shimmer, animatedStyle]}>
         <LinearGradient
           colors={shimmerColors}

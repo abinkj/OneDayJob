@@ -1,6 +1,6 @@
-import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { Colors } from '../../constants/Colors';
+import React from "react";
+import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
+import { Colors } from "../../constants/Colors";
 
 interface AcceptRejectButtonsProps {
   onAccept: () => void;
@@ -59,7 +59,7 @@ const AcceptRejectButtons: React.FC<AcceptRejectButtonsProps> = ({
 
 const styles = StyleSheet.create({
   buttonContainer: {
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: 8,
   },
   button: {
@@ -67,28 +67,28 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 6,
     minWidth: 70,
-    alignItems: 'center',
+    alignItems: "center",
   },
   acceptButton: {
-    backgroundColor: Colors.primary || '#000',
+    backgroundColor: Colors.primary || "#000",
   },
   rejectButton: {
-    backgroundColor: '#F5F5F5',
+    backgroundColor: "#F5F5F5",
     borderWidth: 1,
-    borderColor: '#E5E5E5',
+    borderColor: "#E5E5E5",
   },
   buttonText: {
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   acceptButtonText: {
-    color: '#FFF',
+    color: "#FFF",
   },
   rejectButtonText: {
-    color: '#666',
+    color: "#666",
   },
   statusContainer: {
-    alignItems: 'flex-end',
+    alignItems: "flex-end",
   },
   statusBadge: {
     paddingHorizontal: 12,
@@ -96,21 +96,21 @@ const styles = StyleSheet.create({
     borderRadius: 16,
   },
   acceptedBadge: {
-    backgroundColor: '#4CAF50',
+    backgroundColor: "#4CAF50",
   },
   rejectedBadge: {
-    backgroundColor: '#F5F5F5',
+    backgroundColor: "#F5F5F5",
   },
   statusText: {
     fontSize: 12,
-    fontWeight: '500',
-    textTransform: 'capitalize',
+    fontWeight: "500",
+    textTransform: "capitalize",
   },
   acceptedText: {
-    color: '#FFF',
+    color: "#FFF",
   },
   rejectedText: {
-    color: '#666',
+    color: "#666",
   },
 });
 

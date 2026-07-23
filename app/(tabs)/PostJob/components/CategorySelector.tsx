@@ -2,7 +2,6 @@ import React from "react";
 import { View, Text, TouchableOpacity, Image } from "react-native";
 import { CategorySkeleton } from "../../../../components/Shimmer/Skeletons";
 
-
 interface Category {
   id: string;
   name: string;

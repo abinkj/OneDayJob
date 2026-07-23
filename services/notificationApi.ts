@@ -1,4 +1,4 @@
-import api from './api';
+import api from "./api";
 
 export interface NotificationSettings {
   verificationCodes: boolean;
@@ -20,44 +20,54 @@ export interface NotificationHistory {
 }
 
 // Register device for push notifications
-export const registerDevice = async (expoPushToken: string, platform: string, deviceId: string) => {
+export const registerDevice = async (
+  expoPushToken: string,
+  platform: string,
+  deviceId: string
+) => {
   try {
-    const response = await api.post('/notifications/register-device', {
+    const response = await api.post("/notifications/register-device", {
       expoPushToken,
       platform,
       deviceId,
     });
     return response.data;
   } catch (error) {
-    console.error('Error registering device:', error);
+    console.error("Error registering device:", error);
     throw error;
   }
 };
 
 // Get notification settings
-export const getNotificationSettings = async (): Promise<NotificationSettings> => {
-  try {
-    const response = await api.get('/notifications/settings');
-    return response.data;
-  } catch (error) {
-    console.error('Error fetching notification settings:', error);
-    throw error;
-  }
-};
+export const getNotificationSettings =
+  async (): Promise<NotificationSettings> => {
+    try {
+      const response = await api.get("/notifications/settings");
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching notification settings:", error);
+      throw error;
+    }
+  };
 
 // Update notification settings
-export const updateNotificationSettings = async (settings: Partial<NotificationSettings>) => {
+export const updateNotificationSettings = async (
+  settings: Partial<NotificationSettings>
+) => {
   try {
-    const response = await api.put('/notifications/settings', settings);
+    const response = await api.put("/notifications/settings", settings);
     return response.data;
   } catch (error) {
-    console.error('Error updating notification settings:', error);
+    console.error("Error updating notification settings:", error);
     throw error;
   }
 };
 
 // Get notification history
-export const getNotificationHistory = async (page: number = 1, limit: number = 20): Promise<{
+export const getNotificationHistory = async (
+  page: number = 1,
+  limit: number = 20
+): Promise<{
   success: boolean;
   data: {
     notifications: NotificationHistory[];
@@ -67,10 +77,12 @@ export const getNotificationHistory = async (page: number = 1, limit: number = 2
   };
 }> => {
   try {
-    const response = await api.get(`/notifications/history?page=${page}&limit=${limit}`);
+    const response = await api.get(
+      `/notifications/history?page=${page}&limit=${limit}`
+    );
     return response.data;
   } catch (error) {
-    console.error('Error fetching notification history:', error);
+    console.error("Error fetching notification history:", error);
     throw error;
   }
 };
@@ -81,7 +93,7 @@ export const markNotificationAsRead = async (notificationId: string) => {
     const response = await api.put(`/notifications/${notificationId}/read`);
     return response.data;
   } catch (error) {
-    console.error('Error marking notification as read:', error);
+    console.error("Error marking notification as read:", error);
     throw error;
   }
 };
@@ -89,10 +101,10 @@ export const markNotificationAsRead = async (notificationId: string) => {
 // Mark all notifications as read
 export const markAllNotificationsAsRead = async () => {
   try {
-    const response = await api.put('/notifications/mark-all-read');
+    const response = await api.put("/notifications/mark-all-read");
     return response.data;
   } catch (error) {
-    console.error('Error marking all notifications as read:', error);
+    console.error("Error marking all notifications as read:", error);
     throw error;
   }
 };
@@ -103,7 +115,7 @@ export const deleteNotification = async (notificationId: string) => {
     const response = await api.delete(`/notifications/${notificationId}`);
     return response.data;
   } catch (error) {
-    console.error('Error deleting notification:', error);
+    console.error("Error deleting notification:", error);
     throw error;
   }
 };
@@ -111,21 +123,21 @@ export const deleteNotification = async (notificationId: string) => {
 // Clear all notifications
 export const clearAllNotifications = async () => {
   try {
-    const response = await api.delete('/notifications/clear-all');
+    const response = await api.delete("/notifications/clear-all");
     return response.data;
   } catch (error) {
-    console.error('Error clearing all notifications:', error);
+    console.error("Error clearing all notifications:", error);
     throw error;
   }
 };
 
 // Test notification delivery
-export const testNotification = async (type: string = 'test') => {
+export const testNotification = async (type: string = "test") => {
   try {
-    const response = await api.post('/notifications/test', { type });
+    const response = await api.post("/notifications/test", { type });
     return response.data;
   } catch (error) {
-    console.error('Error testing notification:', error);
+    console.error("Error testing notification:", error);
     throw error;
   }
 };
@@ -133,11 +145,10 @@ export const testNotification = async (type: string = 'test') => {
 // Get notification statistics
 export const getNotificationStats = async () => {
   try {
-    const response = await api.get('/notifications/stats');
+    const response = await api.get("/notifications/stats");
     return response.data;
   } catch (error) {
-    console.error('Error fetching notification stats:', error);
+    console.error("Error fetching notification stats:", error);
     throw error;
   }
 };
-
