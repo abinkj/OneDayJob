@@ -1,17 +1,13 @@
-import { Dimensions, PixelRatio, Platform } from "react-native";
+import { Dimensions, PixelRatio } from "react-native";
 
 const SCREEN_WIDTH = Dimensions.get("window").width;
 const SCREEN_HEIGHT = Dimensions.get("window").height;
 const scale = SCREEN_WIDTH / 393; // Base width for scaling
 const scaleHeight = SCREEN_HEIGHT / 852; // Base height for scaling
 
-export function actuatedNormalize(size: any): any {
+export function actuatedNormalize(size: number): number {
   const newSize = size * scale;
-  if (Platform.OS === "ios") {
-    return Math.round(PixelRatio.roundToNearestPixel(newSize));
-  } else {
-    return Math.round(PixelRatio.roundToNearestPixel(newSize));
-  }
+  return Math.round(PixelRatio.roundToNearestPixel(newSize));
 }
 
 export const fontSizes = {
