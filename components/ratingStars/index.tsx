@@ -15,7 +15,7 @@ const ratingStars = (rating: number) => {
       />
     ));
 };
-export default React.memo(ratingStars);
+export default ratingStars;
 
 const styles = StyleSheet.create({
   starIcon: {
