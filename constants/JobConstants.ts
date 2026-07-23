@@ -113,11 +113,10 @@ export const timeSlots: TimeSlot[] = [
 // Helper function to get category icon by name
 export const getCategoryIcon = (categoryName?: string): ImageSourcePropType => {
   if (!categoryName) return require("../assets/images/custom.png");
-  
+
   const category = defaultJobCategories.find(
     (cat) => cat.name.toLowerCase() === categoryName.toLowerCase()
   );
-  
+
   return category ? category.icon : require("../assets/images/custom.png");
 };
-

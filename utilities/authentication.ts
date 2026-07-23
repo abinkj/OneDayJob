@@ -29,9 +29,9 @@ export const loginUser =
       if (userData.isSuspended || userData.role === "suspended") {
         dispatch(setSuspended(true));
       }
-      
+
       // Establishes secure socket connection under the new token credentials
-      socketService.connect().catch(err => {
+      socketService.connect().catch((err) => {
         console.error("Socket connection failed on login:", err);
       });
     } catch (error) {
@@ -45,7 +45,7 @@ export const logoutUser = () => async (dispatch) => {
   try {
     // Disconnect active socket session before erasing token credentials
     socketService.disconnect();
-    
+
     await clearTokens();
     await clearUserData();
     await clearKycStatus();

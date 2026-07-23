@@ -57,20 +57,20 @@ const PaginationDot = ({ index, scrollX }: { index: number; scrollX: any }) => {
       scrollX.value,
       [(index - 1) * width, index * width, (index + 1) * width],
       [8, 20, 8],
-      Extrapolation.CLAMP,
+      Extrapolation.CLAMP
     );
 
     const opacity = interpolate(
       scrollX.value,
       [(index - 1) * width, index * width, (index + 1) * width],
       [0.4, 1, 0.4],
-      Extrapolation.CLAMP,
+      Extrapolation.CLAMP
     );
 
     const backgroundColor = interpolateColor(
       scrollX.value,
       [(index - 1) * width, index * width, (index + 1) * width],
-      ["#333", "#000", "#333"],
+      ["#333", "#000", "#333"]
     );
 
     return { width: dotWidth, opacity, backgroundColor };
@@ -162,7 +162,11 @@ const Onboarding = () => {
         </View>
 
         <CustomButton
-          text={currentIndex === slides.length - 1 ? strings.onboarding.buttons.getStarted : strings.onboarding.buttons.next}
+          text={
+            currentIndex === slides.length - 1
+              ? strings.onboarding.buttons.getStarted
+              : strings.onboarding.buttons.next
+          }
           onPress={handleNext}
           color={Colors.blue}
         />

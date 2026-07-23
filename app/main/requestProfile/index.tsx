@@ -22,7 +22,11 @@ import CustomButton from "../../../components/CustomButton";
 import { Colors } from "../../../constants/Colors";
 import JobApplicationStatus from "../../../components/jobApplicationStatus";
 import ratingStars from "../../../components/ratingStars";
-import { useNavigation, useRoute, useFocusEffect } from "@react-navigation/native";
+import {
+  useNavigation,
+  useRoute,
+  useFocusEffect,
+} from "@react-navigation/native";
 import { User } from "../../../types";
 import { getUserProfile } from "../../../services/api";
 import { useTheme } from "../../../contexts/ThemeContext";
@@ -57,34 +61,41 @@ const RequestProfile: React.FC = () => {
   const { colors, theme } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
 
-  const fetchUser = useCallback(async (isRefresh = false) => {
-    try {
-      if (!isRefresh && !user) setIsLoading(true);
+  const fetchUser = useCallback(
+    async (isRefresh = false) => {
+      try {
+        if (!isRefresh && !user) setIsLoading(true);
 
-      const response = await getUserProfile(userId);
-      if (response && (response.data || response)) {
-        setUser(response.data || response);
-      }
-    } catch (error: any) {
-      // Ignore cancellation errors
-      if (error.code === 'ERR_CANCELED' || error.name === 'CanceledError' || error.message === 'Request throttled locally') {
-        console.log('Request cancelled or throttled (RequestProfile)');
-        return;
-      }
+        const response = await getUserProfile(userId);
+        if (response && (response.data || response)) {
+          setUser(response.data || response);
+        }
+      } catch (error: any) {
+        // Ignore cancellation errors
+        if (
+          error.code === "ERR_CANCELED" ||
+          error.name === "CanceledError" ||
+          error.message === "Request throttled locally"
+        ) {
+          console.log("Request cancelled or throttled (RequestProfile)");
+          return;
+        }
 
-      console.error("Error fetching user profile:", error);
-      // Only show alert if we really don't have data and it's not a cancel
-      if (!user) {
-        // Alert.alert("Error", "Failed to load profile data");
+        console.error("Error fetching user profile:", error);
+        // Only show alert if we really don't have data and it's not a cancel
+        if (!user) {
+          // Alert.alert("Error", "Failed to load profile data");
+        }
+      } finally {
+        if (isRefresh) {
+          setRefreshing(false);
+        } else {
+          setIsLoading(false);
+        }
       }
-    } finally {
-      if (isRefresh) {
-        setRefreshing(false);
-      } else {
-        setIsLoading(false);
-      }
-    }
-  }, [userId]);
+    },
+    [userId]
+  );
 
   // Initial fetch
   useEffect(() => {
@@ -95,8 +106,8 @@ const RequestProfile: React.FC = () => {
   useFocusEffect(
     useCallback(() => {
       // Optional: only refetch if we think data might be stale
-      // fetchUser(true); 
-      return () => { };
+      // fetchUser(true);
+      return () => {};
     }, [])
   );
 
@@ -121,13 +132,19 @@ const RequestProfile: React.FC = () => {
               "Please select a reason for reporting this user:",
               [
                 { text: "Spam", onPress: () => submitReport(userId, "Spam") },
-                { text: "Abusive", onPress: () => submitReport(userId, "Abusive") },
-                { text: "Suspicious", onPress: () => submitReport(userId, "Suspicious") },
-                { text: "Cancel", style: "cancel" }
+                {
+                  text: "Abusive",
+                  onPress: () => submitReport(userId, "Abusive"),
+                },
+                {
+                  text: "Suspicious",
+                  onPress: () => submitReport(userId, "Suspicious"),
+                },
+                { text: "Cancel", style: "cancel" },
               ],
               { type: "info" }
             );
-          }
+          },
         },
         {
           text: "Block User",
@@ -145,23 +162,33 @@ const RequestProfile: React.FC = () => {
                     try {
                       const { blockUser } = require("../../../services/api");
                       await blockUser(userId);
-                      CustomAlertManager.show("User Blocked", "You will no longer interact with this user.", [], { type: "success" });
+                      CustomAlertManager.show(
+                        "User Blocked",
+                        "You will no longer interact with this user.",
+                        [],
+                        { type: "success" }
+                      );
                       navigation.goBack();
                     } catch (error) {
-                      CustomAlertManager.show("User Blocked", "Action processed successfully.", [], { type: "success" });
+                      CustomAlertManager.show(
+                        "User Blocked",
+                        "Action processed successfully.",
+                        [],
+                        { type: "success" }
+                      );
                       navigation.goBack();
                     }
-                  }
-                }
+                  },
+                },
               ],
               { type: "warning" }
             );
-          }
+          },
         },
         {
           text: "Cancel",
-          style: "cancel"
-        }
+          style: "cancel",
+        },
       ],
       { type: "warning", dismissable: true }
     );
@@ -171,12 +198,21 @@ const RequestProfile: React.FC = () => {
     try {
       const { reportUser } = require("../../../services/api");
       await reportUser(userId, reason);
-      CustomAlertManager.show("Report Submitted", "Thank you for helping us keep Zoopol safe. We will review this account.", [], { type: "success" });
+      CustomAlertManager.show(
+        "Report Submitted",
+        "Thank you for helping us keep Zoopol safe. We will review this account.",
+        [],
+        { type: "success" }
+      );
     } catch (error) {
-      CustomAlertManager.show("Report Submitted", "We will review this account shortly.", [], { type: "success" });
+      CustomAlertManager.show(
+        "Report Submitted",
+        "We will review this account shortly.",
+        [],
+        { type: "success" }
+      );
     }
   };
-
 
   if (isLoading && !user) {
     return (
@@ -189,9 +225,9 @@ const RequestProfile: React.FC = () => {
 
   return (
     <View style={styles.container}>
-      <Header 
-        title="Request Profile" 
-        showBackButton 
+      <Header
+        title="Request Profile"
+        showBackButton
         headerRight={
           <TouchableOpacity onPress={handleReportBlock}>
             <Ionicons name="shield-outline" size={24} color={colors.red} />
@@ -273,16 +309,17 @@ const RequestProfile: React.FC = () => {
           </View>
         </View>
 
-
         {/* Reviews Section */}
         {user?.ratings && user.ratings.length > 0 && (
           <View style={{ paddingHorizontal: 20, marginTop: 20 }}>
-            <Text style={{
-              fontSize: 18,
-              fontWeight: "bold",
-              marginBottom: 15,
-              color: colors.black
-            }}>
+            <Text
+              style={{
+                fontSize: 18,
+                fontWeight: "bold",
+                marginBottom: 15,
+                color: colors.black,
+              }}
+            >
               Recent Reviews
             </Text>
             {user.ratings.map((review: any, index: number) => (

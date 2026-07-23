@@ -533,15 +533,15 @@ export const validateHourlyRate = (
     };
   }
 
-
-
   return {
     rateError: "",
     status: true,
   };
 };
 
-export const validateIfscCode = (ifsc: string): { ifscError: string; status: boolean } => {
+export const validateIfscCode = (
+  ifsc: string
+): { ifscError: string; status: boolean } => {
   if (isEmpty(ifsc)) {
     return {
       ifscError: "Please enter IFSC code",
@@ -560,7 +560,9 @@ export const validateIfscCode = (ifsc: string): { ifscError: string; status: boo
   };
 };
 
-export const validateUpiId = (upi: string): { upiError: string; status: boolean } => {
+export const validateUpiId = (
+  upi: string
+): { upiError: string; status: boolean } => {
   if (isEmpty(upi)) {
     return {
       upiError: "Please enter UPI ID",
@@ -579,4 +581,3 @@ export const validateUpiId = (upi: string): { upiError: string; status: boolean 
     status: true,
   };
 };
-

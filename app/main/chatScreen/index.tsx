@@ -61,11 +61,11 @@ const ChatAvatar: React.FC<ChatAvatarProps> = ({
 }) => {
   const initials = name
     ? name
-      .split(" ")
-      .map((n) => n[0])
-      .join("")
-      .toUpperCase()
-      .slice(0, 2)
+        .split(" ")
+        .map((n) => n[0])
+        .join("")
+        .toUpperCase()
+        .slice(0, 2)
     : "?";
 
   const isValidUri = uri && uri.startsWith("http");
@@ -111,7 +111,6 @@ const ChatAvatar: React.FC<ChatAvatarProps> = ({
   );
 };
 
-
 // ─── Chat Screen ─────────────────────────────────────────────────────────────
 export default function ChatScreen() {
   const { theme, colors } = useTheme();
@@ -123,7 +122,7 @@ export default function ChatScreen() {
 
   // Use Redux for current user — no getCurrentUser() API call needed
   const userData = useSelector(
-    (state: RootState) => state.authentication.userData,
+    (state: RootState) => state.authentication.userData
   );
 
   const { conversationId, participant } = (route.params as any) || {};
@@ -134,10 +133,8 @@ export default function ChatScreen() {
   const participantData =
     typeof participant === "string" ? JSON.parse(participant) : participant;
 
-  const {
-    data: rawMessages,
-    isLoading: messagesLoading,
-  } = useMessages(conversationIdString);
+  const { data: rawMessages, isLoading: messagesLoading } =
+    useMessages(conversationIdString);
 
   const sendMessageMutation = useSendMessage();
   const markAsReadMutation = useMarkMessagesAsRead();
@@ -152,11 +149,11 @@ export default function ChatScreen() {
   useEffect(() => {
     const show = Keyboard.addListener(
       Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow",
-      () => { },
+      () => {}
     );
     const hide = Keyboard.addListener(
       Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide",
-      () => { },
+      () => {}
     );
     return () => {
       show.remove();
@@ -169,7 +166,9 @@ export default function ChatScreen() {
   const otherUserId = normalizeUserId(participantData);
   const isBlocked = useMemo(() => {
     if (!userData || !otherUserId) return false;
-    return userData.blockedUsers?.some((id: string) => String(id) === otherUserId);
+    return userData.blockedUsers?.some(
+      (id: string) => String(id) === otherUserId
+    );
   }, [userData, otherUserId]);
 
   // ─── Transform messages ──────────────────────────────────────────────────────
@@ -217,11 +216,11 @@ export default function ChatScreen() {
           (oldData: any[]) => {
             const exists = oldData?.some(
               (msg) =>
-                (msg._id || msg.id) === (data.message._id || data.message.id),
+                (msg._id || msg.id) === (data.message._id || data.message.id)
             );
             if (exists) return oldData;
             return [...(oldData || []), data.message];
-          },
+          }
         );
 
         // Also invalidate conversations list
@@ -328,9 +327,19 @@ export default function ChatScreen() {
   const submitReport = async (userId: string, reason: string) => {
     try {
       await reportUser(userId, reason);
-      CustomAlertManager.show("Report Submitted", "Thank you for helping us keep Zoopol safe. We will review this account.", [], { type: "success" });
+      CustomAlertManager.show(
+        "Report Submitted",
+        "Thank you for helping us keep Zoopol safe. We will review this account.",
+        [],
+        { type: "success" }
+      );
     } catch (error) {
-      CustomAlertManager.show("Report Submitted", "We will review this account shortly.", [], { type: "success" });
+      CustomAlertManager.show(
+        "Report Submitted",
+        "We will review this account shortly.",
+        [],
+        { type: "success" }
+      );
     }
   };
 
@@ -416,15 +425,28 @@ export default function ChatScreen() {
         },
       }}
       textStyle={{
-        right: { color: colors.white, fontSize: fontSizes.size16, fontFamily: "regular" },
-        left: { color: colors.black, fontSize: fontSizes.size16, fontFamily: "regular" },
+        right: {
+          color: colors.white,
+          fontSize: fontSizes.size16,
+          fontFamily: "regular",
+        },
+        left: {
+          color: colors.black,
+          fontSize: fontSizes.size16,
+          fontFamily: "regular",
+        },
       }}
       renderTicks={(currentMessage) => {
         if (currentMessage.user._id === currentUserId) {
           return (
             <View style={{ flexDirection: "row", marginRight: 4 }}>
               <AntDesign name="check" size={12} color="rgba(255,255,255,0.7)" />
-              <AntDesign name="check" size={12} color="rgba(255,255,255,0.7)" style={{ marginLeft: -8 }} />
+              <AntDesign
+                name="check"
+                size={12}
+                color="rgba(255,255,255,0.7)"
+                style={{ marginLeft: -8 }}
+              />
             </View>
           );
         }
@@ -459,8 +481,16 @@ export default function ChatScreen() {
     <Time
       {...props}
       timeTextStyle={{
-        right: { color: "rgba(255,255,255,0.7)", fontSize: fontSizes.size10, fontFamily: "regular" },
-        left: { color: colors.grey, fontSize: fontSizes.size10, fontFamily: "regular" },
+        right: {
+          color: "rgba(255,255,255,0.7)",
+          fontSize: fontSizes.size10,
+          fontFamily: "regular",
+        },
+        left: {
+          color: colors.grey,
+          fontSize: fontSizes.size10,
+          fontFamily: "regular",
+        },
       }}
     />
   );
@@ -513,7 +543,7 @@ export default function ChatScreen() {
         renderInputToolbar={renderInputToolbar}
         renderSend={renderSend}
         renderTime={renderTime}
-        renderAvatar={renderAvatar}  // ← single, clean, cached
+        renderAvatar={renderAvatar} // ← single, clean, cached
         textInputProps={{
           placeholder: isBlocked ? "Blocked" : "Type a message...",
           placeholderTextColor: colors.grey,
@@ -533,7 +563,7 @@ export default function ChatScreen() {
         listProps={{
           keyboardShouldPersistTaps: "never",
         }}
-      //messagesContainerStyle={{ paddingBottom: 20 }}
+        //messagesContainerStyle={{ paddingBottom: 20 }}
       />
     </View>
   );

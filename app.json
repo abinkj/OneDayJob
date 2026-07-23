@@ -2,12 +2,12 @@
   "expo": {
     "name": "Zoopol",
     "slug": "zoopol",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
-    "runtimeVersion": "1.0.0",
+    "runtimeVersion": "1.0.1",
     "updates": {
       "url": "https://u.expo.dev/819389f1-6170-4df9-b735-9831e39f5b21",
       "enabled": true,

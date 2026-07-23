@@ -61,7 +61,7 @@ const JobDetails = () => {
   const queryClient = useQueryClient();
   const insets = useSafeAreaInsets();
   const { kycStatus, userData } = useSelector(
-    (state: any) => state.authentication,
+    (state: any) => state.authentication
   );
   const userRole = userData?.role;
   const { jobId, jobData } = route.params || {};
@@ -80,7 +80,7 @@ const JobDetails = () => {
 
   const [arrivalLoading, setArrivalLoading] = useState(false);
   const [currentLocationAddress, setCurrentLocationAddress] = useState<string>(
-    "Getting location...",
+    "Getting location..."
   );
 
   // Helper variables for role-based logic
@@ -119,7 +119,10 @@ const JobDetails = () => {
         setJob(jobData);
 
         // FIX 4: Only check verification status if job requires verification AND user is not the employer
-        const isEmployerCheck = isJobOwner(jobData, userData?.id || userData?._id);
+        const isEmployerCheck = isJobOwner(
+          jobData,
+          userData?.id || userData?._id
+        );
         if (jobData.requiresVerification && jobId && !isEmployerCheck) {
           checkVerificationStatus();
         }
@@ -131,8 +134,11 @@ const JobDetails = () => {
           if (response.data?.success && response.data?.data) {
             const fetchedJob = response.data.data;
             setJob(fetchedJob);
-            
-            const isEmployerCheck = isJobOwner(fetchedJob, userData?.id || userData?._id);
+
+            const isEmployerCheck = isJobOwner(
+              fetchedJob,
+              userData?.id || userData?._id
+            );
             if (fetchedJob.requiresVerification && !isEmployerCheck) {
               checkVerificationStatus();
             }
@@ -165,13 +171,13 @@ const JobDetails = () => {
 
     socketService.on(
       "verification-status-updated",
-      handleVerificationStatusUpdated,
+      handleVerificationStatusUpdated
     );
 
     return () => {
       socketService.off(
         "verification-status-updated",
-        handleVerificationStatusUpdated,
+        handleVerificationStatusUpdated
       );
     };
   }, [jobId, job?.requiresVerification, isEmployer]);
@@ -190,7 +196,7 @@ const JobDetails = () => {
     } catch (error) {
       console.log(
         "No verification status available or user not assigned to job:",
-        error.message,
+        error.message
       );
       // This is expected for users who haven't applied or been accepted
     } finally {
@@ -211,7 +217,7 @@ const JobDetails = () => {
         employerName:
           `${job.userId?.firstName || ""} ${job.userId?.lastName || ""}`.trim(),
         employerImage: job.userId?.profilePicture,
-      }),
+      })
     );
     navigation.navigate("JobTimer", {
       jobId: job._id,
@@ -295,7 +301,10 @@ const JobDetails = () => {
         err?.message ||
         "Something went wrong";
 
-      if (errorMessage.includes("overlapping this time slot") || errorMessage.includes("user_1_onDate_1_fromTime_1_toTime_1")) {
+      if (
+        errorMessage.includes("overlapping this time slot") ||
+        errorMessage.includes("user_1_onDate_1_fromTime_1_toTime_1")
+      ) {
         Toast.show({
           type: "error",
           text1: "Application Failed",
@@ -419,8 +428,6 @@ const JobDetails = () => {
     }
   };
 
-
-
   const formatRequirements = (reqs: string[]) => {
     if (!reqs || reqs.length === 0) return "No specific requirements";
     return reqs.join(", ");
@@ -466,7 +473,7 @@ const JobDetails = () => {
                 },
                 { text: "Cancel", style: "cancel" },
               ],
-              { type: "info" },
+              { type: "info" }
             );
           },
         },
@@ -475,7 +482,7 @@ const JobDetails = () => {
           style: "cancel",
         },
       ],
-      { type: "warning", dismissable: true },
+      { type: "warning", dismissable: true }
     );
   };
 
@@ -487,14 +494,14 @@ const JobDetails = () => {
         "Report Submitted",
         "Thank you for the feedback. We will review this listing shortly.",
         [],
-        { type: "success" },
+        { type: "success" }
       );
     } catch (error) {
       CustomAlertManager.show(
         "Report Submitted",
         "We will review this listing shortly.",
         [],
-        { type: "success" },
+        { type: "success" }
       );
     }
   };
@@ -597,7 +604,7 @@ const JobDetails = () => {
             activeOpacity={0.7}
           >
             <View style={styles.mapIconContainer}>
-              <Image 
+              <Image
                 source={require("../../../assets/images/google_maps.png")}
                 style={{ width: 24, height: 24 }}
                 resizeMode="contain"
@@ -607,23 +614,38 @@ const JobDetails = () => {
               <Text
                 style={[
                   styles.locationTextPrimary,
-                  (job.jobStatus === "completed" || job.status === "completed") && { color: colors.grey }
+                  (job.jobStatus === "completed" ||
+                    job.status === "completed") && { color: colors.grey },
                 ]}
                 numberOfLines={2}
               >
                 {job.isRemote
                   ? "Remote Work"
-                  : `${job.location?.address || ""}${job.location?.city ? ", " + job.location.city : ""
-                  }${job.location?.state ? ", " + job.location.state : ""}${job.location?.country ? ", " + job.location.country : ""
-                  }`}
+                  : `${job.location?.address || ""}${
+                      job.location?.city ? ", " + job.location.city : ""
+                    }${job.location?.state ? ", " + job.location.state : ""}${
+                      job.location?.country ? ", " + job.location.country : ""
+                    }`}
               </Text>
-              {!job.isRemote && !(job.jobStatus === "completed" || job.status === "completed") && (
-                <Text style={styles.tapToViewText}>Tap to view on Google Maps</Text>
-              )}
+              {!job.isRemote &&
+                !(
+                  job.jobStatus === "completed" || job.status === "completed"
+                ) && (
+                  <Text style={styles.tapToViewText}>
+                    Tap to view on Google Maps
+                  </Text>
+                )}
             </View>
-            {!job.isRemote && !(job.jobStatus === "completed" || job.status === "completed") && (
-              <Ionicons name="chevron-forward" size={20} color={colors.primary} />
-            )}
+            {!job.isRemote &&
+              !(
+                job.jobStatus === "completed" || job.status === "completed"
+              ) && (
+                <Ionicons
+                  name="chevron-forward"
+                  size={20}
+                  color={colors.primary}
+                />
+              )}
           </TouchableOpacity>
         </View>
 
@@ -638,7 +660,7 @@ const JobDetails = () => {
               {job.fromTime && job.toTime && (
                 <Text style={{ fontWeight: "600", color: colors.black }}>
                   {`\nExact Time: ${format24to12h(
-                    job.fromTime,
+                    job.fromTime
                   )} - ${format24to12h(job.toTime)}`}
                 </Text>
               )}
@@ -741,7 +763,11 @@ const JobDetails = () => {
             {job.isCompletedByWorker ? (
               <View style={styles.verificationStatusContainer}>
                 <View style={styles.verificationStatusRow}>
-                  <Ionicons name="checkmark-circle" size={24} color={colors.darkGreen} />
+                  <Ionicons
+                    name="checkmark-circle"
+                    size={24}
+                    color={colors.darkGreen}
+                  />
                   <View style={styles.verificationStatusInfo}>
                     <Text
                       style={[
@@ -797,7 +823,10 @@ const JobDetails = () => {
                           <TouchableOpacity
                             style={[
                               styles.refreshCodeButtonLarge,
-                              { marginTop: 12, backgroundColor: colors.darkGreen },
+                              {
+                                marginTop: 12,
+                                backgroundColor: colors.darkGreen,
+                              },
                             ]}
                             onPress={handleArrival}
                             disabled={arrivalLoading}
@@ -956,9 +985,9 @@ const JobDetails = () => {
           <Text style={styles.sectionTitle}>Employer</Text>
           <View style={styles.employerContainer}>
             {job.userId?.profilePicture ? (
-              <Image 
-                source={{ uri: job.userId.profilePicture }} 
-                style={styles.employerAvatar} 
+              <Image
+                source={{ uri: job.userId.profilePicture }}
+                style={styles.employerAvatar}
               />
             ) : (
               <View style={styles.employerAvatar}>
@@ -1001,7 +1030,7 @@ const JobDetails = () => {
                 applicant === userData?.id ||
                 applicant === userData?._id ||
                 applicant?.id === userData?.id ||
-                applicant?._id === userData?._id,
+                applicant?._id === userData?._id
             )) ? (
             <CustomButton
               text="Applied"

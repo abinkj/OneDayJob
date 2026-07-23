@@ -5,10 +5,12 @@
 Fixed critical security vulnerability where MMKV encryption key was exposed in app bundle.
 
 ### Files Created
+
 - `utilities/encryptionKeyManager.ts` - Secure key generation & storage
 - `MMKV_SECURITY_FIX.md` - Detailed documentation
 
 ### Files Modified
+
 - `utilities/mmkvStore.tsx` - Async initialization with secure key
 - `app/_layout.tsx` - Initialize storage on app startup
 - `package.json` - Added expo-crypto dependency
@@ -34,6 +36,7 @@ Existing users will need to re-login (old data encrypted with old key becomes un
 ## 📝 Cleanup
 
 Remove from `.env`:
+
 ```
 EXPO_PUBLIC_MMKV_ENCRYPTION_KEY=...
 ```

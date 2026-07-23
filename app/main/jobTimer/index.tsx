@@ -40,7 +40,7 @@ interface JobTimerRouteParams {
 
 const JobTimerScreen = () => {
   const route = useRoute();
-  console.log(route.params)
+  console.log(route.params);
   const {
     jobId,
     jobName,
@@ -68,7 +68,7 @@ const JobTimerScreen = () => {
   // Calculate display time for worker (server-side calculation)
   const { displayTime } = useServerTimer(
     isEmployer ? null : workerSession.session?.session || null,
-    isEmployer ? null : workerSession.lastSyncTime,
+    isEmployer ? null : workerSession.lastSyncTime
   );
 
   const activeJob = useSelector((state: RootState) => state.activeJob);
@@ -108,7 +108,7 @@ const JobTimerScreen = () => {
       await employerDashboard.submitWorkerRating(
         selectedWorkerForRating.id,
         rating,
-        comment,
+        comment
       );
       setIsRatingModalVisible(false);
     } catch (error) {
@@ -192,7 +192,9 @@ const JobTimerScreen = () => {
                 forbiddenMessage={workerSession.forbiddenMessage}
                 employerId={employerId}
                 employerName={employerName}
-                employerPhoneNumber={employerPhoneNumberParam || employer?.phoneNumber}
+                employerPhoneNumber={
+                  employerPhoneNumberParam || employer?.phoneNumber
+                }
               />
             ) : (
               <WorkerTimerView

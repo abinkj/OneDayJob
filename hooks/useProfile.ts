@@ -90,7 +90,7 @@ export const useUpdateProfile = () => {
             ...oldData,
             ...normalizedData,
           };
-        },
+        }
       );
 
       // Update MMKV to keep it in sync

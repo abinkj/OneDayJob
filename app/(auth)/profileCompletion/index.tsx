@@ -1,9 +1,5 @@
 import React, { useState, useRef, useMemo } from "react";
-import {
-  View,
-  Text,
-  TouchableOpacity,
-} from "react-native";
+import { View, Text, TouchableOpacity } from "react-native";
 import { Image } from "expo-image";
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
@@ -30,7 +26,7 @@ const ProfileCompletion = () => {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [profileImage, setProfileImage] = useState<{ uri: string } | null>(
-    null,
+    null
   );
   const [isLoading, setIsLoading] = useState(false);
   const imagePickerRef = useRef<ImagePickerActionSheetRef>(null);
@@ -39,7 +35,7 @@ const ProfileCompletion = () => {
   const dispatch = useDispatch();
   const { showAlert } = useAlert();
   const { colors } = useTheme();
-  
+
   const styles = useMemo(() => createStyles(colors), [colors]);
 
   const showImagePicker = () => {
@@ -121,7 +117,7 @@ const ProfileCompletion = () => {
           }
         } catch (uploadError) {
           throw new Error(
-            "Failed to upload profile picture. Please try again.",
+            "Failed to upload profile picture. Please try again."
           );
         }
       }

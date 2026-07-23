@@ -10,7 +10,9 @@ const API_URL = process.env.EXPO_PUBLIC_API_URL;
 
 const TestSocketScreen = () => {
   const { colors } = useTheme();
-  const [activeTab, setActiveTab] = useState<"simulator" | "viewer">("simulator");
+  const [activeTab, setActiveTab] = useState<"simulator" | "viewer">(
+    "simulator"
+  );
   const [messages, setMessages] = useState<any[]>([]);
   const [currentStatus, setCurrentStatus] = useState<string | null>(null);
 
@@ -48,8 +50,8 @@ const TestSocketScreen = () => {
       if (!data.success) {
         Alert.alert("Error", data.message || "Simulation failed");
       } else {
-         // Auto-switch to viewer to see the result
-         setActiveTab("viewer");
+        // Auto-switch to viewer to see the result
+        setActiveTab("viewer");
       }
     } catch (error) {
       console.error(error);
@@ -63,18 +65,26 @@ const TestSocketScreen = () => {
   };
 
   const getStatusColor = (status: string) => {
-    switch(status) {
-      case "started": return colors.primary;
-      case "paused": return colors.yellow || "#f39c12";
-      case "completed": return colors.green || "#2ecc71";
-      default: return colors.grey;
+    switch (status) {
+      case "started":
+        return colors.primary;
+      case "paused":
+        return colors.yellow || "#f39c12";
+      case "completed":
+        return colors.green || "#2ecc71";
+      default:
+        return colors.grey;
     }
   };
 
   const renderItem = ({ item }: { item: any }) => (
     <View style={[styles.messageCard, { backgroundColor: colors.white }]}>
       <View style={[styles.iconBox, { backgroundColor: colors.categoryBox }]}>
-        <Ionicons name="briefcase" size={20} color={getStatusColor(item.status)} />
+        <Ionicons
+          name="briefcase"
+          size={20}
+          color={getStatusColor(item.status)}
+        />
       </View>
       <View style={styles.textContent}>
         <Text style={[styles.messageText, { color: colors.black }]}>
@@ -83,8 +93,13 @@ const TestSocketScreen = () => {
         <Text style={[styles.detailText, { color: colors.grey }]}>
           Worker: {item.workerId}
         </Text>
-        <View style={[styles.statusBadge, { backgroundColor: getStatusColor(item.status) }]}>
-           <Text style={styles.statusText}>{item.status}</Text>
+        <View
+          style={[
+            styles.statusBadge,
+            { backgroundColor: getStatusColor(item.status) },
+          ]}
+        >
+          <Text style={styles.statusText}>{item.status}</Text>
         </View>
         <Text style={[styles.timestampText, { color: colors.grey }]}>
           {new Date(item.timestamp).toLocaleTimeString()}
@@ -100,24 +115,51 @@ const TestSocketScreen = () => {
     const isPaused = currentStatus === "paused";
     const isCompleted = currentStatus === "completed";
 
-    const bannerBg = isWorking ? colors.primary + '15' : isPaused ? (colors.yellow || "#f39c12") + '15' : (colors.green || "#2ecc71") + '15';
-    const bannerBorder = isWorking ? colors.primary : isPaused ? (colors.yellow || "#f39c12") : (colors.green || "#2ecc71");
-    const bannerColor = isWorking ? colors.primary : isPaused ? (colors.yellow || "#d68910") : (colors.green || "#27ae60");
-    const iconName = isWorking ? "timer-outline" : isPaused ? "pause-circle-outline" : "checkmark-circle-outline";
+    const bannerBg = isWorking
+      ? colors.primary + "15"
+      : isPaused
+        ? (colors.yellow || "#f39c12") + "15"
+        : (colors.green || "#2ecc71") + "15";
+    const bannerBorder = isWorking
+      ? colors.primary
+      : isPaused
+        ? colors.yellow || "#f39c12"
+        : colors.green || "#2ecc71";
+    const bannerColor = isWorking
+      ? colors.primary
+      : isPaused
+        ? colors.yellow || "#d68910"
+        : colors.green || "#27ae60";
+    const iconName = isWorking
+      ? "timer-outline"
+      : isPaused
+        ? "pause-circle-outline"
+        : "checkmark-circle-outline";
 
     return (
-      <View style={[styles.bannerContainer, { backgroundColor: bannerBg, borderColor: bannerBorder }]}>
+      <View
+        style={[
+          styles.bannerContainer,
+          { backgroundColor: bannerBg, borderColor: bannerBorder },
+        ]}
+      >
         <View style={[styles.bannerIcon, { backgroundColor: bannerBorder }]}>
           <Ionicons name={iconName as any} size={28} color={colors.white} />
         </View>
         <View style={styles.bannerTextContent}>
           <Text style={[styles.bannerTitle, { color: bannerColor }]}>
-            {isWorking ? "Job is Working" : isPaused ? "Job is Paused" : "Job Completed"}
+            {isWorking
+              ? "Job is Working"
+              : isPaused
+                ? "Job is Paused"
+                : "Job Completed"}
           </Text>
           <Text style={[styles.bannerSubtitle, { color: colors.grey }]}>
-            {isWorking ? "Current session is active and tracking time." : 
-             isPaused ? "The timer has been paused. Resume to continue." : 
-             "This job session has been finalized."}
+            {isWorking
+              ? "Current session is active and tracking time."
+              : isPaused
+                ? "The timer has been paused. Resume to continue."
+                : "This job session has been finalized."}
           </Text>
         </View>
       </View>
@@ -129,19 +171,43 @@ const TestSocketScreen = () => {
       <Header title="Job Status Simulator" showBackButton />
 
       <View style={[styles.tabContainer, { backgroundColor: colors.white }]}>
-        <TouchableOpacity 
-          style={[styles.tab, activeTab === "simulator" && [styles.activeTab, { borderBottomColor: colors.primary }]]} 
+        <TouchableOpacity
+          style={[
+            styles.tab,
+            activeTab === "simulator" && [
+              styles.activeTab,
+              { borderBottomColor: colors.primary },
+            ],
+          ]}
           onPress={() => setActiveTab("simulator")}
         >
-          <Text style={[styles.tabText, { color: activeTab === "simulator" ? colors.primary : colors.grey }]}>
+          <Text
+            style={[
+              styles.tabText,
+              {
+                color: activeTab === "simulator" ? colors.primary : colors.grey,
+              },
+            ]}
+          >
             Simulator
           </Text>
         </TouchableOpacity>
-        <TouchableOpacity 
-          style={[styles.tab, activeTab === "viewer" && [styles.activeTab, { borderBottomColor: colors.primary }]]} 
+        <TouchableOpacity
+          style={[
+            styles.tab,
+            activeTab === "viewer" && [
+              styles.activeTab,
+              { borderBottomColor: colors.primary },
+            ],
+          ]}
           onPress={() => setActiveTab("viewer")}
         >
-          <Text style={[styles.tabText, { color: activeTab === "viewer" ? colors.primary : colors.grey }]}>
+          <Text
+            style={[
+              styles.tabText,
+              { color: activeTab === "viewer" ? colors.primary : colors.grey },
+            ]}
+          >
             Viewer
           </Text>
         </TouchableOpacity>
@@ -149,38 +215,70 @@ const TestSocketScreen = () => {
 
       {activeTab === "simulator" ? (
         <View style={styles.simulatorContainer}>
-          <Text style={{ color: colors.black, fontSize: 18, marginBottom: 20, fontWeight: "600" }}>
+          <Text
+            style={{
+              color: colors.black,
+              fontSize: 18,
+              marginBottom: 20,
+              fontWeight: "600",
+            }}
+          >
             Trigger Status Updates
           </Text>
-          
-          <TouchableOpacity 
+
+          <TouchableOpacity
             style={[styles.simButton, { backgroundColor: colors.primary }]}
             onPress={() => simulateAction("started")}
           >
-            <Text style={[styles.buttonText, { color: colors.white }]}>Simulate Job Started</Text>
+            <Text style={[styles.buttonText, { color: colors.white }]}>
+              Simulate Job Started
+            </Text>
           </TouchableOpacity>
-          
-          <TouchableOpacity 
-            style={[styles.simButton, { backgroundColor: colors.yellow || "#f39c12" }]}
+
+          <TouchableOpacity
+            style={[
+              styles.simButton,
+              { backgroundColor: colors.yellow || "#f39c12" },
+            ]}
             onPress={() => simulateAction("paused")}
           >
-            <Text style={[styles.buttonText, { color: colors.white }]}>Simulate Job Paused</Text>
+            <Text style={[styles.buttonText, { color: colors.white }]}>
+              Simulate Job Paused
+            </Text>
           </TouchableOpacity>
-          
-          <TouchableOpacity 
-            style={[styles.simButton, { backgroundColor: colors.green || "#2ecc71" }]}
+
+          <TouchableOpacity
+            style={[
+              styles.simButton,
+              { backgroundColor: colors.green || "#2ecc71" },
+            ]}
             onPress={() => simulateAction("completed")}
           >
-            <Text style={[styles.buttonText, { color: colors.white }]}>Simulate Job Completed</Text>
+            <Text style={[styles.buttonText, { color: colors.white }]}>
+              Simulate Job Completed
+            </Text>
           </TouchableOpacity>
         </View>
       ) : (
         <View style={styles.container}>
           <JobStatusBanner />
-          
-          <View style={[styles.actionContainer, { justifyContent: "flex-end", paddingBottom: 0 }]}>
+
+          <View
+            style={[
+              styles.actionContainer,
+              { justifyContent: "flex-end", paddingBottom: 0 },
+            ]}
+          >
             <TouchableOpacity
-              style={[styles.button, { backgroundColor: colors.categoryBox, paddingVertical: 8, paddingHorizontal: 16, flex: 0 }]}
+              style={[
+                styles.button,
+                {
+                  backgroundColor: colors.categoryBox,
+                  paddingVertical: 8,
+                  paddingHorizontal: 16,
+                  flex: 0,
+                },
+              ]}
               onPress={clearMessages}
               activeOpacity={0.8}
             >
@@ -192,7 +290,9 @@ const TestSocketScreen = () => {
 
           <FlatList
             data={messages}
-            keyExtractor={(item, index) => item.jobId?.toString() + index.toString()}
+            keyExtractor={(item, index) =>
+              item.jobId?.toString() + index.toString()
+            }
             renderItem={renderItem}
             contentContainerStyle={styles.listContent}
             showsVerticalScrollIndicator={false}

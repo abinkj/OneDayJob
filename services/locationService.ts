@@ -88,13 +88,13 @@ export const getHighAccuracyLocation =
 
     // Fast path: use a recent, accurate cached fix if available
     const lastKnown = await Location.getLastKnownPositionAsync({
-      maxAge: 30_000,        // no older than 30 seconds
-      requiredAccuracy: 20,  // no worse than 20 m
+      maxAge: 30_000, // no older than 30 seconds
+      requiredAccuracy: 20, // no worse than 20 m
     });
     if (lastKnown) {
       console.log(
         `[Location] GPS fix via cache — ${Date.now() - t0} ms` +
-        ` | accuracy: ${lastKnown.coords.accuracy?.toFixed(1) ?? "??"} m`
+          ` | accuracy: ${lastKnown.coords.accuracy?.toFixed(1) ?? "??"} m`
       );
       return lastKnown;
     }
@@ -105,7 +105,7 @@ export const getHighAccuracyLocation =
     });
     console.log(
       `[Location] Initial GPS fix — ${Date.now() - t0} ms` +
-      ` | accuracy: ${best.coords.accuracy?.toFixed(1) ?? "??"} m`
+        ` | accuracy: ${best.coords.accuracy?.toFixed(1) ?? "??"} m`
     );
 
     for (let attempt = 0; attempt < 3; attempt++) {
@@ -121,18 +121,20 @@ export const getHighAccuracyLocation =
         const candidateAcc = candidate.coords.accuracy ?? Infinity;
         console.log(
           `[Location] GPS retry ${attempt + 1} — ${Date.now() - t0} ms` +
-          ` | accuracy: ${candidateAcc.toFixed(1)} m` +
-          (candidateAcc < bestAcc ? " ✓ improved" : " — no improvement")
+            ` | accuracy: ${candidateAcc.toFixed(1)} m` +
+            (candidateAcc < bestAcc ? " ✓ improved" : " — no improvement")
         );
         if (candidateAcc < bestAcc) best = candidate;
       } catch {
-        console.log(`[Location] GPS retry ${attempt + 1} failed — ${Date.now() - t0} ms`);
+        console.log(
+          `[Location] GPS retry ${attempt + 1} failed — ${Date.now() - t0} ms`
+        );
       }
     }
 
     console.log(
       `[Location] GPS acquisition done — ${Date.now() - t0} ms total` +
-      ` | best accuracy: ${best.coords.accuracy?.toFixed(1) ?? "??"} m`
+        ` | best accuracy: ${best.coords.accuracy?.toFixed(1) ?? "??"} m`
     );
     return best;
   };
@@ -172,21 +174,27 @@ const reverseGeocodeWithGoogle = async (
 
     for (const c of components) {
       const types: string[] = c.types ?? [];
-      if (types.includes("street_number"))            streetNumber = c.long_name;
-      else if (types.includes("route"))               route = c.long_name;
-      else if (types.includes("locality"))            locationData.city = c.long_name;
-      else if (types.includes("sublocality") || types.includes("neighborhood")) {
+      if (types.includes("street_number")) streetNumber = c.long_name;
+      else if (types.includes("route")) route = c.long_name;
+      else if (types.includes("locality")) locationData.city = c.long_name;
+      else if (
+        types.includes("sublocality") ||
+        types.includes("neighborhood")
+      ) {
         locationData.district ??= c.long_name;
-      }
-      else if (types.includes("administrative_area_level_1")) locationData.state   = c.long_name;
-      else if (types.includes("administrative_area_level_2")) locationData.subregion = c.long_name;
-      else if (types.includes("country"))             locationData.country  = c.long_name;
-      else if (types.includes("postal_code"))         locationData.zipCode  = c.long_name;
-      else if (types.includes("premise"))             locationData.name     = c.long_name;
+      } else if (types.includes("administrative_area_level_1"))
+        locationData.state = c.long_name;
+      else if (types.includes("administrative_area_level_2"))
+        locationData.subregion = c.long_name;
+      else if (types.includes("country")) locationData.country = c.long_name;
+      else if (types.includes("postal_code"))
+        locationData.zipCode = c.long_name;
+      else if (types.includes("premise")) locationData.name = c.long_name;
     }
 
-    locationData.address = [streetNumber, route].filter(Boolean).join(" ")
-      || stripPlusCode(best.formatted_address?.split(",")[0] ?? "");
+    locationData.address =
+      [streetNumber, route].filter(Boolean).join(" ") ||
+      stripPlusCode(best.formatted_address?.split(",")[0] ?? "");
 
     return locationData;
   } catch {
@@ -203,7 +211,10 @@ const reverseGeocodeWithExpo = async (
   extras: Partial<LocationData> = {}
 ): Promise<LocationData | null> => {
   try {
-    const [result] = await Location.reverseGeocodeAsync({ latitude, longitude });
+    const [result] = await Location.reverseGeocodeAsync({
+      latitude,
+      longitude,
+    });
     if (!result) return null;
 
     return {
@@ -211,11 +222,11 @@ const reverseGeocodeWithExpo = async (
       address: stripPlusCode(
         `${result.streetNumber ?? ""} ${result.street ?? ""}`.trim()
       ),
-      city:     result.city     ?? "",
-      state:    result.region   ?? "",
-      country:  result.country  ?? "United States",
-      zipCode:  result.postalCode ?? "",
-      name:     result.name     ?? null,
+      city: result.city ?? "",
+      state: result.region ?? "",
+      country: result.country ?? "United States",
+      zipCode: result.postalCode ?? "",
+      name: result.name ?? null,
       district: result.district ?? null,
       subregion: result.subregion ?? null,
     };
@@ -254,7 +265,9 @@ export const getCurrentLocation = async (): Promise<LocationData | null> => {
     } catch {
       // getHighAccuracyLocation already tries getLastKnownPositionAsync, but if
       // everything fails fall back to any cached fix with no constraints.
-      console.log(`[Location] getHighAccuracyLocation failed, trying unconstrained cache — ${Date.now() - t0} ms`);
+      console.log(
+        `[Location] getHighAccuracyLocation failed, trying unconstrained cache — ${Date.now() - t0} ms`
+      );
       position = await Location.getLastKnownPositionAsync({});
     }
 
@@ -273,27 +286,31 @@ export const getCurrentLocation = async (): Promise<LocationData | null> => {
     if (googleResult) {
       console.log(
         `[Location] ✓ Done (Google geocode) — total: ${Date.now() - t0} ms` +
-        ` | geocode: ${Date.now() - tGeocode} ms` +
-        ` | accuracy: ${accuracy?.toFixed(1) ?? "??"} m` +
-        (isMocked ? " | ⚠️ mocked" : "")
+          ` | geocode: ${Date.now() - tGeocode} ms` +
+          ` | accuracy: ${accuracy?.toFixed(1) ?? "??"} m` +
+          (isMocked ? " | ⚠️ mocked" : "")
       );
       return { ...googleResult, ...extras };
     }
 
-    const expoResult = await reverseGeocodeWithExpo(latitude, longitude, extras);
+    const expoResult = await reverseGeocodeWithExpo(
+      latitude,
+      longitude,
+      extras
+    );
     if (expoResult) {
       console.log(
         `[Location] ✓ Done (Expo geocode fallback) — total: ${Date.now() - t0} ms` +
-        ` | geocode: ${Date.now() - tGeocode} ms` +
-        ` | accuracy: ${accuracy?.toFixed(1) ?? "??"} m` +
-        (isMocked ? " | ⚠️ mocked" : "")
+          ` | geocode: ${Date.now() - tGeocode} ms` +
+          ` | accuracy: ${accuracy?.toFixed(1) ?? "??"} m` +
+          (isMocked ? " | ⚠️ mocked" : "")
       );
       return expoResult;
     }
 
     console.log(
       `[Location] ✓ Done (coordinates only, geocode failed) — total: ${Date.now() - t0} ms` +
-      ` | accuracy: ${accuracy?.toFixed(1) ?? "??"} m`
+        ` | accuracy: ${accuracy?.toFixed(1) ?? "??"} m`
     );
     return emptyLocationAt(latitude, longitude, extras);
   } catch (err) {
@@ -351,20 +368,22 @@ export const getPlaceDetails = async (
 
     for (const c of components) {
       const types: string[] = c.types ?? [];
-      if (types.includes("street_number"))            streetNumber = c.long_name;
-      else if (types.includes("route"))               route = c.long_name;
-      else if (types.includes("locality"))            locationData.city = c.long_name;
+      if (types.includes("street_number")) streetNumber = c.long_name;
+      else if (types.includes("route")) route = c.long_name;
+      else if (types.includes("locality")) locationData.city = c.long_name;
       else if (
         types.includes("sublocality") ||
         types.includes("neighborhood") ||
         types.includes("sublocality_level_1")
       ) {
         locationData.district ??= c.long_name;
-      }
-      else if (types.includes("administrative_area_level_1")) locationData.state     = c.long_name;
-      else if (types.includes("administrative_area_level_2")) locationData.subregion  = c.long_name;
-      else if (types.includes("country"))             locationData.country   = c.long_name;
-      else if (types.includes("postal_code"))         locationData.zipCode   = c.long_name;
+      } else if (types.includes("administrative_area_level_1"))
+        locationData.state = c.long_name;
+      else if (types.includes("administrative_area_level_2"))
+        locationData.subregion = c.long_name;
+      else if (types.includes("country")) locationData.country = c.long_name;
+      else if (types.includes("postal_code"))
+        locationData.zipCode = c.long_name;
       else if (
         types.includes("point_of_interest") ||
         types.includes("premise") ||
@@ -374,7 +393,10 @@ export const getPlaceDetails = async (
       }
     }
 
-    locationData.address = [streetNumber, route].filter(Boolean).join(" ").trim();
+    locationData.address = [streetNumber, route]
+      .filter(Boolean)
+      .join(" ")
+      .trim();
     return locationData;
   } catch {
     return null;
@@ -400,9 +422,11 @@ export const searchPlacesFallback = async (
     if (!geoResults.length) return [];
 
     const settled = await Promise.allSettled(
-      geoResults.slice(0, 5).map(({ latitude, longitude }) =>
-        reverseGeocodeWithExpo(latitude, longitude)
-      )
+      geoResults
+        .slice(0, 5)
+        .map(({ latitude, longitude }) =>
+          reverseGeocodeWithExpo(latitude, longitude)
+        )
     );
 
     return settled

@@ -50,11 +50,14 @@ export const useJobPostings = (filters: JobFilters) => {
   return useInfiniteQuery({
     queryKey: ["jobs", filters],
     queryFn: async ({ pageParam = 1, signal }) => {
-      const response = await getJobPostings({
-        ...filters,
-        page: pageParam,
-        limit: 20
-      }, signal);
+      const response = await getJobPostings(
+        {
+          ...filters,
+          page: pageParam,
+          limit: 20,
+        },
+        signal
+      );
 
       // Handle different response structures
       let jobs: JobPost[] = [];
@@ -74,7 +77,7 @@ export const useJobPostings = (filters: JobFilters) => {
       return {
         jobs,
         page: pageParam,
-        hasMore
+        hasMore,
       };
     },
     initialPageParam: 1,
@@ -88,7 +91,7 @@ export const useJobPostings = (filters: JobFilters) => {
     retry: (failureCount, error: any) => {
       // Don't retry on 429 (Too Many Requests) or canceled requests
       if (error.response?.status === 429) return false;
-      if (error.name === 'CanceledError' || error.code === 'ERR_CANCELED') {
+      if (error.name === "CanceledError" || error.code === "ERR_CANCELED") {
         return false;
       }
       return failureCount < 2;
@@ -101,7 +104,12 @@ export const useUserJobPostings = (userId: string | undefined) => {
     queryKey: ["userJobs", userId],
     queryFn: async ({ pageParam = 1, signal }) => {
       if (!userId) return { data: [], hasMore: false };
-      const response = await getJobPostingsByUserId(userId, pageParam, 10, signal);
+      const response = await getJobPostingsByUserId(
+        userId,
+        pageParam,
+        10,
+        signal
+      );
       return response;
     },
     initialPageParam: 1,
@@ -114,7 +122,7 @@ export const useUserJobPostings = (userId: string | undefined) => {
     refetchOnMount: true,
     retry: (failureCount, error: any) => {
       if (error.response?.status === 429) return false;
-      if (error.name === 'CanceledError' || error.code === 'ERR_CANCELED') {
+      if (error.name === "CanceledError" || error.code === "ERR_CANCELED") {
         return false;
       }
       return failureCount < 2;
@@ -127,7 +135,12 @@ export const useUserAppliedJobs = (userId: string | undefined) => {
     queryKey: ["userAppliedJobs", userId],
     queryFn: async ({ pageParam = 1, signal }) => {
       if (!userId) return { data: [], hasMore: false };
-      const response = await getAppliedJobsByUserId(userId, pageParam, 10, signal);
+      const response = await getAppliedJobsByUserId(
+        userId,
+        pageParam,
+        10,
+        signal
+      );
       return response;
     },
     initialPageParam: 1,
@@ -140,7 +153,7 @@ export const useUserAppliedJobs = (userId: string | undefined) => {
     refetchOnMount: true,
     retry: (failureCount, error: any) => {
       if (error.response?.status === 429) return false;
-      if (error.name === 'CanceledError' || error.code === 'ERR_CANCELED') {
+      if (error.name === "CanceledError" || error.code === "ERR_CANCELED") {
         return false;
       }
       return failureCount < 2;
@@ -168,4 +181,3 @@ export const useWithdrawApplication = () => {
     },
   });
 };
-

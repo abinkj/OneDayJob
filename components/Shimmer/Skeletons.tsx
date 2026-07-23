@@ -49,7 +49,9 @@ export const JobCardSkeleton = () => {
 export const JobDetailsSkeleton = () => {
   const { colors } = useTheme();
   return (
-    <View style={[styles.detailsContainer, { backgroundColor: colors.background }]}>
+    <View
+      style={[styles.detailsContainer, { backgroundColor: colors.background }]}
+    >
       {/* Header / Map placeholder */}
       <ShimmerPlaceholder
         width="100%"
@@ -133,7 +135,9 @@ export const JobDetailsSkeleton = () => {
 export const ProfileSkeleton = () => {
   const { colors } = useTheme();
   return (
-    <View style={[styles.profileContainer, { backgroundColor: colors.background }]}>
+    <View
+      style={[styles.profileContainer, { backgroundColor: colors.background }]}
+    >
       {/* Profile Header */}
       <View style={{ alignItems: "center", marginVertical: 20 }}>
         <ShimmerPlaceholder
@@ -181,7 +185,10 @@ export const ChatListSkeleton = () => {
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
       {[1, 2, 3, 4, 5, 6].map((item) => (
-        <View key={item} style={[styles.chatListItem, { borderBottomColor: colors.border }]}>
+        <View
+          key={item}
+          style={[styles.chatListItem, { borderBottomColor: colors.border }]}
+        >
           <ShimmerPlaceholder
             width={50}
             height={50}
@@ -281,7 +288,7 @@ export const CategorySkeleton = () => {
           justifyContent: "space-between",
         }}
       >
-        {[1, 2, 3, 4, 5, 6, 7, 8,9,10,11,12].map((item) => (
+        {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((item) => (
           <View
             key={item}
             style={{

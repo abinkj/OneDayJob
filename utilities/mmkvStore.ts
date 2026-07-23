@@ -38,7 +38,7 @@ export const initializeStorage = async (): Promise<void> => {
 const getStorage = (): MMKV => {
   if (storageInstance === null) {
     throw new Error(
-      "MMKV storage not initialized. Call initializeStorage() first.",
+      "MMKV storage not initialized. Call initializeStorage() first."
     );
   }
   return storageInstance;
@@ -50,7 +50,7 @@ const USER_DATA_KEY = "USER";
 
 // Private — only used by normalizeUser
 const deriveLocationString = (
-  location: string | UserLocation | undefined,
+  location: string | UserLocation | undefined
 ): string | undefined => {
   if (!location) return undefined;
   if (typeof location === "string") return location;

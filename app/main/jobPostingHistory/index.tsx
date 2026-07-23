@@ -18,17 +18,14 @@ import StatusFilter from "../../../components/statusFilter";
 import { JobCardSkeleton } from "../../../components/Shimmer/Skeletons";
 import { useUserJobPostings, useDeleteJob } from "../../../hooks/useJobs";
 import { JobPost } from "../../../types";
-import {
-  getJobStatusInfo,
-  JOB_STATUSES,
-} from "../../../utilities/statusUtils";
+import { getJobStatusInfo, JOB_STATUSES } from "../../../utilities/statusUtils";
 import { createStyles } from "./styles";
 
 const JobPostingHistory = () => {
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const navigation = useNavigation<any>();
-  
+
   const userData = useSelector((state: any) => state.authentication.userData);
   const userId = userData?.id || userData?._id;
 
@@ -159,7 +156,7 @@ const JobPostingHistory = () => {
   return (
     <View style={styles.container}>
       <Header title="Job Posting History" showBackButton />
-      
+
       {/* {posts.length > 0 && (
         <StatusFilter
           statuses={availableStatuses}
@@ -176,7 +173,7 @@ const JobPostingHistory = () => {
         keyExtractor={(item) => item._id}
         contentContainerStyle={[
           styles.listContent,
-          filteredPosts.length === 0 && { flexGrow: 1 }
+          filteredPosts.length === 0 && { flexGrow: 1 },
         ]}
         showsVerticalScrollIndicator={false}
         refreshControl={

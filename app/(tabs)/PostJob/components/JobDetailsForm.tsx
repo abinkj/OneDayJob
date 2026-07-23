@@ -218,7 +218,7 @@ const JobDetailsForm: React.FC<JobDetailsFormProps> = ({
             onLocationSelect={(location) => {
               setSelectedLocation(location);
               setTaskAddress(
-                location.address || `${location.city}, ${location.state}`,
+                location.address || `${location.city}, ${location.state}`
               );
             }}
             placeholder="Search for a location..."

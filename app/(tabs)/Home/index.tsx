@@ -75,7 +75,7 @@ const HomeScreen = () => {
     if (activeJobState.allWorkersCompleted) {
       setSuccessMessage("All Workers Completed!");
       setSuccessSubMessage(
-        `Great job! ${activeJobState.job?.name} is fully complete.`,
+        `Great job! ${activeJobState.job?.name} is fully complete.`
       );
       setShowSuccessAnimation(true);
     } else if (activeJobState.lastWorkerCompletion) {
@@ -94,7 +94,7 @@ const HomeScreen = () => {
     sendJobUpdateNotification(
       "test-job-123",
       "Test Job",
-      "Test update notification",
+      "Test update notification"
     );
   };
 
@@ -150,7 +150,7 @@ const HomeScreen = () => {
       "scrollToTop_Home",
       () => {
         scrollViewRef.current?.scrollToOffset({ offset: 0, animated: true });
-      },
+      }
     );
     return () => subscription.remove();
   }, []);
@@ -175,7 +175,7 @@ const HomeScreen = () => {
     lat1: number,
     lon1: number,
     lat2: number,
-    lon2: number,
+    lon2: number
   ): number => {
     const R = 6371;
     const dLat = ((lat2 - lat1) * Math.PI) / 180;
@@ -193,7 +193,7 @@ const HomeScreen = () => {
   const processAndSortJobs = (
     jobs: JobPost[],
     userLocation: Coordinates | null, // FIX 4: typed
-    priceSort: string | null,
+    priceSort: string | null
   ) => {
     const NOW = Date.now();
     const ONE_DAY = 24 * 60 * 60 * 1000;
@@ -221,7 +221,7 @@ const HomeScreen = () => {
           userLocation.latitude,
           userLocation.longitude,
           jobLat,
-          jobLng,
+          jobLng
         );
       }
 
@@ -252,7 +252,7 @@ const HomeScreen = () => {
     const activeJobs = jobsWithMeta.filter((job) => {
       const status = (job.jobStatus || job.status || "").toLowerCase();
       return !["completed", "cancelled", "expired", "rejected"].includes(
-        status,
+        status
       );
     });
 
@@ -307,7 +307,7 @@ const HomeScreen = () => {
       console.log(
         "[HomeScreen] Location fetched with high accuracy:",
         locationData.accuracy ? `${locationData.accuracy}m` : "Unknown",
-        locationData,
+        locationData
       );
 
       // FIX 1: record when we last successfully fetched
@@ -317,7 +317,7 @@ const HomeScreen = () => {
         try {
           console.log(
             "[HomeScreen] Updating backend location for user:",
-            userData.id,
+            userData.id
           );
           await updateUserLocationWithRetry({
             coordinates: {
@@ -334,7 +334,7 @@ const HomeScreen = () => {
         } catch (updateError) {
           console.error(
             "[HomeScreen] Backend location update failed:",
-            updateError,
+            updateError
           );
         }
       }
@@ -409,7 +409,7 @@ const HomeScreen = () => {
         j.isRemote ||
         j.distance === null ||
         j.distance === undefined ||
-        j.distance <= NEARBY_RADIUS_KM,
+        j.distance <= NEARBY_RADIUS_KM
     );
   }, [jobsWithDistance, location]);
 
@@ -445,12 +445,12 @@ const HomeScreen = () => {
           try {
             await updateUserLocationWithRetry(selectedLocation);
             console.log(
-              "[HomeScreen] User location updated with searched location",
+              "[HomeScreen] User location updated with searched location"
             );
           } catch (updateError) {
             console.error(
               "[HomeScreen] Failed to update user location in backend:",
-              updateError,
+              updateError
             );
           }
         }
@@ -535,7 +535,7 @@ const HomeScreen = () => {
         const msSinceLastFetch = Date.now() - lastLocationFetchAt.current;
         if (msSinceLastFetch < LOCATION_REFETCH_THROTTLE_MS) {
           console.log(
-            `[HomeScreen] Skipping location fetch — last fetch was ${Math.round(msSinceLastFetch / 1000)}s ago`,
+            `[HomeScreen] Skipping location fetch — last fetch was ${Math.round(msSinceLastFetch / 1000)}s ago`
           );
           refetchJobs();
           return;
@@ -543,7 +543,7 @@ const HomeScreen = () => {
 
         try {
           console.log(
-            "[HomeScreen] Home focused — refreshing location and jobs...",
+            "[HomeScreen] Home focused — refreshing location and jobs..."
           );
           await fetchCurrentLocation();
           refetchJobs();
@@ -553,7 +553,7 @@ const HomeScreen = () => {
       };
 
       fetchLocationAndRefetch();
-    }, [isInitialized, refetchJobs]),
+    }, [isInitialized, refetchJobs])
   );
 
   const backPressedOnce = useRef(false);
@@ -579,11 +579,11 @@ const HomeScreen = () => {
 
       const subscription = BackHandler.addEventListener(
         "hardwareBackPress",
-        onBackPress,
+        onBackPress
       );
 
       return () => subscription.remove();
-    }, []),
+    }, [])
   );
 
   const handleArrival = async (item: any) => {
@@ -831,7 +831,7 @@ const HomeScreen = () => {
     const getSelectedPriceName = () => {
       if (!selectedPriceSort) return "Price";
       const priceOption = priceOptions.find(
-        (opt) => opt.id === selectedPriceSort,
+        (opt) => opt.id === selectedPriceSort
       );
       return priceOption ? priceOption.name : "Price";
     };
@@ -839,7 +839,7 @@ const HomeScreen = () => {
     const getSelectedDistanceName = () => {
       if (!selectedDistance) return "Distance";
       const distanceOption = distanceOptions.find(
-        (opt) => opt.id === selectedDistance,
+        (opt) => opt.id === selectedDistance
       );
       return distanceOption ? distanceOption.name : "Distance";
     };
@@ -1006,7 +1006,7 @@ const HomeScreen = () => {
               const offsetY = event.nativeEvent.contentOffset.y;
               setIsFilterSticky(offsetY >= STICKY_OFFSET);
             },
-          },
+          }
         )}
         scrollEventThrottle={16}
         refreshControl={

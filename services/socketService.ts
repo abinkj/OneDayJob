@@ -33,7 +33,10 @@ export interface SocketEvents {
     conversationId: string;
   }) => void;
   "message-sent": (data: { message: any; conversationId: string }) => void;
-  "messages-read": (data: { conversationId: string; readCount: number }) => void;
+  "messages-read": (data: {
+    conversationId: string;
+    readCount: number;
+  }) => void;
 
   "conversation-joined": (data: {
     conversationId: string;
@@ -188,7 +191,9 @@ class SocketService {
       10000
     );
 
-    console.log(`Attempting to reconnect in ${delay}ms (attempt ${this.reconnectAttempts})`);
+    console.log(
+      `Attempting to reconnect in ${delay}ms (attempt ${this.reconnectAttempts})`
+    );
 
     setTimeout(async () => {
       // ── Don't bother reconnecting if still offline

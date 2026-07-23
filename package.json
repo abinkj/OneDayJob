@@ -81,6 +81,7 @@
     "@babel/core": "^7.20.0",
     "@types/react": "~19.1.10",
     "babel-plugin-transform-remove-console": "^6.9.4",
+    "prettier": "^3.9.6",
     "typescript": "~5.9.2"
   },
   "private": true

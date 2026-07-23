@@ -2,7 +2,12 @@ import { configureStore, combineReducers } from "@reduxjs/toolkit";
 import {
   persistStore,
   persistReducer,
-  FLUSH, REHYDRATE, PAUSE, PERSIST, PURGE, REGISTER,
+  FLUSH,
+  REHYDRATE,
+  PAUSE,
+  PERSIST,
+  PURGE,
+  REGISTER,
 } from "redux-persist";
 import mmkvStorage from "./mmkvStore";
 
@@ -19,7 +24,7 @@ const rootReducer = combineReducers({
 const persistConfig = {
   key: "root",
   storage: mmkvStorage,
-  whitelist: ["activeJob"],   // only this slice persists across app restarts
+  whitelist: ["activeJob"], // only this slice persists across app restarts
 };
 
 const persistedReducer = persistReducer(persistConfig, rootReducer);
@@ -36,5 +41,5 @@ export const store = configureStore({
 
 export const persistor = persistStore(store);
 
-export type RootState = ReturnType<typeof rootReducer>;  // ← use rootReducer not store.getState
+export type RootState = ReturnType<typeof rootReducer>; // ← use rootReducer not store.getState
 export type AppDispatch = typeof store.dispatch;
