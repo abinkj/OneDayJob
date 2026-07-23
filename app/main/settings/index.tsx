@@ -228,25 +228,14 @@ const Settings: React.FC = () => {
     [navigation]
   );
   const handleHelpSupport = useCallback(() => {
-    Toast.show({
-      type: "info",
-      text1: t("settings.comingSoon"),
-      text2: t("settings.comingSoonSub"),
-    });
-  }, [t]);
+    WebBrowser.openBrowserAsync(strings.APP_HELP_CENTER);
+  }, []);
   const handleTermsConditions = useCallback(() => {
     WebBrowser.openBrowserAsync(strings.APP_TERMS_CONDITIONS);
   }, []);
   const handlePrivacyPolicy = useCallback(() => {
     WebBrowser.openBrowserAsync(strings.APP_PRIVACY_POLICY);
   }, []);
-  const handleAbout = useCallback(() => {
-    Toast.show({
-      type: "info",
-      text1: "OneDayJob",
-      text2: t("settings.version"),
-    });
-  }, [t]);
 
   if (isLoading) {
     return (
@@ -441,12 +430,6 @@ const Settings: React.FC = () => {
             title={t("settings.privacyPolicy")}
             onPress={handlePrivacyPolicy}
           />
-          <SettingsItem
-            icon="information-circle-outline"
-            title={t("settings.about")}
-            subtitle={t("settings.version")}
-            onPress={handleAbout}
-          />
         </SettingsSection>
 
         {/* Danger Zone */}
@@ -467,6 +450,9 @@ const Settings: React.FC = () => {
             danger
           />
         </SettingsSection>
+
+        {/* App Version */}
+        <Text style={styles.appVersionText}>{strings.APP_VERSION}</Text>
 
         {/* Bottom Spacing */}
         <View style={styles.bottomSpacing} />

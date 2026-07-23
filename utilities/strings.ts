@@ -1,11 +1,9 @@
 export const strings = {
-  APP_NAME: "One Day Job",
-  APP_VERSION: "Version 1.0",
-  APP_DESCRIPTION: "A platform to find and post one-day job listings.",
-  APP_COPYRIGHT: "© 2024 One Day Job. All rights reserved.",
-  APP_SUPPORT_EMAIL: "support@onedayjob.com",
+  APP_NAME: "Zoopol",
+  APP_VERSION: "Version 1.0.1",
   APP_PRIVACY_POLICY: "https://www.zoopol.com/privacy-policy",
   APP_TERMS_CONDITIONS: "https://www.zoopol.com/terms",
+  APP_HELP_CENTER: "https://www.zoopol.com/contact",
 
   validations: {
     // Signup
