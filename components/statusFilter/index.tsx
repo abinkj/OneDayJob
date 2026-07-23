@@ -128,4 +128,4 @@ const createStyles = (colors: ThemeColors) =>
     },
   });
 
-export default StatusFilter;
+export default React.memo(StatusFilter);

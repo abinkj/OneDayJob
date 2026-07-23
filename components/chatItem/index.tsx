@@ -18,7 +18,7 @@ interface ChatItemProps {
   onPress: () => void;
 }
 
-export default function ChatItem({ item, onPress }: ChatItemProps) {
+const ChatItem = ({ item, onPress }: ChatItemProps) => {
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
 
@@ -75,7 +75,7 @@ export default function ChatItem({ item, onPress }: ChatItemProps) {
       </View>
     </TouchableOpacity>
   );
-}
+};
 
 const createStyles = (colors: ThemeColors) =>
   StyleSheet.create({
@@ -192,3 +192,5 @@ const createStyles = (colors: ThemeColors) =>
       textAlign: "center",
     },
   });
+
+export default React.memo(ChatItem);

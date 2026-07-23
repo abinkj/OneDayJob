@@ -56,4 +56,4 @@ const CustomSwitch = ({ value = false, onValueChange, disabled = false }) => {
   );
 };
 
-export default CustomSwitch;
+export default React.memo(CustomSwitch);

@@ -447,4 +447,4 @@ const createStyles = (colors: ThemeColors) =>
     },
   });
 
-export default JobCard;
+export default React.memo(JobCard);

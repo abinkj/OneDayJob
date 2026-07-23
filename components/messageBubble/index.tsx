@@ -54,7 +54,7 @@ const MessageBubble = ({ text, time, type }) => {
   );
 };
 
-export default MessageBubble;
+export default React.memo(MessageBubble);
 
 const createStyles = (colors: ThemeColors) =>
   StyleSheet.create({

@@ -114,4 +114,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default AcceptRejectButtons;
+export default React.memo(AcceptRejectButtons);

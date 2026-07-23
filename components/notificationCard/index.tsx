@@ -159,4 +159,4 @@ const createStyles = (colors: ThemeColors) =>
     },
   });
 
-export default NotificationCard;
+export default React.memo(NotificationCard);

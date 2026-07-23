@@ -1,4 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
+import React from "react";
 import { StyleSheet } from "react-native";
 
 const ratingStars = (rating: number) => {
@@ -14,7 +15,7 @@ const ratingStars = (rating: number) => {
       />
     ));
 };
-export default ratingStars;
+export default React.memo(ratingStars);
 
 const styles = StyleSheet.create({
   starIcon: {

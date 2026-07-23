@@ -109,4 +109,4 @@ const createStyles = (colors: ThemeColors) =>
     },
   });
 
-export default CustomButton;
+export default React.memo(CustomButton);
