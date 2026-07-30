@@ -57,6 +57,7 @@ const RootStackLayout = () => {
       screenOptions={{
         headerShown: false,
         animation: "slide_from_right",
+        navigationBarHidden:true
       }}
     >
       {isLoggedIn ? (
