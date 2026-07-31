@@ -102,4 +102,4 @@ const CategorySelector: React.FC<CategorySelectorProps> = ({
   );
 };
 
-export default CategorySelector;
+export default React.memo(CategorySelector);

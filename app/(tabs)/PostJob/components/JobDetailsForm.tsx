@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useCallback } from "react";
 import {
   View,
   Text,
@@ -14,6 +14,7 @@ import { LocationData } from "../../../../services/locationService";
 import CustomSwitch from "../../../../components/CustomSwich";
 import JobDescriptionSection from "../../../../components/JobDescription";
 import LocationSearch from "../../../../components/LocationSearch";
+import LabeledInput from "../../../../components/labeledTextInput";
 
 interface Category {
   id: string;
@@ -93,6 +94,28 @@ const JobDetailsForm: React.FC<JobDetailsFormProps> = ({
   styles,
   colors,
 }) => {
+  const handleVacancyTextChange = useCallback(
+    (text: string) => {
+      const numericValue = parseInt(text, 10);
+      if (!isNaN(numericValue)) {
+        setVacancyCount(numericValue);
+      } else if (text === "") {
+        setVacancyCount(0);
+      }
+    },
+    [setVacancyCount]
+  );
+
+  const handleLocationSelect = useCallback(
+    (location: LocationData) => {
+      setSelectedLocation(location);
+      setTaskAddress(
+        location.address || `${location.city}, ${location.state}`
+      );
+    },
+    [setSelectedLocation, setTaskAddress]
+  );
+
   return (
     <View style={styles.stepContainer}>
       <Text style={styles.sectionTitle}>Category</Text>
@@ -116,20 +139,13 @@ const JobDetailsForm: React.FC<JobDetailsFormProps> = ({
                 </View> */}
       </View>
 
-      <View style={styles.row}>
-        <Text style={styles.sectionTitle}>Job Name</Text>
-      </View>
-
-      <View style={styles.premiumInputContainer}>
-        <TextInput
-          style={styles.premiumInput}
-          value={jobName}
-          onChangeText={setJobName}
-          placeholder="e.g. Clean my apartment"
-          placeholderTextColor={colors.grey}
-          maxLength={100}
-        />
-      </View>
+      <LabeledInput
+        title="Job Name"
+        value={jobName}
+        onChangeText={setJobName}
+        placeholder="e.g. Clean my apartment"
+        maxLength={100}
+      />
 
       <View style={styles.row}>
         <Text style={styles.sectionTitle}>Describe Your Job</Text>
@@ -165,14 +181,7 @@ const JobDetailsForm: React.FC<JobDetailsFormProps> = ({
               <TextInput
                 style={styles.counterValue}
                 value={String(vacancyCount)}
-                onChangeText={(text) => {
-                  const numericValue = parseInt(text, 10);
-                  if (!isNaN(numericValue)) {
-                    setVacancyCount(numericValue);
-                  } else if (text === "") {
-                    setVacancyCount(0);
-                  }
-                }}
+                onChangeText={handleVacancyTextChange}
                 keyboardType="number-pad"
                 maxLength={3}
                 placeholder="0"
@@ -215,12 +224,7 @@ const JobDetailsForm: React.FC<JobDetailsFormProps> = ({
           <Text style={styles.sectionTitle2}>Add Task Location</Text>
           <LocationSearch
             value={selectedLocation?.address || taskAddress}
-            onLocationSelect={(location) => {
-              setSelectedLocation(location);
-              setTaskAddress(
-                location.address || `${location.city}, ${location.state}`
-              );
-            }}
+            onLocationSelect={handleLocationSelect}
             placeholder="Search for a location..."
             style={{ marginBottom: 10 }}
             showSavedAddresses={true}
@@ -237,4 +241,4 @@ const JobDetailsForm: React.FC<JobDetailsFormProps> = ({
   );
 };
 
-export default JobDetailsForm;
+export default React.memo(JobDetailsForm);

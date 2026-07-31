@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef } from "react";
+import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import {
   View,
   Text,
@@ -974,58 +974,17 @@ const PostJobScreen = ({ navigation: navProp }) => {
   };
 
   // Increase vacancy count
-  const increaseVacancy = () => {
-    setVacancyCount(vacancyCount + 1);
-  };
+  const increaseVacancy = useCallback(() => {
+    setVacancyCount((prev) => prev + 1);
+  }, []);
 
   // Decrease vacancy count
-  const decreaseVacancy = () => {
-    if (vacancyCount > 1) {
-      setVacancyCount(vacancyCount - 1);
-    }
-  };
-
-  // Toggle the requirements section
-  const toggleRequirementsList = () => {
-    if (!showRequirementsList && requirements.length === 0) {
-      setShowRequirementsModal(true);
-    } else {
-      setShowRequirementsList(!showRequirementsList);
-    }
-  };
-
-  // Toggle the photos section
-  const togglePhotosList = () => {
-    if (!showPhotosList && photos.length === 0) {
-      handlePickImage();
-    } else {
-      setShowPhotosList(!showPhotosList);
-    }
-  };
-
-  // Handle adding a new requirement
-  const handleAddRequirement = () => {
-    if (newRequirement.trim()) {
-      setRequirements([...requirements, newRequirement]);
-      setNewRequirement("");
-      setShowRequirementsModal(false);
-      setShowRequirementsList(true);
-    }
-  };
-
-  // Remove a requirement at a specific index
-  const removeRequirement = (index) => {
-    const updatedRequirements = [...requirements];
-    updatedRequirements.splice(index, 1);
-    setRequirements(updatedRequirements);
-
-    if (updatedRequirements.length === 0) {
-      setShowRequirementsList(false);
-    }
-  };
+  const decreaseVacancy = useCallback(() => {
+    setVacancyCount((prev) => (prev > 1 ? prev - 1 : 1));
+  }, []);
 
   // Handle picking images from the device's library
-  const handlePickImage = async () => {
+  const handlePickImage = useCallback(async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsMultipleSelection: true,
@@ -1033,27 +992,71 @@ const PostJobScreen = ({ navigation: navProp }) => {
     });
 
     if (!result.canceled) {
-      const newPhotos = [...photos, ...result.assets.map((asset) => asset.uri)];
-      setPhotos(newPhotos);
+      setPhotos((prev) => [...prev, ...result.assets.map((asset) => asset.uri)]);
       setShowPhotosList(true);
     }
-  };
+  }, []);
+
+  // Toggle the requirements section
+  const toggleRequirementsList = useCallback(() => {
+    setShowRequirementsList((prev) => {
+      if (!prev && requirements.length === 0) {
+        setShowRequirementsModal(true);
+        return prev;
+      }
+      return !prev;
+    });
+  }, [requirements.length]);
+
+  // Toggle the photos section
+  const togglePhotosList = useCallback(() => {
+    setShowPhotosList((prev) => {
+      if (!prev && photos.length === 0) {
+        handlePickImage();
+        return prev;
+      }
+      return !prev;
+    });
+  }, [photos.length, handlePickImage]);
+
+  // Handle adding a new requirement
+  const handleAddRequirement = useCallback(() => {
+    if (newRequirement.trim()) {
+      setRequirements((prev) => [...prev, newRequirement]);
+      setNewRequirement("");
+      setShowRequirementsModal(false);
+      setShowRequirementsList(true);
+    }
+  }, [newRequirement]);
+
+  // Remove a requirement at a specific index
+  const removeRequirement = useCallback((index) => {
+    setRequirements((prev) => {
+      const updated = [...prev];
+      updated.splice(index, 1);
+      if (updated.length === 0) {
+        setShowRequirementsList(false);
+      }
+      return updated;
+    });
+  }, []);
 
   // Remove a photo at a specific index
-  const removePhoto = (index) => {
-    const updatedPhotos = [...photos];
-    updatedPhotos.splice(index, 1);
-    setPhotos(updatedPhotos);
-
-    if (updatedPhotos.length === 0) {
-      setShowPhotosList(false);
-    }
-  };
+  const removePhoto = useCallback((index) => {
+    setPhotos((prev) => {
+      const updated = [...prev];
+      updated.splice(index, 1);
+      if (updated.length === 0) {
+        setShowPhotosList(false);
+      }
+      return updated;
+    });
+  }, []);
 
   // Open requirements edit modal
-  const openEditRequirements = () => {
+  const openEditRequirements = useCallback(() => {
     setEditingRequirements(true);
-  };
+  }, []);
 
   const onChange = (event: any, selectedDate?: Date) => {
     if (selectedDate) {
@@ -1067,22 +1070,27 @@ const PostJobScreen = ({ navigation: navProp }) => {
     hour12: true,
   });
 
-  const getCategoryIcon = () => {
+  const getCategoryIcon = useCallback(() => {
     const category = jobCategories.find((cat) => cat.id === selectedCategory);
     return category
       ? category.icon
       : require("../../../assets/placeholder-image.png");
-  };
+  }, [jobCategories, selectedCategory]);
+
+  const handleCategorySelect = useCallback(
+    (categoryId: string, categoryName: string) => {
+      setSelectedCategory(categoryId);
+      setSelectedValue(categoryName);
+    },
+    []
+  );
 
   // Render Step 1: Select Category
   const renderStep1 = () => (
     <CategorySelector
       categories={jobCategories}
       selectedCategory={selectedCategory}
-      onSelect={(categoryId, categoryName) => {
-        setSelectedCategory(categoryId);
-        setSelectedValue(categoryName);
-      }}
+      onSelect={handleCategorySelect}
       styles={styles}
       loading={categoriesLoading}
     />
@@ -1849,9 +1857,9 @@ const PostJobScreen = ({ navigation: navProp }) => {
         <ScrollView
           ref={scrollViewRef}
           style={styles.scrollContainer}
-          contentContainerStyle={{ paddingBottom: 20 }}
+          contentContainerStyle={{ paddingBottom: 16 }}
           showsVerticalScrollIndicator={false}
-          bounces={false}
+          //bounces={false}
           keyboardShouldPersistTaps="handled"
         >
           {currentStep === 1 && renderStep1()}
@@ -1865,11 +1873,9 @@ const PostJobScreen = ({ navigation: navProp }) => {
         <View
           style={{
             //paddingHorizontal: 20,
-            paddingVertical: 16,
+            paddingTop: 16,
             //paddingBottom: Platform.OS === "ios" ? 20 : 16,
             backgroundColor: colors.background,
-            borderTopWidth: 1,
-            borderTopColor: colors.border,
           }}
         >
           {currentStep === 5 ? (
