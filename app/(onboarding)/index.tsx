@@ -211,7 +211,7 @@ const styles = StyleSheet.create({
     color: "#fff",
     textAlign: "center",
     marginBottom: 10,
-    lineHeight: 50,
+    lineHeight: Math.round(fontSizes.size38 * 1.25),
     ...Platform.select({
       android: {
         includeFontPadding: false,

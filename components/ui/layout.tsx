@@ -13,6 +13,7 @@ const AppLayout = ({ children }) => {
       style={[styles.safeArea, { backgroundColor: colors.background }]}
     >
       <StatusBar
+        animated={true}
         translucent
         backgroundColor="transparent"
         barStyle={theme === "dark" ? "light-content" : "dark-content"}

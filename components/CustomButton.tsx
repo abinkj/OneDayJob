@@ -14,6 +14,7 @@ import Animated, {
 import { fontSizes } from "../themes/fonts";
 import { useTheme } from "../contexts/ThemeContext";
 import { ThemeColors } from "../constants/Colors";
+import DeviceDimensions from "../constants/DeviceDimenions";
 
 interface CustomButtonProps {
   color?: string;
@@ -87,11 +88,11 @@ const createStyles = (colors: ThemeColors) =>
   StyleSheet.create({
     button: {
       //padding: 12,
-      borderRadius: 12,
+      borderRadius: 12 *DeviceDimensions.heightRatio,
       alignItems: "center",
       justifyContent: "center",
-      minWidth: 120,
-      height: 48, // Fixed height to prevent layout shift during loading
+      minWidth: 120 *DeviceDimensions.widthRatio,
+      height: 48 * DeviceDimensions.heightRatio, // Fixed height to prevent layout shift during loading
     },
     contentContainer: {
       flexDirection: "row",

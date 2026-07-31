@@ -2,7 +2,7 @@ import { Dimensions, PixelRatio } from "react-native";
 
 const SCREEN_WIDTH = Dimensions.get("window").width;
 const SCREEN_HEIGHT = Dimensions.get("window").height;
-const scale = SCREEN_WIDTH / 393; // Base width for scaling
+const scale = Math.min(SCREEN_WIDTH / 393, 1.3); // Base width scaling capped at 1.3x for tablets
 const scaleHeight = SCREEN_HEIGHT / 852; // Base height for scaling
 
 export function actuatedNormalize(size: number): number {
