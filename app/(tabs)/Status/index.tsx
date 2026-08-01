@@ -392,7 +392,7 @@ const MyPostTab = () => {
           filteredPosts.length === 0 && { flexGrow: 1 },
         ]}
         showsVerticalScrollIndicator={false}
-        bounces={false}
+        //bounces={false}
         refreshControl={
           <RefreshControl
             refreshing={isRefetching}
@@ -775,7 +775,7 @@ const AppliedTab = () => {
           filteredJobs.length === 0 && { flexGrow: 1 },
         ]}
         showsVerticalScrollIndicator={false}
-        bounces={false}
+        //bounces={false}
         refreshControl={
           <RefreshControl
             refreshing={isRefetching}
