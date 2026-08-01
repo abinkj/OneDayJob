@@ -179,6 +179,7 @@ export interface JobPost {
   requiresVerification?: boolean;
   applicants?: any[];
   hasApplied?: boolean;
+  isExpired?: boolean;
   // Server-computed per-user fields (set by backend in getJobPostings)
   isEmployer?: boolean; // true if the current user is the job owner/employer
   isAssignedWorker?: boolean; // true if the current user is an accepted/assigned worker

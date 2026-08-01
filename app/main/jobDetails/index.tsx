@@ -540,23 +540,25 @@ const JobDetails = () => {
       <Header
         title="Job Details"
         showBackButton
-        showChatButton
+        showChatButton={!job?.isExpired}
         disableButtonPress={isLoading}
         onChatPress={handleChat}
         headerRight={
-          <TouchableOpacity
-            onPress={handleReportJob}
-            style={{ marginLeft: 10 }}
-            disabled={!isLoading}
-          >
-            <Ionicons name="flag-outline" size={22} color={colors.red} />
-          </TouchableOpacity>
+          !job?.isExpired ? (
+            <TouchableOpacity
+              onPress={handleReportJob}
+              style={{ marginLeft: 10 }}
+              disabled={!isLoading}
+            >
+              <Ionicons name="flag-outline" size={22} color={colors.red} />
+            </TouchableOpacity>
+          ) : null
         }
       />
       <ScrollView
         style={styles.content}
         showsVerticalScrollIndicator={false}
-        bounces={false}
+        //bounces={false}
       >
         {/* Job Header */}
         <View style={styles.jobHeader}>
@@ -569,9 +571,11 @@ const JobDetails = () => {
               {job.category?.name?.toUpperCase() || "GENERAL"}
             </Text>
           </View>
-          {/* <View style={styles.statusContainer}>
-            <Text style={styles.statusText}>{job.status}</Text>
-          </View> */}
+          {job?.isExpired && (
+            <View style={[styles.statusContainer, { backgroundColor: "#FFEBEE" }]}>
+              <Text style={[styles.statusText, { color: "#F44336" }]}>Expired</Text>
+            </View>
+          )}
         </View>
 
         {/* Job Title and Budget */}
@@ -707,7 +711,7 @@ const JobDetails = () => {
         </View>
 
         {/* Employer Verification Shortcut */}
-        {isEmployer && job?.requiresVerification && (
+        {isEmployer && job?.requiresVerification && !job?.isExpired && (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Manage Workers</Text>
             <View
@@ -756,7 +760,7 @@ const JobDetails = () => {
         )}
 
         {/* Verification & Arrival Section - NEW STRATEGY */}
-        {job.requiresVerification && !isEmployer && isAccepted && (
+        {job.requiresVerification && !isEmployer && isAccepted && !job?.isExpired && (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Job Verification</Text>
 
@@ -964,7 +968,8 @@ const JobDetails = () => {
           !applied &&
           !job.hasApplied &&
           !isAccepted &&
-          !verificationStatus && (
+          !verificationStatus &&
+          !job?.isExpired && (
             <View style={styles.section}>
               <View style={styles.verificationNotAssignedContainer}>
                 <Ionicons
@@ -981,39 +986,41 @@ const JobDetails = () => {
           )}
 
         {/* Employer Info */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Employer</Text>
-          <View style={styles.employerContainer}>
-            {job.userId?.profilePicture ? (
-              <Image
-                source={{ uri: job.userId.profilePicture }}
-                style={styles.employerAvatar}
-              />
-            ) : (
-              <View style={styles.employerAvatar}>
-                <Text style={styles.employerInitials}>
-                  {job.userId?.firstName?.charAt(0)}
-                  {job.userId?.lastName?.charAt(0)}
+        {!job?.isExpired && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Employer</Text>
+            <View style={styles.employerContainer}>
+              {job.userId?.profilePicture ? (
+                <Image
+                  source={{ uri: job.userId.profilePicture }}
+                  style={styles.employerAvatar}
+                />
+              ) : (
+                <View style={styles.employerAvatar}>
+                  <Text style={styles.employerInitials}>
+                    {job.userId?.firstName?.charAt(0)}
+                    {job.userId?.lastName?.charAt(0)}
+                  </Text>
+                </View>
+              )}
+              <View style={styles.employerInfo}>
+                <Text style={styles.employerName}>
+                  {job.userId?.firstName} {job.userId?.lastName}
+                </Text>
+                <Text style={styles.employerPhone}>
+                  {job.userId?.phoneNumber}
                 </Text>
               </View>
-            )}
-            <View style={styles.employerInfo}>
-              <Text style={styles.employerName}>
-                {job.userId?.firstName} {job.userId?.lastName}
-              </Text>
-              <Text style={styles.employerPhone}>
-                {job.userId?.phoneNumber}
-              </Text>
+              <TouchableOpacity style={styles.contactButton} onPress={handleCall}>
+                <Ionicons name="call" size={20} color="#fff" />
+              </TouchableOpacity>
             </View>
-            <TouchableOpacity style={styles.contactButton} onPress={handleCall}>
-              <Ionicons name="call" size={20} color="#fff" />
-            </TouchableOpacity>
           </View>
-        </View>
+        )}
       </ScrollView>
 
-      {/* Action Buttons - Hide for Employer */}
-      {!isEmployer && (
+      {/* Action Buttons - Hide for Employer and Expired Jobs */}
+      {!isEmployer && !job?.isExpired && (
         <View
           style={[
             styles.actionContainer,

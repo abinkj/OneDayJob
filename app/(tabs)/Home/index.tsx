@@ -2,7 +2,6 @@ import { useEffect, useState, useRef, useMemo, useCallback } from "react";
 import {
   View,
   Text,
-  Image,
   TouchableOpacity,
   TextInput,
   FlatList,
@@ -29,27 +28,21 @@ import NotificationBadge from "../../../components/notificationBadge";
 import {
   updateUserLocationWithRetry,
   getCategoriesForFilter,
-  markArrival,
 } from "../../../services/api";
-import { getHighAccuracyLocation } from "../../../services/locationService"; // FIX 2: reuse service in handleArrival
-import * as Location from "expo-location";
 import { restoreSession } from "../../../utilities/authentication";
 import { JobPost } from "../../../types";
 import { useJobPostings } from "../../../hooks/useJobs";
 import { JobCardSkeleton } from "../../../components/Shimmer/Skeletons";
 import { useActiveJob } from "../../../hooks/useActiveJob";
+import { HomeJobCard } from "../../../components/jobCard/HomeJobCard";
 import LiveJobHeader from "./components/LiveJobHeader";
 import SuccessAnimation from "../../../components/SuccessAnimation";
 import BannerCarousel from "./components/BannerCarousel";
 import FilterActionSheet, {
   FilterActionSheetRef,
 } from "../../../components/FilterActionSheet";
-import { getCategoryIcon } from "../../../constants/JobConstants";
 import {
   handleArrivalAction,
-  formatDateDDMMYYYY,
-  isJobOwner,
-  isAssignedWorker,
 } from "../../../utilities/jobUtils";
 
 // Helper to format distance for display (e.g. 3167m -> 3.2km)
@@ -610,206 +603,19 @@ const HomeScreen = () => {
     item,
   }: {
     item: JobPost & { distance?: number | null };
-  }) => {
-    const isInProgress =
-      item.jobStatus?.toLowerCase() === "in_progress" ||
-      item.status?.toLowerCase() === "in_progress";
-    const isCompleted =
-      item.jobStatus?.toLowerCase() === "completed" ||
-      item.status?.toLowerCase() === "completed";
-
-    const jobItem = item as any;
-    const jobOwnerId =
-      jobItem.userId?._id ||
-      jobItem.userId?.id ||
-      jobItem.postedBy?._id ||
-      jobItem.postedBy?.id ||
-      jobItem.createdBy ||
-      jobItem.ownerId ||
-      (typeof jobItem.userId === "string" ? jobItem.userId : "");
-
-    const userId = userData?.id || userData?._id;
-    const isEmployer = isJobOwner(item, userId);
-    const isAccepted = isAssignedWorker(item, userId);
-
-    const showArrivalFeature = !isEmployer && isAccepted && !isCompleted;
-
-    const handleJobPress = () => {
-      if (isInProgress) {
-        navigation.navigate("JobTimer", {
-          jobId: item._id,
-          jobName: item.name,
-          isEmployer,
-          employerId: jobOwnerId,
-          employerName:
-            `${item.userId?.firstName || ""} ${item.userId?.lastName || ""}`.trim(),
-          employerPhoneNumber: item.userId?.phoneNumber,
-          employerImage: item.userId?.profilePicture,
-        });
-      } else {
-        navigation.navigate("JobDetails", { jobId: item._id, jobData: item });
-      }
-    };
-
-    return (
-      <TouchableOpacity
-        style={[styles.jobCard, isInProgress && { borderLeftColor: "#FF9800" }]}
-        onPress={handleJobPress}
-      >
-        <View style={styles.jobCardHeader}>
-          <View style={styles.categoryContainer}>
-            <Image
-              style={styles.avatarContainer}
-              source={getCategoryIcon(item.category?.name)}
-            />
-            <Text style={styles.categoryText}>
-              {item.category?.name || "GENERAL"}
-            </Text>
-          </View>
-          <View style={styles.priceContainer}>
-            <Text style={styles.priceText}>₹{item.budget || 0}</Text>
-          </View>
-        </View>
-
-        <View style={styles.titleContainer}>
-          <Text style={styles.jobTitle} numberOfLines={2}>
-            {item.name}
-          </Text>
-          {isInProgress && (
-            <View
-              style={[styles.statusContainer, styles.statusContainerInProgress]}
-            >
-              <Text style={[styles.statusText, styles.statusTextInProgress]}>
-                In Progress
-              </Text>
-            </View>
-          )}
-        </View>
-
-        <View style={styles.jobDetailsContainer}>
-          {item.distance !== null && item.distance !== undefined && (
-            <View style={styles.detailRow}>
-              <Ionicons
-                name="navigate-circle-outline"
-                size={14}
-                color={colors.grey}
-              />
-              <Text style={styles.distanceText}>{item.distance}km away</Text>
-            </View>
-          )}
-          <View style={styles.locationContainer}>
-            <Text style={styles.locationText} numberOfLines={1}>
-              {item.isRemote
-                ? "Remote Work"
-                : item.location?.address ||
-                  item.location?.city ||
-                  item.location?.state ||
-                  "Location not specified"}
-            </Text>
-          </View>
-        </View>
-
-        <View style={styles.jobFooter}>
-          <View style={styles.vacanciesContainer}>
-            <Ionicons name="people-outline" size={14} color={colors.grey} />
-            <Text style={styles.vacanciesText}>
-              {item.participantsNumber || 1} Needed
-            </Text>
-          </View>
-          <Text style={styles.timeAgoText}>
-            {item.createdAt ? formatDateDDMMYYYY(item.createdAt) : "Recently"}
-          </Text>
-        </View>
-
-        {showArrivalFeature && (
-          <View style={styles.arrivalButtonContainer}>
-            <TouchableOpacity
-              style={[
-                styles.arrivalButton,
-                {
-                  backgroundColor:
-                    (item as any).hasArrived ||
-                    (arrivalLoading && arrivingJobId === (item as any)._id)
-                      ? colors.grey
-                      : colors.darkGreen,
-                  shadowColor: colors.darkGreen,
-                  shadowOffset: { width: 0, height: 2 },
-                  shadowOpacity:
-                    (item as any).hasArrived || arrivalLoading ? 0 : 0.3,
-                  shadowRadius: 4,
-                  elevation: (item as any).hasArrived || arrivalLoading ? 0 : 3,
-                },
-              ]}
-              onPress={() =>
-                (item as any).hasArrived
-                  ? Toast.show({
-                      type: "info",
-                      text1: "Waiting for Approval",
-                      text2:
-                        "Please ask your employer to verify you on their screen.",
-                    })
-                  : handleArrival(item)
-              }
-              disabled={
-                (item as any).hasArrived ||
-                (arrivalLoading && arrivingJobId === (item as any)._id)
-              }
-              activeOpacity={0.8}
-            >
-              {arrivalLoading && arrivingJobId === (item as any)._id ? (
-                <ActivityIndicator size="small" color="#fff" />
-              ) : (
-                <>
-                  <Ionicons
-                    name={
-                      (item as any).hasArrived ? "checkmark-circle" : "location"
-                    }
-                    size={18}
-                    color="#fff"
-                    style={styles.arrivalButtonIcon}
-                  />
-                  <Text style={styles.arrivalButtonText}>
-                    {(item as any).hasArrived
-                      ? "Arrived - Waiting for Approval"
-                      : "I Have Reached the Location"}
-                  </Text>
-                </>
-              )}
-            </TouchableOpacity>
-
-            {(item as any).hasArrived && (
-              <Text style={styles.arrivalSuccessText}>
-                Arrival marked! Ask employer to verify you.
-              </Text>
-            )}
-
-            <View style={styles.locationInfoContainer}>
-              <View style={styles.locationInfoRow}>
-                <Ionicons
-                  name="navigate"
-                  size={12}
-                  color={colors.grey}
-                  style={styles.locationInfoIcon}
-                />
-                <Text
-                  style={styles.currentLocationText}
-                  numberOfLines={2}
-                  ellipsizeMode="tail"
-                >
-                  Current: {locationAddress || "Getting location..."}
-                </Text>
-              </View>
-              {item.distance !== null && item.distance !== undefined && (
-                <Text style={styles.distanceFromSiteText}>
-                  ~{item.distance}km from site
-                </Text>
-              )}
-            </View>
-          </View>
-        )}
-      </TouchableOpacity>
-    );
-  };
+  }) => (
+    <HomeJobCard
+      item={item}
+      userData={userData}
+      colors={colors}
+      styles={styles}
+      navigation={navigation}
+      arrivingJobId={arrivingJobId}
+      arrivalLoading={arrivalLoading}
+      locationAddress={locationAddress}
+      handleArrival={handleArrival}
+    />
+  );
 
   const renderFilterRow = () => {
     const getFilterButtonStyle = (isSelected) => [
@@ -976,6 +782,196 @@ const HomeScreen = () => {
     </View>
   );
 
+  const keyExtractor = useCallback((item: JobPost) => item._id, []);
+
+  const renderListEmpty = useCallback(() => {
+    if (!locationReady || isJobsLoading) return null;
+    return noNearbyJobs ? renderNoNearbyJobsState() : renderEmptyState();
+  }, [
+    locationReady,
+    isJobsLoading,
+    noNearbyJobs,
+    renderNoNearbyJobsState,
+    renderEmptyState,
+  ]);
+
+  const renderListFooter = useCallback(() => {
+    if (!isJobsRefetching && !isFetchingNextPage) return null;
+    return (
+      <>
+        {isJobsRefetching && allJobs.length > 0 && (
+          <View style={styles.loadingIndicatorContainer}>
+            <ActivityIndicator size="small" color={colors.primary} />
+          </View>
+        )}
+        {isFetchingNextPage && (
+          <View style={[styles.loadingIndicatorContainer, { padding: 20 }]}>
+            <ActivityIndicator size="large" color={colors.primary} />
+            <Text style={styles.loadingText}>Loading more jobs...</Text>
+          </View>
+        )}
+      </>
+    );
+  }, [
+    isJobsRefetching,
+    allJobs.length,
+    isFetchingNextPage,
+    colors.primary,
+    styles.loadingIndicatorContainer,
+    styles.loadingText,
+  ]);
+
+  const renderListHeader = useCallback(
+    () => (
+      <>
+        {activeJobState.job ? (
+          <LiveJobHeader
+            job={activeJobState.job}
+            activeWorkerCount={activeJobState.activeWorkerCount}
+            totalWorkerCount={activeJobState.totalWorkerCount}
+          />
+        ) : (
+          <View style={styles.header}>
+            <View style={styles.locationHeader}>
+              <View style={styles.iconContainer}>
+                <Ionicons
+                  name="location"
+                  size={20}
+                  color={colors.primary}
+                />
+              </View>
+              <View style={styles.locationTextContainer}>
+                <TouchableOpacity
+                  style={styles.locationSelector}
+                  onPress={fetchCurrentLocation}
+                >
+                  <Text
+                    numberOfLines={1}
+                    ellipsizeMode="tail"
+                    style={styles.locationTitleHeader}
+                  >
+                    {locationDetails.specific}
+                  </Text>
+                  <Ionicons
+                    name="chevron-down"
+                    size={14}
+                    color={colors.black}
+                    style={styles.locationChevron}
+                  />
+                </TouchableOpacity>
+                {!!locationDetails.broad && (
+                  <Text
+                    style={styles.locationSubtitleHeader}
+                    numberOfLines={1}
+                  >
+                    {locationDetails.broad}
+                  </Text>
+                )}
+              </View>
+            </View>
+            <TouchableOpacity
+              onPress={handleNotificationPress}
+              style={styles.notificationButton}
+            >
+              <Ionicons
+                name="notifications-outline"
+                size={22}
+                color={colors.black}
+              />
+              <NotificationBadge />
+            </TouchableOpacity>
+          </View>
+        )}
+
+        <View style={styles.searchContainer}>
+          <Ionicons
+            name="search"
+            size={20}
+            color={colors.grey}
+            style={styles.searchIcon}
+          />
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Search jobs or locations"
+            placeholderTextColor={colors.black}
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            onSubmitEditing={handleSearch}
+            returnKeyType="search"
+          />
+          {searchQuery.length > 0 && (
+            <TouchableOpacity onPress={() => setSearchQuery("")}>
+              <Ionicons name="close-circle" size={20} color={colors.grey} />
+            </TouchableOpacity>
+          )}
+        </View>
+
+        <BannerCarousel />
+
+        {!isFilterSticky && renderFilterRow()}
+
+        {/* Gate: show shimmer until BOTH location AND jobs are ready */}
+        {(!locationReady || isJobsLoading) && allJobs.length === 0 && (
+          <View>
+            <JobCardSkeleton />
+            <JobCardSkeleton />
+          </View>
+        )}
+
+        {/* "Showing all jobs" banner when user bypassed the proximity filter */}
+        {showAllJobs && jobsWithDistance.length > 0 && (
+          <View style={styles.allJobsBanner}>
+            <Ionicons
+              name="globe-outline"
+              size={16}
+              color="#FF9800"
+              style={styles.allJobsBannerIcon}
+            />
+            <View style={styles.allJobsBannerContent}>
+              <Text style={styles.allJobsBannerTitle}>
+                Showing all {jobsWithDistance.length} jobs
+              </Text>
+              <Text style={styles.allJobsBannerSubtitle}>
+                None found within {NEARBY_RADIUS_KM}km of your location
+              </Text>
+            </View>
+            <TouchableOpacity onPress={() => setShowAllJobs(false)}>
+              <Ionicons name="close" size={18} color="#B45309" />
+            </TouchableOpacity>
+          </View>
+        )}
+
+        {/* Results count — only shown once location is ready and jobs are loaded */}
+        {locationReady && !isJobsLoading && allJobs.length > 0 && (
+          <View style={styles.resultsContainer}>
+            <Text style={styles.resultsText}>
+              {allJobs.length} jobs found
+            </Text>
+          </View>
+        )}
+      </>
+    ),
+    [
+      activeJobState,
+      styles,
+      colors,
+      locationDetails,
+      fetchCurrentLocation,
+      handleNotificationPress,
+      searchQuery,
+      setSearchQuery,
+      handleSearch,
+      isFilterSticky,
+      renderFilterRow,
+      locationReady,
+      isJobsLoading,
+      allJobs.length,
+      showAllJobs,
+      jobsWithDistance.length,
+      setShowAllJobs,
+    ]
+  );
+
   return (
     <View style={styles.container}>
       {isFilterSticky && (
@@ -990,7 +986,7 @@ const HomeScreen = () => {
         ref={scrollViewRef}
         data={allJobs}
         renderItem={renderJobCard}
-        keyExtractor={(item) => item._id}
+        keyExtractor={keyExtractor}
         style={[
           styles.scrollContainer,
           isFilterSticky && { paddingTop: filterRowHeight },
@@ -1014,158 +1010,9 @@ const HomeScreen = () => {
         }
         onEndReached={handleLoadMore}
         onEndReachedThreshold={0.5}
-        ListHeaderComponent={
-          <>
-            {activeJobState.job ? (
-              <LiveJobHeader
-                job={activeJobState.job}
-                activeWorkerCount={activeJobState.activeWorkerCount}
-                totalWorkerCount={activeJobState.totalWorkerCount}
-              />
-            ) : (
-              <View style={styles.header}>
-                <View style={styles.locationHeader}>
-                  <View style={styles.iconContainer}>
-                    <Ionicons
-                      name="location"
-                      size={20}
-                      color={colors.primary}
-                    />
-                  </View>
-                  <View style={styles.locationTextContainer}>
-                    <TouchableOpacity
-                      style={styles.locationSelector}
-                      onPress={fetchCurrentLocation}
-                    >
-                      <Text
-                        numberOfLines={1}
-                        ellipsizeMode="tail"
-                        style={styles.locationTitleHeader}
-                      >
-                        {locationDetails.specific}
-                      </Text>
-                      <Ionicons
-                        name="chevron-down"
-                        size={14}
-                        color={colors.black}
-                        style={styles.locationChevron}
-                      />
-                    </TouchableOpacity>
-                    {!!locationDetails.broad && (
-                      <Text
-                        style={styles.locationSubtitleHeader}
-                        numberOfLines={1}
-                      >
-                        {locationDetails.broad}
-                      </Text>
-                    )}
-                  </View>
-                </View>
-                <TouchableOpacity
-                  onPress={handleNotificationPress}
-                  style={styles.notificationButton}
-                >
-                  <Ionicons
-                    name="notifications-outline"
-                    size={22}
-                    color={colors.black}
-                  />
-                  <NotificationBadge />
-                </TouchableOpacity>
-              </View>
-            )}
-
-            <View style={styles.searchContainer}>
-              <Ionicons
-                name="search"
-                size={20}
-                color={colors.grey}
-                style={styles.searchIcon}
-              />
-              <TextInput
-                style={styles.searchInput}
-                placeholder="Search jobs or locations"
-                placeholderTextColor={colors.black}
-                value={searchQuery}
-                onChangeText={setSearchQuery}
-                onSubmitEditing={handleSearch}
-                returnKeyType="search"
-              />
-              {searchQuery.length > 0 && (
-                <TouchableOpacity onPress={() => setSearchQuery("")}>
-                  <Ionicons name="close-circle" size={20} color={colors.grey} />
-                </TouchableOpacity>
-              )}
-            </View>
-
-            <BannerCarousel />
-
-            {!isFilterSticky && renderFilterRow()}
-
-            {/* Gate: show shimmer until BOTH location AND jobs are ready */}
-            {(!locationReady || isJobsLoading) && allJobs.length === 0 && (
-              <View>
-                <JobCardSkeleton />
-                <JobCardSkeleton />
-              </View>
-            )}
-
-            {/* "Showing all jobs" banner when user bypassed the proximity filter */}
-            {showAllJobs && jobsWithDistance.length > 0 && (
-              <View style={styles.allJobsBanner}>
-                <Ionicons
-                  name="globe-outline"
-                  size={16}
-                  color="#FF9800"
-                  style={styles.allJobsBannerIcon}
-                />
-                <View style={styles.allJobsBannerContent}>
-                  <Text style={styles.allJobsBannerTitle}>
-                    Showing all {jobsWithDistance.length} jobs
-                  </Text>
-                  <Text style={styles.allJobsBannerSubtitle}>
-                    None found within {NEARBY_RADIUS_KM}km of your location
-                  </Text>
-                </View>
-                <TouchableOpacity onPress={() => setShowAllJobs(false)}>
-                  <Ionicons name="close" size={18} color="#B45309" />
-                </TouchableOpacity>
-              </View>
-            )}
-
-            {/* Results count — only shown once location is ready and jobs are loaded */}
-            {locationReady && !isJobsLoading && allJobs.length > 0 && (
-              <View style={styles.resultsContainer}>
-                <Text style={styles.resultsText}>
-                  {allJobs.length} jobs found
-                </Text>
-              </View>
-            )}
-          </>
-        }
-        ListEmptyComponent={
-          // Don't show any empty state until location has been attempted
-          !locationReady || isJobsLoading
-            ? null
-            : noNearbyJobs
-              ? renderNoNearbyJobsState()
-              : renderEmptyState()
-        }
-        ListFooterComponent={
-          <>
-            {isJobsRefetching && allJobs.length > 0 && (
-              <View style={styles.loadingIndicatorContainer}>
-                <ActivityIndicator size="small" color={colors.primary} />
-              </View>
-            )}
-            {isFetchingNextPage && (
-              <View style={[styles.loadingIndicatorContainer, { padding: 20 }]}>
-                <ActivityIndicator size="large" color={colors.primary} />
-                <Text style={styles.loadingText}>Loading more jobs...</Text>
-              </View>
-            )}
-          </>
-        }
+        ListHeaderComponent={renderListHeader}
+        ListEmptyComponent={renderListEmpty}
+        ListFooterComponent={renderListFooter}
       />
 
       <SuccessAnimation
