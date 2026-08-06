@@ -1,7 +1,4 @@
-import notifee, {
-  AndroidImportance,
-  AndroidVisibility,
-} from "@notifee/react-native";
+import * as Notifications from "expo-notifications";
 import { Platform } from "react-native";
 
 class TimerNotificationService {
@@ -9,14 +6,19 @@ class TimerNotificationService {
 
   async initialize() {
     if (Platform.OS === "android") {
-      // Create a channel (required for Android)
-      await notifee.createChannel({
-        id: this.channelId,
+      await Notifications.setNotificationChannelAsync(this.channelId, {
         name: "Job Timer",
-        importance: AndroidImportance.HIGH,
-        visibility: AndroidVisibility.PUBLIC,
+        importance: Notifications.AndroidImportance.HIGH,
       });
     }
+    
+    Notifications.setNotificationHandler({
+      handleNotification: async () => ({
+        shouldShowAlert: true,
+        shouldPlaySound: true,
+        shouldSetBadge: true,
+      }),
+    });
   }
 
   async startOngoingNotification(jobName: string) {
@@ -24,31 +26,21 @@ class TimerNotificationService {
 
     const notificationId = `timer_${jobName}`;
 
-    await notifee.displayNotification({
-      id: notificationId,
-      title: "Job is Live ⏱️",
-      body: `Timer is running for: ${jobName}`,
-      android: {
-        channelId: this.channelId,
-        ongoing: true, // Prevents user from dismissing
-        importance: AndroidImportance.HIGH,
-        pressAction: {
-          id: "default",
-        },
+    await Notifications.scheduleNotificationAsync({
+      identifier: notificationId,
+      content: {
+        title: "Job is Live",
+        body: `Timer is running for: ${jobName}`,
+        sticky: true, // Prevents user from dismissing on Android
+        autoDismiss: false,
       },
-      ios: {
-        foregroundPresentationOptions: {
-          banner: true,
-          badge: true,
-          sound: true,
-        },
-      },
+      trigger: null, // Send immediately
     });
   }
 
   async stopNotification(jobName: string) {
     const notificationId = `timer_${jobName}`;
-    await notifee.cancelNotification(notificationId);
+    await Notifications.dismissNotificationAsync(notificationId);
   }
 }
 

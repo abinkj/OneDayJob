@@ -108,7 +108,7 @@ The traditional gig economy often leaves short-term, daily laborers and employer
 - **Security & Tokens:** Expo Secure Store, Expo Crypto
 - **Location:** Expo Location, React Native Google Places Autocomplete
 - **Media:** Expo Image Picker, Expo Image (highly optimized component)
-- **Notifications:** Expo Notifications, Notifee (granular control over channel setups)
+- **Notifications:** Expo Notifications (local and push notifications, channel setups, and sticky alerts)
 - **Haptics:** Expo Haptics (micro-vibrations for interactive actions)
 
 ### Developer & Testing Tools
@@ -276,7 +276,7 @@ EXPO_PUBLIC_GOOGLE_PLACES_API_KEY=AIzaSy_your_google_places_api_key
 - **`@tanstack/react-query`**: Manages server state. It automates background refetching, handles pagination cache, and removes the need for boilerplate fetching actions in Redux.
 - **`socket.io-client`**: Establishes a lightweight TCP connection to the backend, enabling bidirectional, real-time text transmissions and typing status indicators in active chats.
 - **`react-native-razorpay`**: Bridges native SDK payment sheets on Android and iOS to support UPI, Net Banking, and Cards.
-- **`@notifee/react-native`**: Provides granular API control to customize notification visuals (e.g., custom sounds, status bar badges, large icons) on native systems.
+- **`expo-notifications`**: Provides granular API control to customize notification visuals (e.g., custom sounds, status bar badges, large icons) and handles robust local and push notifications.
 - **`react-native-reanimated` & `lottie-react-native`**: Used to build fluid user interface transitions, custom animated loaders, and micro-haptic responses.
 
 ---
