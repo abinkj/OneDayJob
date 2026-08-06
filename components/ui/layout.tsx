@@ -1,12 +1,21 @@
-import { StatusBar, StyleSheet } from "react-native";
+import { useEffect } from "react";
+import { StatusBar, StyleSheet, Platform } from "react-native";
 import { useTheme } from "../../contexts/ThemeContext";
 import { SafeAreaView } from "react-native-safe-area-context";
 import OfflineIndicator from "../OfflineIndicator";
 import { useAlertInitializer } from "../CustomAlert/AlertProvider";
+import * as NavigationBar from "expo-navigation-bar";
 
 const AppLayout = ({ children }) => {
   const { theme, colors } = useTheme();
   useAlertInitializer();
+
+  useEffect(() => {
+    if (Platform.OS === "android") {
+      NavigationBar.setBackgroundColorAsync(colors.background);
+      NavigationBar.setButtonStyleAsync(theme === "dark" ? "light" : "dark");
+    }
+  }, [theme, colors.background]);
 
   return (
     <SafeAreaView
