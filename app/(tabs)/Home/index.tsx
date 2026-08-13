@@ -380,7 +380,17 @@ const HomeScreen = () => {
 
   const jobs = useMemo(() => {
     if (!data?.pages) return [];
-    return data.pages.flatMap((page) => page.jobs);
+    const allFetchedJobs = data.pages.flatMap((page) => page.jobs);
+    
+    // Deduplicate jobs based on _id to prevent FlatList duplicate key errors
+    const uniqueJobsMap = new Map();
+    allFetchedJobs.forEach(job => {
+      if (job && (job._id || job.id)) {
+        uniqueJobsMap.set(job._id || job.id, job);
+      }
+    });
+    
+    return Array.from(uniqueJobsMap.values());
   }, [data]);
 
   useEffect(() => {

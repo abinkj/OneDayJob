@@ -36,7 +36,8 @@ const MainStack = () => {
         headerShown: false,
         animation: "slide_from_right",
         gestureEnabled: true,
-        contentStyle: { backgroundColor: colors.background },
+        freezeOnBlur:true,
+        //contentStyle: { backgroundColor: colors.background },
       }}
     >
       <Stack.Screen name="MainHome" component={TabLayout} />

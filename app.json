@@ -26,7 +26,11 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.zoopol1.app",
       "infoPlist": {
-        "LSApplicationQueriesSchemes": ["tel", "mailto", "sms"]
+        "LSApplicationQueriesSchemes": [
+          "tel",
+          "mailto",
+          "sms"
+        ]
       }
     },
     "scheme": "zoopol",
@@ -90,7 +94,17 @@
           "cameraPermission": "Allow $(PRODUCT_NAME) to access your camera to take a profile picture or document job-related tasks."
         }
       ],
-      "expo-web-browser"
+      "expo-web-browser",
+      "expo-build-properties",
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "compileSdkVersion": 36,
+            "targetSdkVersion": 36
+          }
+        }
+      ]
     ],
     "notification": {
       "icon": "./assets/notification-icon.png",
