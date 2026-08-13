@@ -3,14 +3,25 @@ import { createSlice } from "@reduxjs/toolkit";
 
 export type KycStatus = "not_started" | "skipped" | "completed";
 
+export interface AadhaarDetails {
+  maskedAadhaar?: string;
+  name?: string;
+  dob?: string;
+  gender?: string;
+  verifiedAt?: string;
+}
+
 const initialState = {
   isLoggedIn: false,
+  isAadhaarVerified: false,
+  aadhaarDetails: null as AadhaarDetails | null,
   kycStatus: "not_started" as KycStatus,
-  userData: null,
+  userData: null as any,
   hasSeenOnboarding: false,
   isProfileComplete: false,
   isSuspended: false,
 };
+
 const authSlice = createSlice({
   name: "auth",
   initialState,
@@ -18,23 +29,49 @@ const authSlice = createSlice({
     login(state, action) {
       state.isLoggedIn = true;
       state.userData = action.payload;
+      if (action.payload?.aadhaarVerification?.isVerified) {
+        state.isAadhaarVerified = true;
+        state.aadhaarDetails = action.payload.aadhaarVerification;
+        state.kycStatus = "completed";
+      }
     },
     logout(state) {
       state.isLoggedIn = false;
       state.userData = null;
+      state.isAadhaarVerified = false;
+      state.aadhaarDetails = null;
       state.kycStatus = "not_started";
       state.isProfileComplete = false;
       state.isSuspended = false;
-      // We generally do NOT reset hasSeenOnboarding on logout
     },
     setSuspended(state, action) {
       state.isSuspended = action.payload;
+    },
+    setAadhaarVerification(state, action) {
+      state.isAadhaarVerified = action.payload.isVerified;
+      state.aadhaarDetails = action.payload.aadhaarDetails || null;
+      state.kycStatus = action.payload.isVerified ? "completed" : "not_started";
+    },
+    completeAadhaarVerification(state, action) {
+      state.isAadhaarVerified = true;
+      state.aadhaarDetails = action.payload;
+      state.kycStatus = "completed";
+      if (state.userData) {
+        state.userData = {
+          ...state.userData,
+          aadhaarVerification: {
+            isVerified: true,
+            ...action.payload,
+          },
+        };
+      }
     },
     setKycStatus(state, action) {
       state.kycStatus = action.payload;
     },
     completeKyc(state) {
       state.kycStatus = "completed";
+      state.isAadhaarVerified = true;
     },
     skipKyc(state) {
       state.kycStatus = "skipped";
@@ -50,12 +87,20 @@ const authSlice = createSlice({
       if (action.payload?.isProfileComplete !== undefined) {
         state.isProfileComplete = action.payload.isProfileComplete;
       }
+      if (action.payload?.aadhaarVerification?.isVerified !== undefined) {
+        state.isAadhaarVerified = action.payload.aadhaarVerification.isVerified;
+        state.aadhaarDetails = action.payload.aadhaarVerification;
+        state.kycStatus = action.payload.aadhaarVerification.isVerified ? "completed" : "not_started";
+      }
     },
   },
 });
+
 export const {
   login,
   logout,
+  setAadhaarVerification,
+  completeAadhaarVerification,
   setKycStatus,
   completeKyc,
   skipKyc,
@@ -64,5 +109,7 @@ export const {
   updateUser,
   setSuspended,
 } = authSlice.actions;
+
 export default authSlice.reducer;
+
 // This file defines the authentication reducers using Redux Toolkit.

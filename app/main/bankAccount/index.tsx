@@ -38,7 +38,7 @@ import {
 const BankAccount = () => {
   const navigation = useNavigation<any>();
   const dispatch = useDispatch();
-  const { kycStatus } = useSelector((state) => state.authentication);
+  const { kycStatus } = useSelector((state: any) => state.authentication);
 
   const [loading, setLoading] = useState(false);
   const [currentStep, setCurrentStep] = useState(3); // 1: Pancard, 2: Aadhar, 3: Bank details
@@ -93,9 +93,9 @@ const BankAccount = () => {
         setIfscCode(user.bankAccount.ifscCode || "");
         setBankName(user.bankAccount.bankName || "");
         setAccountType(user.bankAccount.accountType || "savings");
-      } else if (user?.upiDetails) {
+      } else if ((user as any)?.upiDetails) {
         setPaymentMethod("upi");
-        setUpiId(user.upiDetails.upiId || "");
+        setUpiId((user as any).upiDetails.upiId || "");
       }
     } catch (error) {
       console.error("Error loading user data:", error);
@@ -275,8 +275,6 @@ const BankAccount = () => {
           }
         }
 
-        await saveKycStatus("completed");
-        dispatch(completeKyc());
         Toast.show({
           type: "success",
           text1: "Success",
@@ -307,8 +305,6 @@ const BankAccount = () => {
       const response = await addUpiDetails(upiId.toLowerCase());
 
       if (response.data.success) {
-        await saveKycStatus("completed");
-        dispatch(completeKyc());
         Toast.show({
           type: "success",
           text1: "Success",

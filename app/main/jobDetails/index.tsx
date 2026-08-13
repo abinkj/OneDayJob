@@ -60,7 +60,7 @@ const JobDetails = () => {
   const route = useRoute<any>();
   const queryClient = useQueryClient();
   const insets = useSafeAreaInsets();
-  const { kycStatus, userData } = useSelector(
+  const { kycStatus, isAadhaarVerified, userData } = useSelector(
     (state: any) => state.authentication
   );
   const userRole = userData?.role;
@@ -240,18 +240,8 @@ const JobDetails = () => {
   //   );
   // };
 
-  const handleApply = async () => {
-    if (kycStatus !== "completed") {
-      Toast.show({
-        type: "info",
-        text1: "KYC Required",
-        text2: "Please complete your KYC to apply for jobs",
-      });
-      navigation.navigate("BankAccount");
-      return;
-    }
+  const executeApplyJob = async () => {
     setIsLoading(true);
-    //setLoading(true);
     try {
       const result = await applyJobOffline(jobId);
 
@@ -280,7 +270,7 @@ const JobDetails = () => {
       } else {
         // Request succeeded immediately - user is online
         const res = result as any; // Type assertion since we know it's the API response
-        if (res.data.success) {
+        if (res.data?.success) {
           // Update local job state to reflect that user has applied
           setJob((prevJob) => ({
             ...prevJob!,
@@ -330,6 +320,15 @@ const JobDetails = () => {
           text1: "Already Queued",
           text2: "This application is already queued for submission",
         });
+      } else if (errorMessage.includes("Aadhaar verification is required")) {
+        Toast.show({
+          type: "info",
+          text1: "Aadhaar Verification Required",
+          text2: "Please complete your Aadhaar verification to apply for jobs",
+        });
+        navigation.navigate("AadhaarVerification", {
+          onSuccess: () => executeApplyJob(),
+        });
       } else {
         Toast.show({
           type: "error",
@@ -340,6 +339,27 @@ const JobDetails = () => {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleApply = async () => {
+    const userAadhaarVerified =
+      isAadhaarVerified ||
+      userData?.aadhaarVerification?.isVerified ||
+      kycStatus === "completed";
+
+    if (!userAadhaarVerified) {
+      Toast.show({
+        type: "info",
+        text1: "Aadhaar Verification Required",
+        text2: "Please complete your Aadhaar verification to apply for jobs",
+      });
+      navigation.navigate("AadhaarVerification", {
+        onSuccess: () => executeApplyJob(),
+      });
+      return;
+    }
+
+    await executeApplyJob();
   };
 
   const handleChat = async () => {

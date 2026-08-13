@@ -883,6 +883,7 @@ const HomeScreen = () => {
           </View>
         )}
 
+
         <View style={styles.searchContainer}>
           <Ionicons
             name="search"

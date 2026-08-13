@@ -121,6 +121,12 @@ const Settings: React.FC = () => {
   const userData = useSelector(
     (state: RootState) => state.authentication.userData
   );
+  const isAadhaarVerified = useSelector(
+    (state: RootState) => state.authentication.isAadhaarVerified
+  );
+  const aadhaarDetails = useSelector(
+    (state: RootState) => (state.authentication as any).aadhaarDetails
+  );
 
   // Removed: user, isProfileLoading states — userData from Redux is the source of truth
   const [isLoading, setIsLoading] = useState(false);
@@ -314,6 +320,38 @@ const Settings: React.FC = () => {
             title={t("settings.savedAddresses")}
             subtitle={t("settings.savedAddressesSub")}
             onPress={handleSavedAddresses}
+          />
+          <SettingsItem
+            icon="shield-checkmark-outline"
+            title="Identity Verification"
+            subtitle={
+              isAadhaarVerified
+                ? `Verified${aadhaarDetails?.maskedAadhaar ? ` • ${aadhaarDetails.maskedAadhaar}` : ""}`
+                : "Verify your Aadhaar via DigiLocker"
+            }
+            onPress={() => navigation.navigate("AadhaarVerification")}
+            rightComponent={
+              isAadhaarVerified ? (
+                <View
+                  style={{
+                    backgroundColor: "#DCFCE7",
+                    paddingHorizontal: 10,
+                    paddingVertical: 4,
+                    borderRadius: 8,
+                  }}
+                >
+                  <Text
+                    style={{
+                      fontSize: 11,
+                      fontWeight: "800",
+                      color: "#166534",
+                    }}
+                  >
+                    VERIFIED
+                  </Text>
+                </View>
+              ) : undefined
+            }
           />
           {/* <SettingsItem
             icon="card-outline"

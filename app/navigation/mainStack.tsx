@@ -16,6 +16,7 @@ import AddEditAddressScreen from "@/main/addEditAddress";
 import Language from "@/main/language";
 import JobPostingHistory from "@/main/jobPostingHistory";
 import TestSocketScreen from "@/main/testSocket";
+import AadhaarVerificationScreen from "@/main/aadhaarVerification";
 import { useTheme } from "../../contexts/ThemeContext";
 import { useSelector } from "react-redux";
 import { RootState } from "../../redux/store";
@@ -76,6 +77,14 @@ const MainStack = () => {
       <Stack.Screen name="Language" component={Language} />
       <Stack.Screen name="JobPostingHistory" component={JobPostingHistory} />
       <Stack.Screen name="TestSocket" component={TestSocketScreen} />
+      <Stack.Screen
+        name="AadhaarVerification"
+        component={AadhaarVerificationScreen}
+        options={{
+          presentation: "modal",
+          animation: "slide_from_bottom",
+        }}
+      />
     </Stack.Navigator>
   );
 };
