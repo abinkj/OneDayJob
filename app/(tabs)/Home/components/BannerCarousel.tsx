@@ -8,7 +8,7 @@ import {
   Dimensions,
   Animated,
 } from "react-native";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useIsFocused } from "@react-navigation/native";
 import { useTheme } from "../../../../contexts/ThemeContext";
 import DeviceDimensions from "../../../../constants/DeviceDimenions";
 import { fontSizes } from "../../../../themes/fonts";
@@ -46,12 +46,15 @@ const BANNER_DATA = [
 const BannerCarousel = () => {
   const { colors } = useTheme();
   const navigation = useNavigation<any>();
+  const isFocused = useIsFocused();
   const [currentIndex, setCurrentIndex] = useState(0);
   const scrollX = useRef(new Animated.Value(0)).current;
   const flatListRef = useRef<any>(null);
 
   // Auto-scroll logic
   useEffect(() => {
+    if (!isFocused) return;
+
     const timer = setInterval(() => {
       let nextIndex = currentIndex + 1;
       if (nextIndex >= BANNER_DATA.length) {
@@ -65,7 +68,7 @@ const BannerCarousel = () => {
     }, 4000); // 4 seconds interval
 
     return () => clearInterval(timer);
-  }, [currentIndex]);
+  }, [currentIndex, isFocused]);
 
   const handleScroll = Animated.event(
     [{ nativeEvent: { contentOffset: { x: scrollX } } }],
