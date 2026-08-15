@@ -7,7 +7,6 @@ import {
   FlatList,
   ActivityIndicator,
   RefreshControl,
-  Animated,
   DeviceEventEmitter,
   BackHandler,
 } from "react-native";
@@ -125,7 +124,6 @@ const HomeScreen = () => {
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
 
-  const scrollY = useRef(new Animated.Value(0)).current;
   const scrollViewRef = useRef<any>(null);
   const filterRowRef = useRef(null);
   const [filterRowHeight, setFilterRowHeight] = useState(0);
@@ -993,7 +991,7 @@ const HomeScreen = () => {
         </View>
       )}
 
-      <Animated.FlatList
+      <FlatList
         ref={scrollViewRef}
         data={allJobs}
         renderItem={renderJobCard}
@@ -1005,16 +1003,10 @@ const HomeScreen = () => {
         contentContainerStyle={styles.flatListContent}
         showsVerticalScrollIndicator={false}
         bounces={false}
-        onScroll={Animated.event(
-          [{ nativeEvent: { contentOffset: { y: scrollY } } }],
-          {
-            useNativeDriver: false,
-            listener: (event: any) => {
-              const offsetY = event.nativeEvent.contentOffset.y;
-              setIsFilterSticky(offsetY >= STICKY_OFFSET);
-            },
-          }
-        )}
+        onScroll={(event) => {
+          const offsetY = event.nativeEvent.contentOffset.y;
+          setIsFilterSticky(offsetY >= STICKY_OFFSET);
+        }}
         scrollEventThrottle={16}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />

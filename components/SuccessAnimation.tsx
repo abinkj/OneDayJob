@@ -1,12 +1,18 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect } from "react";
 import {
   View,
   Text,
   StyleSheet,
-  Animated,
   Dimensions,
   Modal,
 } from "react-native";
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+  withSpring,
+  runOnJS,
+} from "react-native-reanimated";
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "../contexts/ThemeContext";
 
@@ -18,7 +24,7 @@ interface SuccessAnimationProps {
   type?: "single" | "all";
 }
 
-const { width, height } = Dimensions.get("window");
+const { width } = Dimensions.get("window");
 
 const SuccessAnimation: React.FC<SuccessAnimationProps> = ({
   visible,
@@ -29,34 +35,31 @@ const SuccessAnimation: React.FC<SuccessAnimationProps> = ({
 }) => {
   const { colors } = useTheme();
 
-  const scaleValue = useRef(new Animated.Value(0)).current;
-  const opacityValue = useRef(new Animated.Value(0)).current;
-  const backgroundOpacity = useRef(new Animated.Value(0)).current;
+  const scaleValue = useSharedValue(0);
+  const opacityValue = useSharedValue(0);
+  const backgroundOpacity = useSharedValue(0);
 
-  // Cleanup effect
+  const handleDismiss = () => {
+    backgroundOpacity.value = withTiming(0, { duration: 300 });
+    opacityValue.value = withTiming(0, { duration: 300 }, (finished) => {
+      if (finished && onAnimationFinish) {
+        runOnJS(onAnimationFinish)();
+      }
+    });
+  };
+
+  // UI animations on visible change
   useEffect(() => {
     let timeout: NodeJS.Timeout;
 
     if (visible) {
-      // Start animation
-      Animated.parallel([
-        Animated.timing(backgroundOpacity, {
-          toValue: 1,
-          duration: 300,
-          useNativeDriver: true,
-        }),
-        Animated.spring(scaleValue, {
-          toValue: 1,
-          friction: 5,
-          tension: 40,
-          useNativeDriver: true,
-        }),
-        Animated.timing(opacityValue, {
-          toValue: 1,
-          duration: 300,
-          useNativeDriver: true,
-        }),
-      ]).start();
+      // Start animation on UI thread
+      backgroundOpacity.value = withTiming(1, { duration: 300 });
+      scaleValue.value = withSpring(1, {
+        damping: 10,
+        stiffness: 100,
+      });
+      opacityValue.value = withTiming(1, { duration: 300 });
 
       // Auto dismiss
       timeout = setTimeout(() => {
@@ -64,32 +67,28 @@ const SuccessAnimation: React.FC<SuccessAnimationProps> = ({
       }, 3000); // Show for 3 seconds
     } else {
       // Reset values
-      scaleValue.setValue(0);
-      opacityValue.setValue(0);
-      backgroundOpacity.setValue(0);
+      scaleValue.value = 0;
+      opacityValue.value = 0;
+      backgroundOpacity.value = 0;
     }
 
     return () => clearTimeout(timeout);
   }, [visible]);
 
-  const handleDismiss = () => {
-    Animated.parallel([
-      Animated.timing(opacityValue, {
-        toValue: 0,
-        duration: 300,
-        useNativeDriver: true,
-      }),
-      Animated.timing(backgroundOpacity, {
-        toValue: 0,
-        duration: 300,
-        useNativeDriver: true,
-      }),
-    ]).start(() => {
-      if (onAnimationFinish) {
-        onAnimationFinish();
-      }
-    });
-  };
+  const backdropAnimatedStyle = useAnimatedStyle(() => {
+    "worklet";
+    return {
+      opacity: backgroundOpacity.value,
+    };
+  });
+
+  const cardAnimatedStyle = useAnimatedStyle(() => {
+    "worklet";
+    return {
+      transform: [{ scale: scaleValue.value }],
+      opacity: opacityValue.value,
+    };
+  });
 
   if (!visible) return null;
 
@@ -97,17 +96,14 @@ const SuccessAnimation: React.FC<SuccessAnimationProps> = ({
     <Modal transparent visible={visible} animationType="none">
       <View style={styles.container}>
         <Animated.View
-          style={[styles.backdrop, { opacity: backgroundOpacity }]}
+          style={[styles.backdrop, backdropAnimatedStyle]}
         />
 
         <Animated.View
           style={[
             styles.card,
-            {
-              backgroundColor: colors.white,
-              transform: [{ scale: scaleValue }],
-              opacity: opacityValue,
-            },
+            { backgroundColor: colors.white },
+            cardAnimatedStyle,
           ]}
         >
           <View

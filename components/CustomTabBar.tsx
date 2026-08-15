@@ -1,37 +1,65 @@
-import React, { useRef, useEffect } from "react";
+import React, { useEffect } from "react";
 import {
   View,
   Text,
   TouchableOpacity,
   StyleSheet,
-  Animated,
   DeviceEventEmitter,
 } from "react-native";
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
+  withTiming,
+} from "react-native-reanimated";
 import DeviceDimensions from "../constants/DeviceDimenions";
-// import { Colors } from "../constants/Colors";
 import { useTheme } from "../contexts/ThemeContext";
 import { getFocusedRouteNameFromRoute } from "@react-navigation/native";
 import SvgImage from "../utilities/svg";
-import Toast from "react-native-toast-message";
+
+interface TabIconProps {
+  isFocused: boolean;
+  iconName: string;
+}
+
+const TabIcon = ({ isFocused, iconName }: TabIconProps) => {
+  const scale = useSharedValue(isFocused ? 1 : 0.9);
+
+  useEffect(() => {
+    scale.value = withSpring(isFocused ? 1 : 0.9, {
+      damping: 10,
+      stiffness: 100,
+    });
+  }, [isFocused, scale]);
+
+  const animatedStyle = useAnimatedStyle(() => {
+    "worklet";
+    return {
+      transform: [{ scale: scale.value }],
+    };
+  });
+
+  return (
+    <Animated.View style={animatedStyle}>
+      <SvgImage
+        icon={isFocused ? iconName + "Active" : iconName}
+        width={24}
+        height={24}
+      />
+    </Animated.View>
+  );
+};
 
 const CustomTabBar = ({ state, descriptors, navigation }) => {
   const focusedOptions = descriptors[state.routes[state.index].key].options;
   const currentRoute = state.routes[state.index];
   const routeName =
     getFocusedRouteNameFromRoute(currentRoute) || currentRoute.name;
-  //const { kycStatus } = useSelector((state: any) => state.authentication);
   const { colors } = useTheme();
 
-  // Animated values for each tab - initialized once
-  const scales = useRef(
-    state.routes.map(
-      (_, i) => new Animated.Value(i === state.index ? 1.1 : 0.8)
-    )
-  ).current;
-
   // Animated value for tab bar visibility
-  const tabBarTranslateY = useRef(new Animated.Value(0)).current;
-  const tabBarOpacity = useRef(new Animated.Value(1)).current;
+  const tabBarTranslateY = useSharedValue(0);
+  const tabBarOpacity = useSharedValue(1);
 
   // Check if tab bar should be hidden
   const hiddenTabBarScreens = ["PostJob"];
@@ -39,45 +67,26 @@ const CustomTabBar = ({ state, descriptors, navigation }) => {
     hiddenTabBarScreens.includes(routeName) ||
     focusedOptions.tabBarVisible === false;
 
+  // Animate tab bar visibility with both slide and fade on the UI thread
   useEffect(() => {
-    scales.forEach((scale, i) => {
-      Animated.spring(scale, {
-        toValue: i === state.index ? 1 : 0.9,
-        useNativeDriver: true,
-        speed: 5,
-        bounciness: 10,
-      }).start();
+    tabBarTranslateY.value = withTiming(shouldHideTabBar ? 100 : 0, {
+      duration: 250,
     });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state.index]);
-
-  // Animate tab bar visibility with both slide and fade
-  useEffect(() => {
-    Animated.parallel([
-      Animated.timing(tabBarTranslateY, {
-        toValue: shouldHideTabBar ? 100 : 0,
-        duration: 250,
-        useNativeDriver: true,
-      }),
-      Animated.timing(tabBarOpacity, {
-        toValue: shouldHideTabBar ? 0 : 1,
-        duration: 250,
-        useNativeDriver: true,
-      }),
-    ]).start();
+    tabBarOpacity.value = withTiming(shouldHideTabBar ? 0 : 1, {
+      duration: 100,
+    });
   }, [shouldHideTabBar, tabBarTranslateY, tabBarOpacity]);
 
+  const containerAnimatedStyle = useAnimatedStyle(() => {
+    "worklet";
+    return {
+      transform: [{ translateY: tabBarTranslateY.value }],
+      opacity: tabBarOpacity.value,
+    };
+  });
+
   const handlePostJobPress = () => {
-    //if (kycStatus === "completed") {
     navigation.navigate("PostJob");
-    //} else {
-    // Toast.show({
-    //   type: "info",
-    //   text1: "KYC Required",
-    //   text2: "Please complete your KYC to post jobs",
-    // });
-    // navigation.navigate("BankAccount");
-    //}
   };
 
   const handleTabPress = (index, route) => {
@@ -100,13 +109,7 @@ const CustomTabBar = ({ state, descriptors, navigation }) => {
       onPress={() => handleTabPress(index, route)}
       activeOpacity={0.7}
     >
-      <Animated.View style={{ transform: [{ scale: scales[index] }] }}>
-        <SvgImage
-          icon={state.index === index ? iconName + "Active" : iconName}
-          width={24}
-          height={24}
-        />
-      </Animated.View>
+      <TabIcon isFocused={state.index === index} iconName={iconName} />
       <Text
         style={[
           styles.tabText,
@@ -119,15 +122,7 @@ const CustomTabBar = ({ state, descriptors, navigation }) => {
   );
 
   return (
-    <Animated.View
-      style={[
-        styles.container,
-        {
-          transform: [{ translateY: tabBarTranslateY }],
-          opacity: tabBarOpacity,
-        },
-      ]}
-    >
+    <Animated.View style={[styles.container, containerAnimatedStyle]}>
       <View style={[styles.tabBar, { backgroundColor: colors.white }]}>
         {renderTab(0, state.routes[0], "home", "Home")}
         {renderTab(1, state.routes[1], "status", "Status")}

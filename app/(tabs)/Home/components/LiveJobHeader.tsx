@@ -1,14 +1,23 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect } from "react";
 import {
   View,
   Text,
   TouchableOpacity,
   StyleSheet,
-  Animated,
-  Easing,
   Dimensions,
   Platform,
 } from "react-native";
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withRepeat,
+  withSequence,
+  withTiming,
+  withDelay,
+  Easing,
+  interpolate,
+  Extrapolation,
+} from "react-native-reanimated";
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import { useSelector } from "react-redux";
@@ -37,52 +46,60 @@ const LiveJobHeader: React.FC<LiveJobHeaderProps> = ({
   const userId = userData?.id || userData?._id;
 
   // Animation for the sweep effect
-  const moveAnim = useRef(new Animated.Value(0)).current;
+  const moveAnim = useSharedValue(0);
   // Animation for the pulsing live dot
-  const pulseAnim = useRef(new Animated.Value(1)).current;
+  const pulseAnim = useSharedValue(1);
 
   useEffect(() => {
-    const startSweepAnimation = () => {
-      Animated.loop(
-        Animated.sequence([
-          Animated.timing(moveAnim, {
-            toValue: 1,
-            duration: 2500,
-            easing: Easing.bezier(0.4, 0, 0.2, 1),
-            useNativeDriver: true,
-          }),
-          Animated.delay(1000), // pause between sweeps
-        ])
-      ).start();
-    };
+    moveAnim.value = 0;
+    moveAnim.value = withRepeat(
+      withSequence(
+        withTiming(1, {
+          duration: 2500,
+          easing: Easing.bezier(0.4, 0, 0.2, 1),
+        }),
+        withDelay(1000, withTiming(0, { duration: 0 }))
+      ),
+      -1,
+      false
+    );
 
-    const startPulseAnimation = () => {
-      Animated.loop(
-        Animated.sequence([
-          Animated.timing(pulseAnim, {
-            toValue: 0.4,
-            duration: 800,
-            easing: Easing.inOut(Easing.ease),
-            useNativeDriver: true,
-          }),
-          Animated.timing(pulseAnim, {
-            toValue: 1,
-            duration: 800,
-            easing: Easing.inOut(Easing.ease),
-            useNativeDriver: true,
-          }),
-        ])
-      ).start();
-    };
-
-    startSweepAnimation();
-    startPulseAnimation();
+    pulseAnim.value = 1;
+    pulseAnim.value = withRepeat(
+      withSequence(
+        withTiming(0.4, {
+          duration: 800,
+          easing: Easing.inOut(Easing.ease),
+        }),
+        withTiming(1, {
+          duration: 800,
+          easing: Easing.inOut(Easing.ease),
+        })
+      ),
+      -1,
+      true
+    );
   }, [moveAnim, pulseAnim]);
 
-  // Interpolate for sliding translation
-  const translateX = moveAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: [-width * 0.8, width], // Slide across fully
+  const sweepAnimatedStyle = useAnimatedStyle(() => {
+    "worklet";
+    const translateX = interpolate(
+      moveAnim.value,
+      [0, 1],
+      [-width * 0.8, width],
+      Extrapolation.CLAMP
+    );
+    return {
+      transform: [{ translateX }],
+    };
+  });
+
+  const liveDotAnimatedStyle = useAnimatedStyle(() => {
+    "worklet";
+    return {
+      opacity: pulseAnim.value,
+      transform: [{ scale: pulseAnim.value }],
+    };
   });
 
   const handlePress = () => {
@@ -119,7 +136,7 @@ const LiveJobHeader: React.FC<LiveJobHeaderProps> = ({
       >
         {/* Animated Light Sweep Effect */}
         <Animated.View
-          style={[styles.sweepContainer, { transform: [{ translateX }] }]}
+          style={[styles.sweepContainer, sweepAnimatedStyle]}
         >
           <LinearGradient
             colors={[
@@ -141,10 +158,7 @@ const LiveJobHeader: React.FC<LiveJobHeaderProps> = ({
           <View style={styles.topRow}>
             <View style={styles.liveBadge}>
               <Animated.View
-                style={[
-                  styles.liveDot,
-                  { opacity: pulseAnim, transform: [{ scale: pulseAnim }] },
-                ]}
+                style={[styles.liveDot, liveDotAnimatedStyle]}
               />
               <Text style={styles.liveText}>LIVE JOB</Text>
             </View>

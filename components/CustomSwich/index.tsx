@@ -1,21 +1,39 @@
-import React, { useEffect, useRef } from "react";
-import { View, TouchableOpacity, StyleSheet, Animated } from "react-native";
+import React, { useEffect } from "react";
+import { View, TouchableOpacity } from "react-native";
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+} from "react-native-reanimated";
 import { styles } from "./styles";
 import { Colors } from "../../constants/Colors";
 
-const CustomSwitch = ({ value = false, onValueChange, disabled = false }) => {
-  // Animation for thumb position
-  // Track: 51, Padding: 2*2=4, Thumb: 27.  Remaining space: 51 - 4 - 27 = 20.
-  const thumbPosition = useRef(new Animated.Value(value ? 20 : 0)).current;
+interface CustomSwitchProps {
+  value?: boolean;
+  onValueChange: (val: boolean) => void;
+  disabled?: boolean;
+}
 
-  // Update animations when value changes
+const CustomSwitch: React.FC<CustomSwitchProps> = ({
+  value = false,
+  onValueChange,
+  disabled = false,
+}) => {
+  // Animation for thumb position
+  // Track: 51, Padding: 2*2=4, Thumb: 27. Remaining space: 51 - 4 - 27 = 20.
+  const thumbPosition = useSharedValue(value ? 20 : 0);
+
+  // Update animations on UI thread when value changes
   useEffect(() => {
-    Animated.timing(thumbPosition, {
-      toValue: value ? 20 : 0,
-      duration: 250,
-      useNativeDriver: false,
-    }).start();
+    thumbPosition.value = withTiming(value ? 20 : 0, { duration: 250 });
   }, [value, thumbPosition]);
+
+  const thumbAnimatedStyle = useAnimatedStyle(() => {
+    "worklet";
+    return {
+      transform: [{ translateX: thumbPosition.value }],
+    };
+  });
 
   const handleToggle = () => {
     if (!disabled) {
@@ -43,17 +61,11 @@ const CustomSwitch = ({ value = false, onValueChange, disabled = false }) => {
           },
         ]}
       >
-        <Animated.View
-          style={[
-            styles.thumb,
-            {
-              transform: [{ translateX: thumbPosition }],
-            },
-          ]}
-        />
+        <Animated.View style={[styles.thumb, thumbAnimatedStyle]} />
       </View>
     </TouchableOpacity>
   );
 };
 
 export default React.memo(CustomSwitch);
+
