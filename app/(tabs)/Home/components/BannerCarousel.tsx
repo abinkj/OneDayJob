@@ -6,8 +6,16 @@ import {
   ImageBackground,
   StyleSheet,
   Dimensions,
-  Animated,
+  type FlatList,
 } from "react-native";
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  useAnimatedScrollHandler,
+  interpolate,
+  Extrapolation,
+  type SharedValue,
+} from "react-native-reanimated";
 import { useNavigation, useIsFocused } from "@react-navigation/native";
 import { useTheme } from "../../../../contexts/ThemeContext";
 import DeviceDimensions from "../../../../constants/DeviceDimenions";
@@ -16,7 +24,16 @@ import { fontSizes } from "../../../../themes/fonts";
 const { width } = Dimensions.get("window");
 const BANNER_WIDTH = width - 32; // Assuming 16 horizontal padding on each side
 
-const BANNER_DATA = [
+type BannerItem = {
+  id: string;
+  image: any;
+  title: string;
+  subtitle: string;
+  buttonText: string;
+  navigateTo: string;
+};
+
+const BANNER_DATA: BannerItem[] = [
   {
     id: "1",
     image: require("../../../../assets/images/banner.png"),
@@ -43,13 +60,52 @@ const BANNER_DATA = [
   },
 ];
 
+interface PaginationDotProps {
+  index: number;
+  scrollX: SharedValue<number>;
+  color: string;
+}
+
+const PaginationDot = ({ index, scrollX, color }: PaginationDotProps) => {
+  const animatedStyle = useAnimatedStyle(() => {
+    "worklet";
+    const dotWidth = interpolate(
+      scrollX.value,
+      [(index - 1) * BANNER_WIDTH, index * BANNER_WIDTH, (index + 1) * BANNER_WIDTH],
+      [8, 20, 8],
+      Extrapolation.CLAMP
+    );
+    const opacity = interpolate(
+      scrollX.value,
+      [(index - 1) * BANNER_WIDTH, index * BANNER_WIDTH, (index + 1) * BANNER_WIDTH],
+      [0.3, 1, 0.3],
+      Extrapolation.CLAMP
+    );
+
+    return {
+      width: dotWidth,
+      opacity,
+    };
+  });
+
+  return (
+    <Animated.View
+      style={[
+        styles.dot,
+        { backgroundColor: color },
+        animatedStyle,
+      ]}
+    />
+  );
+};
+
 const BannerCarousel = () => {
   const { colors } = useTheme();
   const navigation = useNavigation<any>();
   const isFocused = useIsFocused();
   const [currentIndex, setCurrentIndex] = useState(0);
-  const scrollX = useRef(new Animated.Value(0)).current;
-  const flatListRef = useRef<any>(null);
+  const scrollX = useSharedValue(0);
+  const flatListRef = useRef<FlatList<BannerItem>>(null);
 
   // Auto-scroll logic
   useEffect(() => {
@@ -70,13 +126,16 @@ const BannerCarousel = () => {
     return () => clearInterval(timer);
   }, [currentIndex, isFocused]);
 
-  const handleScroll = Animated.event(
-    [{ nativeEvent: { contentOffset: { x: scrollX } } }],
-    { useNativeDriver: false } // Width/position isn't fully supported with native driver for custom pagination dots sometimes
-  );
+  // UI-thread animated scroll handler
+  const handleScroll = useAnimatedScrollHandler({
+    onScroll: (event) => {
+      "worklet";
+      scrollX.value = event.contentOffset.x;
+    },
+  });
 
   const onViewableItemsChanged = useRef(({ viewableItems }: any) => {
-    if (viewableItems[0]) {
+    if (viewableItems[0] && viewableItems[0].index !== undefined && viewableItems[0].index !== null) {
       setCurrentIndex(viewableItems[0].index);
     }
   }).current;
@@ -85,7 +144,13 @@ const BannerCarousel = () => {
     viewAreaCoveragePercentThreshold: 50,
   }).current;
 
-  const renderItem = ({ item }: { item: (typeof BANNER_DATA)[0] }) => {
+  const getItemLayout = (_: any, index: number) => ({
+    length: BANNER_WIDTH,
+    offset: BANNER_WIDTH * index,
+    index,
+  });
+
+  const renderItem = ({ item }: { item: BannerItem }) => {
     return (
       <View style={[styles.bannerContainer, { width: BANNER_WIDTH }]}>
         <ImageBackground
@@ -114,7 +179,7 @@ const BannerCarousel = () => {
   return (
     <View style={styles.container}>
       <Animated.FlatList
-        ref={flatListRef}
+        ref={flatListRef as any}
         data={BANNER_DATA}
         keyExtractor={(item) => item.id}
         renderItem={renderItem}
@@ -126,34 +191,17 @@ const BannerCarousel = () => {
         scrollEventThrottle={16}
         onViewableItemsChanged={onViewableItemsChanged}
         viewabilityConfig={viewConfigRef}
+        getItemLayout={getItemLayout}
       />
       <View style={styles.paginationContainer}>
-        {BANNER_DATA.map((_, i) => {
-          const inputRange = [
-            (i - 1) * BANNER_WIDTH,
-            i * BANNER_WIDTH,
-            (i + 1) * BANNER_WIDTH,
-          ];
-          const dotWidth = scrollX.interpolate({
-            inputRange,
-            outputRange: [8, 20, 8],
-            extrapolate: "clamp",
-          });
-          const opacity = scrollX.interpolate({
-            inputRange,
-            outputRange: [0.3, 1, 0.3],
-            extrapolate: "clamp",
-          });
-          return (
-            <Animated.View
-              key={i.toString()}
-              style={[
-                styles.dot,
-                { width: dotWidth, opacity, backgroundColor: colors.primary },
-              ]}
-            />
-          );
-        })}
+        {BANNER_DATA.map((_, i) => (
+          <PaginationDot
+            key={i.toString()}
+            index={i}
+            scrollX={scrollX}
+            color={colors.primary}
+          />
+        ))}
       </View>
     </View>
   );
