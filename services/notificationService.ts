@@ -13,7 +13,8 @@ export interface NotificationData {
     | "job_update"
     | "application_status"
     | "message"
-    | "system";
+    | "system"
+    | "job_match";
   title: string;
   body: string;
   data?: any;
@@ -160,6 +161,7 @@ class NotificationService {
       case "verification_code":
         this.handleVerificationCodeNotification(notificationData);
         break;
+      case "job_match":
       case "job_update":
         this.handleJobUpdateNotification(notificationData);
         break;
@@ -251,6 +253,7 @@ class NotificationService {
           });
         }
         break;
+      case "job_match":
       case "job_update":
       case "application_status":
         if (notificationData.jobId) {

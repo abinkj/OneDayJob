@@ -92,6 +92,9 @@ export interface User {
 
   // Saved addresses for quick location selection
   savedAddresses?: SavedAddress[];
+
+  primaryProficiency?: string | { _id: string; name: string };
+  secondaryProficiency?: string | { _id: string; name: string };
 }
 
 export interface EditProfileParams {

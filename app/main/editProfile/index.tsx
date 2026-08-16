@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from "react";
-import { View, TouchableOpacity, ScrollView } from "react-native";
+import { View, TouchableOpacity, ScrollView, Modal, Text } from "react-native";
 import { Image } from "expo-image";
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
@@ -12,7 +12,7 @@ import { Header } from "../../../components/header";
 import LabeledInput from "../../../components/labeledTextInput";
 import { User } from "../../../types";
 import { saveUserData, normalizeUser } from "../../../utilities/mmkvStore";
-import { uploadProfilePicture } from "../../../services/api";
+import { uploadProfilePicture, getCategories } from "../../../services/api";
 import { useUpdateProfile } from "../../../hooks/useProfile";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "../../../redux/store";
@@ -43,11 +43,30 @@ const EditProfile: React.FC = () => {
   const [profileImage, setProfileImage] = useState<string | { uri: string }>(
     Images.profile.profileImage as unknown as string
   );
+  const [categories, setCategories] = useState<any[]>([]);
+  const [primaryProficiency, setPrimaryProficiency] = useState<string | null>(null);
+  const [secondaryProficiency, setSecondaryProficiency] = useState<string | null>(null);
+  const [showPrimaryModal, setShowPrimaryModal] = useState(false);
+  const [showSecondaryModal, setShowSecondaryModal] = useState(false);
   const [imageRemoved, setImageRemoved] = useState(false); // ← NEW
   const [isSaving, setIsSaving] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
 
   const { showAlert } = useAlert();
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await getCategories();
+        if (response.data && Array.isArray(response.data.data)) {
+          setCategories(response.data.data);
+        }
+      } catch (error) {
+        console.error("Error fetching categories:", error);
+      }
+    };
+    fetchCategories();
+  }, []);
 
   useEffect(() => {
     if (!userData) return;
@@ -64,6 +83,16 @@ const EditProfile: React.FC = () => {
       (Images.profile.profileImage as unknown as string);
     setProfileImage(imageSource as any);
     setImageRemoved(false); // ← reset on userData change
+
+    // Initialize proficiencies
+    const pProf = userData.primaryProficiency;
+    const sProf = userData.secondaryProficiency;
+    setPrimaryProficiency(
+      pProf ? (typeof pProf === "object" ? pProf._id : pProf) : null
+    );
+    setSecondaryProficiency(
+      sProf ? (typeof sProf === "object" ? sProf._id : sProf) : null
+    );
   }, [userData]);
 
   // ─── Unsaved-changes guard ──────────────────────────────────────────────
@@ -74,15 +103,38 @@ const EditProfile: React.FC = () => {
       typeof profileImage === "string" ? profileImage : profileImage?.uri;
     const isNewImage = imageUri?.startsWith("file://");
 
+    const currentPrimary = userData.primaryProficiency
+      ? typeof userData.primaryProficiency === "object"
+        ? userData.primaryProficiency._id
+        : userData.primaryProficiency
+      : null;
+
+    const currentSecondary = userData.secondaryProficiency
+      ? typeof userData.secondaryProficiency === "object"
+        ? userData.secondaryProficiency._id
+        : userData.secondaryProficiency
+      : null;
+
     return (
       userData.firstName !== firstName.trim() ||
       userData.lastName !== lastName.trim() ||
       (userData.locationText || userData.location?.address || "") !==
         location.trim() ||
+      currentPrimary !== primaryProficiency ||
+      currentSecondary !== secondaryProficiency ||
       !!isNewImage ||
       imageRemoved // ← NEW
     );
-  }, [userData, firstName, lastName, location, profileImage, imageRemoved]);
+  }, [
+    userData,
+    firstName,
+    lastName,
+    location,
+    profileImage,
+    imageRemoved,
+    primaryProficiency,
+    secondaryProficiency,
+  ]);
 
   useEffect(() => {
     const unsubscribe = navigation.addListener("beforeRemove", (e: any) => {
@@ -203,6 +255,8 @@ const EditProfile: React.FC = () => {
           address: location.trim(),
         },
         profilePicture: profilePictureKey,
+        primaryProficiency: primaryProficiency || null,
+        secondaryProficiency: secondaryProficiency || null,
         updatedAt: new Date().toISOString(),
       };
 
@@ -251,6 +305,79 @@ const EditProfile: React.FC = () => {
     }
     return Images.profile.profileImage;
   }, [profileImage]);
+
+  // ─── Modal Helper Method ──────────────────────────────────────────────────
+  const renderCategoryModal = (
+    visible: boolean,
+    onClose: () => void,
+    selectedValue: string | null,
+    onSelect: (value: string | null) => void,
+    title: string,
+    excludeValue: string | null
+  ) => {
+    const filteredCategories = categories.filter((c) => c._id !== excludeValue);
+
+    return (
+      <Modal visible={visible} animationType="slide" transparent>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>{title}</Text>
+              <TouchableOpacity onPress={onClose}>
+                <Ionicons name="close" size={24} color={colors.black} />
+              </TouchableOpacity>
+            </View>
+            <ScrollView style={styles.categoryList}>
+              <TouchableOpacity
+                style={styles.categoryItem}
+                onPress={() => {
+                  onSelect(null);
+                  onClose();
+                }}
+              >
+                <Text
+                  style={[
+                    styles.categoryText,
+                    !selectedValue && styles.selectedCategoryText,
+                  ]}
+                >
+                  None
+                </Text>
+                {!selectedValue && (
+                  <Ionicons name="checkmark" size={20} color={colors.primary} />
+                )}
+              </TouchableOpacity>
+              {filteredCategories.map((category) => {
+                const isSelected = selectedValue === category._id;
+                return (
+                  <TouchableOpacity
+                    key={category._id}
+                    style={styles.categoryItem}
+                    onPress={() => {
+                      onSelect(category._id);
+                      onClose();
+                    }}
+                  >
+                    <Text
+                      style={[
+                        styles.categoryText,
+                        isSelected && styles.selectedCategoryText,
+                      ]}
+                    >
+                      {category.name}
+                    </Text>
+                    {isSelected && (
+                      <Ionicons name="checkmark" size={20} color={colors.primary} />
+                    )}
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
+    );
+  };
 
   // ─── Render ──────────────────────────────────────────────────────────────
   return (
@@ -301,6 +428,70 @@ const EditProfile: React.FC = () => {
           spellCheck={false}
           textContentType="name"
         />
+
+        {/* Primary Proficiency */}
+        <View style={{ marginBottom: 16, width: "100%" }}>
+          <Text style={styles.sectionTitle}>Primary Proficiency</Text>
+          <TouchableOpacity
+            style={styles.dropdownContainer}
+            onPress={() => setShowPrimaryModal(true)}
+            disabled={isSaving}
+          >
+            <View style={styles.dropdownLeft}>
+              <Ionicons
+                name="star-outline"
+                size={20}
+                color={colors.grey}
+                style={{ marginRight: 12 }}
+              />
+              <Text
+                style={
+                  primaryProficiency
+                    ? styles.dropdownValue
+                    : styles.dropdownPlaceholder
+                }
+              >
+                {primaryProficiency
+                  ? categories.find((c) => c._id === primaryProficiency)?.name ||
+                    "Select Primary Category"
+                  : "Select Primary Category"}
+              </Text>
+            </View>
+            <Ionicons name="chevron-down" size={20} color={colors.grey} />
+          </TouchableOpacity>
+        </View>
+
+        {/* Secondary Proficiency */}
+        <View style={{ marginBottom: 16, width: "100%" }}>
+          <Text style={styles.sectionTitle}>Secondary Proficiency</Text>
+          <TouchableOpacity
+            style={styles.dropdownContainer}
+            onPress={() => setShowSecondaryModal(true)}
+            disabled={isSaving}
+          >
+            <View style={styles.dropdownLeft}>
+              <Ionicons
+                name="star-outline"
+                size={20}
+                color={colors.grey}
+                style={{ marginRight: 12 }}
+              />
+              <Text
+                style={
+                  secondaryProficiency
+                    ? styles.dropdownValue
+                    : styles.dropdownPlaceholder
+                }
+              >
+                {secondaryProficiency
+                  ? categories.find((c) => c._id === secondaryProficiency)?.name ||
+                    "Select Secondary Category"
+                  : "Select Secondary Category"}
+              </Text>
+            </View>
+            <Ionicons name="chevron-down" size={20} color={colors.grey} />
+          </TouchableOpacity>
+        </View>
       </ScrollView>
 
       {/* Save Button */}
@@ -321,6 +512,26 @@ const EditProfile: React.FC = () => {
         primaryColor={colors.primary}
         showRemoveButton
       />
+
+      {/* Primary Category Modal */}
+      {renderCategoryModal(
+        showPrimaryModal,
+        () => setShowPrimaryModal(false),
+        primaryProficiency,
+        setPrimaryProficiency,
+        "Select Primary Category",
+        secondaryProficiency
+      )}
+
+      {/* Secondary Category Modal */}
+      {renderCategoryModal(
+        showSecondaryModal,
+        () => setShowSecondaryModal(false),
+        secondaryProficiency,
+        setSecondaryProficiency,
+        "Select Secondary Category",
+        primaryProficiency
+      )}
     </View>
   );
 };

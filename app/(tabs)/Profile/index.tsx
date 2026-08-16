@@ -265,6 +265,34 @@ const Profile: React.FC = () => {
           <Text style={styles.locationText}>{getDisplayAddress()}</Text>
         </View>
 
+        {/* Proficiencies */}
+        {(userData?.primaryProficiency || userData?.secondaryProficiency) && (
+          <View style={styles.proficienciesContainer}>
+            <Text style={styles.proficienciesTitle}>Proficiencies</Text>
+            <View style={styles.tagsContainer}>
+              {userData?.primaryProficiency && (
+                <View style={[styles.proficiencyTag, styles.primaryTag]}>
+                  <Ionicons name="star" size={14} color={colors.white} style={styles.tagIcon} />
+                  <Text style={styles.primaryTagText}>
+                    {typeof userData.primaryProficiency === "object"
+                      ? userData.primaryProficiency.name
+                      : userData.primaryProficiency}
+                  </Text>
+                </View>
+              )}
+              {userData?.secondaryProficiency && (
+                <View style={[styles.proficiencyTag, styles.secondaryTag]}>
+                  <Text style={styles.secondaryTagText}>
+                    {typeof userData.secondaryProficiency === "object"
+                      ? userData.secondaryProficiency.name
+                      : userData.secondaryProficiency}
+                  </Text>
+                </View>
+              )}
+            </View>
+          </View>
+        )}
+
         {/* Stats */}
         <View style={styles.statsContainer}>
           <View style={styles.statBox}>

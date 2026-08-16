@@ -473,6 +473,54 @@ export const createStyles = (colors: ThemeColors) =>
         },
       }),
     },
+    proficienciesContainer: {
+      alignItems: "center",
+      marginTop: 8,
+      marginBottom: 16,
+      width: "100%",
+    },
+    proficienciesTitle: {
+      fontSize: fontSizes.size12,
+      fontFamily: fontFamilies.bold,
+      color: colors.grey,
+      letterSpacing: 1,
+      textTransform: "uppercase",
+      marginBottom: 8,
+    },
+    tagsContainer: {
+      flexDirection: "row",
+      flexWrap: "wrap",
+      justifyContent: "center",
+      gap: 8,
+    },
+    proficiencyTag: {
+      flexDirection: "row",
+      alignItems: "center",
+      paddingHorizontal: 12,
+      paddingVertical: 6,
+      borderRadius: 16,
+    },
+    primaryTag: {
+      backgroundColor: colors.primary,
+    },
+    secondaryTag: {
+      backgroundColor: colors.categoryBox,
+      borderWidth: 1,
+      borderColor: colors.primary + "30",
+    },
+    tagIcon: {
+      marginRight: 4,
+    },
+    primaryTagText: {
+      fontSize: fontSizes.size13,
+      fontFamily: fontFamilies.medium,
+      color: colors.white,
+    },
+    secondaryTagText: {
+      fontSize: fontSizes.size13,
+      fontFamily: fontFamilies.medium,
+      color: colors.primary,
+    },
   });
 
 export default () => null;
