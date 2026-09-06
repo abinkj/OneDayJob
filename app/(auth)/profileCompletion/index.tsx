@@ -3,7 +3,7 @@ import { View, Text, TouchableOpacity } from "react-native";
 import { Image } from "expo-image";
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import CustomButton from "../../../components/CustomButton";
@@ -13,6 +13,8 @@ import { updateUserProfile, uploadProfilePicture } from "../../../services/api";
 import { getUserData, saveUserData } from "../../../utilities/mmkvStore";
 import { useTheme } from "../../../contexts/ThemeContext";
 import { login, completeProfile } from "../../../redux/reducers/authReducers";
+import socketService from "../../../services/socketService";
+import { RootState } from "../../../redux/store";
 import ImagePickerActionSheet, {
   ImagePickerActionSheetRef,
 } from "../../../components/imagePickerActionSheet";
@@ -23,8 +25,12 @@ import { validateName } from "../../../utilities/formValidation";
 import { strings } from "../../../utilities/strings";
 
 const ProfileCompletion = () => {
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
+  const currentUserData = useSelector(
+    (state: RootState) => state.authentication.userData
+  );
+
+  const [firstName, setFirstName] = useState(currentUserData?.firstName || "");
+  const [lastName, setLastName] = useState(currentUserData?.lastName || "");
   const [profileImage, setProfileImage] = useState<{ uri: string } | null>(
     null
   );
@@ -134,9 +140,14 @@ const ProfileCompletion = () => {
 
         await saveUserData(responseUser);
 
+        // Ensure socket is connected under completed profile credentials
+        socketService.connect().catch((err) => {
+          console.error("Socket connection failed on profile complete:", err);
+        });
+
         // ✅ Dispatch based on what API says about isProfileComplete
         dispatch(login(responseUser));
-        dispatch(completeProfile(responseUser.isProfileComplete));
+        dispatch(completeProfile(true));
       }
     } catch (error) {
       console.error("Error updating profile:", error);
