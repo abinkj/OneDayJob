@@ -30,7 +30,7 @@ const authSlice = createSlice({
       state.isLoggedIn = true;
       state.userData = action.payload;
       if (action.payload?.aadhaarVerification?.isVerified) {
-        state.isAadhaarVerified = true;
+        state.isAadhaarVerified = action.payload.aadhaarVerification.isVerified;
         state.aadhaarDetails = action.payload.aadhaarVerification;
         state.kycStatus = "completed";
       }
