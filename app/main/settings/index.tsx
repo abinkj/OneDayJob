@@ -127,11 +127,18 @@ const Settings: React.FC = () => {
   const userData = useSelector(
     (state: RootState) => state.authentication.userData
   );
+
+  console.log("user data",userData)
+
   const isAadhaarVerified = useSelector(
-    (state: RootState) => state.authentication.isAadhaarVerified
+    (state: RootState) =>
+      Boolean(state.authentication.userData?.aadhaarVerification?.isVerified)
   );
+  console.log("isAadhaarVerified", isAadhaarVerified);
   const aadhaarDetails = useSelector(
-    (state: RootState) => (state.authentication as any).aadhaarDetails
+    (state: RootState) =>
+      state.authentication.userData?.aadhaarVerification ||
+      (state.authentication as any).aadhaarDetails
   );
 
   // Removed: user, isProfileLoading states — userData from Redux is the source of truth

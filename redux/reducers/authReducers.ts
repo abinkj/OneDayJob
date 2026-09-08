@@ -29,9 +29,10 @@ const authSlice = createSlice({
     login(state, action) {
       state.isLoggedIn = true;
       state.userData = action.payload;
-      if (action.payload?.aadhaarVerification?.isVerified) {
-        state.isAadhaarVerified = action.payload.aadhaarVerification.isVerified;
-        state.aadhaarDetails = action.payload.aadhaarVerification;
+      const isVerified = Boolean(action.payload?.aadhaarVerification?.isVerified);
+      state.isAadhaarVerified = isVerified;
+      state.aadhaarDetails = isVerified ? action.payload.aadhaarVerification : null;
+      if (isVerified) {
         state.kycStatus = "completed";
       }
     },
@@ -71,7 +72,6 @@ const authSlice = createSlice({
     },
     completeKyc(state) {
       state.kycStatus = "completed";
-      state.isAadhaarVerified = true;
     },
     skipKyc(state) {
       state.kycStatus = "skipped";

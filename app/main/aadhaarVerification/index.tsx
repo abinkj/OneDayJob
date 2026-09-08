@@ -37,9 +37,15 @@ const AadhaarVerificationContent = () => {
   const navigation = useNavigation<any>();
   const route = useRoute<any>();
   const dispatch = useDispatch();
-  const { isAadhaarVerified, aadhaarDetails } = useSelector(
+  const { isAadhaarVerified, aadhaarDetails, userData } = useSelector(
     (state: any) => state.authentication
   );
+
+  const effectiveIsAadhaarVerified = Boolean(
+    userData?.aadhaarVerification?.isVerified ?? isAadhaarVerified
+  );
+  const effectiveAadhaarDetails =
+    userData?.aadhaarVerification || aadhaarDetails;
 
   const onVerificationSuccess = route.params?.onSuccess;
 
@@ -48,9 +54,9 @@ const AadhaarVerificationContent = () => {
   const [verificationId, setVerificationId] = useState<string | null>(null);
   const [isSimulated, setIsSimulated] = useState(false);
   const [verifiedDetails, setVerifiedDetails] = useState<any>(
-    isAadhaarVerified ? aadhaarDetails : null
+    effectiveIsAadhaarVerified ? effectiveAadhaarDetails : null
   );
-  const [isVerified, setIsVerified] = useState(isAadhaarVerified);
+  const [isVerified, setIsVerified] = useState(effectiveIsAadhaarVerified);
 
   // Attempt to use SDK hook
   const digiLocker = useDigiLocker ? useDigiLocker() : null;

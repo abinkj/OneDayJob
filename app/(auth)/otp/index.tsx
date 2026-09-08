@@ -227,7 +227,7 @@ const Otp = () => {
             setIsOtpSuccess(false);
             setIsSettingUp(true);
 
-            if (userData?.bankAccount) {
+            if (userData?.bankAccount?.isVerified || userData?.bankAccount?.accountNumber) {
               await saveKycStatus("completed");
               dispatch(completeKyc());
             }
