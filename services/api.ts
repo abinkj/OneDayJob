@@ -346,6 +346,7 @@ export const isAuthenticated = async () => {
 export const clearAuthData = async () => {
   try {
     storage.remove("USER");
+    storage.remove("kycStatus");
     await clearTokens();
     console.log("Auth data cleared successfully");
   } catch (error) {

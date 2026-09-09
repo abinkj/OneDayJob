@@ -18,6 +18,11 @@ import {
 import { saveToken, clearTokens } from "./secureStore";
 import type { KycStatus } from "../redux/reducers/authReducers";
 import socketService from "../services/socketService";
+import { clearActiveJob } from "../redux/reducers/jobReducer";
+import { clearQueue } from "../redux/reducers/offlineSyncSlice";
+import { persistor } from "../redux/store";
+import { logout as apiLogout } from "../services/api";
+import { offlineQueue } from "../services/offlineQueue";
 
 // ✅ Log user in and update Redux + secure storage
 export const loginUser =
@@ -43,12 +48,38 @@ export const loginUser =
 // ✅ Clear storage + Redux state
 export const logoutUser = () => async (dispatch) => {
   try {
-    // Disconnect active socket session before erasing token credentials
+    // 1. Notify backend to blacklist/revoke refresh token (best-effort before wiping local tokens)
+    try {
+      await apiLogout();
+    } catch (apiErr) {
+      // Ignore network failures on logout
+    }
+
+    // 2. Disconnect active socket session
     socketService.disconnect();
 
+    // 3. Clear SecureStore tokens & MMKV caches
     await clearTokens();
     await clearUserData();
     await clearKycStatus();
+
+    // 4. Clear offline queue (both MMKV storage and Redux slice)
+    try {
+      await offlineQueue.clearQueue();
+    } catch (qErr) {
+      console.warn("Error clearing offline queue:", qErr);
+    }
+    dispatch(clearQueue());
+
+    // 5. Purge redux-persist storage (clears persisted activeJob from MMKV)
+    try {
+      await persistor.purge();
+    } catch (pErr) {
+      console.warn("Error purging persistor:", pErr);
+    }
+
+    // 6. Reset all Redux slices
+    dispatch(clearActiveJob());
     dispatch(logout());
   } catch (error) {
     console.error("Logout error:", error);
