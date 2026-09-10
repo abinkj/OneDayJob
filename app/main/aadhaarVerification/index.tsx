@@ -126,7 +126,7 @@ const AadhaarVerificationContent = () => {
     }
   }, [digiLocker]);
 
-  const handleFetchResult = async (vid: string) => {
+  const handleFetchResult = async (vid: string, retryCount = 0) => {
     try {
       const result = await fetchDigiLockerResult(vid);
 
@@ -141,20 +141,34 @@ const AadhaarVerificationContent = () => {
           text1: "Verified Successfully",
           text2: "Your identity has been verified via DigiLocker!",
         });
+        setLoading(false);
+      } else if (
+        (result.data?.status === "PENDING" || result.data?.status === "INITIATED") &&
+        retryCount < 3
+      ) {
+        // Cashfree status may lag by a moment right after redirect; retry with short backoff
+        setTimeout(() => {
+          handleFetchResult(vid, retryCount + 1);
+        }, 2000);
       } else {
         Toast.show({
           type: "info",
           text1: result.data?.status || "Pending",
-          text2: result.message || "Verification is still pending",
+          text2: result.message || "Verification is still pending. Tap verify again to check.",
         });
+        setLoading(false);
       }
     } catch (error: any) {
+      const errorMsg =
+        error?.response?.data?.error?.message ||
+        error?.response?.data?.message ||
+        error?.message ||
+        "Failed to fetch result";
       Toast.show({
         type: "error",
         text1: "Error",
-        text2: error?.response?.data?.error?.message || "Failed to fetch result",
+        text2: errorMsg,
       });
-    } finally {
       setLoading(false);
     }
   };
