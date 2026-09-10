@@ -2,7 +2,6 @@ import React, { useState, useMemo } from "react";
 import { View, Text, TouchableOpacity, Image } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import { createStyles } from "./styles";
-import { router } from "expo-router";
 import { requestOtp } from "../../../services/api";
 import { useNavigation } from "@react-navigation/native";
 import Animated, { FadeInDown, FadeInUp } from "react-native-reanimated";
@@ -53,11 +52,11 @@ const SignUp = () => {
       const response = await requestOtp({ phoneNumber: `+91${phone}` });
       console.log("OTP request successful:", response.data);
 
-      router.push({
-        pathname: "/(auth)/otp",
-        params: { phoneNumber: `+91${phone}` },
+      navigation.navigate("Otp", {
+        phoneNumber: `+91${phone}`,
+        initialName: name.trim(),
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error(
         "OTP request failed:",
         error.response?.data || error.message

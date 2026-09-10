@@ -45,4 +45,4 @@ const BudgetInput: React.FC<BudgetInputProps> = ({
   );
 };
 
-export default BudgetInput;
+export default React.memo(BudgetInput);

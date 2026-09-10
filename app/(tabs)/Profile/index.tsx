@@ -1,10 +1,8 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
   FlatList,
-  Animated,
-  LayoutAnimation,
   Platform,
   UIManager,
   RefreshControl,
@@ -12,7 +10,6 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { Header } from "../../../components/header";
 import Images from "../../../utilities/images";
-import DeviceDimensions from "../../../constants/DeviceDimenions";
 import { useTheme } from "../../../contexts/ThemeContext";
 import { createStyles } from "./styles";
 import ratingStars from "../../../components/ratingStars";
@@ -84,10 +81,6 @@ const Profile: React.FC = () => {
 
   const [reviews, setReviews] = useState<any[]>([]);
   const [refreshing, setRefreshing] = useState(false);
-  const [isDropdownVisible, setIsDropdownVisible] = useState(false);
-
-  const dropdownHeight = useRef(new Animated.Value(0)).current;
-  const experiencedHeight = 206 * DeviceDimensions.heightRatio;
 
   const navigation = useNavigation<any>();
   const { showAlert } = useAlert();
@@ -197,20 +190,6 @@ const Profile: React.FC = () => {
     }
   };
 
-  const toggleDropdown = () => {
-    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-    setIsDropdownVisible((prev) => !prev);
-    Animated.timing(dropdownHeight, {
-      toValue: isDropdownVisible ? 0 : 1,
-      duration: 300,
-      useNativeDriver: false,
-    }).start();
-  };
-
-  const heightInterpolation = dropdownHeight.interpolate({
-    inputRange: [0, 1],
-    outputRange: [0, experiencedHeight],
-  });
 
   // ─── Helpers ──────────────────────────────────────────────────────────────
   const getDisplayAddress = () => {

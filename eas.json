@@ -12,11 +12,13 @@
     "preview": {
       "distribution": "internal",
       "channel": "staging",
+      "autoIncrement": true,
       "android": {
         "buildType": "apk"
       },
       "ios": {
-        "simulator": false
+        "simulator": false,
+        "credentialsSource": "remote"
       },
       "env": {
         "EXPO_PUBLIC_API_URL": "https://api.zoopol.com/api/"

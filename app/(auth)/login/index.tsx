@@ -92,6 +92,7 @@ const Login = () => {
           maxLength={10}
           prefix="+91"
           leftIcon={<Ionicons name="call-outline" size={20} />}
+          editable={!isLoading}
         />
         <View style={{ marginTop: 20 }}>
           <CustomButton
@@ -108,7 +109,10 @@ const Login = () => {
         style={styles.footer}
       >
         <Text style={styles.footerText}>{strings.auth.login.footerText}</Text>
-        <TouchableOpacity onPress={() => navigation.navigate("Signup")}>
+        <TouchableOpacity
+          onPress={() => navigation.navigate("Signup")}
+          disabled={isLoading}
+        >
           <Text style={styles.createAccount}>
             {strings.auth.login.createAccountAction}
           </Text>

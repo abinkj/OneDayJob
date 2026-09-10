@@ -16,8 +16,8 @@ import { useDispatch, useSelector } from "react-redux";
 // import { Colors } from "../../../constants/Colors";
 import { useTheme } from "../../../contexts/ThemeContext";
 import { Header } from "../../../components/header";
-import { ProfileSkeleton } from "../../../components/Shimmer/Skeletons";
 import { logoutUser } from "../../../utilities/authentication";
+import { deleteUser } from "../../../services/api";
 import Images from "../../../utilities/images";
 import Toast from "react-native-toast-message";
 import styles from "./styles";
@@ -34,6 +34,7 @@ interface SettingsItemProps {
   showArrow?: boolean;
   rightComponent?: React.ReactNode;
   danger?: boolean;
+  disabled?: boolean;
 }
 
 const SettingsItem: React.FC<SettingsItemProps> = ({
@@ -45,16 +46,21 @@ const SettingsItem: React.FC<SettingsItemProps> = ({
   showArrow = true,
   rightComponent,
   danger = false,
+  disabled = false,
 }) => {
   const IconComponent = iconFamily === "material" ? MaterialIcons : Ionicons;
   const { colors } = useTheme();
 
   return (
     <TouchableOpacity
-      style={[styles.settingsItem, { borderBottomColor: colors.addressGrey }]}
+      style={[
+        styles.settingsItem,
+        { borderBottomColor: colors.addressGrey },
+        disabled && { opacity: 0.6 },
+      ]}
       onPress={onPress}
       activeOpacity={0.7}
-      disabled={!onPress}
+      disabled={!onPress || disabled}
     >
       <View style={styles.settingsItemLeft}>
         <View
@@ -122,8 +128,21 @@ const Settings: React.FC = () => {
     (state: RootState) => state.authentication.userData
   );
 
+  console.log("user data",userData)
+
+  const isAadhaarVerified = useSelector(
+    (state: RootState) =>
+      Boolean(state.authentication.userData?.aadhaarVerification?.isVerified)
+  );
+  console.log("isAadhaarVerified", isAadhaarVerified);
+  const aadhaarDetails = useSelector(
+    (state: RootState) =>
+      state.authentication.userData?.aadhaarVerification ||
+      (state.authentication as any).aadhaarDetails
+  );
+
   // Removed: user, isProfileLoading states — userData from Redux is the source of truth
-  const [isLoading, setIsLoading] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [isTogglingTheme, setIsTogglingTheme] = useState(false);
 
   const { theme, colors, toggleTheme } = useTheme();
@@ -166,12 +185,11 @@ const Settings: React.FC = () => {
           text: t("settings.deleteAccount"),
           style: "destructive",
           onPress: async () => {
-            try {
-              const userId = userData?.id || userData?._id; // use userData directly
-              if (!userId) return;
+            const userId = userData?.id || userData?._id;
+            if (!userId) return;
 
-              setIsLoading(true);
-              const { deleteUser } = require("../../../services/api");
+            try {
+              setIsDeleting(true);
               await deleteUser(userId);
 
               Toast.show({
@@ -181,15 +199,20 @@ const Settings: React.FC = () => {
               });
 
               dispatch(logoutUser() as any);
-            } catch (error) {
+            } catch (error: any) {
               console.error("Error deleting account:", error);
+              const serverMessage =
+                error.response?.data?.error?.message ||
+                error.response?.data?.message ||
+                t("settings.deleteErrorMessage");
+
               Toast.show({
                 type: "error",
                 text1: t("settings.deleteErrorTitle"),
-                text2: t("settings.deleteErrorMessage"),
+                text2: serverMessage,
               });
             } finally {
-              setIsLoading(false);
+              setIsDeleting(false);
             }
           },
         },
@@ -237,15 +260,6 @@ const Settings: React.FC = () => {
     WebBrowser.openBrowserAsync(strings.APP_PRIVACY_POLICY);
   }, []);
 
-  if (isLoading) {
-    return (
-      <View style={[styles.container, { backgroundColor: colors.background }]}>
-        <Header title={t("settings.title")} showBackButton />
-        <ProfileSkeleton />
-      </View>
-    );
-  }
-
   // Resolve profile image source from userData (Redux only)
   const profileImageSource =
     userData?.profilePictureUrl &&
@@ -258,37 +272,34 @@ const Settings: React.FC = () => {
         ? { uri: userData.profilePicture }
         : Images.profile.profileImage;
 
-  const renderProfile = useCallback(
-    () => (
-      <View style={[styles.profileCard, { backgroundColor: colors.white }]}>
-        <Image
-          //key={`settings-${userData?.profilePictureUrl || userData?.profilePicture}`}
-          source={profileImageSource}
-          style={[styles.profileImage, { backgroundColor: colors.categoryBox }]}
-          placeholder={Images.profile.profileImage}
-          placeholderContentFit="cover"
-          contentFit="cover"
-          cachePolicy="memory-disk"
-          //transition={300}
-          onError={(error) => {
-            console.error("Settings image load error:", error);
-            console.error(
-              "Failed to load image URL:",
-              userData?.profilePictureUrl || userData?.profilePicture
-            );
-          }}
-        />
-        <View style={styles.profileInfo}>
-          <Text style={[styles.profileName, { color: colors.black }]}>
-            {userData?.firstName} {userData?.lastName}
-          </Text>
-          <Text style={[styles.profileEmail, { color: colors.grey }]}>
-            {userData?.phoneNumber}
-          </Text>
-        </View>
+  const renderProfile = () => (
+    <View style={[styles.profileCard, { backgroundColor: colors.white }]}>
+      <Image
+        //key={`settings-${userData?.profilePictureUrl || userData?.profilePicture}`}
+        source={profileImageSource}
+        style={[styles.profileImage, { backgroundColor: colors.categoryBox }]}
+        //placeholder={Images.profile.profileImage}
+        placeholderContentFit="cover"
+        contentFit="cover"
+        cachePolicy="memory-disk"
+        //transition={300}
+        onError={(error) => {
+          console.error("Settings image load error:", error);
+          console.error(
+            "Failed to load image URL:",
+            userData?.profilePictureUrl || userData?.profilePicture
+          );
+        }}
+      />
+      <View style={styles.profileInfo}>
+        <Text style={[styles.profileName, { color: colors.black }]}>
+          {userData?.firstName} {userData?.lastName}
+        </Text>
+        <Text style={[styles.profileEmail, { color: colors.grey }]}>
+          {userData?.phoneNumber}
+        </Text>
       </View>
-    ),
-    [colors, profileImageSource, userData]
+    </View>
   );
 
   return (
@@ -314,6 +325,38 @@ const Settings: React.FC = () => {
             title={t("settings.savedAddresses")}
             subtitle={t("settings.savedAddressesSub")}
             onPress={handleSavedAddresses}
+          />
+          <SettingsItem
+            icon="shield-checkmark-outline"
+            title="Identity Verification"
+            subtitle={
+              isAadhaarVerified
+                ? `Verified${aadhaarDetails?.maskedAadhaar ? ` • ${aadhaarDetails.maskedAadhaar}` : ""}`
+                : "Verify your Aadhaar via DigiLocker"
+            }
+            onPress={() => navigation.navigate("AadhaarVerification")}
+            rightComponent={
+              isAadhaarVerified ? (
+                <View
+                  style={{
+                    backgroundColor: "#DCFCE7",
+                    paddingHorizontal: 10,
+                    paddingVertical: 4,
+                    borderRadius: 8,
+                  }}
+                >
+                  <Text
+                    style={{
+                      fontSize: 11,
+                      fontWeight: "800",
+                      color: "#166534",
+                    }}
+                  >
+                    VERIFIED
+                  </Text>
+                </View>
+              ) : undefined
+            }
           />
           {/* <SettingsItem
             icon="card-outline"
@@ -446,8 +489,14 @@ const Settings: React.FC = () => {
             title={t("settings.deleteAccount")}
             subtitle={t("settings.deleteAccountSub")}
             onPress={handleDeleteAccount}
-            showArrow={false}
+            showArrow={!isDeleting}
             danger
+            disabled={isDeleting}
+            rightComponent={
+              isDeleting ? (
+                <ActivityIndicator size="small" color="#EF4444" />
+              ) : undefined
+            }
           />
         </SettingsSection>
 

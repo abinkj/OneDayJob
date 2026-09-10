@@ -32,11 +32,15 @@ import { useNotifications } from "../../../contexts/NotificationContext";
 import {
   completeKyc,
   completeProfile,
+  login,
+  setSuspended,
 } from "../../../redux/reducers/authReducers";
+import socketService from "../../../services/socketService";
 import { strings } from "../../../utilities/strings";
 
 interface RouteParams {
   phoneNumber: string;
+  initialName?: string;
 }
 
 const RotatingBorder = ({ size, color }: { size: number; color: string }) => {
@@ -130,7 +134,7 @@ const Otp = () => {
 
   const route = useRoute();
   const navigation = useNavigation<any>();
-  const { phoneNumber } = route.params as RouteParams;
+  const { phoneNumber, initialName } = (route.params as RouteParams) || {};
   const dispatch = useDispatch();
   const { showAlert } = useAlert();
 
@@ -223,7 +227,7 @@ const Otp = () => {
             setIsOtpSuccess(false);
             setIsSettingUp(true);
 
-            if (userData?.bankAccount) {
+            if (userData?.bankAccount?.isVerified || userData?.bankAccount?.accountNumber) {
               await saveKycStatus("completed");
               dispatch(completeKyc());
             }
@@ -231,32 +235,35 @@ const Otp = () => {
             await requestPermission();
 
             if (!isProfileComplete) {
-              // Profile incomplete — save tokens & data but skip login dispatch
-              // so RootStackLayout doesn't navigate to MainStack prematurely
               console.log(
-                "Profile incomplete, navigating to ProfileCompletion"
+                "Profile incomplete, setting auth state for ProfileCompletion"
               );
+
+              const enrichedUserData = {
+                ...userData,
+                ...(initialName && !userData.firstName
+                  ? { firstName: initialName }
+                  : {}),
+              };
 
               await saveToken(accessToken, refreshToken);
-              console.log("✅ Tokens saved");
-
-              await saveUserData(userData);
-              console.log("✅ User data saved");
-
-              const savedData = await getUserData();
-              console.log(
-                "🔍 Verified saved data:",
-                JSON.stringify(savedData, null, 2)
-              );
-
+              await saveUserData(enrichedUserData);
               await registerDevice();
 
-              navigation.replace("ProfileCompletion");
+              // Connect socket for real-time events
+              socketService.connect().catch((err) => {
+                console.error("Socket connection failed on login:", err);
+              });
+
+              // Dispatch login + incomplete profile:
+              // RootStackLayout will automatically switch to root ProfileCompletion!
+              dispatch(login(enrichedUserData));
+              dispatch(completeProfile(false));
             } else {
               // Profile complete — sync Redux and proceed to MainStack
               console.log("Profile complete, logging in user");
 
-              dispatch(completeProfile()); // ✅ sync Redux isProfileComplete = true
+              dispatch(completeProfile(true));
               await dispatch(
                 loginUser(userData, accessToken, refreshToken) as any
               );
@@ -287,10 +294,8 @@ const Otp = () => {
       let errorMessage = "Invalid OTP. Please try again.";
 
       if (error.response?.status === 403) {
-        // User is suspended - navigate to suspended screen
-        errorMessage =
-          error.response.data.message || "Your account has been suspended.";
-        navigation.replace("/auth/suspended");
+        // User is suspended - dispatch to suspended state
+        dispatch(setSuspended(true));
         return;
       }
 

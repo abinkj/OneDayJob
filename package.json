@@ -9,8 +9,8 @@
     "web": "expo start --web"
   },
   "dependencies": {
+    "@cashfreepayments/react-native-digilocker": "^0.1.4",
     "@expo/vector-icons": "^15.0.3",
-    "@notifee/react-native": "^9.1.8",
     "@react-native-community/datetimepicker": "8.4.4",
     "@react-native-community/masked-view": "^0.1.11",
     "@react-native-community/netinfo": "11.4.1",
@@ -25,6 +25,7 @@
     "@tanstack/react-query": "^5.90.11",
     "axios": "1.10.0",
     "expo": "~54.0.34",
+    "expo-build-properties": "~57.0.10",
     "expo-constants": "~18.0.10",
     "expo-crypto": "~15.0.9",
     "expo-dev-client": "~6.0.21",

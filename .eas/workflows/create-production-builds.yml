@@ -3,24 +3,32 @@ name: Zoopol EAS Builds
 on:
   push:
     branches:
-      # - staging
+      - staging
       - main
 
 jobs:
-  # staging → preview build + OTA update
-  # build_preview:
-  #   if: ${{ github.ref == 'refs/heads/staging' }}
-  #   type: build
-  #   params:
-  #     platform: android
-  #     profile: preview
+  # staging → preview builds (ad-hoc for iOS, APK for Android)
+  # build_preview_android:
+  #  if: ${{ github.ref == 'refs/heads/staging' }}
+  #  type: build
+  #  params:
+  #    platform: android
+  #    profile: preview
 
-  # ota_staging:
-  #   if: ${{ github.ref == 'refs/heads/staging' }}
-  #   type: update
-  #   params:
-  #     branch: staging
-  #     message: "Staging update"
+  build_preview_ios:
+    if: ${{ github.ref == 'refs/heads/staging' }}
+    type: build
+    params:
+      platform: ios
+      profile: preview
+
+  #ota_staging:
+  #  if: ${{ github.ref == 'refs/heads/staging' }}
+  #  type: update
+  #  needs: [build_preview_android, build_preview_ios]
+  #  params:
+  #    branch: staging
+  #    message: "Staging update from CI"
 
   # main → production build + OTA update ye
   build_android:
