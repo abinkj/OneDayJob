@@ -22,13 +22,13 @@ jobs:
       platform: ios
       profile: preview
 
-  #ota_staging:
-  #  if: ${{ github.ref == 'refs/heads/staging' }}
-  #  type: update
-  #  needs: [build_preview_android, build_preview_ios]
-  #  params:
-  #    branch: staging
-  #    message: "Staging update from CI"
+  ota_staging:
+    if: ${{ github.ref == 'refs/heads/staging' }}
+    type: update
+    needs: [build_preview_ios]
+    params:
+      branch: staging
+      message: "Staging update from CI"
 
   # main → production build + OTA update ye
   build_android:
