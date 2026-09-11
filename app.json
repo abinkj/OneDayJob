@@ -30,7 +30,12 @@
           "tel",
           "mailto",
           "sms"
-        ]
+        ],
+        "NSAppTransportSecurity": {
+          "NSAllowsArbitraryLoads": false,
+          "NSAllowsLocalNetworking": true,
+          "NSAllowsArbitraryLoadsInWebContent": true
+        }
       }
     },
     "scheme": "zoopol",

@@ -7,8 +7,8 @@ import {
   StyleSheet,
   SafeAreaView,
   ScrollView,
-  Alert,
 } from "react-native";
+import * as WebBrowser from "expo-web-browser";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { useDispatch, useSelector } from "react-redux";
 import { Ionicons } from "@expo/vector-icons";
@@ -20,18 +20,17 @@ import {
 import { completeAadhaarVerification } from "../../../redux/reducers/authReducers";
 import Toast from "react-native-toast-message";
 
-// DigiLocker SDK — conditionally imported so the app doesn't crash if native modules aren't linked
-let DigiLockerProvider: any = null;
-let useDigiLocker: any = null;
-try {
-  const sdk = require("@cashfreepayments/react-native-digilocker");
-  DigiLockerProvider = sdk.DigiLockerProvider;
-  useDigiLocker = sdk.useDigiLocker;
-} catch {
-  // SDK not available — will fall back to simulated flow
-}
+// The HTTPS redirect URL Cashfree navigates to after DigiLocker consent.
+// Must be https:// — Cashfree rejects custom URI schemes.
+// Our backend's /digilocker/callback does a 302 → zoopol://digilocker-callback
+// so openAuthSessionAsync can detect the custom scheme and auto-close the browser.
+const API_BASE = (process.env.EXPO_PUBLIC_API_URL || 'https://api.zoopol.com/api').replace(/\/$/, '');
+const DIGILOCKER_REDIRECT_URL = `${API_BASE}/verification/aadhaar/digilocker/callback`;
 
-// ─── Inner Component (consumes DigiLocker hook if available) ─────────────────
+// The custom scheme openAuthSessionAsync monitors for (must match what the backend 302s to)
+const DIGILOCKER_CALLBACK_SCHEME = 'zoopol://digilocker-callback';
+
+// ─── Screen Component ─────────────────────────────────────────────────────────
 
 const AadhaarVerificationContent = () => {
   const navigation = useNavigation<any>();
@@ -49,62 +48,103 @@ const AadhaarVerificationContent = () => {
 
   const onVerificationSuccess = route.params?.onSuccess;
 
-  // State
   const [loading, setLoading] = useState(false);
-  const [verificationId, setVerificationId] = useState<string | null>(null);
   const [isSimulated, setIsSimulated] = useState(false);
   const [verifiedDetails, setVerifiedDetails] = useState<any>(
     effectiveIsAadhaarVerified ? effectiveAadhaarDetails : null
   );
   const [isVerified, setIsVerified] = useState(effectiveIsAadhaarVerified);
 
-  // Attempt to use SDK hook
-  const digiLocker = useDigiLocker ? useDigiLocker() : null;
+  // ── Fetch result from backend after browser closes ──────────────────────────
+
+  const handleFetchResult = useCallback(async (vid: string, retryCount = 0) => {
+    try {
+      const result = await fetchDigiLockerResult(vid);
+
+      if (result.success && result.data?.isVerified && result.data?.aadhaarDetails) {
+        const details = result.data.aadhaarDetails;
+        setVerifiedDetails(details);
+        setIsVerified(true);
+        dispatch(completeAadhaarVerification(details));
+        Toast.show({
+          type: "success",
+          text1: "Verified Successfully",
+          text2: "Your identity has been verified via DigiLocker!",
+        });
+        setLoading(false);
+      } else if (
+        (result.data?.status === "PENDING" || result.data?.status === "INITIATED") &&
+        retryCount < 3
+      ) {
+        setTimeout(() => handleFetchResult(vid, retryCount + 1), 2000);
+      } else {
+        Toast.show({
+          type: "info",
+          text1: result.data?.status || "Pending",
+          text2:
+            result.message || "Verification is still pending. Tap verify again to check.",
+        });
+        setLoading(false);
+      }
+    } catch (error: any) {
+      const errorMsg =
+        error?.response?.data?.error?.message ||
+        error?.response?.data?.message ||
+        error?.message ||
+        "Failed to fetch result";
+      Toast.show({ type: "error", text1: "Error", text2: errorMsg });
+      setLoading(false);
+    }
+  }, [dispatch]);
+
+  // ── Main handler ────────────────────────────────────────────────────────────
 
   const handleInitiateVerification = useCallback(async () => {
     setLoading(true);
     try {
-      const response = await initiateDigiLocker();
+      // Pass the backend HTTPS URL as redirect_url (Cashfree requires https://)
+      // The backend /digilocker/callback does a 302 to zoopol://digilocker-callback
+      const response = await initiateDigiLocker(DIGILOCKER_REDIRECT_URL);
 
       if (!response.success || !response.data) {
         throw new Error("Failed to initiate verification");
       }
 
       const { verificationId: vid, digilockerUrl, isSimulated: sim } = response.data;
-      setVerificationId(vid);
       setIsSimulated(Boolean(sim));
 
-      // If DigiLocker SDK is available, use it
-      if (digiLocker && !sim) {
-        digiLocker.verify(
-          digilockerUrl,
-          response.data.redirectUrl || "https://verification.cashfree.com/dgl/status",
-          {
-            userFlow: "signin",
-            onSuccess: async () => {
-              await handleFetchResult(vid);
-            },
-            onError: (error: string) => {
-              Toast.show({
-                type: "error",
-                text1: "Verification Failed",
-                text2: error || "DigiLocker verification encountered an error",
-              });
-              setLoading(false);
-            },
-            onCancel: () => {
-              Toast.show({
-                type: "info",
-                text1: "Cancelled",
-                text2: "DigiLocker verification was cancelled",
-              });
-              setLoading(false);
-            },
-          }
-        );
-      } else {
-        // Simulated sandbox flow — auto-complete
+      if (sim) {
+        // Simulated sandbox — no browser needed, auto-complete
         await handleFetchResult(vid);
+        return;
+      }
+
+      // Open DigiLocker in native browser (SFSafariViewController on iOS,
+      // Chrome Custom Tabs on Android). openAuthSessionAsync monitors for a
+      // redirect to DIGILOCKER_CALLBACK_URL and closes the browser automatically.
+      const result = await WebBrowser.openAuthSessionAsync(
+        digilockerUrl,
+        DIGILOCKER_CALLBACK_SCHEME
+      );
+
+      if (result.type === "success") {
+        // Browser was closed by a redirect to our callback URL — verification complete
+        await handleFetchResult(vid);
+      } else if (result.type === "cancel") {
+        // User dismissed the browser manually
+        Toast.show({
+          type: "info",
+          text1: "Cancelled",
+          text2: "DigiLocker verification was cancelled",
+        });
+        setLoading(false);
+      } else {
+        Toast.show({
+          type: "info",
+          text1: "Closed",
+          text2: "Browser was closed. Tap verify to check your status.",
+        });
+        setLoading(false);
       }
     } catch (error: any) {
       const msg =
@@ -124,54 +164,7 @@ const AadhaarVerificationContent = () => {
       }
       setLoading(false);
     }
-  }, [digiLocker]);
-
-  const handleFetchResult = async (vid: string, retryCount = 0) => {
-    try {
-      const result = await fetchDigiLockerResult(vid);
-
-      if (result.success && result.data?.isVerified && result.data?.aadhaarDetails) {
-        const details = result.data.aadhaarDetails;
-        setVerifiedDetails(details);
-        setIsVerified(true);
-        dispatch(completeAadhaarVerification(details));
-
-        Toast.show({
-          type: "success",
-          text1: "Verified Successfully",
-          text2: "Your identity has been verified via DigiLocker!",
-        });
-        setLoading(false);
-      } else if (
-        (result.data?.status === "PENDING" || result.data?.status === "INITIATED") &&
-        retryCount < 3
-      ) {
-        // Cashfree status may lag by a moment right after redirect; retry with short backoff
-        setTimeout(() => {
-          handleFetchResult(vid, retryCount + 1);
-        }, 2000);
-      } else {
-        Toast.show({
-          type: "info",
-          text1: result.data?.status || "Pending",
-          text2: result.message || "Verification is still pending. Tap verify again to check.",
-        });
-        setLoading(false);
-      }
-    } catch (error: any) {
-      const errorMsg =
-        error?.response?.data?.error?.message ||
-        error?.response?.data?.message ||
-        error?.message ||
-        "Failed to fetch result";
-      Toast.show({
-        type: "error",
-        text1: "Error",
-        text2: errorMsg,
-      });
-      setLoading(false);
-    }
-  };
+  }, [handleFetchResult]);
 
   const handleFinish = () => {
     navigation.goBack();
@@ -325,19 +318,9 @@ const AadhaarVerificationContent = () => {
   );
 };
 
-// ─── Exported Screen (wraps with DigiLockerProvider if SDK available) ────────
+// ─── Export ───────────────────────────────────────────────────────────────────
 
-export const AadhaarVerificationScreen = () => {
-  if (DigiLockerProvider) {
-    return (
-      <DigiLockerProvider>
-        <AadhaarVerificationContent />
-      </DigiLockerProvider>
-    );
-  }
-  return <AadhaarVerificationContent />;
-};
-
+export const AadhaarVerificationScreen = () => <AadhaarVerificationContent />;
 export default AadhaarVerificationScreen;
 
 // ─── Styles ──────────────────────────────────────────────────────────────────
