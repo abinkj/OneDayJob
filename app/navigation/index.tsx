@@ -5,7 +5,6 @@ import { ActivityIndicator, View } from "react-native";
 
 import MainStack from "./mainStack";
 import OnBoardingStack from "./onBoardingStack";
-import KycStack from "./kycStack";
 import { restoreSession } from "../../utilities/authentication";
 import ProfileCompletion from "@/(auth)/profileCompletion";
 import IntroStack from "./introStack";

@@ -8,8 +8,6 @@ import JobTimer from "@/main/jobTimer";
 import NewRequest from "@/main/newRequest";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import RequestProfile from "@/main/requestProfile";
-import BankAccountScreen from "@/main/bankAccount";
-import PaymentHistoryScreen from "@/main/paymentHistory";
 import Settings from "@/main/settings";
 import SavedAddressesScreen from "@/main/savedAddresses";
 import AddEditAddressScreen from "@/main/addEditAddress";
@@ -70,8 +68,6 @@ const MainStack = () => {
       <Stack.Screen name="Notification" component={Notification} />
       <Stack.Screen name="EditProfile" component={EditProfile} />
       <Stack.Screen name="JobDetails" component={JobDetails} />
-      <Stack.Screen name="BankAccount" component={BankAccountScreen} />
-      <Stack.Screen name="PaymentHistory" component={PaymentHistoryScreen} />
       <Stack.Screen name="Settings" component={Settings} />
       <Stack.Screen name="SavedAddresses" component={SavedAddressesScreen} />
       <Stack.Screen name="AddEditAddress" component={AddEditAddressScreen} />

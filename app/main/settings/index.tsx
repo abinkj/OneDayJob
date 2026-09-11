@@ -358,19 +358,8 @@ const Settings: React.FC = () => {
               ) : undefined
             }
           />
-          {/* <SettingsItem
-            icon="card-outline"
-            title="Bank Account"
-            subtitle="Manage your payment details"
-            onPress={handleBankAccount}
-          />
-          <SettingsItem
-            icon="receipt-outline"
-            title="Payment History"
-            subtitle="View your transaction history"
-            onPress={handlePaymentHistory}
-          /> */}
         </SettingsSection>
+
 
         {/* Notifications Section */}
         {/* <SettingsSection title="Notifications">

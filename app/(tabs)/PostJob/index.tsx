@@ -599,15 +599,6 @@ const PostJobScreen = ({ navigation: navProp }) => {
   // Handle job posting
   // Debug handlePost function
   const handlePost = async () => {
-    if (kycStatus !== "completed") {
-      Toast.show({
-        type: "info",
-        text1: "KYC Required",
-        text2: "Please complete your KYC to post jobs",
-      });
-      navigation.navigate("BankAccount");
-      return;
-    }
 
     if (!validateJobData()) {
       return;
