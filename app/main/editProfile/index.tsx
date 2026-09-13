@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useMemo } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { View, TouchableOpacity, ScrollView } from "react-native";
 import { Image } from "expo-image";
 import { Ionicons } from "@expo/vector-icons";
@@ -18,18 +18,15 @@ import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "../../../redux/store";
 import { updateUser } from "../../../redux/reducers/authReducers";
 import Toast from "react-native-toast-message";
-import ImagePickerActionSheet, {
-  ImagePickerActionSheetRef,
-} from "../../../components/imagePickerActionSheet";
 import { validateName } from "../../../utilities/formValidation";
 import { useAlert } from "../../../components/CustomAlert/AlertProvider";
+import { captureProfileSelfie } from "../../../utilities/profileCamera";
 
 const EditProfile: React.FC = () => {
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const dispatch = useDispatch();
   const navigation = useNavigation<any>();
-  const imagePickerRef = useRef<ImagePickerActionSheetRef>(null);
 
   const userData = useSelector(
     (state: RootState) => state.authentication.userData
@@ -43,7 +40,6 @@ const EditProfile: React.FC = () => {
   const [profileImage, setProfileImage] = useState<string | { uri: string }>(
     Images.profile.profileImage as unknown as string
   );
-  const [imageRemoved, setImageRemoved] = useState(false); // ← NEW
   const [isSaving, setIsSaving] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
 
@@ -63,7 +59,6 @@ const EditProfile: React.FC = () => {
       userData.profilePicture ||
       (Images.profile.profileImage as unknown as string);
     setProfileImage(imageSource as any);
-    setImageRemoved(false); // ← reset on userData change
   }, [userData]);
 
   // ─── Unsaved-changes guard ──────────────────────────────────────────────
@@ -72,17 +67,17 @@ const EditProfile: React.FC = () => {
 
     const imageUri =
       typeof profileImage === "string" ? profileImage : profileImage?.uri;
-    const isNewImage = imageUri?.startsWith("file://");
+    const isNewImage =
+      imageUri?.startsWith("file://") || imageUri?.startsWith("content://");
 
     return (
       userData.firstName !== firstName.trim() ||
       userData.lastName !== lastName.trim() ||
       (userData.locationText || userData.location?.address || "") !==
         location.trim() ||
-      !!isNewImage ||
-      imageRemoved // ← NEW
+      !!isNewImage
     );
-  }, [userData, firstName, lastName, location, profileImage, imageRemoved]);
+  }, [userData, firstName, lastName, location, profileImage]);
 
   useEffect(() => {
     const unsubscribe = navigation.addListener("beforeRemove", (e: any) => {
@@ -108,22 +103,17 @@ const EditProfile: React.FC = () => {
     return unsubscribe;
   }, [navigation, hasUnsavedChanges, isSaved, showAlert]);
 
-  // ─── Image picker ────────────────────────────────────────────────────────
-  const showImagePicker = () => imagePickerRef.current?.show();
-
-  const handleImageSelected = (imageUri: string) => {
-    if (!imageUri) {
-      // User tapped "Remove photo"
-      setProfileImage(Images.profile.profileImage as unknown as string);
-      setImageRemoved(true); // ← mark as explicitly removed
-    } else {
-      setProfileImage({ uri: imageUri });
-      setImageRemoved(false); // ← new pick clears removal flag
-    }
-  };
-
-  const handleImageError = (error: string) => {
-    Toast.show({ type: "error", text1: "Error", text2: error });
+  // ─── Front camera selfie capture ─────────────────────────────────────────
+  const handleCapturePhoto = () => {
+    captureProfileSelfie({
+      onSuccess: (uri: string) => {
+        setProfileImage({ uri });
+      },
+      onError: (error: string) => {
+        Toast.show({ type: "error", text1: "Error", text2: error });
+      },
+      showAlert,
+    });
   };
 
   // ─── Validation ──────────────────────────────────────────────────────────
@@ -148,6 +138,21 @@ const EditProfile: React.FC = () => {
       return false;
     }
 
+    const imageUri =
+      typeof profileImage === "string" ? profileImage : profileImage?.uri;
+    if (
+      !imageUri ||
+      imageUri === (Images.profile.profileImage as unknown as string)
+    ) {
+      Toast.show({
+        type: "error",
+        text1: "Validation Error",
+        text2:
+          "Profile photo is required. Please take a selfie using your front camera.",
+      });
+      return false;
+    }
+
     return true;
   };
 
@@ -158,7 +163,10 @@ const EditProfile: React.FC = () => {
 
     const imageUri =
       typeof profileImage === "string" ? profileImage : profileImage?.uri;
-    const isNewImage = imageUri?.startsWith("file://");
+    const isNewImage =
+      imageUri?.startsWith("file://") ||
+      imageUri?.startsWith("content://") ||
+      (imageUri && !imageUri.startsWith("http"));
 
     if (!hasUnsavedChanges) {
       Toast.show({
@@ -174,10 +182,7 @@ const EditProfile: React.FC = () => {
 
       let profilePictureKey = userData?.profilePicture;
 
-      if (imageRemoved) {
-        // ← User explicitly removed their photo
-        profilePictureKey = ""; // or null — match what your backend expects
-      } else if (isNewImage && imageUri) {
+      if (isNewImage && imageUri) {
         Toast.show({
           type: "info",
           text1: "Uploading Image",
@@ -222,7 +227,6 @@ const EditProfile: React.FC = () => {
           text2: "Profile updated successfully",
         });
         setIsSaved(true);
-        setImageRemoved(false); // ← reset after successful save
         setTimeout(() => navigation.goBack(), 1500);
       } else {
         throw new Error("Unexpected response from server.");
@@ -261,8 +265,12 @@ const EditProfile: React.FC = () => {
         onBackPress={() => navigation.goBack()}
       />
       <ScrollView contentContainerStyle={styles.scrollContent} bounces={false}>
-        {/* Profile Image */}
-        <View style={styles.imageWrapper}>
+        {/* Profile Image — Front Camera Selfie */}
+        <TouchableOpacity
+          activeOpacity={0.8}
+          onPress={handleCapturePhoto}
+          style={styles.imageWrapper}
+        >
           <Image
             source={resolvedImageSource}
             style={styles.profileImage}
@@ -271,10 +279,10 @@ const EditProfile: React.FC = () => {
             contentFit="cover"
             cachePolicy="memory-disk"
           />
-          <TouchableOpacity onPress={showImagePicker} style={styles.editIcon}>
+          <View style={styles.editIcon}>
             <Ionicons name="camera" size={16} color="#fff" />
-          </TouchableOpacity>
-        </View>
+          </View>
+        </TouchableOpacity>
 
         {/* First Name */}
         <LabeledInput
@@ -311,16 +319,6 @@ const EditProfile: React.FC = () => {
           disabled={isSaving}
         />
       </View>
-
-      {/* Image Picker ActionSheet */}
-      <ImagePickerActionSheet
-        ref={imagePickerRef}
-        onImageSelected={handleImageSelected}
-        onError={handleImageError}
-        title="Change Profile Picture"
-        primaryColor={colors.primary}
-        showRemoveButton
-      />
     </View>
   );
 };

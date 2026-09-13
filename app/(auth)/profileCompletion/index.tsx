@@ -1,4 +1,4 @@
-import React, { useState, useRef, useMemo } from "react";
+import React, { useState, useMemo } from "react";
 import { View, Text, TouchableOpacity } from "react-native";
 import { Image } from "expo-image";
 import { Ionicons } from "@expo/vector-icons";
@@ -15,14 +15,12 @@ import { useTheme } from "../../../contexts/ThemeContext";
 import { login, completeProfile } from "../../../redux/reducers/authReducers";
 import socketService from "../../../services/socketService";
 import { RootState } from "../../../redux/store";
-import ImagePickerActionSheet, {
-  ImagePickerActionSheetRef,
-} from "../../../components/imagePickerActionSheet";
 import Images from "../../../utilities/images";
 import Toast from "react-native-toast-message";
 import { createStyles } from "./styles";
 import { validateName } from "../../../utilities/formValidation";
 import { strings } from "../../../utilities/strings";
+import { captureProfileSelfie } from "../../../utilities/profileCamera";
 
 const ProfileCompletion = () => {
   const currentUserData = useSelector(
@@ -32,10 +30,16 @@ const ProfileCompletion = () => {
   const [firstName, setFirstName] = useState(currentUserData?.firstName || "");
   const [lastName, setLastName] = useState(currentUserData?.lastName || "");
   const [profileImage, setProfileImage] = useState<{ uri: string } | null>(
-    null
+    currentUserData?.profilePictureUrl || currentUserData?.profilePicture
+      ? {
+          uri:
+            currentUserData.profilePictureUrl ||
+            currentUserData.profilePicture ||
+            "",
+        }
+      : null
   );
   const [isLoading, setIsLoading] = useState(false);
-  const imagePickerRef = useRef<ImagePickerActionSheetRef>(null);
 
   const navigation = useNavigation<any>();
   const dispatch = useDispatch();
@@ -44,29 +48,24 @@ const ProfileCompletion = () => {
 
   const styles = useMemo(() => createStyles(colors), [colors]);
 
-  const showImagePicker = () => {
-    imagePickerRef.current?.show();
-  };
-
-  const handleImageSelected = (imageUri: string) => {
-    setProfileImage({ uri: imageUri });
-  };
-
-  const handleImageError = (error: string) => {
-    showAlert({
-      type: "error",
-      title: "Error",
-      message: error,
-      buttons: [
-        {
-          text: "OK",
-          onPress: () => {},
-        },
-      ],
+  const handleCapturePhoto = () => {
+    captureProfileSelfie({
+      onSuccess: (imageUri: string) => {
+        setProfileImage({ uri: imageUri });
+      },
+      onError: (error: string) => {
+        showAlert({
+          type: "error",
+          title: "Camera Error",
+          message: error,
+        });
+      },
+      showAlert,
     });
   };
 
   const handleCompleteProfile = async () => {
+    // 1. Validate First Name
     const firstNameValidation = validateName(firstName.trim(), "firstname");
     if (!firstNameValidation.status) {
       showAlert({
@@ -77,12 +76,25 @@ const ProfileCompletion = () => {
       return;
     }
 
+    // 2. Validate Last Name
     const lastNameValidation = validateName(lastName.trim(), "lastname");
     if (!lastNameValidation.status) {
       showAlert({
         type: "error",
         title: "Error",
         message: lastNameValidation.nameError,
+      });
+      return;
+    }
+
+    // 3. Validate Profile Picture (Mandatory)
+    if (!profileImage?.uri) {
+      showAlert({
+        type: "error",
+        title: "Profile Photo Required",
+        message:
+          strings.auth.profileCompletion.profilePicRequired ||
+          "Please take a selfie using your front camera to continue.",
       });
       return;
     }
@@ -104,9 +116,13 @@ const ProfileCompletion = () => {
 
       let profilePictureUrl = "";
 
-      // Only upload if user actually selected an image
-      const imageUri = profileImage?.uri;
-      if (imageUri && imageUri.startsWith("file://")) {
+      // Upload if local URI
+      const imageUri = profileImage.uri;
+      if (
+        imageUri.startsWith("file://") ||
+        imageUri.startsWith("content://") ||
+        !imageUri.startsWith("http")
+      ) {
         Toast.show({
           type: "info",
           text1: strings.auth.profileCompletion.uploadingTitle,
@@ -126,13 +142,15 @@ const ProfileCompletion = () => {
             "Failed to upload profile picture. Please try again."
           );
         }
+      } else {
+        profilePictureUrl = imageUri;
       }
 
       // Update user profile
       const response = await updateUserProfile(userId, {
         firstName: firstName.trim(),
         lastName: lastName.trim(),
-        ...(profilePictureUrl && { profilePicture: profilePictureUrl }),
+        profilePicture: profilePictureUrl,
       });
       console.log("updatededded", JSON.stringify(response, null, 2));
       if (response.success) {
@@ -184,8 +202,12 @@ const ProfileCompletion = () => {
       <Animated.View
         entering={FadeInDown.delay(400).duration(1000).springify()}
       >
-        {/* Profile Image — Optional */}
-        <View style={styles.imageWrapper}>
+        {/* Profile Image — Front Camera Selfie */}
+        <TouchableOpacity
+          activeOpacity={0.8}
+          onPress={handleCapturePhoto}
+          style={styles.imageWrapper}
+        >
           <Image
             source={
               profileImage?.uri
@@ -197,10 +219,10 @@ const ProfileCompletion = () => {
             placeholderContentFit="cover"
             contentFit="cover"
           />
-          <TouchableOpacity onPress={showImagePicker} style={styles.editIcon}>
+          <View style={styles.editIcon}>
             <Ionicons name="camera" size={16} color="#fff" />
-          </TouchableOpacity>
-        </View>
+          </View>
+        </TouchableOpacity>
 
         <LabeledInput
           title={strings.auth.profileCompletion.labelFirstName}
@@ -233,14 +255,6 @@ const ProfileCompletion = () => {
           />
         </View>
       </Animated.View>
-
-      <ImagePickerActionSheet
-        ref={imagePickerRef}
-        onImageSelected={handleImageSelected}
-        onError={handleImageError}
-        title={strings.auth.profileCompletion.choosePhoto}
-        primaryColor={colors.primary}
-      />
     </KeyboardAwareScrollView>
   );
 };

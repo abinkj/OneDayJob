@@ -11,6 +11,7 @@ export const strings = {
     lastNameRequired: "Last name is required.",
     nameRequired: "Please enter your full name.",
     nameRequireds: "Name is required.",
+    profilePicRequired: "Profile photo is required. Please take a selfie using your front camera.",
     zipRequired: "Zip code is required.",
     invalidZipcode: "Invalid zip code.",
     nameAlphabetsOnly:
@@ -308,13 +309,16 @@ export const strings = {
     profileCompletion: {
       title: "Tell us about yourself",
       subtitle:
-        "Introduce yourself to the Zoopol community. A photo is optional.",
+        "Introduce yourself to the Zoopol community. Please take a selfie with your front camera to set your profile photo.",
       labelFirstName: "First name",
       placeholderFirstName: "e.g., Alex",
       labelLastName: "Last name",
       placeholderLastName: "e.g., Rivera",
       continue: "Continue",
-      choosePhoto: "Choose a profile photo",
+      choosePhoto: "Take a selfie",
+      takePhoto: "Take Selfie",
+      profilePicRequired:
+        "Profile photo is required. Please take a selfie using your front camera to continue.",
       uploadingTitle: "Uploading photo...",
       uploadingSub: "Just a second...",
     },
