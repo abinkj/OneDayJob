@@ -32,11 +32,11 @@ const ProfileCompletion = () => {
   const [profileImage, setProfileImage] = useState<{ uri: string } | null>(
     currentUserData?.profilePictureUrl || currentUserData?.profilePicture
       ? {
-          uri:
-            currentUserData.profilePictureUrl ||
-            currentUserData.profilePicture ||
-            "",
-        }
+        uri:
+          currentUserData.profilePictureUrl ||
+          currentUserData.profilePicture ||
+          "",
+      }
       : null
   );
   const [isLoading, setIsLoading] = useState(false);
@@ -75,7 +75,7 @@ const ProfileCompletion = () => {
       });
       return;
     }
-
+    //gfdfg
     // 2. Validate Last Name
     const lastNameValidation = validateName(lastName.trim(), "lastname");
     if (!lastNameValidation.status) {
