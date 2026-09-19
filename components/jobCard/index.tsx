@@ -249,8 +249,10 @@ const JobCard = ({
           </TouchableOpacity>
         ) : (
           <View style={styles.bottomRow}>
+            {/* Primary button */}
             <TouchableOpacity style={styles.button} onPress={() => onPress()}>
-              {withdraw ? (
+              {!isEmployer ? (
+                // Workers always see "View Details" regardless of withdraw state
                 <Text style={styles.buttonText}>View Details</Text>
               ) : isInProgress ? (
                 <Text style={styles.buttonText}>Start Timer</Text>
@@ -258,25 +260,10 @@ const JobCard = ({
                 <Text style={styles.buttonText}>View Requests</Text>
               )}
             </TouchableOpacity>
-            {withdraw ? (
-              <TouchableOpacity
-                style={[
-                  styles.button,
-                  {
-                    backgroundColor: colors.red,
-                    marginLeft: 12,
-                    shadowColor: colors.red,
-                  },
-                ]}
-                onPress={() => {
-                  if (onWithdraw) onWithdraw();
-                }}
-              >
-                <Text style={[styles.buttonText, { color: colors.white }]}>
-                  Withdraw
-                </Text>
-              </TouchableOpacity>
-            ) : (
+
+            {/* Secondary button */}
+            {isEmployer ? (
+              // Employer: show Delete button
               <TouchableOpacity
                 style={[
                   styles.button,
@@ -294,7 +281,26 @@ const JobCard = ({
                   Delete
                 </Text>
               </TouchableOpacity>
-            )}
+            ) : withdraw ? (
+              // Worker + cutoff not passed: show Withdraw button
+              <TouchableOpacity
+                style={[
+                  styles.button,
+                  {
+                    backgroundColor: colors.red,
+                    marginLeft: 12,
+                    shadowColor: colors.red,
+                  },
+                ]}
+                onPress={() => {
+                  if (onWithdraw) onWithdraw();
+                }}
+              >
+                <Text style={[styles.buttonText, { color: colors.white }]}>
+                  Withdraw
+                </Text>
+              </TouchableOpacity>
+            ) : null /* Worker + cutoff passed: no secondary button */}
           </View>
         )}
       </View>

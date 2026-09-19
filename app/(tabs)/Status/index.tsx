@@ -496,10 +496,21 @@ const AppliedTab = () => {
       console.error("Error withdrawing application:", error);
       console.error("Error details:", error.response?.data);
 
+      // Extract the specific message from the API response
+      const apiMessage =
+        error.response?.data?.error?.message ||
+        error.response?.data?.message ||
+        null;
+
+      const isValidationError =
+        error.response?.data?.error?.type === "VALIDATION_ERROR" ||
+        error.response?.status === 400;
+
       Toast.show({
-        type: "error",
-        text1: "Error",
-        text2: "Could not withdraw application",
+        type: isValidationError ? "info" : "error",
+        text1: isValidationError ? "Cannot Withdraw" : "Error",
+        text2: apiMessage || "Could not withdraw application",
+        visibilityTime: 3000,
       });
     }
   };
@@ -567,6 +578,22 @@ const AppliedTab = () => {
     getJobStatusInfo(JOB_STATUSES.COMPLETED),
   ];
 
+  // Mirror the backend cutoff: withdraw must happen >24h before job start (IST-aware).
+  const canWithdraw = (job: any): boolean => {
+    if (!job) return false;
+    if (job.jobStatus === "in_progress" || job.jobStatus === "completed") return false;
+    const rawDate: Date | undefined = job.isFlexible
+      ? job.beforeDate || job.onDate
+      : job.onDate;
+    if (!rawDate) return true;
+    const fromTime: string = job.fromTime || "00:00";
+    const isoDate = new Date(rawDate).toISOString().slice(0, 10);
+    const jobStart = new Date(`${isoDate}T${fromTime}:00+05:30`);
+    // Cutoff = 24 hours before job start
+    const cutoff = new Date(jobStart.getTime() - 24 * 60 * 60 * 1000);
+    return new Date() < cutoff;
+  };
+
   const renderItem = ({ item }: { item: any }) => {
     if (!item || !item.job || !item.applicationId) {
       return null;
@@ -580,7 +607,7 @@ const AppliedTab = () => {
           status: item.job.jobStatus || "posted",
         }}
         onPress={() => handleNext(item.job)}
-        withdraw={true}
+        withdraw={canWithdraw(item.job)}
         onWithdraw={() => handleWithdraw(item.applicationId, item.job._id)}
         onSummary={() => handleSummary(item.job._id, item.job.name)}
         isEmployer={false}
@@ -640,7 +667,42 @@ const AppliedTab = () => {
         />
       )}
 
+      {/* 24-hour withdraw notice */}
+      {appliedJobs.length > 0 && (
+        <View
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+            marginHorizontal: 16,
+            marginTop: 10,
+            marginBottom: 2,
+            backgroundColor: colors.primary + "12",
+            borderRadius: 8,
+            paddingHorizontal: 10,
+            paddingVertical: 7,
+          }}
+        >
+          <Ionicons
+            name="information-circle-outline"
+            size={15}
+            color={colors.primary}
+            style={{ marginRight: 6 }}
+          />
+          <Text
+            style={{
+              fontSize: fontSizes.size12,
+              fontFamily: "regular",
+              color: colors.primary,
+              flexShrink: 1,
+            }}
+          >
+            Withdrawal is only available up to 24 hours before the job starts.
+          </Text>
+        </View>
+      )}
+
       {/* Active Job Highlight for Worker */}
+
       {activeWorkerJobs.length > 0 && selectedStatus === null && (
         <View style={{ paddingHorizontal: 16, marginTop: 16 }}>
           <View
