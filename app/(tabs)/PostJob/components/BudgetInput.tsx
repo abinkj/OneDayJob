@@ -1,6 +1,5 @@
 import React from "react";
 import { View, Text, TextInput, TouchableOpacity } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
 import { ThemeColors } from "../../../../constants/Colors";
 
 interface BudgetInputProps {
@@ -25,21 +24,25 @@ const BudgetInput: React.FC<BudgetInputProps> = ({
   return (
     <View style={styles.stepContainer}>
       <Text style={styles.sectionTitle}>Enter Your Budget</Text>
-      <Text style={styles.sectionSubtitle}>
-        The budget amount is per person. For multiple vacancies, total payment is calculated accordingly.
-      </Text>
+
+      {/* Info card matching the style of previous page Exact Time card */}
+      <View style={styles.switchCard}>
+        <View style={styles.switchHeader}>
+          <View style={styles.switchTitleContainer}>
+            <View style={styles.switchTitleRow}>
+              <Text style={styles.switchLabel}>Budget Per Person</Text>
+              <View style={styles.optionalBadge}>
+                <Text style={styles.optionalBadgeText}>Min ₹300</Text>
+              </View>
+            </View>
+            <Text style={styles.switchSubtitle}>
+              The budget amount is per person. For multiple vacancies, total payment is calculated accordingly.
+            </Text>
+          </View>
+        </View>
+      </View>
 
       <View style={styles.premiumBudgetContainer}>
-        {/* Minimum Budget Notice Badge */}
-        <View style={styles.budgetMinBadge}>
-          <Ionicons
-            name="information-circle-outline"
-            size={16}
-            color={colors.primary}
-          />
-          <Text style={styles.budgetMinBadgeText}>Minimum budget is ₹300</Text>
-        </View>
-
         {/* Budget Input */}
         <View
           style={[
@@ -79,10 +82,6 @@ const BudgetInput: React.FC<BudgetInputProps> = ({
             Amount must be at least ₹300
           </Text>
         )}
-
-        <Text style={styles.budgetHelperText}>
-          Budget mentioned is per person
-        </Text>
 
         {/* Quick Amount Suggestion Cards */}
         <View style={styles.quickAmountSection}>
