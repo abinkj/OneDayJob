@@ -466,7 +466,7 @@ export const validateJobTitle = (
 ): { titleError: string; status: boolean } => {
   if (isEmpty(title)) {
     return {
-      titleError: "Job title is required.",
+      titleError: "Please provide a job title to continue.",
       status: false,
     };
   }
@@ -493,7 +493,7 @@ export const validateJobDescription = (
 ): { descriptionError: string; status: boolean } => {
   if (isEmpty(description)) {
     return {
-      descriptionError: "Job description is required.",
+      descriptionError: "Please provide a job description to continue.",
       status: false,
     };
   }
@@ -501,7 +501,7 @@ export const validateJobDescription = (
   if (!isValidLength(description, 1, 1000)) {
     const errorMessage =
       description.length < 1
-        ? "Job description must be at least 10 characters long."
+        ? "Please provide a job description to continue.."
         : "Job description cannot exceed 1000 characters.";
     return {
       descriptionError: errorMessage,
@@ -520,15 +520,15 @@ export const validateHourlyRate = (
 ): { rateError: string; status: boolean } => {
   if (isEmpty(rate)) {
     return {
-      rateError: "Hourly rate is required.",
+      rateError: "Budget amount is required.",
       status: false,
     };
   }
 
   const numericRate = parseFloat(rate);
-  if (isNaN(numericRate) || numericRate <= 0) {
+  if (isNaN(numericRate) || numericRate < 300) {
     return {
-      rateError: "Please enter a valid hourly rate.",
+      rateError: "Minimum budget amount is ₹300.",
       status: false,
     };
   }
