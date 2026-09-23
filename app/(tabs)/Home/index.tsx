@@ -240,11 +240,23 @@ const HomeScreen = () => {
       return { ...job, distance, recencyScore, proximityScore, combinedScore };
     });
 
+    const currentUserId = (userData?.id || userData?._id)?.toString();
     const activeJobs = jobsWithMeta.filter((job) => {
       const status = (job.jobStatus || job.status || "").toLowerCase();
-      return !["completed", "cancelled", "expired", "rejected"].includes(
-        status
-      );
+      // Filter out terminal or inactive job statuses
+      if (["completed", "cancelled", "expired", "rejected", "work_completed"].includes(status)) {
+        return false;
+      }
+      // Filter out if explicitly marked as expired
+      if (job.isExpired) {
+        return false;
+      }
+      // Exclude jobs posted by the same user from home discovery feed
+      const jobOwnerId = (typeof job.userId === "object" ? job.userId?._id : job.userId)?.toString();
+      if (currentUserId && jobOwnerId && currentUserId === jobOwnerId) {
+        return false;
+      }
+      return true;
     });
 
     return activeJobs.sort((a, b) => {

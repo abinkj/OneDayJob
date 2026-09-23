@@ -24,6 +24,11 @@ const api = axios.create({
   timeout: 10000, // 10 second timeout
 });
 
+console.log("🌐 [Axios API Initialized]", {
+  baseURL: API_BASE_URL,
+  timeout: 10000,
+});
+
 import { getDeviceOnline } from "../offline/networkState";
 import { shouldQueueRequest } from "../offline/queuePolicy";
 import { getSyncDispatch } from "../offline/syncBridge";
@@ -89,6 +94,11 @@ api.interceptors.request.use(
         console.warn("No token found for request to:", config.url);
       }
 
+      console.log(
+        `🚀 [API Request] ${config.method?.toUpperCase()} ${config.baseURL || ""}${config.url}`,
+        config.params ? { params: config.params } : ""
+      );
+
       return config;
     } catch (error) {
       console.error("Error in request interceptor:", error);
@@ -104,6 +114,9 @@ api.interceptors.request.use(
 // ─── RESPONSE INTERCEPTOR ────────────────────────────────────────────────────
 api.interceptors.response.use(
   (response) => {
+    console.log(
+      `📥 [API Response] ${response.status} ${response.config.method?.toUpperCase()} ${response.config.url}`
+    );
     return response;
   },
   async (error) => {
@@ -300,21 +313,6 @@ export const createJobPosting = async (data) => {
   }
 };
 
-// FIXED: Better authentication testing function - Local only
-export const testAuth = async () => {
-  try {
-    const token = await getAccessToken();
-    if (!token) {
-      console.log("auth check: No token found");
-      return false;
-    }
-    // We trust the token is valid until an API call fails with 401
-    return true;
-  } catch (error) {
-    console.log("Auth test failed:", error);
-    return false;
-  }
-};
 
 // FIXED: Improved authentication check
 // FIXED: Improved authentication check - Local only

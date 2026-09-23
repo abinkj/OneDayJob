@@ -39,13 +39,14 @@ export const HomeJobCard: React.FC<HomeJobCardProps> = ({
   locationAddress,
   handleArrival,
 }) => {
-  const isExpired = !!item.isExpired;
+  const isExpired = !!item.isExpired || item.jobStatus?.toLowerCase() === "expired";
   const isInProgress =
     item.jobStatus?.toLowerCase() === "in_progress" ||
     item.status?.toLowerCase() === "in_progress";
   const isCompleted =
     item.jobStatus?.toLowerCase() === "completed" ||
-    item.status?.toLowerCase() === "completed";
+    item.status?.toLowerCase() === "completed" ||
+    item.jobStatus?.toLowerCase() === "work_completed";
 
   const jobItem = item as any;
   const jobOwnerId =

@@ -146,6 +146,15 @@ export interface JobUser {
   profilePicture?: string;
 }
 
+export type JobStatus =
+  | "draft"
+  | "posted"
+  | "filled"
+  | "in_progress"
+  | "completed"
+  | "cancelled"
+  | "expired";
+
 export interface JobPost {
   __v: number;
   _id: string;
@@ -163,7 +172,7 @@ export interface JobPost {
   isPaymentDone: boolean;
   isRemote: boolean;
   isVerifiedByEmployer: boolean;
-  jobStatus: string;
+  jobStatus: JobStatus | string;
   location: JobLocation;
   name: string;
   participantsNumber: number;

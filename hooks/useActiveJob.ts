@@ -101,11 +101,14 @@ export const useActiveJob = () => {
         })),
       });
 
-      const inProgressJob = allJobs.find(
-        (job: JobPost) =>
-          (job?.jobStatus === "in_progress" || job?.status === "in_progress") &&
-          job?._id // Ensure valid job
-      );
+      const inProgressJob = allJobs.find((job: JobPost) => {
+        const status = (job?.jobStatus || job?.status || "").toLowerCase();
+        return (
+          status === "in_progress" &&
+          !job?.isCompletedByWorker &&
+          Boolean(job?._id)
+        );
+      });
 
       if (inProgressJob) {
         console.log(
@@ -261,6 +264,7 @@ export const useActiveJob = () => {
 
     const handleUpdate = async () => {
       console.log("Job updated event received, invalidating queries...");
+      globalLastActiveJobFetch = 0; // Reset throttle so socket event triggers immediate refetch
       // Invalidate queries to force a fresh fetch
       await Promise.all([
         queryClient.invalidateQueries({

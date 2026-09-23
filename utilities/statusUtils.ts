@@ -17,6 +17,7 @@ export const JOB_STATUSES = {
   WORK_COMPLETED: "work_completed", // Work done by employees, payment pending
   COMPLETED: "completed", // Payment completed
   CANCELLED: "cancelled",
+  EXPIRED: "expired",
 } as const;
 
 // Application statuses for Applied section (employee view) - aligned with backend
@@ -92,6 +93,15 @@ export const getJobStatusInfo = (status: string): StatusInfo => {
         backgroundColor: Colors.red + "20",
         icon: "close-circle-outline",
         description: "Job was cancelled",
+      };
+
+    case JOB_STATUSES.EXPIRED:
+      return {
+        label: "Expired",
+        color: Colors.subGrey,
+        backgroundColor: Colors.subGrey + "20",
+        icon: "time-outline",
+        description: "Job posting has expired",
       };
 
     default:
