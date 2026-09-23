@@ -283,34 +283,28 @@ class NotificationService {
     const { type, title, body } = notificationData;
 
     let toastType: "success" | "info" | "error" = "info";
-    let icon = "🔔";
 
     switch (type) {
       case "verification_code":
         toastType = "success";
-        icon = "🔑";
         break;
       case "job_update":
         toastType = "info";
-        icon = "💼";
         break;
       case "application_status":
         toastType = "success";
-        icon = "✅";
         break;
       case "message":
         toastType = "info";
-        icon = "💬";
         break;
       case "system":
         toastType = "info";
-        icon = "⚙️";
         break;
     }
 
     Toast.show({
       type: toastType,
-      text1: `${icon} ${title}`,
+      text1: title,
       text2: body,
       visibilityTime: 5000,
       autoHide: true,
@@ -384,7 +378,7 @@ class NotificationService {
     jobName: string,
     code: string
   ): Promise<void> {
-    const title = "🔑 Verification Code Received";
+    const title = "Verification Code Received";
     const body = `Your verification code for "${jobName}" is: ${code}`;
 
     await this.sendLocalNotification(title, body, {
@@ -401,7 +395,7 @@ class NotificationService {
     jobName: string,
     update: string
   ): Promise<void> {
-    const title = "💼 Job Update";
+    const title = "Job Update";
     const body = `Update for "${jobName}": ${update}`;
 
     await this.sendLocalNotification(title, body, {
@@ -418,7 +412,7 @@ class NotificationService {
     jobName: string,
     status: string
   ): Promise<void> {
-    const title = "📋 Application Update";
+    const title = "Application Update";
     const body = `Your application for "${jobName}" status: ${status}`;
 
     await this.sendLocalNotification(title, body, {
@@ -435,7 +429,7 @@ class NotificationService {
     senderName: string,
     message: string
   ): Promise<void> {
-    const title = `💬 Message from ${senderName}`;
+    const title = `Message from ${senderName}`;
     const body = message;
 
     await this.sendLocalNotification(title, body, {

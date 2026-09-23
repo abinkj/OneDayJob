@@ -394,13 +394,14 @@ const HomeScreen = () => {
     
     // Deduplicate jobs based on _id to prevent FlatList duplicate key errors
     const uniqueJobsMap = new Map();
-    allFetchedJobs.forEach(job => {
-      if (job && (job._id || job.id)) {
-        uniqueJobsMap.set(job._id || job.id, job);
+    allFetchedJobs.forEach((job: any) => {
+      const jobId = job?._id || job?.id;
+      if (jobId) {
+        uniqueJobsMap.set(jobId, job);
       }
     });
     
-    return Array.from(uniqueJobsMap.values());
+    return Array.from(uniqueJobsMap.values()) as JobPost[];
   }, [data]);
 
   useEffect(() => {

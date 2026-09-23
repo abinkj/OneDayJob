@@ -1,15 +1,15 @@
-import React, { useState, useEffect, useMemo, useCallback } from "react";
+import React, { useState, useMemo, useCallback } from "react";
 import {
   View,
   Text,
-  StyleSheet,
   FlatList,
   RefreshControl,
   ScrollView,
+  TouchableOpacity,
+  Alert,
+  Platform,
 } from "react-native";
-import { Swipeable, TouchableOpacity } from "react-native-gesture-handler";
 import {
-  MaterialIcons,
   Ionicons,
   MaterialCommunityIcons,
 } from "@expo/vector-icons";
@@ -18,9 +18,86 @@ import NotificationCard from "../../../components/notificationCard";
 import { useNotifications } from "../../../contexts/NotificationContext";
 import { NotificationData } from "../../../services/notificationService";
 import { useTheme } from "../../../contexts/ThemeContext";
-import { ThemeColors } from "../../../constants/Colors";
-import Animated, { FadeInDown, Layout, FadeIn } from "react-native-reanimated";
 import { useNavigation } from "@react-navigation/native";
+import { createStyles } from "./styles";
+
+const SEGMENT_VALUES = ["All", "Job Updates", "Messages", "System"] as const;
+
+interface FilterChipProps {
+  label: string;
+  index: number;
+  isSelected: boolean;
+  onSelect: (index: number) => void;
+  styles: ReturnType<typeof createStyles>;
+}
+
+const FilterChip = React.memo<FilterChipProps>(
+  ({ label, index, isSelected, onSelect, styles }) => {
+    const handlePress = useCallback(() => {
+      onSelect(index);
+    }, [index, onSelect]);
+
+    return (
+      <TouchableOpacity
+        onPress={handlePress}
+        activeOpacity={0.7}
+        style={[styles.chip, isSelected && styles.activeChip]}
+      >
+        <Text style={[styles.chipText, isSelected && styles.activeChipText]}>
+          {label}
+        </Text>
+      </TouchableOpacity>
+    );
+  }
+);
+
+interface NotificationListItemProps {
+  item: NotificationData;
+  onPress: (item: NotificationData) => void;
+  onDelete: (id: string) => void;
+}
+
+const NotificationListItem = React.memo<NotificationListItemProps>(
+  ({ item, onPress, onDelete }) => {
+    const handlePress = useCallback(() => {
+      onPress(item);
+    }, [item, onPress]);
+
+    const handleDelete = useCallback(() => {
+      if (item.id) {
+        onDelete(item.id);
+      }
+    }, [item.id, onDelete]);
+
+    const time = useMemo(() => {
+      if (!item.timestamp) return "Now";
+      try {
+        return new Date(item.timestamp).toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+        });
+      } catch {
+        return "Now";
+      }
+    }, [item.timestamp]);
+
+    return (
+      <NotificationCard
+        title={item.title}
+        subtitle={item.body}
+        time={time}
+        count={item.read ? 0 : 1}
+        type={item.type}
+        isRead={item.read}
+        onPress={handlePress}
+        onDelete={handleDelete}
+      />
+    );
+  }
+);
+
+const keyExtractor = (item: NotificationData, index: number) =>
+  item.id || index.toString();
 
 const Notification = () => {
   const {
@@ -32,148 +109,119 @@ const Notification = () => {
     refreshNotifications,
   } = useNotifications();
 
-  const { colors, theme } = useTheme();
+  const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
 
   const navigation = useNavigation<any>();
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [refreshing, setRefreshing] = useState(false);
 
-  const segmentValues = ["All", "Job Updates", "Messages", "System"];
-
-  const handleRefresh = async () => {
+  const handleRefresh = useCallback(async () => {
     setRefreshing(true);
     await refreshNotifications();
     setRefreshing(false);
-  };
+  }, [refreshNotifications]);
 
-  const handleDelete = (id) => {
-    if (id) {
-      deleteNotification(id);
-    }
-  };
-
-  const renderRightActions = (id) => (
-    <TouchableOpacity
-      activeOpacity={0.8}
-      style={styles.deleteBox}
-      onPress={() => handleDelete(id)}
-    >
-      <MaterialIcons name="delete-outline" size={28} color="white" />
-    </TouchableOpacity>
+  const handleDelete = useCallback(
+    (id: string) => {
+      if (!id) return;
+      Alert.alert(
+        "Delete Notification",
+        "Are you sure you want to delete this notification?",
+        [
+          { text: "Cancel", style: "cancel" },
+          {
+            text: "Delete",
+            style: "destructive",
+            onPress: () => deleteNotification(id),
+          },
+        ]
+      );
+    },
+    [deleteNotification]
   );
 
-  const renderItem = ({
-    item,
-    index,
-  }: {
-    item: NotificationData;
-    index: number;
-  }) => (
-    <Animated.View
-      entering={FadeInDown.delay(index * 100).springify()}
-      layout={Layout.springify()}
-    >
-      <Swipeable
-        renderRightActions={() => renderRightActions(item.id)}
-        overshootRight={false}
-      >
-        <NotificationCard
-          title={item.title}
-          subtitle={item.body}
-          time={
-            item.timestamp
-              ? new Date(item.timestamp).toLocaleTimeString([], {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })
-              : "Now"
+  const handleNotificationPress = useCallback(
+    (item: NotificationData) => {
+      if (item.id) {
+        markAsRead(item.id);
+      }
+
+      const clickAction =
+        item.data?.clickAction || (item as any).clickAction;
+
+      // Handle VERIFY_ARRIVAL
+      if (
+        clickAction === "VERIFY_ARRIVAL" &&
+        item.jobId &&
+        item.data?.workerId
+      ) {
+        navigation.navigate("RequestVerification", {
+          jobId: item.jobId,
+          workerId: item.data.workerId,
+          initialTab: "verify",
+        });
+        return;
+      }
+
+      // Handle REVIEW_COMPLETION
+      if (clickAction === "REVIEW_COMPLETION" && item.jobId) {
+        navigation.navigate("JobTimer", {
+          jobId: item.jobId,
+          jobName: item.data?.jobName || "Job Summary",
+          isEmployer: true,
+        });
+        return;
+      }
+
+      // Handle Job Published
+      if (item.data?.type === "job_published" && item.jobId) {
+        navigation.navigate("JobDetails", {
+          jobId: item.jobId,
+        });
+        return;
+      }
+
+      // Handle fallback navigation based on notification type
+      switch (item.type) {
+        case "verification_code":
+          if (item.jobId) {
+            navigation.navigate("RequestVerification", {
+              jobId: item.jobId,
+            });
           }
-          count={item.read ? 0 : 1}
-          type={item.type}
-          isRead={item.read}
-          onPress={() => {
-            if (item.id) {
-              markAsRead(item.id);
-            }
-
-            const clickAction =
-              item.data?.clickAction || (item as any).clickAction;
-
-            // Handle VERIFY_ARRIVAL
-            if (
-              clickAction === "VERIFY_ARRIVAL" &&
-              item.jobId &&
-              item.data?.workerId
-            ) {
-              navigation.navigate("RequestVerification", {
-                jobId: item.jobId,
-                workerId: item.data.workerId,
-                initialTab: "verify",
-              });
-              return;
-            }
-
-            // Handle REVIEW_COMPLETION
-            if (clickAction === "REVIEW_COMPLETION" && item.jobId) {
-              navigation.navigate("JobTimer", {
-                jobId: item.jobId,
-                jobName: item.data?.jobName || "Job Summary",
-                isEmployer: true,
-              });
-              return;
-            }
-
-            // Handle Job Published
-            if (item.data?.type === "job_published" && item.jobId) {
-              navigation.navigate("JobDetails", {
-                jobId: item.jobId,
-              });
-              return;
-            }
-
-            // Handle fallback navigation based on notification type
-            switch (item.type) {
-              case "verification_code":
-                if (item.jobId) {
-                  navigation.navigate("RequestVerification", {
-                    jobId: item.jobId,
-                  });
-                }
-                break;
-              case "job_update":
-              case "application_status":
-                if (item.jobId) {
-                  navigation.navigate("JobDetails", {
-                    jobId: item.jobId,
-                  });
-                }
-                break;
-              case "message":
-                if (item.data?.conversationId) {
-                  navigation.navigate("ChatScreen", {
-                    conversationId: item.data.conversationId,
-                    participant: {
-                      id: item.data.senderId || item.userId,
-                      name: item.data.senderName || "User",
-                      avatar: item.data.senderAvatar,
-                    },
-                  });
-                }
-                break;
-            }
-          }}
-        />
-      </Swipeable>
-    </Animated.View>
+          break;
+        case "job_update":
+        case "application_status":
+          if (item.jobId) {
+            navigation.navigate("JobDetails", {
+              jobId: item.jobId,
+            });
+          }
+          break;
+        case "message":
+          if (item.data?.conversationId) {
+            navigation.navigate("ChatScreen", {
+              conversationId: item.data.conversationId,
+              participant: {
+                id: item.data.senderId || item.userId,
+                name: item.data.senderName || "User",
+                avatar: item.data.senderAvatar,
+              },
+            });
+          }
+          break;
+      }
+    },
+    [markAsRead, navigation]
   );
 
   const filteredNotifications = useMemo(() => {
-    if (segmentValues[selectedIndex] === "All") {
+    if (SEGMENT_VALUES[selectedIndex] === "All") {
       return notifications;
     }
 
-    const filterType = segmentValues[selectedIndex].toLowerCase();
+    const filterType = SEGMENT_VALUES[selectedIndex].toLowerCase();
     return notifications.filter((n) => {
       switch (filterType) {
         case "job updates":
@@ -188,28 +236,74 @@ const Notification = () => {
     });
   }, [notifications, selectedIndex]);
 
-  const FilterChips = () => (
-    <ScrollView
-      horizontal
-      showsHorizontalScrollIndicator={false}
-      contentContainerStyle={styles.chipsContainer}
-    >
-      {segmentValues.map((value, index) => {
-        const isActive = selectedIndex === index;
-        return (
-          <TouchableOpacity
-            key={value}
-            onPress={() => setSelectedIndex(index)}
-            activeOpacity={0.7}
-            style={[styles.chip, isActive && styles.activeChip]}
-          >
-            <Text style={[styles.chipText, isActive && styles.activeChipText]}>
-              {value}
-            </Text>
-          </TouchableOpacity>
-        );
-      })}
-    </ScrollView>
+  const handleSelectFilter = useCallback((index: number) => {
+    setSelectedIndex(index);
+  }, []);
+
+  const headerRight = useMemo(() => {
+    if (unreadCount <= 0) return null;
+    return (
+      <TouchableOpacity onPress={markAllAsRead} style={styles.markAllBtn}>
+        <MaterialCommunityIcons
+          name="check-all"
+          size={22}
+          color={colors.primary}
+        />
+        <Text style={styles.markAllText}>Read All</Text>
+      </TouchableOpacity>
+    );
+  }, [
+    unreadCount,
+    markAllAsRead,
+    styles.markAllBtn,
+    styles.markAllText,
+    colors.primary,
+  ]);
+
+  const renderItem = useCallback(
+    ({ item }: { item: NotificationData }) => (
+      <NotificationListItem
+        item={item}
+        onPress={handleNotificationPress}
+        onDelete={handleDelete}
+      />
+    ),
+    [handleNotificationPress, handleDelete]
+  );
+
+  const renderEmptyComponent = useCallback(
+    () => (
+      <View style={styles.emptyContainer}>
+        <View style={styles.emptyIconContainer}>
+          <Ionicons
+            name="notifications-off-outline"
+            size={80}
+            color={colors.primary}
+            style={styles.emptyIcon}
+          />
+          <View style={styles.emptyIconBadge}>
+            <Ionicons name="close" size={20} color={colors.white} />
+          </View>
+        </View>
+        <Text style={styles.emptyTitle}>No Notifications</Text>
+        <Text style={styles.emptySubtitle}>
+          {SEGMENT_VALUES[selectedIndex] === "All"
+            ? "You don't have any notifications right now."
+            : `You don't have any ${SEGMENT_VALUES[selectedIndex].toLowerCase()} notifications right now.`}
+        </Text>
+      </View>
+    ),
+    [
+      styles.emptyContainer,
+      styles.emptyIconContainer,
+      styles.emptyIcon,
+      styles.emptyIconBadge,
+      styles.emptyTitle,
+      styles.emptySubtitle,
+      colors.primary,
+      colors.white,
+      selectedIndex,
+    ]
   );
 
   return (
@@ -217,28 +311,39 @@ const Notification = () => {
       <Header
         title="Notifications"
         showBackButton
-        headerRight={
-          unreadCount > 0 ? (
-            <TouchableOpacity onPress={markAllAsRead} style={styles.markAllBtn}>
-              <MaterialCommunityIcons
-                name="check-all"
-                size={22}
-                color={colors.primary}
-              />
-              <Text style={styles.markAllText}>Read All</Text>
-            </TouchableOpacity>
-          ) : null
-        }
+        headerRight={headerRight}
       />
 
-      <FilterChips />
+      <View>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.chipsContainer}
+        >
+          {SEGMENT_VALUES.map((value, index) => (
+            <FilterChip
+              key={value}
+              label={value}
+              index={index}
+              isSelected={selectedIndex === index}
+              onSelect={handleSelectFilter}
+              styles={styles}
+            />
+          ))}
+        </ScrollView>
+      </View>
 
       <FlatList
+        style={styles.list}
         data={filteredNotifications}
-        keyExtractor={(item, index) => item.id || index.toString()}
+        keyExtractor={keyExtractor}
         renderItem={renderItem}
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
+        initialNumToRender={10}
+        maxToRenderPerBatch={10}
+        windowSize={7}
+        removeClippedSubviews={Platform.OS === "android"}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -247,134 +352,10 @@ const Notification = () => {
             tintColor={colors.primary}
           />
         }
-        ListEmptyComponent={
-          <Animated.View
-            entering={FadeIn.delay(300)}
-            style={styles.emptyContainer}
-          >
-            <View style={styles.emptyIconContainer}>
-              <Ionicons
-                name="notifications-off-outline"
-                size={80}
-                color={colors.primary}
-                style={{ opacity: 0.2 }}
-              />
-              <View style={styles.emptyIconBadge}>
-                <Ionicons name="close" size={20} color={colors.white} />
-              </View>
-            </View>
-            <Text style={styles.emptyTitle}>All caught up!</Text>
-            <Text style={styles.emptySubtitle}>
-              You don't have any{" "}
-              {segmentValues[selectedIndex] !== "All"
-                ? segmentValues[selectedIndex].toLowerCase()
-                : ""}{" "}
-              notifications at the moment.
-            </Text>
-          </Animated.View>
-        }
+        ListEmptyComponent={renderEmptyComponent}
       />
     </View>
   );
 };
 
 export default Notification;
-
-const createStyles = (colors: ThemeColors) =>
-  StyleSheet.create({
-    container: {
-      //flex: 1,
-      backgroundColor: colors.background,
-    },
-    chipsContainer: {
-      paddingHorizontal: 20,
-      paddingVertical: 12,
-      gap: 8,
-    },
-    chip: {
-      paddingHorizontal: 16,
-      paddingVertical: 8,
-      borderRadius: 20,
-      backgroundColor: colors.white,
-      borderWidth: 1,
-      borderColor: colors.border,
-      justifyContent: "center",
-      alignItems: "center",
-    },
-    activeChip: {
-      backgroundColor: colors.primary,
-      borderColor: colors.primary,
-    },
-    chipText: {
-      fontSize: 14,
-      color: colors.grey,
-      fontWeight: "500",
-    },
-    activeChipText: {
-      color: colors.white,
-      fontWeight: "600",
-    },
-    markAllBtn: {
-      flexDirection: "row",
-      alignItems: "center",
-      backgroundColor: colors.lightBlue,
-      paddingHorizontal: 12,
-      paddingVertical: 6,
-      borderRadius: 12,
-    },
-    markAllText: {
-      fontSize: 12,
-      fontWeight: "600",
-      color: colors.primary,
-      marginLeft: 4,
-    },
-    listContent: {
-      paddingHorizontal: 16,
-      paddingTop: 4,
-      paddingBottom: 40,
-      flex: 1,
-    },
-    deleteBox: {
-      backgroundColor: colors.red,
-      justifyContent: "center",
-      alignItems: "center",
-      width: 80,
-      borderRadius: 20,
-      height: "85%",
-      marginTop: 4,
-      marginLeft: 10,
-    },
-    emptyContainer: {
-      alignItems: "center",
-      paddingHorizontal: 40,
-    },
-    emptyIconContainer: {
-      marginBottom: 24,
-      position: "relative",
-    },
-    emptyIconBadge: {
-      position: "absolute",
-      bottom: 0,
-      right: 0,
-      backgroundColor: colors.primary,
-      width: 28,
-      height: 28,
-      borderRadius: 14,
-      justifyContent: "center",
-      alignItems: "center",
-      borderWidth: 3,
-      borderColor: colors.background,
-    },
-    emptyTitle: {
-      fontSize: 20,
-      fontWeight: "700",
-      color: colors.black,
-      marginBottom: 8,
-    },
-    emptySubtitle: {
-      textAlign: "center",
-      fontSize: 15,
-      color: colors.grey,
-      lineHeight: 22,
-    },
-  });
