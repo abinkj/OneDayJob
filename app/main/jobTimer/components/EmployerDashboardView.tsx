@@ -24,6 +24,7 @@ interface EmployerDashboardViewProps {
   lastRefreshTime: number | null;
   onInitiateJob: () => void;
   onRateWorker: (worker: any) => void;
+  onMarkNoShow?: (worker: any) => void;
   colors: any;
   styles: any; // Parent styles
 }
@@ -34,6 +35,7 @@ const EmployerDashboardView: React.FC<EmployerDashboardViewProps> = ({
   lastRefreshTime,
   onInitiateJob,
   onRateWorker,
+  onMarkNoShow,
   colors,
   styles,
 }) => {
@@ -150,7 +152,12 @@ const EmployerDashboardView: React.FC<EmployerDashboardViewProps> = ({
             data={summary.workers}
             keyExtractor={(item, index) => item.id || String(index)}
             renderItem={({ item }) => (
-              <WorkerCard worker={item} onRate={onRateWorker} colors={colors} />
+              <WorkerCard
+                worker={item}
+                onRate={onRateWorker}
+                onMarkNoShow={onMarkNoShow}
+                colors={colors}
+              />
             )}
             scrollEnabled={false} // Important: avoids conflict with parent ScrollView
             initialNumToRender={10}

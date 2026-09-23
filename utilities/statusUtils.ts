@@ -14,10 +14,11 @@ export const JOB_STATUSES = {
   POSTED: "posted",
   FILLED: "filled",
   IN_PROGRESS: "in_progress",
-  WORK_COMPLETED: "work_completed", // Work done by employees, payment pending
-  COMPLETED: "completed", // Payment completed
+  COMPLETED: "completed",
   CANCELLED: "cancelled",
   EXPIRED: "expired",
+  // Backward-compatibility alias pointing to canonical completed status
+  WORK_COMPLETED: "completed",
 } as const;
 
 // Application statuses for Applied section (employee view) - aligned with backend
@@ -28,7 +29,10 @@ export const APPLICATION_STATUSES = {
   WITHDRAWN: "withdrawn",
 } as const;
 
-export const getJobStatusInfo = (status: string): StatusInfo => {
+export const getJobStatusInfo = (
+  status: string,
+  isPaymentDone?: boolean
+): StatusInfo => {
   const normalizedStatus = status?.toLowerCase() || "";
 
   switch (normalizedStatus) {
@@ -42,6 +46,7 @@ export const getJobStatusInfo = (status: string): StatusInfo => {
       };
 
     case JOB_STATUSES.POSTED:
+    case "open":
       return {
         label: "Open",
         color: Colors.blue,
@@ -60,6 +65,7 @@ export const getJobStatusInfo = (status: string): StatusInfo => {
       };
 
     case JOB_STATUSES.IN_PROGRESS:
+    case "in progress":
       return {
         label: "In Progress",
         color: "#FF9800",
@@ -68,7 +74,7 @@ export const getJobStatusInfo = (status: string): StatusInfo => {
         description: "Work has started",
       };
 
-    case JOB_STATUSES.WORK_COMPLETED:
+    case "work_completed":
       return {
         label: "Work Completed",
         color: "#4CAF50",
@@ -78,6 +84,16 @@ export const getJobStatusInfo = (status: string): StatusInfo => {
       };
 
     case JOB_STATUSES.COMPLETED:
+      // Derive display label at render time based on payment state
+      if (isPaymentDone === false) {
+        return {
+          label: "Work Completed",
+          color: "#4CAF50",
+          backgroundColor: "#4CAF5020",
+          icon: "checkmark-circle-outline",
+          description: "Work finished, payment pending",
+        };
+      }
       return {
         label: "Completed",
         color: "#4CAF50",
@@ -115,7 +131,10 @@ export const getJobStatusInfo = (status: string): StatusInfo => {
   }
 };
 
-export const getApplicationStatusInfo = (status: string): StatusInfo => {
+export const getApplicationStatusInfo = (
+  status: string,
+  isPaymentDone?: boolean
+): StatusInfo => {
   const normalizedStatus = status?.toLowerCase() || "";
 
   switch (normalizedStatus) {
@@ -157,7 +176,7 @@ export const getApplicationStatusInfo = (status: string): StatusInfo => {
 
     default:
       // Try to get info from job statuses (for when we show job status instead of application status)
-      return getJobStatusInfo(status);
+      return getJobStatusInfo(status, isPaymentDone);
   }
 };
 
@@ -228,17 +247,10 @@ export const isWorkCompleted = (
 };
 
 // Helper function to get the correct display status for employer view
-// Maps backend "completed" to "work_completed" when payment is not done
+// Note: Display label ("Work Completed" vs "Completed") is now derived at render time from isPaymentDone
 export const getEmployerDisplayStatus = (
   jobStatus: string,
-  isPaymentDone?: boolean
+  _isPaymentDone?: boolean
 ): string => {
-  const normalizedStatus = jobStatus?.toLowerCase() || "";
-
-  // If backend says completed but payment is not done, show as work_completed
-  if (normalizedStatus === "completed" && isPaymentDone !== true) {
-    return "work_completed";
-  }
-
   return jobStatus;
 };

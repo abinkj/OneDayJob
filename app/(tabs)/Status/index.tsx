@@ -160,6 +160,9 @@ const MyPostTab = () => {
       setFilteredPosts(posts);
     } else {
       const filtered = posts.filter((post) => {
+        if (selectedStatus === "Completed" || selectedStatus === "Work Completed") {
+          return post.jobStatus === "completed" || post.jobStatus === "work_completed";
+        }
         const statusInfo = getJobStatusInfo(post.jobStatus || "posted");
         return statusInfo.label === selectedStatus;
       });
@@ -535,6 +538,12 @@ const AppliedTab = () => {
       setFilteredJobs(appliedJobs);
     } else {
       const filtered = appliedJobs.filter((application) => {
+        if (selectedStatus === "Completed" || selectedStatus === "Work Completed") {
+          return (
+            application.job?.jobStatus === "completed" ||
+            application.job?.jobStatus === "work_completed"
+          );
+        }
         const displayStatus = getDisplayStatus(
           application.job?.jobStatus,
           application.status,

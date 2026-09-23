@@ -194,7 +194,7 @@ export interface JobPost {
   isAssignedWorker?: boolean; // true if the current user is an accepted/assigned worker
   // Arrival state (derived from worker's session in the job list response)
   hasArrived?: boolean; // true if this worker has already pressed 'I Have Reached'
-  arrivalStatus?: "pending" | "arrived" | "verified"; // mirrors JobSession.arrivalStatus
+  arrivalStatus?: "pending" | "arrived" | "verified" | "no_show"; // mirrors JobSession.arrivalStatus
 }
 
 // For backward compatibility and convenience

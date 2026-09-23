@@ -19,6 +19,7 @@ import { useNotifications } from "../../../contexts/NotificationContext";
 import { NotificationData } from "../../../services/notificationService";
 import { useTheme } from "../../../contexts/ThemeContext";
 import { useNavigation } from "@react-navigation/native";
+import * as Haptics from "expo-haptics";
 import { createStyles } from "./styles";
 
 const SEGMENT_VALUES = ["All", "Job Updates", "Messages", "System"] as const;
@@ -118,8 +119,19 @@ const Notification = () => {
 
   const handleRefresh = useCallback(async () => {
     setRefreshing(true);
-    await refreshNotifications();
-    setRefreshing(false);
+    if (Platform.OS === "ios") {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+    }
+    try {
+      await Promise.all([
+        refreshNotifications(),
+        new Promise((resolve) => setTimeout(resolve, 500)),
+      ]);
+    } catch (error) {
+      console.error("Error refreshing notifications:", error);
+    } finally {
+      setRefreshing(false);
+    }
   }, [refreshNotifications]);
 
   const handleDelete = useCallback(
@@ -170,6 +182,16 @@ const Notification = () => {
           jobId: item.jobId,
           jobName: item.data?.jobName || "Job Summary",
           isEmployer: true,
+        });
+        return;
+      }
+
+      // Handle JOB_TIMER
+      if (clickAction === "JOB_TIMER" && item.jobId) {
+        navigation.navigate("JobTimer", {
+          jobId: item.jobId,
+          jobName: item.data?.jobName || "Job Timer",
+          isEmployer: false,
         });
         return;
       }
@@ -344,12 +366,17 @@ const Notification = () => {
         maxToRenderPerBatch={10}
         windowSize={7}
         removeClippedSubviews={Platform.OS === "android"}
+        bounces={true}
+        alwaysBounceVertical={true}
+        overScrollMode="always"
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
             onRefresh={handleRefresh}
             colors={[colors.primary]}
             tintColor={colors.primary}
+            title={refreshing ? "Updating notifications..." : undefined}
+            titleColor={colors.grey}
           />
         }
         ListEmptyComponent={renderEmptyComponent}

@@ -5,8 +5,8 @@
  * Features instant updates via Socket.IO and optimistic UI transitions.
  */
 
-import React, { useState, useMemo, useEffect } from "react";
-import { View, Text, ScrollView, RefreshControl } from "react-native";
+import React, { useState, useMemo, useEffect, useCallback } from "react";
+import { View, Text, ScrollView, RefreshControl, Alert } from "react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { Header } from "../../../components/header";
 import { JobDetailsSkeleton } from "../../../components/Shimmer/Skeletons";
@@ -15,6 +15,7 @@ import { useAlert } from "../../../components/CustomAlert/AlertProvider";
 import Toast from "react-native-toast-message";
 import { createStyles } from "./styles";
 import RatingModal from "../../../components/RatingModal";
+import { markWorkerNoShow } from "../../../services/api";
 
 // Custom hooks
 import { useServerTimer } from "./hooks/useServerTimer";
@@ -116,6 +117,53 @@ const JobTimerScreen = () => {
     }
   };
 
+  // Handle marking worker as no-show
+  const handleMarkWorkerNoShow = useCallback(
+    (worker: any) => {
+      Alert.alert(
+        "Mark as Absent / No-Show",
+        `Are you sure you want to mark ${worker.name} as absent / no-show? This worker will not participate in this job.`,
+        [
+          { text: "Cancel", style: "cancel" },
+          {
+            text: "Mark Absent",
+            style: "destructive",
+            onPress: async () => {
+              try {
+                const response = await markWorkerNoShow(jobId, worker.id);
+                if (response.data?.success) {
+                  Toast.show({
+                    type: "info",
+                    text1: "Worker Marked Absent",
+                    text2: `${worker.name} has been marked as absent.`,
+                  });
+                  await employerDashboard.refresh();
+                } else {
+                  Toast.show({
+                    type: "error",
+                    text1: "Failed",
+                    text2:
+                      response.data?.message ||
+                      "Could not mark worker as absent.",
+                  });
+                }
+              } catch (error: any) {
+                Toast.show({
+                  type: "error",
+                  text1: "Error",
+                  text2:
+                    error?.response?.data?.message ||
+                    "Failed to mark worker absent.",
+                });
+              }
+            },
+          },
+        ]
+      );
+    },
+    [jobId, employerDashboard]
+  );
+
   // Handle complete with confirmation
   const handleCompleteWithConfirmation = () => {
     showAlert({
@@ -152,6 +200,8 @@ const JobTimerScreen = () => {
           <ScrollView
             style={styles.content}
             showsVerticalScrollIndicator={false}
+            alwaysBounceVertical={true}
+            bounces={true}
             refreshControl={
               <RefreshControl
                 refreshing={loading}
@@ -181,11 +231,13 @@ const JobTimerScreen = () => {
                 lastRefreshTime={employerDashboard.lastRefreshTime}
                 onInitiateJob={employerDashboard.initiateJob}
                 onRateWorker={openRatingModal}
+                onMarkNoShow={handleMarkWorkerNoShow}
                 colors={colors}
                 styles={styles}
               />
             ) : workerSession.isPendingVerification ? (
               <VerificationPendingView
+                jobId={jobId}
                 colors={colors}
                 onRefresh={handleRefresh}
                 actionLoading={workerSession.actionLoading}

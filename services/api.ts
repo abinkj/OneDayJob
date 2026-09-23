@@ -115,7 +115,7 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => {
     console.log(
-      `📥 [API Response] ${response.status} ${response.config.method?.toUpperCase()} ${response.config.url}`
+      `[API Response] ${response.status} ${response.config.method?.toUpperCase()} ${JSON.stringify(response.data,null,2)}`
     );
     return response;
   },
@@ -1053,6 +1053,45 @@ export const checkArrivalEligibility = async (
     return response;
   } catch (error) {
     console.error("Error checking arrival eligibility:", error);
+    throw error;
+  }
+};
+
+/**
+ * Worker sends reminder to employer for arrival approval
+ * POST /api/jobs/:jobId/remind-arrival
+ */
+export const remindArrivalEmployer = async (jobId: string) => {
+  try {
+    console.log("Sending arrival reminder to employer:", jobId);
+    const response = await api.post(`/jobs/${jobId}/remind-arrival`);
+    console.log("Remind arrival response:", response.data);
+    return response;
+  } catch (error) {
+    console.error("Error sending arrival reminder:", error);
+    throw error;
+  }
+};
+
+/**
+ * Employer marks a worker as absent / no-show
+ * POST /api/jobs/:jobId/mark-no-show
+ */
+export const markWorkerNoShow = async (
+  jobId: string,
+  workerId: string,
+  reason?: string
+) => {
+  try {
+    console.log("Marking worker as no-show:", { jobId, workerId, reason });
+    const response = await api.post(`/jobs/${jobId}/mark-no-show`, {
+      workerId,
+      reason,
+    });
+    console.log("Mark no-show response:", response.data);
+    return response;
+  } catch (error) {
+    console.error("Error marking worker as no-show:", error);
     throw error;
   }
 };

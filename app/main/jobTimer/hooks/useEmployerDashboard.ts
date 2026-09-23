@@ -21,6 +21,7 @@ export interface DashboardSummary {
   pausedWorkers: number;
   completedWorkers: number;
   notStartedWorkers: number;
+  totalNoShowWorkers?: number;
   totalTimeSpent: number;
   averageTimePerWorker: number;
   completionPercentage: number;
@@ -31,7 +32,7 @@ export interface DashboardSummary {
     email: string;
     profilePicture?: string;
     profilePictureUrl?: string;
-    status: "active" | "paused" | "completed" | "not_started";
+    status: "active" | "paused" | "completed" | "not_started" | "no_show";
     timeSpent: number;
     hasRated?: boolean;
     rating?: number;

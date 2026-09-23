@@ -8,9 +8,9 @@ import {
   ScrollView,
   ActivityIndicator,
   RefreshControl,
+  Alert,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { NavigationState } from "react-native-tab-view";
 import {
   useNavigation,
   useRoute,
@@ -24,6 +24,7 @@ import {
   initiateJobExecution,
   getArrivedWorkers,
   approveWorkerArrival,
+  markWorkerNoShow,
 } from "../../../services/api";
 import Toast from "react-native-toast-message";
 
@@ -54,6 +55,7 @@ const RequestsVerifyTab = ({
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [approvingId, setApprovingId] = useState<string | null>(null);
+  const [markingAbsentId, setMarkingAbsentId] = useState<string | null>(null);
   const [jobInitiated, setJobInitiated] = useState(false);
   const [initiatingJob, setInitiatingJob] = useState(false);
   const [hasInitiallyLoaded, setHasInitiallyLoaded] = useState(false);
@@ -155,6 +157,54 @@ const RequestsVerifyTab = ({
     }
   };
 
+  const handleMarkAbsent = useCallback(
+    (workerId: string, workerName: string) => {
+      Alert.alert(
+        "Mark Worker as Absent?",
+        `Are you sure you want to mark ${workerName} as absent / no-show? This will close out their shift and remove them from the active crew.`,
+        [
+          { text: "Cancel", style: "cancel" },
+          {
+            text: "Mark Absent",
+            style: "destructive",
+            onPress: async () => {
+              try {
+                setMarkingAbsentId(workerId);
+                const response = await markWorkerNoShow(jobId, workerId);
+                if (response.data?.success) {
+                  Toast.show({
+                    type: "info",
+                    text1: "Worker Marked Absent",
+                    text2: `${workerName} has been marked as absent.`,
+                  });
+                  await fetchWorkers();
+                } else {
+                  Toast.show({
+                    type: "error",
+                    text1: "Action Failed",
+                    text2:
+                      response.data?.message || "Could not mark worker absent.",
+                  });
+                }
+              } catch (error: any) {
+                Toast.show({
+                  type: "error",
+                  text1: "Error",
+                  text2:
+                    error?.response?.data?.message ||
+                    "Failed to mark worker absent.",
+                });
+              } finally {
+                setMarkingAbsentId(null);
+              }
+            },
+          },
+        ]
+      );
+    },
+    [jobId, fetchWorkers]
+  );
+
   const handleStartJob = async () => {
     try {
       setInitiatingJob(true);
@@ -193,8 +243,15 @@ const RequestsVerifyTab = ({
   const arrivedWorkers = workers.filter((w) => w.arrivalStatus === "arrived");
   const verifiedWorkers = workers.filter((w) => w.arrivalStatus === "verified");
   const pendingWorkers = workers.filter((w) => w.arrivalStatus === "pending");
+  const noShowWorkers = workers.filter(
+    (w) => w.arrivalStatus === "no_show" || w.sessionStatus === "no_show"
+  );
+  const participatingWorkers = workers.filter(
+    (w) => w.arrivalStatus !== "no_show" && w.sessionStatus !== "no_show"
+  );
   const allVerified =
-    workers.length > 0 && verifiedWorkers.length === workers.length;
+    participatingWorkers.length > 0 &&
+    verifiedWorkers.length === participatingWorkers.length;
 
   const formatTimeAgo = (dateStr: string) => {
     if (!dateStr) return "";
@@ -209,7 +266,25 @@ const RequestsVerifyTab = ({
   return (
     <View style={styles.tabContainer}>
       {workers.length === 0 ? (
-        <View style={{ alignItems: "center", marginTop: 40 }}>
+        <ScrollView
+          style={{ flex: 1 }}
+          contentContainerStyle={{
+            alignItems: "center",
+            paddingTop: 40,
+            paddingBottom: 40,
+            flexGrow: 1,
+          }}
+          alwaysBounceVertical={true}
+          bounces={true}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={() => fetchWorkers(true)}
+              colors={[colors.primary]}
+              tintColor={colors.primary}
+            />
+          }
+        >
           <Ionicons name="people-outline" size={64} color="#ccc" />
           <Text
             style={{
@@ -321,10 +396,11 @@ const RequestsVerifyTab = ({
               </View>
             </View>
           )}
-        </View>
+        </ScrollView>
       ) : (
         <FlatList
-          bounces={false}
+          bounces={true}
+          alwaysBounceVertical={true}
           data={workers}
           keyExtractor={(item) => item.workerId}
           showsVerticalScrollIndicator={false}
@@ -368,7 +444,8 @@ const RequestsVerifyTab = ({
                   }}
                 >
                   <Text style={{ fontSize: 13, color: colors.grey }}>
-                    {verifiedWorkers.length} / {workers.length} Verified
+                    {verifiedWorkers.length} / {participatingWorkers.length} Verified
+                    {noShowWorkers.length > 0 ? ` (${noShowWorkers.length} Absent)` : ""}
                   </Text>
                   <Text
                     style={{
@@ -386,8 +463,8 @@ const RequestsVerifyTab = ({
                       styles.progressFill,
                       {
                         width: `${
-                          workers.length > 0
-                            ? (verifiedWorkers.length / workers.length) * 100
+                          participatingWorkers.length > 0
+                            ? (verifiedWorkers.length / participatingWorkers.length) * 100
                             : 0
                         }%`,
                       },
@@ -460,14 +537,22 @@ const RequestsVerifyTab = ({
             const isArrived = item.arrivalStatus === "arrived";
             const isVerified = item.arrivalStatus === "verified";
             const isPending = item.arrivalStatus === "pending";
+            const isNoShow =
+              item.arrivalStatus === "no_show" || item.sessionStatus === "no_show";
             const isApproving = approvingId === item.workerId;
+            const isMarkingAbsent = markingAbsentId === item.workerId;
 
             let borderColor = colors.border;
             let statusColor = "#999";
             let statusText = "Waiting to arrive";
             let statusIcon = "time-outline";
 
-            if (isArrived) {
+            if (isNoShow) {
+              borderColor = "#EF4444";
+              statusColor = "#EF4444";
+              statusText = "Marked Absent / No-Show";
+              statusIcon = "close-circle-outline";
+            } else if (isArrived) {
               borderColor = "#F59E0B";
               statusColor = "#F59E0B";
               statusText = `Arrived ${formatTimeAgo(item.arrivedAt)}`;
@@ -622,25 +707,87 @@ const RequestsVerifyTab = ({
                     </View>
                   )}
 
-                  {/* Pending indicator */}
-                  {isPending && (
+                  {/* Absent badge */}
+                  {isNoShow && (
                     <View
                       style={{
-                        backgroundColor: "#F3F4F6",
+                        backgroundColor: "#FEE2E2",
                         paddingVertical: 6,
                         paddingHorizontal: 12,
                         borderRadius: 8,
+                        borderWidth: 1,
+                        borderColor: "#FCA5A5",
                       }}
                     >
                       <Text
                         style={{
-                          color: "#9CA3AF",
-                          fontWeight: "500",
+                          color: "#DC2626",
+                          fontWeight: "600",
                           fontSize: 12,
                         }}
                       >
-                        Pending
+                        Absent
                       </Text>
+                    </View>
+                  )}
+
+                  {/* Pending indicator + Mark Absent action */}
+                  {isPending && (
+                    <View
+                      style={{
+                        flexDirection: "row",
+                        alignItems: "center",
+                      }}
+                    >
+                      <View
+                        style={{
+                          backgroundColor: "#F3F4F6",
+                          paddingVertical: 6,
+                          paddingHorizontal: 10,
+                          borderRadius: 8,
+                          marginRight: 6,
+                        }}
+                      >
+                        <Text
+                          style={{
+                            color: "#9CA3AF",
+                            fontWeight: "500",
+                            fontSize: 12,
+                          }}
+                        >
+                          Pending
+                        </Text>
+                      </View>
+                      <TouchableOpacity
+                        style={{
+                          backgroundColor: "#FEE2E2",
+                          paddingVertical: 6,
+                          paddingHorizontal: 10,
+                          borderRadius: 8,
+                          borderWidth: 1,
+                          borderColor: "#FCA5A5",
+                          flexDirection: "row",
+                          alignItems: "center",
+                        }}
+                        onPress={() =>
+                          handleMarkAbsent(item.workerId, item.workerName)
+                        }
+                        disabled={isMarkingAbsent}
+                      >
+                        {isMarkingAbsent ? (
+                          <ActivityIndicator size="small" color="#DC2626" />
+                        ) : (
+                          <Text
+                            style={{
+                              color: "#DC2626",
+                              fontWeight: "600",
+                              fontSize: 12,
+                            }}
+                          >
+                            Mark Absent
+                          </Text>
+                        )}
+                      </TouchableOpacity>
                     </View>
                   )}
                 </View>

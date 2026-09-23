@@ -17,7 +17,7 @@ interface Worker {
   email: string;
   profilePicture?: string;
   profilePictureUrl?: string;
-  status: "active" | "paused" | "completed" | "not_started";
+  status: "active" | "paused" | "completed" | "not_started" | "no_show";
   timeSpent: number;
   hasRated?: boolean;
   rating?: number;
@@ -26,11 +26,12 @@ interface Worker {
 interface WorkerCardProps {
   worker: Worker;
   onRate?: (worker: Worker) => void;
+  onMarkNoShow?: (worker: Worker) => void;
   colors: any;
 }
 
 const WorkerCard: React.FC<WorkerCardProps> = React.memo(
-  ({ worker, onRate, colors }) => {
+  ({ worker, onRate, onMarkNoShow, colors }) => {
     // Debug log to check worker data
     // console.log(`WorkerCard render for ${worker.name}:`, { ... });
 
@@ -53,6 +54,12 @@ const WorkerCard: React.FC<WorkerCardProps> = React.memo(
             bg: colors.lightBlue || "#E3F2FD",
             text: colors.tabBlue || "#1976D2",
             label: "Done",
+          };
+        case "no_show":
+          return {
+            bg: "#FEE2E2",
+            text: colors.red || "#DC2626",
+            label: "No-Show",
           };
         default:
           return {
@@ -173,6 +180,42 @@ const WorkerCard: React.FC<WorkerCardProps> = React.memo(
                 </Text>
               </TouchableOpacity>
             )}
+          </View>
+        )}
+
+        {/* Mark No-Show Action */}
+        {worker.status === "not_started" && onMarkNoShow && (
+          <View
+            style={[
+              styles.ratingSection,
+              { borderTopColor: colors.border || "rgba(0,0,0,0.05)" },
+            ]}
+          >
+            <TouchableOpacity
+              style={[
+                styles.rateButton,
+                {
+                  backgroundColor: "#FEE2E2",
+                  borderWidth: 1,
+                  borderColor: "#FCA5A5",
+                },
+              ]}
+              onPress={() => onMarkNoShow(worker)}
+            >
+              <Ionicons
+                name="person-remove-outline"
+                size={16}
+                color="#DC2626"
+              />
+              <Text
+                style={[
+                  styles.rateButtonText,
+                  { color: "#DC2626", marginLeft: 6 },
+                ]}
+              >
+                Mark as Absent / No-Show
+              </Text>
+            </TouchableOpacity>
           </View>
         )}
       </View>

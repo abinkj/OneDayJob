@@ -63,21 +63,16 @@ const JobCard = ({
   const actualStatus = jobStatus || status;
 
   // Get the appropriate status for display
-  let displayStatus = getDisplayStatus(
+  const displayStatus = getDisplayStatus(
     actualStatus,
     applicationStatus,
     isEmployer
   );
 
-  // For employers, use the corrected display status that handles payment state
-  if (isEmployer) {
-    displayStatus = getEmployerDisplayStatus(actualStatus, data?.isPaymentDone);
-  }
-
-  // Get status info based on context
+  // Get status info based on context, deriving display label from isPaymentDone at render time
   const statusInfo = isEmployer
-    ? getJobStatusInfo(displayStatus)
-    : getApplicationStatusInfo(displayStatus);
+    ? getJobStatusInfo(displayStatus, data?.isPaymentDone)
+    : getApplicationStatusInfo(displayStatus, data?.isPaymentDone);
 
   const isApplied =
     displayStatus?.toLowerCase() === "applied" ||
@@ -85,9 +80,11 @@ const JobCard = ({
   const isInProgress =
     displayStatus?.toLowerCase() === "in_progress" ||
     displayStatus?.toLowerCase() === "in progress";
-  const isCompleted = displayStatus?.toLowerCase() === "completed";
-  const isWorkCompletedStatus =
+  const isCompleted =
+    displayStatus?.toLowerCase() === "completed" ||
     displayStatus?.toLowerCase() === "work_completed";
+  const isWorkCompletedStatus =
+    isCompleted && data?.isPaymentDone !== true;
 
   // Check if work is completed based on status or backend flags
   // Use actualStatus instead of displayStatus to check the real backend status
@@ -97,24 +94,6 @@ const JobCard = ({
     data?.isVerifiedByEmployer
   );
 
-  // Debug logging for payment button
-  console.log("🔍 JobCard Debug:", {
-    jobId: data?._id,
-    jobName: data?.name,
-    status: data?.status,
-    jobStatus: data?.jobStatus,
-    actualStatus,
-    displayStatus,
-    isCompleted,
-    isWorkCompletedStatus,
-    isWorkFinished,
-    isCompletedByWorker: data?.isCompletedByWorker,
-    isVerifiedByEmployer: data?.isVerifiedByEmployer,
-    isPaymentDone: data?.isPaymentDone,
-    isEmployer,
-    showPaymentButton,
-    shouldShowPayment: showPaymentButton && isWorkFinished && isEmployer,
-  });
 
   const formattedLocation = location?.address
     ? `${location.address}${location.city ? ", " + location.city : ""}${

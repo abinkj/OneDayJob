@@ -10,7 +10,6 @@ import notificationService, {
   NotificationData,
   NotificationPermission,
 } from "../services/notificationService";
-import { getUserData } from "../utilities/mmkvStore";
 import socketService from "../services/socketService";
 import * as notificationApi from "../services/notificationApi";
 import { useSelector } from "react-redux";
