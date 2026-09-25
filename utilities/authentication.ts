@@ -20,8 +20,8 @@ import type { KycStatus } from "../redux/reducers/authReducers";
 import socketService from "../services/socketService";
 import { clearActiveJob } from "../redux/reducers/jobReducer";
 import { clearQueue } from "../redux/reducers/offlineSyncSlice";
-import { persistor } from "../redux/store";
-import { logout as apiLogout } from "../services/api";
+import { persistor, store } from "../redux/store";
+import { logout as apiLogout, getWorkerSession } from "../services/api";
 import { offlineQueue } from "../services/offlineQueue";
 
 // ✅ Log user in and update Redux + secure storage
@@ -110,6 +110,61 @@ export const restoreSession = () => async (dispatch) => {
       socketService.connect().catch((err) => {
         console.error("Socket connection failed on session restore:", err);
       });
+
+      // ─── Startup Active Job Validation ──────────────────────────────────────
+      // If an activeJob was restored from redux-persist MMKV storage, check
+      // with the backend to ensure the job/session is actually still active.
+      // If completed, absent, or unassigned, clear it immediately so MainStack
+      // does not mount the JobTimer screen on startup.
+      try {
+        const persistedActiveJob = (store.getState() as any)?.activeJob;
+        if (persistedActiveJob?.activeJobId) {
+          try {
+            const checkRes = await getWorkerSession(
+              persistedActiveJob.activeJobId,
+              true
+            );
+            const sData = checkRes.data?.data;
+            const sessionStatus = sData?.session?.status;
+            const jobStatus = sData?.job?.jobStatus;
+
+            if (
+              sessionStatus === "completed" ||
+              sessionStatus === "no_show" ||
+              jobStatus === "completed" ||
+              (sessionStatus !== "active" && sessionStatus !== "paused")
+            ) {
+              console.log(
+                "🧹 [restoreSession] Persisted job is completed or not active. Clearing activeJob:",
+                persistedActiveJob.activeJobId
+              );
+              dispatch(clearActiveJob());
+            }
+          } catch (checkErr: any) {
+            const errStatus = checkErr?.response?.status;
+            console.log(
+              "🧹 [restoreSession] Active job check returned status:",
+              errStatus,
+              "- clearing activeJob."
+            );
+            if (
+              errStatus === 403 ||
+              errStatus === 404 ||
+              errStatus === 400 ||
+              errStatus === 422
+            ) {
+              dispatch(clearActiveJob());
+            }
+          }
+        } else if (persistedActiveJob?.isTimerRunning) {
+          console.log(
+            "🧹 [restoreSession] Dangling isTimerRunning without activeJobId. Clearing activeJob."
+          );
+          dispatch(clearActiveJob());
+        }
+      } catch (validationErr) {
+        console.warn("🧹 [restoreSession] Error during active job validation:", validationErr);
+      }
 
       return user;
     } else {

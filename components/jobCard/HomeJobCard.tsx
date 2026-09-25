@@ -14,6 +14,7 @@ import {
   isJobOwner,
   isAssignedWorker,
   formatDateDDMMYYYY,
+  isJobToday,
 } from "../../utilities/jobUtils";
 
 interface HomeJobCardProps {
@@ -39,13 +40,14 @@ export const HomeJobCard: React.FC<HomeJobCardProps> = ({
   locationAddress,
   handleArrival,
 }) => {
-  const isExpired = !!item.isExpired;
+  const isExpired = !!item.isExpired || item.jobStatus?.toLowerCase() === "expired";
   const isInProgress =
     item.jobStatus?.toLowerCase() === "in_progress" ||
     item.status?.toLowerCase() === "in_progress";
   const isCompleted =
     item.jobStatus?.toLowerCase() === "completed" ||
-    item.status?.toLowerCase() === "completed";
+    item.status?.toLowerCase() === "completed" ||
+    item.jobStatus?.toLowerCase() === "work_completed";
 
   const jobItem = item as any;
   const jobOwnerId =
@@ -60,17 +62,17 @@ export const HomeJobCard: React.FC<HomeJobCardProps> = ({
   const userId = userData?.id || userData?._id;
   const isEmployer = isJobOwner(item, userId);
   const isAccepted = isAssignedWorker(item, userId);
+  const isToday = isJobToday(item);
 
-  const showArrivalFeature =
-    !isEmployer && isAccepted && !isCompleted && !isExpired;
+  const showArrivalFeature = !isEmployer && isAccepted && !isCompleted && !isExpired && isToday;
 
   const handleJobPress = () => {
     if (isExpired) return;
-    if (isInProgress) {
+    if (isEmployer && isInProgress) {
       navigation.navigate("JobTimer", {
         jobId: item._id,
         jobName: item.name,
-        isEmployer,
+        isEmployer: true,
         employerId: jobOwnerId,
         employerName:
           `${item.userId?.firstName || ""} ${item.userId?.lastName || ""}`.trim(),
@@ -211,7 +213,13 @@ export const HomeJobCard: React.FC<HomeJobCardProps> = ({
             isExpired && { color: "#9CA3AF" },
           ]}
         >
-          {item.createdAt ? formatDateDDMMYYYY(item.createdAt) : "Recently"}
+          {item.onDate
+            ? formatDateDDMMYYYY(item.onDate)
+            : item.beforeDate
+            ? formatDateDDMMYYYY(item.beforeDate)
+            : item.createdAt
+            ? formatDateDDMMYYYY(item.createdAt)
+            : "Recently"}
         </Text>
       </View>
 
@@ -299,6 +307,15 @@ export const HomeJobCard: React.FC<HomeJobCardProps> = ({
               </Text>
             )}
           </View>
+        </View>
+      )}
+
+      {/* Scheduled label for future assigned jobs */}
+      {!isToday && isAccepted && !isCompleted && !isExpired && (
+        <View style={styles.arrivalButtonContainer}>
+          <Text style={styles.scheduledText}>
+            Scheduled for {formatDateDDMMYYYY(item.onDate)}
+          </Text>
         </View>
       )}
     </TouchableOpacity>

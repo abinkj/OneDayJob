@@ -14,6 +14,9 @@ import {
   submitRating,
 } from "../../../../services/api";
 import socketService from "../../../../services/socketService";
+import { useDispatch, useSelector } from "react-redux";
+import { clearActiveJob } from "../../../../redux/reducers/jobReducer";
+import { resetActiveJobThrottle } from "../../../../hooks/useActiveJob";
 
 export interface DashboardSummary {
   totalWorkers: number;
@@ -21,6 +24,7 @@ export interface DashboardSummary {
   pausedWorkers: number;
   completedWorkers: number;
   notStartedWorkers: number;
+  totalNoShowWorkers?: number;
   totalTimeSpent: number;
   averageTimePerWorker: number;
   completionPercentage: number;
@@ -31,7 +35,7 @@ export interface DashboardSummary {
     email: string;
     profilePicture?: string;
     profilePictureUrl?: string;
-    status: "active" | "paused" | "completed" | "not_started";
+    status: "active" | "paused" | "completed" | "not_started" | "no_show";
     timeSpent: number;
     hasRated?: boolean;
     rating?: number;
@@ -69,6 +73,10 @@ export interface UseEmployerDashboardReturn {
 export const useEmployerDashboard = (
   jobId: string
 ): UseEmployerDashboardReturn => {
+  const dispatch = useDispatch();
+  const userData = useSelector((state: any) => state.authentication.userData);
+  const userId = userData?.id || userData?._id;
+
   const [dashboard, setDashboard] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
@@ -248,10 +256,27 @@ export const useEmployerDashboard = (
       }
     };
 
+    const handleDirectUpdate = (data: any) => {
+      if (!data || data.jobId === jobId) {
+        console.log("[useEmployerDashboard] Direct event received, reloading dashboard:", data);
+        loadDashboard(true);
+      }
+    };
+
     socketService.on("notification", handleNotification);
+    socketService.on("session_status_updated", handleDirectUpdate);
+    socketService.on("worker-marked-no-show", handleDirectUpdate);
+    socketService.on("worker-late-arrival-allowed", handleDirectUpdate);
+    socketService.on("worker-arrival-approved", handleDirectUpdate);
+    socketService.on("worker-arrived", handleDirectUpdate);
 
     return () => {
       socketService.off("notification", handleNotification);
+      socketService.off("session_status_updated", handleDirectUpdate);
+      socketService.off("worker-marked-no-show", handleDirectUpdate);
+      socketService.off("worker-late-arrival-allowed", handleDirectUpdate);
+      socketService.off("worker-arrival-approved", handleDirectUpdate);
+      socketService.off("worker-arrived", handleDirectUpdate);
     };
   }, [jobId, loadDashboard]);
 
@@ -326,6 +351,10 @@ export const useEmployerDashboard = (
           text1: "Rating Submitted",
           text2: "Worker has been rated successfully",
         });
+
+        // Reset throttle, clear activeJob Redux state, and reload dashboard
+        resetActiveJobThrottle();
+        dispatch(clearActiveJob());
 
         await loadDashboard(true);
       } catch (error) {

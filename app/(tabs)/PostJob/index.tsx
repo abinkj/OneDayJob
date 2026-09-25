@@ -65,7 +65,7 @@ const PostJobScreen = ({ navigation: navProp }) => {
     null
   );
   const [selectedTimePreferences, setSelectedTimePreferences] = useState([]); // Changed to array
-  const [budget, setBudget] = useState(null);
+  const [budget, setBudget] = useState<string | null>("300");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Date/Time mode - simplified state
@@ -369,7 +369,7 @@ const PostJobScreen = ({ navigation: navProp }) => {
 
     if (errors.length > 0) {
       showAlert({
-        type: "warning",
+        type: "info",
         title: "Validation Error",
         message: errors.join("\n"),
       });
@@ -577,7 +577,7 @@ const PostJobScreen = ({ navigation: navProp }) => {
     setToAmPm("AM");
 
     // Reset budget
-    setBudget("200");
+    setBudget("300");
 
     // Reset requirements and photos
     setRequirements([]);
@@ -789,33 +789,37 @@ const PostJobScreen = ({ navigation: navProp }) => {
     if (currentStep === 1 && !selectedCategory) {
       showAlert({
         type: "info",
-        title: "Required",
+        title: "Category Required",
         message: "Please select a job category",
       });
       return;
     }
 
     if (currentStep === 2) {
-      if (!jobName) {
+      const titleValidation = validateJobTitle(jobName);
+      if (!titleValidation.status) {
         showAlert({
           type: "info",
-          title: "Required",
-          message: "Please enter a job name",
+          title: "Job Title Required",
+          message: titleValidation.titleError,
         });
         return;
       }
-      // if (!jobDescription) {
-      //   showAlert({
-      //     type: "info",
-      //     title: "Required",
-      //     message: "Please enter a job description",
-      //   });
-      //   return;
-      // }
+
+      const descriptionValidation = validateJobDescription(jobDescription);
+      if (!descriptionValidation.status) {
+        showAlert({
+          type: "info",
+          title: "Job Description Required",
+          message: descriptionValidation.descriptionError,
+        });
+        return;
+      }
+
       if (!canBeDoneRemotely && !selectedLocation) {
         showAlert({
           type: "info",
-          title: "Required",
+          title: "Location Required",
           message: "Please provide a location for onsite jobs",
         });
         return;
@@ -855,7 +859,7 @@ const PostJobScreen = ({ navigation: navProp }) => {
         if (!fromHour || !fromMinute || !fromAmPm) {
           showAlert({
             type: "info",
-            title: "Required",
+            title: "Start Time Required",
             message: "Please set the start time for the job",
           });
           return;
@@ -863,7 +867,7 @@ const PostJobScreen = ({ navigation: navProp }) => {
         if (!toHour || !toMinute || !toAmPm) {
           showAlert({
             type: "info",
-            title: "Required",
+            title: "End Time Required",
             message: "Please set the end time for the job",
           });
           return;
@@ -875,7 +879,7 @@ const PostJobScreen = ({ navigation: navProp }) => {
 
         if (fromTime24 >= toTime24) {
           showAlert({
-            type: "warning",
+            type: "info",
             title: "Invalid Time",
             message: "End time must be after start time",
           });
@@ -911,7 +915,7 @@ const PostJobScreen = ({ navigation: navProp }) => {
 
         if (fromTime24 >= toTime24) {
           showAlert({
-            type: "warning",
+            type: "info",
             title: "Invalid Time",
             message: "End time must be after start time",
           });
@@ -921,7 +925,7 @@ const PostJobScreen = ({ navigation: navProp }) => {
         // Validate time is within 12 AM to 11:59 PM range
         if (!isValidTimeRange(fromHour, fromMinute, fromAmPm)) {
           showAlert({
-            type: "warning",
+            type: "info",
             title: "Invalid Time",
             message: "Start time must be between 12 AM and 11:59 PM",
           });
@@ -930,7 +934,7 @@ const PostJobScreen = ({ navigation: navProp }) => {
 
         if (!isValidTimeRange(toHour, toMinute, toAmPm)) {
           showAlert({
-            type: "warning",
+            type: "info",
             title: "Invalid Time",
             message: "End time must be between 12 AM and 11:59 PM",
           });
@@ -939,13 +943,16 @@ const PostJobScreen = ({ navigation: navProp }) => {
       }
     }
 
-    if (currentStep === 4 && (!budget || parseFloat(budget) <= 0)) {
-      showAlert({
-        type: "info",
-        title: "Required",
-        message: "Please enter a valid budget",
-      });
-      return;
+    if (currentStep === 4) {
+      const rateValidation = validateHourlyRate(budget?.toString() || "");
+      if (!rateValidation.status) {
+        showAlert({
+          type: "info",
+          title: "Budget Required",
+          message: rateValidation.rateError,
+        });
+        return;
+      }
     }
 
     setCurrentStep(currentStep + 1);
@@ -1184,20 +1191,32 @@ const PostJobScreen = ({ navigation: navProp }) => {
 
       {/* Only show Exact Time Toggle if Date is selected */}
       {scheduleDate && (
-        <View style={styles.switchContainer}>
-          <Text style={styles.switchLabel}>Set Exact Time</Text>
-          <CustomSwitch
-            value={isExactTime}
-            onValueChange={(value) => {
-              setIsExactTime(value);
-              if (!value) {
-                if (selectedTimePreferences.length > 0) {
-                  const pref = selectedTimePreferences[0];
-                  handleTimePreferenceToggle(pref, false);
+        <View style={styles.switchCard}>
+          <View style={styles.switchHeader}>
+            <View style={styles.switchTitleContainer}>
+              <View style={styles.switchTitleRow}>
+                <Text style={styles.switchLabel}>Set Exact Time</Text>
+                <View style={styles.optionalBadge}>
+                  <Text style={styles.optionalBadgeText}>Optional</Text>
+                </View>
+              </View>
+              <Text style={styles.switchSubtitle}>
+                Enable this only if you need workers to arrive at a sharp scheduled time. Otherwise, select flexible time preferences below.
+              </Text>
+            </View>
+            <CustomSwitch
+              value={isExactTime}
+              onValueChange={(value) => {
+                setIsExactTime(value);
+                if (!value) {
+                  if (selectedTimePreferences.length > 0) {
+                    const pref = selectedTimePreferences[0];
+                    handleTimePreferenceToggle(pref, false);
+                  }
                 }
-              }
-            }}
-          />
+              }}
+            />
+          </View>
         </View>
       )}
 

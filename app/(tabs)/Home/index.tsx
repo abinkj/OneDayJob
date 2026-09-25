@@ -240,11 +240,23 @@ const HomeScreen = () => {
       return { ...job, distance, recencyScore, proximityScore, combinedScore };
     });
 
+    const currentUserId = (userData?.id || userData?._id)?.toString();
     const activeJobs = jobsWithMeta.filter((job) => {
       const status = (job.jobStatus || job.status || "").toLowerCase();
-      return !["completed", "cancelled", "expired", "rejected"].includes(
-        status
-      );
+      // Filter out terminal or inactive job statuses
+      if (["completed", "cancelled", "expired", "rejected", "work_completed"].includes(status)) {
+        return false;
+      }
+      // Filter out if explicitly marked as expired
+      if (job.isExpired) {
+        return false;
+      }
+      // Exclude jobs posted by the same user from home discovery feed
+      const jobOwnerId = (typeof job.userId === "object" ? job.userId?._id : job.userId)?.toString();
+      if (currentUserId && jobOwnerId && currentUserId === jobOwnerId) {
+        return false;
+      }
+      return true;
     });
 
     return activeJobs.sort((a, b) => {
@@ -382,13 +394,14 @@ const HomeScreen = () => {
     
     // Deduplicate jobs based on _id to prevent FlatList duplicate key errors
     const uniqueJobsMap = new Map();
-    allFetchedJobs.forEach(job => {
-      if (job && (job._id || job.id)) {
-        uniqueJobsMap.set(job._id || job.id, job);
+    allFetchedJobs.forEach((job: any) => {
+      const jobId = job?._id || job?.id;
+      if (jobId) {
+        uniqueJobsMap.set(jobId, job);
       }
     });
     
-    return Array.from(uniqueJobsMap.values());
+    return Array.from(uniqueJobsMap.values()) as JobPost[];
   }, [data]);
 
   useEffect(() => {
@@ -410,7 +423,8 @@ const HomeScreen = () => {
         j.isRemote ||
         j.distance === null ||
         j.distance === undefined ||
-        j.distance <= NEARBY_RADIUS_KM
+        j.distance <= NEARBY_RADIUS_KM ||
+        j.isAssignedWorker
     );
   }, [jobsWithDistance, location]);
 
@@ -587,23 +601,16 @@ const HomeScreen = () => {
     }, [])
   );
 
+  const [arrivedJobIds, setArrivedJobIds] = useState<Set<string>>(new Set());
+
   const handleArrival = async (item: any) => {
     const jobId = item._id;
-    const jobName = item.name;
     setArrivingJobId(jobId);
     const result = await handleArrivalAction(jobId, setArrivalLoading);
     setArrivingJobId(null);
     if (result.success) {
-      navigation.navigate("JobTimer", {
-        jobId,
-        jobName,
-        isEmployer: false,
-        employerId: item.userId?._id || item.userId?.id || item.userId,
-        employerName:
-          `${item.userId?.firstName || ""} ${item.userId?.lastName || ""}`.trim(),
-        employerPhoneNumber: item.userId?.phoneNumber,
-        employerImage: item.userId?.profilePicture,
-      });
+      setArrivedJobIds((prev) => new Set(prev).add(jobId));
+      refetchJobs();
     }
   };
 
@@ -611,19 +618,25 @@ const HomeScreen = () => {
     item,
   }: {
     item: JobPost & { distance?: number | null };
-  }) => (
-    <HomeJobCard
-      item={item}
-      userData={userData}
-      colors={colors}
-      styles={styles}
-      navigation={navigation}
-      arrivingJobId={arrivingJobId}
-      arrivalLoading={arrivalLoading}
-      locationAddress={locationAddress}
-      handleArrival={handleArrival}
-    />
-  );
+  }) => {
+    const itemWithArrived = arrivedJobIds.has(item._id)
+      ? { ...item, hasArrived: true, arrivalStatus: "arrived" }
+      : item;
+
+    return (
+      <HomeJobCard
+        item={itemWithArrived as any}
+        userData={userData}
+        colors={colors}
+        styles={styles}
+        navigation={navigation}
+        arrivingJobId={arrivingJobId}
+        arrivalLoading={arrivalLoading}
+        locationAddress={locationAddress}
+        handleArrival={handleArrival}
+      />
+    );
+  };
 
   const renderFilterRow = () => {
     const getFilterButtonStyle = (isSelected) => [
@@ -1002,7 +1015,6 @@ const HomeScreen = () => {
         ]}
         contentContainerStyle={styles.flatListContent}
         showsVerticalScrollIndicator={false}
-        bounces={false}
         onScroll={(event) => {
           const offsetY = event.nativeEvent.contentOffset.y;
           setIsFilterSticky(offsetY >= STICKY_OFFSET);

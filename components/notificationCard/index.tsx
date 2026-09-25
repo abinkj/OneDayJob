@@ -1,9 +1,8 @@
-// components/NotificationCard.js
-import React, { useMemo } from "react";
-import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
-import { MaterialCommunityIcons } from "@expo/vector-icons";
+import React, { useMemo, useCallback } from "react";
+import { View, Text, TouchableOpacity } from "react-native";
+import { MaterialCommunityIcons, Ionicons } from "@expo/vector-icons";
 import { useTheme } from "../../contexts/ThemeContext";
-import { ThemeColors } from "../../constants/Colors";
+import { createStyles, getTypeConfig } from "./styles";
 
 interface NotificationCardProps {
   title: string;
@@ -11,9 +10,19 @@ interface NotificationCardProps {
   time: string;
   count?: number;
   onPress: () => void;
+  onDelete?: () => void;
+  onLongPress?: () => void;
   type?: string;
   isRead?: boolean;
 }
+
+const EMOJI_REGEX =
+  /[\u{1F300}-\u{1F9FF}\u{2600}-\u{27BF}\u{1F600}-\u{1F64F}\u{1F680}-\u{1F6FF}\u{2300}-\u{23FF}\u{2B50}\u{FE0F}\u{200D}]/gu;
+
+const sanitizeText = (text?: string): string => {
+  if (!text) return "";
+  return text.replace(EMOJI_REGEX, "").trim();
+};
 
 const NotificationCard: React.FC<NotificationCardProps> = ({
   title,
@@ -21,142 +30,80 @@ const NotificationCard: React.FC<NotificationCardProps> = ({
   time,
   count,
   onPress,
+  onDelete,
+  onLongPress,
   type,
   isRead,
 }) => {
-  const { colors, theme } = useTheme();
+  const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
+  const typeConfig = useMemo(() => getTypeConfig(type, colors), [type, colors]);
 
-  const getIcon = () => {
-    switch (type) {
-      case "job_update":
-      case "application_status":
-        return "briefcase-outline";
-      case "message":
-        return "message-text-outline";
-      case "system":
-        return "information-outline";
-      default:
-        return "bell-outline";
+  const displayTitle = useMemo(() => sanitizeText(title), [title]);
+  const displaySubtitle = useMemo(() => sanitizeText(subtitle), [subtitle]);
+
+  const handleLongPress = useCallback(() => {
+    if (onLongPress) {
+      onLongPress();
+    } else if (onDelete) {
+      onDelete();
     }
-  };
+  }, [onLongPress, onDelete]);
 
   return (
     <TouchableOpacity
-      activeOpacity={0.7}
+      activeOpacity={0.75}
       onPress={onPress}
-      style={styles.cardContainer}
+      onLongPress={handleLongPress}
+      style={[styles.cardContainer, !isRead && styles.cardContainerUnread]}
     >
-      {!isRead && <View style={styles.unreadIndicator} />}
-      <View style={[styles.card, !isRead && styles.unreadCard]}>
-        <View
-          style={[
-            styles.left,
-            { backgroundColor: isRead ? colors.categoryBox : colors.lightBlue },
-          ]}
-        >
-          <MaterialCommunityIcons
-            name={getIcon()}
-            size={22}
-            color={isRead ? colors.grey : colors.primary}
-          />
-        </View>
-        <View style={styles.content}>
-          <View style={styles.header}>
-            <Text
-              style={[styles.title, !isRead && { fontWeight: "700" }]}
-              numberOfLines={1}
-            >
-              {title}
-            </Text>
-            <Text style={styles.time}>{time}</Text>
-          </View>
-          <Text style={styles.subtitle} numberOfLines={2}>
-            {subtitle}
-          </Text>
-        </View>
-        {count > 0 && !isRead && (
-          <View style={styles.badge}>
-            <View style={styles.activeDot} />
-          </View>
-        )}
+      {/* Icon Circle */}
+      <View style={[styles.iconCircle, { backgroundColor: typeConfig.bgColor }]}>
+        <MaterialCommunityIcons
+          name={typeConfig.icon as any}
+          size={20}
+          color={typeConfig.color}
+        />
+        {/* Unread dot badge on icon */}
+        {!isRead && <View style={[styles.unreadDot, { backgroundColor: typeConfig.color }]} />}
       </View>
+
+      {/* Content */}
+      <View style={styles.content}>
+        {/* Row 1: Title + Time */}
+        <View style={styles.titleRow}>
+          <Text
+            style={[styles.title, !isRead && styles.titleUnread]}
+            numberOfLines={1}
+            ellipsizeMode="tail"
+          >
+            {displayTitle}
+          </Text>
+          <Text style={styles.time}>{time}</Text>
+        </View>
+
+        {/* Row 2: Subtitle */}
+        <Text style={styles.subtitle} numberOfLines={2}>
+          {displaySubtitle}
+        </Text>
+      </View>
+
+      {/* Dismiss button */}
+      {onDelete && (
+        <TouchableOpacity
+          onPress={onDelete}
+          hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+          style={styles.deleteButton}
+          activeOpacity={0.6}
+        >
+          <Ionicons name="close" size={14} color={colors.grey} />
+        </TouchableOpacity>
+      )}
     </TouchableOpacity>
   );
 };
 
-const createStyles = (colors: ThemeColors) =>
-  StyleSheet.create({
-    cardContainer: {
-      marginBottom: 12,
-    },
-    card: {
-      flexDirection: "row",
-      backgroundColor: colors.white,
-      paddingVertical: 16,
-      paddingHorizontal: 16,
-      borderRadius: 20,
-      alignItems: "center",
-    },
-    unreadCard: {
-      backgroundColor: colors.white,
-      borderWidth: 1,
-      borderColor: colors.lightBlue,
-    },
-    unreadIndicator: {
-      position: "absolute",
-      left: -8,
-      top: "20%",
-      bottom: "20%",
-      width: 4,
-      backgroundColor: colors.primary,
-      borderRadius: 2,
-      zIndex: 1,
-    },
-    left: {
-      width: 48,
-      height: 48,
-      borderRadius: 14,
-      justifyContent: "center",
-      alignItems: "center",
-      marginRight: 14,
-    },
-    content: {
-      flex: 1,
-    },
-    header: {
-      flexDirection: "row",
-      justifyContent: "space-between",
-      alignItems: "center",
-      marginBottom: 4,
-    },
-    title: {
-      fontWeight: "600",
-      fontSize: 16,
-      color: colors.black,
-      flex: 1,
-    },
-    time: {
-      fontSize: 12,
-      color: colors.grey,
-      marginLeft: 8,
-    },
-    subtitle: {
-      fontSize: 14,
-      color: colors.subGrey,
-      lineHeight: 18,
-    },
-    badge: {
-      marginLeft: 10,
-      justifyContent: "center",
-      alignItems: "center",
-    },
-    activeDot: {
-      width: 8,
-      height: 8,
-      borderRadius: 4,
-      backgroundColor: colors.primary,
-    },
-  });
-
 export default React.memo(NotificationCard);
+
+
+

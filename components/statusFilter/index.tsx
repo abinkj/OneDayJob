@@ -91,14 +91,19 @@ const StatusFilter: React.FC<StatusFilterProps> = ({
 const createStyles = (colors: ThemeColors) =>
   StyleSheet.create({
     container: {
-      marginVertical: 8,
       backgroundColor: colors.background,
-      maxHeight: 50,
       flexGrow: 0,
+      flexShrink: 0,
+      paddingVertical: 6,
+      // subtle bottom border to separate chips from content below
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border + "40",
     },
     contentContainer: {
       paddingHorizontal: 16,
+      paddingVertical: 2,
       gap: 8,
+      alignItems: "center",
     },
     filterButton: {
       flexDirection: "row",

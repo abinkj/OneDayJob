@@ -146,6 +146,15 @@ export interface JobUser {
   profilePicture?: string;
 }
 
+export type JobStatus =
+  | "draft"
+  | "posted"
+  | "filled"
+  | "in_progress"
+  | "completed"
+  | "cancelled"
+  | "expired";
+
 export interface JobPost {
   __v: number;
   _id: string;
@@ -163,7 +172,7 @@ export interface JobPost {
   isPaymentDone: boolean;
   isRemote: boolean;
   isVerifiedByEmployer: boolean;
-  jobStatus: string;
+  jobStatus: JobStatus | string;
   location: JobLocation;
   name: string;
   participantsNumber: number;
@@ -174,6 +183,7 @@ export interface JobPost {
   fromTime?: string; // HH:MM format for non-flexible jobs
   toTime?: string; // HH:MM format for non-flexible jobs
   onDate?: string; // ISO date string — the actual scheduled work date (from backend `onDate` field)
+  beforeDate?: string; // ISO date string for flexible jobs
   updatedAt: string;
   userId: JobUser;
   requiresVerification?: boolean;
@@ -185,7 +195,7 @@ export interface JobPost {
   isAssignedWorker?: boolean; // true if the current user is an accepted/assigned worker
   // Arrival state (derived from worker's session in the job list response)
   hasArrived?: boolean; // true if this worker has already pressed 'I Have Reached'
-  arrivalStatus?: "pending" | "arrived" | "verified"; // mirrors JobSession.arrivalStatus
+  arrivalStatus?: "pending" | "arrived" | "verified" | "no_show"; // mirrors JobSession.arrivalStatus
 }
 
 // For backward compatibility and convenience
@@ -196,6 +206,8 @@ export interface JobCardData {
   applicantCount: number;
   location: JobLocation;
   createdAt: string;
+  onDate?: string;
+  beforeDate?: string;
   status: string;
   jobStatus?: string; // Backend job status
   category: JobCategory;

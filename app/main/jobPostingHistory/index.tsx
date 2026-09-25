@@ -57,6 +57,9 @@ const JobPostingHistory = () => {
       setFilteredPosts(posts);
     } else {
       const filtered = posts.filter((post) => {
+        if (selectedStatus === "Completed" || selectedStatus === "Work Completed") {
+          return post.jobStatus === "completed" || post.jobStatus === "work_completed";
+        }
         const statusInfo = getJobStatusInfo(post.jobStatus || "posted");
         return statusInfo.label === selectedStatus;
       });

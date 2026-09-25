@@ -17,20 +17,23 @@ interface Worker {
   email: string;
   profilePicture?: string;
   profilePictureUrl?: string;
-  status: "active" | "paused" | "completed" | "not_started";
+  status: "active" | "paused" | "completed" | "not_started" | "no_show";
   timeSpent: number;
   hasRated?: boolean;
   rating?: number;
+  arrivalStatus?: string;
+  isVerified?: boolean;
 }
 
 interface WorkerCardProps {
   worker: Worker;
   onRate?: (worker: Worker) => void;
+  onMarkNoShow?: (worker: Worker) => void;
   colors: any;
 }
 
 const WorkerCard: React.FC<WorkerCardProps> = React.memo(
-  ({ worker, onRate, colors }) => {
+  ({ worker, onRate, onMarkNoShow, colors }) => {
     // Debug log to check worker data
     // console.log(`WorkerCard render for ${worker.name}:`, { ... });
 
@@ -40,7 +43,7 @@ const WorkerCard: React.FC<WorkerCardProps> = React.memo(
           return {
             bg: colors.green + "15", // 15% opacity
             text: colors.darkGreen || "#2E7D32",
-            label: "Active",
+            label: "Working",
           };
         case "paused":
           return {
@@ -52,13 +55,33 @@ const WorkerCard: React.FC<WorkerCardProps> = React.memo(
           return {
             bg: colors.lightBlue || "#E3F2FD",
             text: colors.tabBlue || "#1976D2",
-            label: "Done",
+            label: "Completed",
+          };
+        case "no_show":
+          return {
+            bg: "#FEE2E2",
+            text: colors.red || "#DC2626",
+            label: "Absent",
           };
         default:
+          if (worker.arrivalStatus === "verified" || worker.isVerified) {
+            return {
+              bg: (colors.darkGreen || "#2E7D32") + "15",
+              text: colors.darkGreen || "#2E7D32",
+              label: "Verified / Not Started",
+            };
+          }
+          if (worker.arrivalStatus === "arrived") {
+            return {
+              bg: "#FEF3C7",
+              text: "#D97706",
+              label: "Arrived",
+            };
+          }
           return {
             bg: colors.border || "#EEEEEE",
             text: colors.grey || "#757575",
-            label: "Pending",
+            label: "Waiting for arrival",
           };
       }
     };
@@ -173,6 +196,42 @@ const WorkerCard: React.FC<WorkerCardProps> = React.memo(
                 </Text>
               </TouchableOpacity>
             )}
+          </View>
+        )}
+
+        {/* Mark No-Show Action */}
+        {worker.status === "not_started" && onMarkNoShow && (
+          <View
+            style={[
+              styles.ratingSection,
+              { borderTopColor: colors.border || "rgba(0,0,0,0.05)" },
+            ]}
+          >
+            <TouchableOpacity
+              style={[
+                styles.rateButton,
+                {
+                  backgroundColor: "#FEE2E2",
+                  borderWidth: 1,
+                  borderColor: "#FCA5A5",
+                },
+              ]}
+              onPress={() => onMarkNoShow(worker)}
+            >
+              <Ionicons
+                name="person-remove-outline"
+                size={16}
+                color="#DC2626"
+              />
+              <Text
+                style={[
+                  styles.rateButtonText,
+                  { color: "#DC2626", marginLeft: 6 },
+                ]}
+              >
+                Mark as Absent / No-Show
+              </Text>
+            </TouchableOpacity>
           </View>
         )}
       </View>

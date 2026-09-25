@@ -209,10 +209,6 @@ const Otp = () => {
 
     try {
       const response = await verifyOtp({ phoneNumber, otpCode: otp });
-      console.log(
-        "OTP verification response:",
-        JSON.stringify(response.data, null, 2)
-      );
 
       if (response.data.success) {
         const accessToken = response.data.data.tokens.accessToken;
@@ -257,7 +253,7 @@ const Otp = () => {
 
               // Dispatch login + incomplete profile:
               // RootStackLayout will automatically switch to root ProfileCompletion!
-              dispatch(login(enrichedUserData));
+              dispatch(login(enrichedUserData)); // <----Redux login user
               dispatch(completeProfile(false));
             } else {
               // Profile complete — sync Redux and proceed to MainStack

@@ -24,6 +24,11 @@ const api = axios.create({
   timeout: 10000, // 10 second timeout
 });
 
+console.log("🌐 [Axios API Initialized]", {
+  baseURL: API_BASE_URL,
+  timeout: 10000,
+});
+
 import { getDeviceOnline } from "../offline/networkState";
 import { shouldQueueRequest } from "../offline/queuePolicy";
 import { getSyncDispatch } from "../offline/syncBridge";
@@ -89,6 +94,11 @@ api.interceptors.request.use(
         console.warn("No token found for request to:", config.url);
       }
 
+      console.log(
+        `🚀 [API Request] ${config.method?.toUpperCase()} ${config.baseURL || ""}${config.url}`,
+        config.params ? { params: config.params } : ""
+      );
+
       return config;
     } catch (error) {
       console.error("Error in request interceptor:", error);
@@ -104,6 +114,9 @@ api.interceptors.request.use(
 // ─── RESPONSE INTERCEPTOR ────────────────────────────────────────────────────
 api.interceptors.response.use(
   (response) => {
+    console.log(
+      `[API Response] ${response.status} ${response.config.method?.toUpperCase()} ${JSON.stringify(response.data,null,2)}`
+    );
     return response;
   },
   async (error) => {
@@ -300,21 +313,6 @@ export const createJobPosting = async (data) => {
   }
 };
 
-// FIXED: Better authentication testing function - Local only
-export const testAuth = async () => {
-  try {
-    const token = await getAccessToken();
-    if (!token) {
-      console.log("auth check: No token found");
-      return false;
-    }
-    // We trust the token is valid until an API call fails with 401
-    return true;
-  } catch (error) {
-    console.log("Auth test failed:", error);
-    return false;
-  }
-};
 
 // FIXED: Improved authentication check
 // FIXED: Improved authentication check - Local only
@@ -1059,6 +1057,63 @@ export const checkArrivalEligibility = async (
   }
 };
 
+/**
+ * Worker sends reminder to employer for arrival approval
+ * POST /api/jobs/:jobId/remind-arrival
+ */
+export const remindArrivalEmployer = async (jobId: string) => {
+  try {
+    console.log("Sending arrival reminder to employer:", jobId);
+    const response = await api.post(`/jobs/${jobId}/remind-arrival`);
+    console.log("Remind arrival response:", response.data);
+    return response;
+  } catch (error) {
+    console.error("Error sending arrival reminder:", error);
+    throw error;
+  }
+};
+
+/**
+ * Employer marks a worker as absent / no-show
+ * POST /api/jobs/:jobId/mark-no-show
+ */
+export const markWorkerNoShow = async (
+  jobId: string,
+  workerId: string,
+  reason?: string
+) => {
+  try {
+    console.log("Marking worker as no-show:", { jobId, workerId, reason });
+    const response = await api.post(`/jobs/${jobId}/mark-no-show`, {
+      workerId,
+      reason,
+    });
+    console.log("Mark no-show response:", response.data);
+    return response;
+  } catch (error) {
+    console.error("Error marking worker as no-show:", error);
+    throw error;
+  }
+};
+
+/**
+ * Employer allows late arrival for an absent / no-show worker
+ * POST /api/jobs/:jobId/allow-late-arrival
+ */
+export const allowLateArrival = async (jobId: string, workerId: string) => {
+  try {
+    console.log("Allowing late arrival for worker:", { jobId, workerId });
+    const response = await api.post(`/jobs/${jobId}/allow-late-arrival`, {
+      workerId,
+    });
+    console.log("Allow late arrival response:", response.data);
+    return response;
+  } catch (error) {
+    console.error("Error allowing late arrival:", error);
+    throw error;
+  }
+};
+
 // ==================== RATING API ENDPOINTS ====================
 
 /**
@@ -1188,6 +1243,22 @@ export const syncAcceptedApplications = async (
 // ============================================================================
 // JOB TIMER API FUNCTIONS
 // ============================================================================
+// JOB TIMER API ENDPOINTS
+// ============================================================================
+
+/**
+ * Get active job session summary for authenticated user (Employer or Worker)
+ * GET /api/job-timer/active
+ */
+export const getActiveJobSession = async () => {
+  try {
+    const response = await api.get('/job-timer/active');
+    return response;
+  } catch (error) {
+    console.error("Error getting active job session:", error);
+    throw error;
+  }
+};
 
 /**
  * Initiate job execution (Employer)
@@ -1313,15 +1384,23 @@ export const resumeWorkerSession = async (sessionId: string) => {
  * Complete worker session
  * PUT /api/job-timer/sessions/:sessionId/complete
  */
-export const completeWorkerSession = async (sessionId: string, notes = "") => {
+export const completeWorkerSession = async (
+  sessionId: string,
+  notes = "",
+  location?: { latitude: number; longitude: number }
+) => {
   try {
-    console.log("Completing worker session:", sessionId, "Notes:", notes);
+    console.log("Completing worker session:", sessionId, "Notes:", notes, "Location:", location);
+
+    const payload: any = { notes };
+    if (location) {
+      payload.latitude = location.latitude;
+      payload.longitude = location.longitude;
+    }
 
     const response = await api.put(
       `/job-timer/sessions/${sessionId}/complete`,
-      {
-        notes,
-      }
+      payload
     );
 
     console.log("Worker session completed:", response.data);

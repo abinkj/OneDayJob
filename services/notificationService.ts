@@ -188,7 +188,11 @@ class NotificationService {
     } as NotificationData;
 
     console.log("Processed notification response:", notificationData);
+    this.handleNotificationClick(notificationData);
+  }
 
+  // Handle clicking a notification (tray tap or foreground toast tap)
+  public handleNotificationClick(notificationData: NotificationData): void {
     // Emit an event to be handled by the top-level navigation layout
     const clickAction =
       notificationData.data?.clickAction ||
@@ -226,6 +230,22 @@ class NotificationService {
           jobId: notificationData.jobId,
           jobName: notificationData.data?.jobName || "Job Summary",
           isEmployer: true,
+        },
+      });
+      return;
+    }
+
+    if (clickAction === "JOB_TIMER" && notificationData.jobId) {
+      console.log(
+        "🔗 Deep-linking to Job Timer:",
+        notificationData.jobId
+      );
+      DeviceEventEmitter.emit("navigate_from_notification", {
+        screen: "JobTimer",
+        params: {
+          jobId: notificationData.jobId,
+          jobName: notificationData.data?.jobName || "Job Timer",
+          isEmployer: false,
         },
       });
       return;
@@ -283,65 +303,70 @@ class NotificationService {
     const { type, title, body } = notificationData;
 
     let toastType: "success" | "info" | "error" = "info";
-    let icon = "🔔";
 
     switch (type) {
       case "verification_code":
         toastType = "success";
-        icon = "🔑";
         break;
       case "job_update":
         toastType = "info";
-        icon = "💼";
         break;
       case "application_status":
         toastType = "success";
-        icon = "✅";
         break;
       case "message":
         toastType = "info";
-        icon = "💬";
         break;
       case "system":
         toastType = "info";
-        icon = "⚙️";
         break;
     }
 
     Toast.show({
       type: toastType,
-      text1: `${icon} ${title}`,
+      text1: title,
       text2: body,
       visibilityTime: 5000,
       autoHide: true,
       topOffset: 60,
       bottomOffset: 40,
+      onPress: () => {
+        Toast.hide();
+        this.handleNotificationClick(notificationData);
+      },
     });
   }
 
   // Handle verification code notifications
   private handleVerificationCodeNotification(data: NotificationData): void {
     console.log("Verification code notification received:", data);
-    // Additional handling for verification codes
-    // Could trigger specific UI updates or state changes
+    DeviceEventEmitter.emit("refresh_active_job", { jobId: data.jobId });
+    DeviceEventEmitter.emit("refresh_notifications");
   }
 
   // Handle job update notifications
   private handleJobUpdateNotification(data: NotificationData): void {
     console.log("Job update notification received:", data);
-    // Handle job status changes, new applications, etc.
+    DeviceEventEmitter.emit("refresh_active_job", { jobId: data.jobId });
+    DeviceEventEmitter.emit("refresh_notifications");
+    DeviceEventEmitter.emit("refresh_jobs_feed");
   }
 
   // Handle application status notifications
   private handleApplicationStatusNotification(data: NotificationData): void {
     console.log("Application status notification received:", data);
-    // Handle application status changes (accepted, rejected, etc.)
+    DeviceEventEmitter.emit("refresh_applications", { jobId: data.jobId });
+    DeviceEventEmitter.emit("refresh_notifications");
+    DeviceEventEmitter.emit("refresh_active_job", { jobId: data.jobId });
   }
 
   // Handle message notifications
   private handleMessageNotification(data: NotificationData): void {
     console.log("Message notification received:", data);
-    // Handle new messages in conversations
+    DeviceEventEmitter.emit("refresh_messages", {
+      conversationId: data.data?.conversationId,
+    });
+    DeviceEventEmitter.emit("refresh_notifications");
   }
 
   // Navigation helpers
@@ -384,7 +409,7 @@ class NotificationService {
     jobName: string,
     code: string
   ): Promise<void> {
-    const title = "🔑 Verification Code Received";
+    const title = "Verification Code Received";
     const body = `Your verification code for "${jobName}" is: ${code}`;
 
     await this.sendLocalNotification(title, body, {
@@ -401,7 +426,7 @@ class NotificationService {
     jobName: string,
     update: string
   ): Promise<void> {
-    const title = "💼 Job Update";
+    const title = "Job Update";
     const body = `Update for "${jobName}": ${update}`;
 
     await this.sendLocalNotification(title, body, {
@@ -418,7 +443,7 @@ class NotificationService {
     jobName: string,
     status: string
   ): Promise<void> {
-    const title = "📋 Application Update";
+    const title = "Application Update";
     const body = `Your application for "${jobName}" status: ${status}`;
 
     await this.sendLocalNotification(title, body, {
@@ -435,7 +460,7 @@ class NotificationService {
     senderName: string,
     message: string
   ): Promise<void> {
-    const title = `💬 Message from ${senderName}`;
+    const title = `Message from ${senderName}`;
     const body = message;
 
     await this.sendLocalNotification(title, body, {

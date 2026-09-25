@@ -1,9 +1,14 @@
+export const CUSTOMER_SUPPORT_PHONE = "+917560969629";
+export const CUSTOMER_SUPPORT_PHONE_DISPLAY = "+91 75609 69629";
+
 export const strings = {
   APP_NAME: "Zoopol",
   APP_VERSION: "Version 1.0.1",
   APP_PRIVACY_POLICY: "https://www.zoopol.com/privacy-policy",
   APP_TERMS_CONDITIONS: "https://www.zoopol.com/terms",
   APP_HELP_CENTER: "https://www.zoopol.com/contact",
+  CUSTOMER_SUPPORT_PHONE,
+  CUSTOMER_SUPPORT_PHONE_DISPLAY,
 
   validations: {
     // Signup

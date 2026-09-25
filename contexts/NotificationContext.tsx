@@ -10,7 +10,6 @@ import notificationService, {
   NotificationData,
   NotificationPermission,
 } from "../services/notificationService";
-import { getUserData } from "../utilities/mmkvStore";
 import socketService from "../services/socketService";
 import * as notificationApi from "../services/notificationApi";
 import { useSelector } from "react-redux";
@@ -135,7 +134,7 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({
     const handleNewApplication = (data: any) => {
       const notification: NotificationData = {
         type: "application_status",
-        title: "📋 New Application Received",
+        title: "New Application Received",
         body: `${data.applicantName} has applied for "${data.jobName}"`,
         jobId: data.jobId,
         timestamp: new Date().toISOString(),
@@ -151,7 +150,7 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({
       const statusText = data.status === "accepted" ? "accepted" : "rejected";
       const notification: NotificationData = {
         type: "application_status",
-        title: "📋 Application Update",
+        title: "Application Update",
         body: `Your application for "${data.jobName}" has been ${statusText}`,
         jobId: data.jobId,
         timestamp: new Date().toISOString(),
@@ -166,7 +165,7 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({
     const handleVerificationCode = (data: any) => {
       const notification: NotificationData = {
         type: "verification_code",
-        title: "🔑 Verification Code Received",
+        title: "Verification Code Received",
         body: `Your verification code for "${data.jobName}" is: ${data.code}`,
         jobId: data.jobId,
         timestamp: new Date().toISOString(),
@@ -246,7 +245,7 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({
 
       const notification: NotificationData = {
         type: "job_update",
-        title: "💼 Job Update",
+        title: "Job Update",
         body: `Update for "${jobName}": ${update}`,
         jobId,
         timestamp: new Date().toISOString(),
@@ -274,7 +273,7 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({
 
       const notification: NotificationData = {
         type: "application_status",
-        title: "📋 Application Update",
+        title: "Application Update",
         body: `Your application for "${jobName}" status: ${status}`,
         jobId,
         timestamp: new Date().toISOString(),
@@ -302,7 +301,7 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({
 
       const notification: NotificationData = {
         type: "message",
-        title: `💬 Message from ${senderName}`,
+        title: `Message from ${senderName}`,
         body: message,
         data: { conversationId },
         timestamp: new Date().toISOString(),
