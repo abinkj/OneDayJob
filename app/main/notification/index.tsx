@@ -24,68 +24,6 @@ import { createStyles } from "./styles";
 
 const SEGMENT_VALUES = ["All", "Job Updates", "Messages", "System"] as const;
 
-// ---------------------------------------------------------------------------
-// DEV-ONLY: Mock notifications for UI testing. Removed automatically in prod.
-// ---------------------------------------------------------------------------
-const MOCK_NOTIFICATIONS: import("../../../services/notificationService").NotificationData[] =
-  __DEV__
-    ? [
-        {
-          id: "mock-1",
-          title: "Application Accepted",
-          body: "Nagendar Broski accepted your application for Del del delivery.",
-          type: "application_status",
-          read: false,
-          timestamp: new Date(Date.now() - 5 * 60 * 1000).toISOString(), // 5m ago
-          jobId: "mock-job-1",
-        },
-        {
-          id: "mock-2",
-          title: "New Message",
-          body: "Hey, can you arrive 30 minutes early tomorrow?",
-          type: "message",
-          read: false,
-          timestamp: new Date(Date.now() - 45 * 60 * 1000).toISOString(), // 45m ago
-          data: { conversationId: "mock-conv-1", senderName: "Nagendar" },
-        },
-        {
-          id: "mock-3",
-          title: "Job Posted Successfully",
-          body: "Your job \"Grocery delivery\" is now live and accepting applicants.",
-          type: "job_update",
-          read: true,
-          timestamp: new Date(Date.now() - 3 * 3600 * 1000).toISOString(), // 3h ago
-          jobId: "mock-job-2",
-        },
-        {
-          id: "mock-4",
-          title: "Worker Arrived at Location",
-          body: "Ravi Kumar has marked arrival at your job site. Tap to verify.",
-          type: "job_update",
-          read: false,
-          timestamp: new Date(Date.now() - 10 * 60 * 1000).toISOString(), // 10m ago
-          jobId: "mock-job-3",
-          data: { clickAction: "VERIFY_ARRIVAL", workerId: "mock-worker-1" },
-        },
-        {
-          id: "mock-5",
-          title: "Payment Released",
-          body: "Payment of INR 1,500 has been released for \"Plumbing fix\".",
-          type: "system",
-          read: true,
-          timestamp: new Date(Date.now() - 2 * 86400 * 1000).toISOString(), // 2d ago
-        },
-        {
-          id: "mock-6",
-          title: "Job Reminder",
-          body: "Your scheduled job \"Del del delivery\" starts tomorrow at 10:00 AM.",
-          type: "system",
-          read: false,
-          timestamp: new Date(Date.now() - 30 * 60 * 1000).toISOString(), // 30m ago
-          jobId: "mock-job-1",
-        },
-      ]
-    : [];
 
 interface FilterChipProps {
   label: string;
@@ -312,17 +250,12 @@ const Notification = () => {
   );
 
   const filteredNotifications = useMemo(() => {
-    // Merge real notifications with DEV mock data for UI testing
-    const allNotifications = __DEV__
-      ? [...MOCK_NOTIFICATIONS, ...notifications]
-      : notifications;
-
     if (SEGMENT_VALUES[selectedIndex] === "All") {
-      return allNotifications;
+      return notifications;
     }
 
     const filterType = SEGMENT_VALUES[selectedIndex].toLowerCase();
-    return allNotifications.filter((n) => {
+    return notifications.filter((n) => {
       switch (filterType) {
         case "job updates":
           return n.type === "job_update" || n.type === "application_status";
