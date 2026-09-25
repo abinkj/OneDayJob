@@ -183,6 +183,7 @@ export interface JobPost {
   fromTime?: string; // HH:MM format for non-flexible jobs
   toTime?: string; // HH:MM format for non-flexible jobs
   onDate?: string; // ISO date string — the actual scheduled work date (from backend `onDate` field)
+  beforeDate?: string; // ISO date string for flexible jobs
   updatedAt: string;
   userId: JobUser;
   requiresVerification?: boolean;
@@ -205,6 +206,8 @@ export interface JobCardData {
   applicantCount: number;
   location: JobLocation;
   createdAt: string;
+  onDate?: string;
+  beforeDate?: string;
   status: string;
   jobStatus?: string; // Backend job status
   category: JobCategory;

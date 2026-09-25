@@ -9,7 +9,8 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { AppState, AppStateStatus } from "react-native";
 import NetInfo from "@react-native-community/netinfo";
 import Toast from "react-native-toast-message";
-import { useQueryClient } from "@tanstack/react-query";
+import * as Location from "expo-location";
+import { resetActiveJobThrottle } from "../../../../hooks/useActiveJob";
 import { useSelector, useDispatch } from "react-redux";
 import {
   getWorkerSession,
@@ -78,7 +79,6 @@ export const useJobSession = (jobId: string): UseJobSessionReturn => {
   const [forbiddenMessage, setForbiddenMessage] = useState<string | null>(null);
   const [queueSize, setQueueSize] = useState(0);
 
-  const queryClient = useQueryClient();
   const dispatch = useDispatch();
   const userData = useSelector((state: any) => state.authentication.userData);
   const userId = userData?.id || userData?._id;
@@ -124,12 +124,24 @@ export const useJobSession = (jobId: string): UseJobSessionReturn => {
           setLastSyncTime(Date.now());
 
           // If session is active, ensure notification is running (useful on app restart)
+          const sStatus = sessionData?.session?.status;
+          const jStatus = sessionData?.job?.jobStatus;
+
           if (
-            sessionData?.session?.status === "active" ||
-            sessionData?.session?.status === "paused"
+            sStatus === "completed" ||
+            sStatus === "no_show" ||
+            jStatus === "completed"
           ) {
+            console.log(
+              "[useJobSession] Session or job is completed/no-show on load. Clearing active job."
+            );
+            dispatch(clearActiveJob());
+            if (sessionData?.job?.name) {
+              timerNotificationService.stopNotification(sessionData.job.name);
+            }
+          } else if (sStatus === "active" || sStatus === "paused") {
             if (
-              sessionData.session.status === "active" &&
+              sStatus === "active" &&
               sessionData?.job?.name
             ) {
               timerNotificationService.startOngoingNotification(
@@ -149,6 +161,9 @@ export const useJobSession = (jobId: string): UseJobSessionReturn => {
                 employerImage: sessionData.employer?.profilePicture,
               })
             );
+          } else {
+            // not_started: not active yet!
+            dispatch(clearActiveJob());
           }
         }
       } catch (error: any) {
@@ -162,17 +177,22 @@ export const useJobSession = (jobId: string): UseJobSessionReturn => {
         // Handle case where no session exists yet (404)
         if (status === 404) {
           console.log("[useJobSession] No session found yet (404)");
+          dispatch(clearActiveJob());
           setSession(null);
         }
-        // Handle unauthorized/pending verification (403)
+        // Handle unauthorized/pending verification or unassigned (403)
         else if (status === 403) {
           console.log(
             "[useJobSession] Pending verification or forbidden (403):",
             message
           );
-          setIsPendingVerification(true);
+          dispatch(clearActiveJob());
           setForbiddenMessage(message);
           setSession(null);
+          const isUnassigned =
+            message.toLowerCase().includes("not assigned") ||
+            message.toLowerCase().includes("job not found");
+          setIsPendingVerification(!isUnassigned);
         } else {
           console.error("[useJobSession] Error loading session:", error);
           Toast.show({
@@ -198,39 +218,46 @@ export const useJobSession = (jobId: string): UseJobSessionReturn => {
     if (!jobId || !userId) return;
 
     const handleNotification = (data: any) => {
-      console.log("[useJobSession] Socket notification received:", data.type);
+      console.log("[useJobSession] Socket notification received:", data?.type || data);
 
       // Check if this is relevant to our current job
-      const isRelevant = data.jobId === jobId;
+      const isRelevant = !data?.jobId || data.jobId === jobId;
 
       if (isRelevant) {
-        // Handle different notification types
-        if (
-          data.type === "job_initiated" ||
-          data.type === "verification_status_updated" ||
-          data.type === "session_status_updated"
-        ) {
-          console.log(
-            `[useJobSession] Relevant update received (${data.type}). Refreshing...`
-          );
-
-          if (data.message) {
-            Toast.show({
-              type: "info",
-              text1: "Update",
-              text2: data.message,
-            });
-          }
-
-          loadSession(true);
+        if (data?.message) {
+          Toast.show({
+            type: "info",
+            text1: "Update",
+            text2: data.message,
+          });
         }
+        loadSession(true);
+      }
+    };
+
+    const handleSessionStatusUpdated = (data: any) => {
+      if (!data || data.jobId === jobId) {
+        console.log("[useJobSession] session_status_updated event received, refreshing session");
+        loadSession(true);
       }
     };
 
     socketService.on("notification", handleNotification);
+    socketService.on("session_status_updated", handleSessionStatusUpdated);
+    socketService.on("worker-arrival-approved", handleSessionStatusUpdated);
+    socketService.on("arrival-approved", handleSessionStatusUpdated);
+    socketService.on("worker-marked-no-show", handleSessionStatusUpdated);
+    socketService.on("worker-late-arrival-allowed", handleSessionStatusUpdated);
+    socketService.on("job_updated", handleSessionStatusUpdated);
 
     return () => {
       socketService.off("notification", handleNotification);
+      socketService.off("session_status_updated", handleSessionStatusUpdated);
+      socketService.off("worker-arrival-approved", handleSessionStatusUpdated);
+      socketService.off("arrival-approved", handleSessionStatusUpdated);
+      socketService.off("worker-marked-no-show", handleSessionStatusUpdated);
+      socketService.off("worker-late-arrival-allowed", handleSessionStatusUpdated);
+      socketService.off("job_updated", handleSessionStatusUpdated);
     };
   }, [jobId, userId, loadSession]);
 
@@ -257,7 +284,8 @@ export const useJobSession = (jobId: string): UseJobSessionReturn => {
           if (session?.session?.id) {
             await completeWorkerSession(
               session.session.id,
-              action.payload?.notes
+              action.payload?.notes,
+              action.payload?.coords
             );
           }
           break;
@@ -297,19 +325,6 @@ export const useJobSession = (jobId: string): UseJobSessionReturn => {
   // Start session
   const startSession = useCallback(async () => {
     setActionLoading(true);
-
-    // Optimistic update
-    const optimisticSession: SessionData = {
-      session: {
-        id: "temp",
-        status: "active",
-        totalWorkedSeconds: 0,
-        lastActiveTimestamp: new Date().toISOString(),
-      },
-      job: session?.job,
-      employer: session?.employer,
-    };
-    setSession(optimisticSession);
 
     try {
       if (!isOnline) {
@@ -513,7 +528,7 @@ export const useJobSession = (jobId: string): UseJobSessionReturn => {
     }
   }, [session, isOnline, loadSession]);
 
-  // Complete session
+  // Complete session with GPS location validation
   const completeSession = useCallback(
     async (notes = "") => {
       // Guard clause: Don't complete if already completed or no session ID
@@ -526,26 +541,27 @@ export const useJobSession = (jobId: string): UseJobSessionReturn => {
 
       setActionLoading(true);
 
-      const now = Date.now();
-
-      // Optimistic update
-      const previousSession = session;
-      const previousLastSyncTime = lastSyncTime;
-
-      setSession({
-        ...session,
-        session: {
-          ...session.session,
-          status: "completed",
-        },
-      });
-
-      // Update sync time to now to prevent double-counting or drift during the API call
-      setLastSyncTime(now);
+      // Get high-accuracy GPS coordinates for backend geofence verification
+      let coords: { latitude: number; longitude: number } | undefined;
+      try {
+        const { status } = await Location.requestForegroundPermissionsAsync();
+        if (status === "granted") {
+          const loc = await Location.getCurrentPositionAsync({
+            accuracy: Location.Accuracy.High,
+          });
+          coords = {
+            latitude: loc.coords.latitude,
+            longitude: loc.coords.longitude,
+          };
+          console.log("[useJobSession] Got location for completion:", coords);
+        }
+      } catch (locErr) {
+        console.warn("[useJobSession] Could not get location for completion:", locErr);
+      }
 
       try {
         if (!isOnline) {
-          syncQueue.enqueue("complete", { notes });
+          syncQueue.enqueue("complete", { notes, coords });
           setQueueSize(syncQueue.size());
           Toast.show({
             type: "info",
@@ -555,9 +571,22 @@ export const useJobSession = (jobId: string): UseJobSessionReturn => {
           return;
         }
 
-        const response = await completeWorkerSession(session.session.id, notes);
+        const response = await completeWorkerSession(session.session.id, notes, coords);
 
         if (response.data.success) {
+          // Update local session status to completed
+          setSession((prev) =>
+            prev
+              ? {
+                  ...prev,
+                  session: {
+                    ...prev.session,
+                    status: "completed",
+                  },
+                }
+              : null
+          );
+
           // Stop notification on completion
           if (session?.job?.name) {
             timerNotificationService.stopNotification(session.job.name);
@@ -565,20 +594,9 @@ export const useJobSession = (jobId: string): UseJobSessionReturn => {
 
           await loadSession(true);
 
-          // Clear active job state in Redux
+          // Clear active job state in Redux & reset throttle
           dispatch(clearActiveJob());
-
-          // CRITICAL: Invalidate active job queries to force UI update immediately
-          // This ensures the "Active Job" bar disappears right away
-          console.log("[useJobSession] Invalidating active job queries");
-          await Promise.all([
-            queryClient.invalidateQueries({
-              queryKey: ["userJobs", userId, "activeCheck"],
-            }),
-            queryClient.invalidateQueries({
-              queryKey: ["userAppliedJobs", userId, "activeCheck"],
-            }),
-          ]);
+          resetActiveJobThrottle();
 
           Toast.show({
             type: "success",
@@ -586,21 +604,22 @@ export const useJobSession = (jobId: string): UseJobSessionReturn => {
             text2: "Work session has been completed",
           });
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error("[useJobSession] Error completing session:", error);
-        // Rollback
-        setSession(previousSession);
-        setLastSyncTime(previousLastSyncTime);
+        const errorMsg =
+          error.response?.data?.message ||
+          error.response?.data?.error?.message ||
+          "Failed to complete work session";
         Toast.show({
           type: "error",
-          text1: "Error",
-          text2: "Failed to complete work session",
+          text1: "Completion Error",
+          text2: errorMsg,
         });
       } finally {
         setActionLoading(false);
       }
     },
-    [session, isOnline, loadSession, lastSyncTime, queryClient, userId]
+    [session, isOnline, loadSession]
   );
 
   // Heartbeat sync

@@ -25,6 +25,7 @@ import {
   getArrivedWorkers,
   approveWorkerArrival,
   markWorkerNoShow,
+  allowLateArrival,
 } from "../../../services/api";
 import Toast from "react-native-toast-message";
 
@@ -56,6 +57,7 @@ const RequestsVerifyTab = ({
   const [refreshing, setRefreshing] = useState(false);
   const [approvingId, setApprovingId] = useState<string | null>(null);
   const [markingAbsentId, setMarkingAbsentId] = useState<string | null>(null);
+  const [allowingLateId, setAllowingLateId] = useState<string | null>(null);
   const [jobInitiated, setJobInitiated] = useState(false);
   const [initiatingJob, setInitiatingJob] = useState(false);
   const [hasInitiallyLoaded, setHasInitiallyLoaded] = useState(false);
@@ -196,6 +198,54 @@ const RequestsVerifyTab = ({
                 });
               } finally {
                 setMarkingAbsentId(null);
+              }
+            },
+          },
+        ]
+      );
+    },
+    [jobId, fetchWorkers]
+  );
+
+  const handleAllowLateArrival = useCallback(
+    (workerId: string, workerName: string) => {
+      Alert.alert(
+        "Allow Late Arrival?",
+        `Allow ${workerName} to mark arrival again when they reach the job site?`,
+        [
+          { text: "Cancel", style: "cancel" },
+          {
+            text: "Allow Arrival",
+            onPress: async () => {
+              try {
+                setAllowingLateId(workerId);
+                const response = await allowLateArrival(jobId, workerId);
+                if (response.data?.success) {
+                  Toast.show({
+                    type: "success",
+                    text1: "Late Arrival Allowed",
+                    text2: `${workerName} can now mark arrival upon reaching the job location.`,
+                  });
+                  await fetchWorkers();
+                } else {
+                  Toast.show({
+                    type: "error",
+                    text1: "Action Failed",
+                    text2:
+                      response.data?.message ||
+                      "Could not allow late arrival.",
+                  });
+                }
+              } catch (error: any) {
+                Toast.show({
+                  type: "error",
+                  text1: "Error",
+                  text2:
+                    error?.response?.data?.message ||
+                    "Failed to allow late arrival.",
+                });
+              } finally {
+                setAllowingLateId(null);
               }
             },
           },
@@ -534,41 +584,77 @@ const RequestsVerifyTab = ({
             </>
           }
           renderItem={({ item }) => {
-            const isArrived = item.arrivalStatus === "arrived";
-            const isVerified = item.arrivalStatus === "verified";
-            const isPending = item.arrivalStatus === "pending";
             const isNoShow =
               item.arrivalStatus === "no_show" || item.sessionStatus === "no_show";
+            const isCompleted = item.sessionStatus === "completed";
+            const isWorking = item.sessionStatus === "active";
+            const isPaused = item.sessionStatus === "paused";
+            const isVerifiedNotStarted =
+              (item.arrivalStatus === "verified" || item.isVerified) &&
+              item.sessionStatus !== "active" &&
+              item.sessionStatus !== "paused" &&
+              item.sessionStatus !== "completed" &&
+              !isNoShow;
+            const isArrived = item.arrivalStatus === "arrived" && !isNoShow;
+            const isPending =
+              !isNoShow &&
+              !isArrived &&
+              !isVerifiedNotStarted &&
+              !isWorking &&
+              !isPaused &&
+              !isCompleted;
+
             const isApproving = approvingId === item.workerId;
             const isMarkingAbsent = markingAbsentId === item.workerId;
+            const isAllowingLate = allowingLateId === item.workerId;
 
             let borderColor = colors.border;
-            let statusColor = "#999";
-            let statusText = "Waiting to arrive";
+            let statusColor = "#6B7280";
+            let statusText = "Waiting for arrival";
             let statusIcon = "time-outline";
+            let subtext: string | null = null;
 
             if (isNoShow) {
               borderColor = "#EF4444";
               statusColor = "#EF4444";
-              statusText = "Marked Absent / No-Show";
+              statusText = "Absent";
               statusIcon = "close-circle-outline";
+              subtext = "Marked as absent / no-show";
+            } else if (isCompleted) {
+              borderColor = "#10B981";
+              statusColor = "#10B981";
+              statusText = "Completed";
+              statusIcon = "checkmark-done-circle";
+              subtext = "Shift completed";
+            } else if (isWorking) {
+              borderColor = "#2563EB";
+              statusColor = "#2563EB";
+              statusText = "Working";
+              statusIcon = "play-circle";
+              subtext = "Timer is running";
+            } else if (isPaused) {
+              borderColor = "#F59E0B";
+              statusColor = "#F59E0B";
+              statusText = "Paused";
+              statusIcon = "pause-circle";
+              subtext = "Work paused by worker";
+            } else if (isVerifiedNotStarted) {
+              borderColor = colors.darkGreen;
+              statusColor = colors.darkGreen;
+              statusText = "Verified / Not Started";
+              statusIcon = "checkmark-circle";
+              subtext = "Waiting for worker to start";
             } else if (isArrived) {
               borderColor = "#F59E0B";
               statusColor = "#F59E0B";
               statusText = `Arrived ${formatTimeAgo(item.arrivedAt)}`;
               statusIcon = "location";
-            } else if (isVerified) {
-              borderColor = colors.darkGreen;
-              statusColor = colors.darkGreen;
-              statusText =
-                item.sessionStatus === "active"
-                  ? "Working"
-                  : item.sessionStatus === "paused"
-                    ? "Paused"
-                    : item.sessionStatus === "completed"
-                      ? "Completed"
-                      : "Approved - Ready";
-              statusIcon = "checkmark-circle";
+            } else {
+              // Waiting for arrival
+              borderColor = colors.border;
+              statusColor = "#6B7280";
+              statusText = "Waiting for arrival";
+              statusIcon = "time-outline";
             }
 
             return (
@@ -584,184 +670,143 @@ const RequestsVerifyTab = ({
                   borderColor: colors.border,
                 }}
               >
-                <View style={{ flexDirection: "row", alignItems: "center" }}>
-                  {/* Worker Avatar */}
+                <View
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                  }}
+                >
+                  {/* Left: Avatar & Worker Info */}
                   <View
                     style={{
-                      width: 44,
-                      height: 44,
-                      borderRadius: 22,
-                      backgroundColor: `${statusColor}20`,
+                      flexDirection: "row",
                       alignItems: "center",
-                      justifyContent: "center",
-                      marginRight: 12,
+                      flex: 1,
+                      marginRight: 8,
                     }}
                   >
-                    <Ionicons name="person" size={22} color={statusColor} />
-                  </View>
-
-                  {/* Worker Info */}
-                  <View style={{ flex: 1 }}>
-                    <Text
-                      style={{
-                        fontSize: 15,
-                        fontWeight: "600",
-                        color: colors.black,
-                      }}
-                    >
-                      {item.workerName}
-                    </Text>
                     <View
                       style={{
-                        flexDirection: "row",
+                        width: 44,
+                        height: 44,
+                        borderRadius: 22,
+                        backgroundColor: `${statusColor}20`,
                         alignItems: "center",
-                        marginTop: 3,
+                        justifyContent: "center",
+                        marginRight: 12,
                       }}
                     >
-                      <Ionicons
-                        name={statusIcon as any}
-                        size={14}
-                        color={statusColor}
-                      />
-                      <Text
-                        style={{
-                          fontSize: 12,
-                          color: statusColor,
-                          marginLeft: 4,
-                          fontWeight: "500",
-                        }}
-                      >
-                        {statusText}
-                      </Text>
+                      <Ionicons name="person" size={22} color={statusColor} />
                     </View>
-                    {item.locationDistance != null && isArrived && (
+
+                    <View style={{ flex: 1 }}>
                       <Text
                         style={{
-                          fontSize: 11,
-                          color: colors.darkGreen,
-                          marginTop: 2,
-                        }}
-                      >
-                        ✅ {item.locationDistance}m from job site
-                      </Text>
-                    )}
-                  </View>
-
-                  {/* Approve Button */}
-                  {isArrived && (
-                    <TouchableOpacity
-                      style={{
-                        backgroundColor: isApproving
-                          ? colors.grey
-                          : colors.darkGreen,
-                        paddingVertical: 10,
-                        paddingHorizontal: 18,
-                        borderRadius: 10,
-                        flexDirection: "row",
-                        alignItems: "center",
-                      }}
-                      onPress={() =>
-                        handleApprove(item.workerId, item.workerName)
-                      }
-                      disabled={isApproving}
-                    >
-                      {isApproving ? (
-                        <ActivityIndicator size="small" color="#fff" />
-                      ) : (
-                        <>
-                          <Ionicons name="checkmark" size={16} color="#fff" />
-                          <Text
-                            style={{
-                              color: "#fff",
-                              fontWeight: "700",
-                              fontSize: 13,
-                              marginLeft: 4,
-                            }}
-                          >
-                            Approve
-                          </Text>
-                        </>
-                      )}
-                    </TouchableOpacity>
-                  )}
-
-                  {/* Verified badge */}
-                  {isVerified && (
-                    <View
-                      style={{
-                        backgroundColor: colors.darkGreen + "15",
-                        paddingVertical: 6,
-                        paddingHorizontal: 12,
-                        borderRadius: 8,
-                      }}
-                    >
-                      <Text
-                        style={{
-                          color: colors.darkGreen,
+                          fontSize: 15,
                           fontWeight: "600",
-                          fontSize: 12,
+                          color: colors.black,
                         }}
                       >
-                        ✔ Verified
+                        {item.workerName}
                       </Text>
-                    </View>
-                  )}
-
-                  {/* Absent badge */}
-                  {isNoShow && (
-                    <View
-                      style={{
-                        backgroundColor: "#FEE2E2",
-                        paddingVertical: 6,
-                        paddingHorizontal: 12,
-                        borderRadius: 8,
-                        borderWidth: 1,
-                        borderColor: "#FCA5A5",
-                      }}
-                    >
-                      <Text
-                        style={{
-                          color: "#DC2626",
-                          fontWeight: "600",
-                          fontSize: 12,
-                        }}
-                      >
-                        Absent
-                      </Text>
-                    </View>
-                  )}
-
-                  {/* Pending indicator + Mark Absent action */}
-                  {isPending && (
-                    <View
-                      style={{
-                        flexDirection: "row",
-                        alignItems: "center",
-                      }}
-                    >
                       <View
                         style={{
-                          backgroundColor: "#F3F4F6",
-                          paddingVertical: 6,
-                          paddingHorizontal: 10,
-                          borderRadius: 8,
-                          marginRight: 6,
+                          flexDirection: "row",
+                          alignItems: "center",
+                          marginTop: 3,
                         }}
                       >
+                        <Ionicons
+                          name={statusIcon as any}
+                          size={14}
+                          color={statusColor}
+                        />
                         <Text
                           style={{
-                            color: "#9CA3AF",
-                            fontWeight: "500",
                             fontSize: 12,
+                            color: statusColor,
+                            marginLeft: 4,
+                            fontWeight: "500",
                           }}
                         >
-                          Pending
+                          {statusText}
                         </Text>
                       </View>
+                      {item.locationDistance != null && isArrived && (
+                        <Text
+                          style={{
+                            fontSize: 11,
+                            color: colors.darkGreen,
+                            marginTop: 2,
+                          }}
+                        >
+                          ✅ {item.locationDistance}m from job site
+                        </Text>
+                      )}
+                      {subtext && !isArrived && (
+                        <Text
+                          style={{
+                            fontSize: 11,
+                            color: colors.grey,
+                            marginTop: 2,
+                          }}
+                        >
+                          {subtext}
+                        </Text>
+                      )}
+                    </View>
+                  </View>
+
+                  {/* Right: State-dependent Actions */}
+                  {/* State 1: ARRIVED -> [ Verify Worker ] & [ Mark Absent ] */}
+                  {isArrived && (
+                    <View
+                      style={{
+                        flexDirection: "row",
+                        alignItems: "center",
+                      }}
+                    >
+                      <TouchableOpacity
+                        style={{
+                          backgroundColor: isApproving
+                            ? colors.grey
+                            : colors.darkGreen,
+                          paddingVertical: 8,
+                          paddingHorizontal: 12,
+                          borderRadius: 8,
+                          flexDirection: "row",
+                          alignItems: "center",
+                          marginRight: 6,
+                        }}
+                        onPress={() =>
+                          handleApprove(item.workerId, item.workerName)
+                        }
+                        disabled={isApproving || isMarkingAbsent}
+                      >
+                        {isApproving ? (
+                          <ActivityIndicator size="small" color="#fff" />
+                        ) : (
+                          <>
+                            <Ionicons name="checkmark" size={14} color="#fff" />
+                            <Text
+                              style={{
+                                color: "#fff",
+                                fontWeight: "700",
+                                fontSize: 12,
+                                marginLeft: 4,
+                              }}
+                            >
+                              Verify
+                            </Text>
+                          </>
+                        )}
+                      </TouchableOpacity>
+
                       <TouchableOpacity
                         style={{
                           backgroundColor: "#FEE2E2",
-                          paddingVertical: 6,
+                          paddingVertical: 8,
                           paddingHorizontal: 10,
                           borderRadius: 8,
                           borderWidth: 1,
@@ -772,7 +817,7 @@ const RequestsVerifyTab = ({
                         onPress={() =>
                           handleMarkAbsent(item.workerId, item.workerName)
                         }
-                        disabled={isMarkingAbsent}
+                        disabled={isApproving || isMarkingAbsent}
                       >
                         {isMarkingAbsent ? (
                           <ActivityIndicator size="small" color="#DC2626" />
@@ -784,16 +829,190 @@ const RequestsVerifyTab = ({
                               fontSize: 12,
                             }}
                           >
-                            Mark Absent
+                            Absent
                           </Text>
                         )}
                       </TouchableOpacity>
                     </View>
                   )}
+
+                  {/* State 2: NO_SHOW -> [ Allow Late Arrival ] */}
+                  {isNoShow && (
+                    <TouchableOpacity
+                      style={{
+                        backgroundColor: colors.primary + "15",
+                        paddingVertical: 8,
+                        paddingHorizontal: 12,
+                        borderRadius: 8,
+                        borderWidth: 1,
+                        borderColor: colors.primary,
+                        flexDirection: "row",
+                        alignItems: "center",
+                      }}
+                      onPress={() =>
+                        handleAllowLateArrival(item.workerId, item.workerName)
+                      }
+                      disabled={isAllowingLate}
+                    >
+                      {isAllowingLate ? (
+                        <ActivityIndicator
+                          size="small"
+                          color={colors.primary}
+                        />
+                      ) : (
+                        <>
+                          <Ionicons
+                            name="refresh"
+                            size={14}
+                            color={colors.primary}
+                            style={{ marginRight: 4 }}
+                          />
+                          <Text
+                            style={{
+                              color: colors.primary,
+                              fontWeight: "600",
+                              fontSize: 12,
+                            }}
+                          >
+                            Allow Late Arrival
+                          </Text>
+                        </>
+                      )}
+                    </TouchableOpacity>
+                  )}
+
+                  {/* State 3: PENDING (Waiting for arrival) -> [ Mark Absent ] */}
+                  {isPending && (
+                    <TouchableOpacity
+                      style={{
+                        backgroundColor: "#FEE2E2",
+                        paddingVertical: 8,
+                        paddingHorizontal: 12,
+                        borderRadius: 8,
+                        borderWidth: 1,
+                        borderColor: "#FCA5A5",
+                        flexDirection: "row",
+                        alignItems: "center",
+                      }}
+                      onPress={() =>
+                        handleMarkAbsent(item.workerId, item.workerName)
+                      }
+                      disabled={isMarkingAbsent}
+                    >
+                      {isMarkingAbsent ? (
+                        <ActivityIndicator size="small" color="#DC2626" />
+                      ) : (
+                        <Text
+                          style={{
+                            color: "#DC2626",
+                            fontWeight: "600",
+                            fontSize: 12,
+                          }}
+                        >
+                          Mark Absent
+                        </Text>
+                      )}
+                    </TouchableOpacity>
+                  )}
+
+                  {/* State 4: VERIFIED / NOT STARTED -> Badge (Waiting for worker to start) */}
+                  {isVerifiedNotStarted && (
+                    <View
+                      style={{
+                        backgroundColor: colors.darkGreen + "15",
+                        paddingVertical: 6,
+                        paddingHorizontal: 10,
+                        borderRadius: 8,
+                      }}
+                    >
+                      <Text
+                        style={{
+                          color: colors.darkGreen,
+                          fontWeight: "600",
+                          fontSize: 12,
+                        }}
+                      >
+                        ✔ Ready
+                      </Text>
+                    </View>
+                  )}
+
+                  {/* State 5: WORKING -> Badge */}
+                  {isWorking && (
+                    <View
+                      style={{
+                        backgroundColor: "#EFF6FF",
+                        paddingVertical: 6,
+                        paddingHorizontal: 10,
+                        borderRadius: 8,
+                        borderWidth: 1,
+                        borderColor: "#BFDBFE",
+                      }}
+                    >
+                      <Text
+                        style={{
+                          color: "#2563EB",
+                          fontWeight: "600",
+                          fontSize: 12,
+                        }}
+                      >
+                        ● Active
+                      </Text>
+                    </View>
+                  )}
+
+                  {/* State 6: PAUSED -> Badge */}
+                  {isPaused && (
+                    <View
+                      style={{
+                        backgroundColor: "#FFFBEB",
+                        paddingVertical: 6,
+                        paddingHorizontal: 10,
+                        borderRadius: 8,
+                        borderWidth: 1,
+                        borderColor: "#FDE68A",
+                      }}
+                    >
+                      <Text
+                        style={{
+                          color: "#D97706",
+                          fontWeight: "600",
+                          fontSize: 12,
+                        }}
+                      >
+                        Paused
+                      </Text>
+                    </View>
+                  )}
+
+                  {/* State 7: COMPLETED -> Badge */}
+                  {isCompleted && (
+                    <View
+                      style={{
+                        backgroundColor: "#ECFDF5",
+                        paddingVertical: 6,
+                        paddingHorizontal: 10,
+                        borderRadius: 8,
+                        borderWidth: 1,
+                        borderColor: "#A7F3D0",
+                      }}
+                    >
+                      <Text
+                        style={{
+                          color: "#059669",
+                          fontWeight: "600",
+                          fontSize: 12,
+                        }}
+                      >
+                        ✔ Completed
+                      </Text>
+                    </View>
+                  )}
                 </View>
 
                 {/* Timer display for active workers */}
-                {isVerified && item.totalWorkedSeconds > 0 && (
+                {(item.arrivalStatus === "verified" || item.isVerified) &&
+                  item.totalWorkedSeconds > 0 && (
                   <View
                     style={{
                       marginTop: 10,
@@ -845,7 +1064,7 @@ const RequestVerification = () => {
   const [verifiedCount, setVerifiedCount] = useState(0);
   const [initialDataLoaded, setInitialDataLoaded] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
-  // Real-time socket listener: auto-refresh when a worker marks arrival
+  // Real-time socket listener: auto-refresh when worker events occur
   useEffect(() => {
     let socket: any = null;
     try {
@@ -855,12 +1074,25 @@ const RequestVerification = () => {
       /* ignore */
     }
     if (!socket) return;
-    const onWorkerArrived = () => {
+
+    const onUpdate = () => {
       setRefreshTrigger((prev) => prev + 1);
     };
-    socket.on("worker-arrived", onWorkerArrived);
+
+    socket.on("worker-arrived", onUpdate);
+    socket.on("worker-arrival-approved", onUpdate);
+    socket.on("arrival-approved", onUpdate);
+    socket.on("worker-marked-no-show", onUpdate);
+    socket.on("worker-late-arrival-allowed", onUpdate);
+    socket.on("session_status_updated", onUpdate);
+
     return () => {
-      socket.off("worker-arrived", onWorkerArrived);
+      socket.off("worker-arrived", onUpdate);
+      socket.off("worker-arrival-approved", onUpdate);
+      socket.off("arrival-approved", onUpdate);
+      socket.off("worker-marked-no-show", onUpdate);
+      socket.off("worker-late-arrival-allowed", onUpdate);
+      socket.off("session_status_updated", onUpdate);
     };
   }, []);
 

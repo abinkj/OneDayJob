@@ -1,8 +1,8 @@
 import React, { useMemo, useCallback } from "react";
 import { View, Text, TouchableOpacity } from "react-native";
-import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { MaterialCommunityIcons, Ionicons } from "@expo/vector-icons";
 import { useTheme } from "../../contexts/ThemeContext";
-import { createStyles } from "./styles";
+import { createStyles, getTypeConfig } from "./styles";
 
 interface NotificationCardProps {
   title: string;
@@ -37,23 +37,10 @@ const NotificationCard: React.FC<NotificationCardProps> = ({
 }) => {
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
+  const typeConfig = useMemo(() => getTypeConfig(type, colors), [type, colors]);
 
   const displayTitle = useMemo(() => sanitizeText(title), [title]);
   const displaySubtitle = useMemo(() => sanitizeText(subtitle), [subtitle]);
-
-  const getIcon = useCallback(() => {
-    switch (type) {
-      case "job_update":
-      case "application_status":
-        return "briefcase-outline";
-      case "message":
-        return "message-text-outline";
-      case "system":
-        return "information-outline";
-      default:
-        return "bell-outline";
-    }
-  }, [type]);
 
   const handleLongPress = useCallback(() => {
     if (onLongPress) {
@@ -63,62 +50,60 @@ const NotificationCard: React.FC<NotificationCardProps> = ({
     }
   }, [onLongPress, onDelete]);
 
-  const showBadge = Boolean(count && count > 0 && !isRead);
-
   return (
     <TouchableOpacity
-      activeOpacity={0.7}
+      activeOpacity={0.75}
       onPress={onPress}
       onLongPress={handleLongPress}
-      style={styles.cardContainer}
+      style={[styles.cardContainer, !isRead && styles.cardContainerUnread]}
     >
-      {!isRead && <View style={styles.unreadIndicator} />}
-      <View style={[styles.card, !isRead && styles.unreadCard]}>
-        <View
-          style={[styles.left, isRead ? styles.iconBoxRead : styles.iconBoxUnread]}
-        >
-          <MaterialCommunityIcons
-            name={getIcon()}
-            size={22}
-            color={isRead ? colors.grey : colors.primary}
-          />
-        </View>
-        <View style={styles.content}>
-          <View style={styles.header}>
-            <Text
-              style={[styles.title, !isRead && styles.titleUnread]}
-              numberOfLines={1}
-            >
-              {displayTitle}
-            </Text>
-            <Text style={styles.time}>{time}</Text>
-            {onDelete && (
-              <TouchableOpacity
-                onPress={onDelete}
-                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                style={styles.deleteButton}
-                activeOpacity={0.6}
-              >
-                <MaterialCommunityIcons
-                  name="close"
-                  size={16}
-                  color={colors.grey}
-                />
-              </TouchableOpacity>
-            )}
-          </View>
-          <Text style={styles.subtitle} numberOfLines={2}>
-            {displaySubtitle}
-          </Text>
-        </View>
-        {showBadge && (
-          <View style={styles.badge}>
-            <View style={styles.activeDot} />
-          </View>
-        )}
+      {/* Icon Circle */}
+      <View style={[styles.iconCircle, { backgroundColor: typeConfig.bgColor }]}>
+        <MaterialCommunityIcons
+          name={typeConfig.icon as any}
+          size={20}
+          color={typeConfig.color}
+        />
+        {/* Unread dot badge on icon */}
+        {!isRead && <View style={[styles.unreadDot, { backgroundColor: typeConfig.color }]} />}
       </View>
+
+      {/* Content */}
+      <View style={styles.content}>
+        {/* Row 1: Title + Time */}
+        <View style={styles.titleRow}>
+          <Text
+            style={[styles.title, !isRead && styles.titleUnread]}
+            numberOfLines={1}
+            ellipsizeMode="tail"
+          >
+            {displayTitle}
+          </Text>
+          <Text style={styles.time}>{time}</Text>
+        </View>
+
+        {/* Row 2: Subtitle */}
+        <Text style={styles.subtitle} numberOfLines={2}>
+          {displaySubtitle}
+        </Text>
+      </View>
+
+      {/* Dismiss button */}
+      {onDelete && (
+        <TouchableOpacity
+          onPress={onDelete}
+          hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+          style={styles.deleteButton}
+          activeOpacity={0.6}
+        >
+          <Ionicons name="close" size={14} color={colors.grey} />
+        </TouchableOpacity>
+      )}
     </TouchableOpacity>
   );
 };
 
 export default React.memo(NotificationCard);
+
+
+

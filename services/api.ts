@@ -1096,6 +1096,24 @@ export const markWorkerNoShow = async (
   }
 };
 
+/**
+ * Employer allows late arrival for an absent / no-show worker
+ * POST /api/jobs/:jobId/allow-late-arrival
+ */
+export const allowLateArrival = async (jobId: string, workerId: string) => {
+  try {
+    console.log("Allowing late arrival for worker:", { jobId, workerId });
+    const response = await api.post(`/jobs/${jobId}/allow-late-arrival`, {
+      workerId,
+    });
+    console.log("Allow late arrival response:", response.data);
+    return response;
+  } catch (error) {
+    console.error("Error allowing late arrival:", error);
+    throw error;
+  }
+};
+
 // ==================== RATING API ENDPOINTS ====================
 
 /**
@@ -1225,6 +1243,22 @@ export const syncAcceptedApplications = async (
 // ============================================================================
 // JOB TIMER API FUNCTIONS
 // ============================================================================
+// JOB TIMER API ENDPOINTS
+// ============================================================================
+
+/**
+ * Get active job session summary for authenticated user (Employer or Worker)
+ * GET /api/job-timer/active
+ */
+export const getActiveJobSession = async () => {
+  try {
+    const response = await api.get('/job-timer/active');
+    return response;
+  } catch (error) {
+    console.error("Error getting active job session:", error);
+    throw error;
+  }
+};
 
 /**
  * Initiate job execution (Employer)
@@ -1350,15 +1384,23 @@ export const resumeWorkerSession = async (sessionId: string) => {
  * Complete worker session
  * PUT /api/job-timer/sessions/:sessionId/complete
  */
-export const completeWorkerSession = async (sessionId: string, notes = "") => {
+export const completeWorkerSession = async (
+  sessionId: string,
+  notes = "",
+  location?: { latitude: number; longitude: number }
+) => {
   try {
-    console.log("Completing worker session:", sessionId, "Notes:", notes);
+    console.log("Completing worker session:", sessionId, "Notes:", notes, "Location:", location);
+
+    const payload: any = { notes };
+    if (location) {
+      payload.latitude = location.latitude;
+      payload.longitude = location.longitude;
+    }
 
     const response = await api.put(
       `/job-timer/sessions/${sessionId}/complete`,
-      {
-        notes,
-      }
+      payload
     );
 
     console.log("Worker session completed:", response.data);

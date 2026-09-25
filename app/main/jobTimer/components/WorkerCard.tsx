@@ -21,6 +21,8 @@ interface Worker {
   timeSpent: number;
   hasRated?: boolean;
   rating?: number;
+  arrivalStatus?: string;
+  isVerified?: boolean;
 }
 
 interface WorkerCardProps {
@@ -41,7 +43,7 @@ const WorkerCard: React.FC<WorkerCardProps> = React.memo(
           return {
             bg: colors.green + "15", // 15% opacity
             text: colors.darkGreen || "#2E7D32",
-            label: "Active",
+            label: "Working",
           };
         case "paused":
           return {
@@ -53,19 +55,33 @@ const WorkerCard: React.FC<WorkerCardProps> = React.memo(
           return {
             bg: colors.lightBlue || "#E3F2FD",
             text: colors.tabBlue || "#1976D2",
-            label: "Done",
+            label: "Completed",
           };
         case "no_show":
           return {
             bg: "#FEE2E2",
             text: colors.red || "#DC2626",
-            label: "No-Show",
+            label: "Absent",
           };
         default:
+          if (worker.arrivalStatus === "verified" || worker.isVerified) {
+            return {
+              bg: (colors.darkGreen || "#2E7D32") + "15",
+              text: colors.darkGreen || "#2E7D32",
+              label: "Verified / Not Started",
+            };
+          }
+          if (worker.arrivalStatus === "arrived") {
+            return {
+              bg: "#FEF3C7",
+              text: "#D97706",
+              label: "Arrived",
+            };
+          }
           return {
             bg: colors.border || "#EEEEEE",
             text: colors.grey || "#757575",
-            label: "Pending",
+            label: "Waiting for arrival",
           };
       }
     };

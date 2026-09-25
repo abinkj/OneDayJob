@@ -26,8 +26,9 @@ import { useEmployerDashboard } from "./hooks/useEmployerDashboard";
 import WorkerTimerView from "./components/WorkerTimerView";
 import EmployerDashboardView from "./components/EmployerDashboardView";
 import VerificationPendingView from "./components/VerificationPendingView";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "../../../redux/store";
+import { clearActiveJob } from "../../../redux/reducers/jobReducer";
 
 interface JobTimerRouteParams {
   jobId: string;
@@ -40,6 +41,7 @@ interface JobTimerRouteParams {
 }
 
 const JobTimerScreen = () => {
+  const dispatch = useDispatch();
   const route = useRoute();
   console.log(route.params);
   const {
@@ -73,19 +75,87 @@ const JobTimerScreen = () => {
   );
 
   const activeJob = useSelector((state: RootState) => state.activeJob);
-  const hasActiveJob = activeJob.isTimerRunning && !!activeJob.activeJobId;
+  const isRunningActiveSession =
+    !isEmployer && workerSession.session?.session?.status === "active";
 
   const navigation = useNavigation();
   useEffect(() => {
     navigation.setOptions({
-      gestureEnabled: !hasActiveJob,
+      gestureEnabled: !isRunningActiveSession,
     });
-  }, [hasActiveJob, navigation]);
+  }, [isRunningActiveSession, navigation]);
+
+  // Back button press handler
+  const handleBackPress = useCallback(() => {
+    if (navigation.canGoBack()) {
+      navigation.goBack();
+    } else {
+      navigation.reset({
+        index: 0,
+        routes: [{ name: "MainHome" as never }],
+      });
+    }
+  }, [navigation]);
 
   // Determine loading state
   const loading = isEmployer
     ? employerDashboard.loading
     : workerSession.loading;
+
+  // Auto-dismiss and redirect to Home if worker's session/job is completed, no-show, or unassigned
+  useEffect(() => {
+    if (isEmployer || loading) return;
+
+    const sStatus = workerSession.session?.session?.status;
+    const jStatus = (workerSession.session?.job as any)?.jobStatus;
+    const forbidden = workerSession.forbiddenMessage || "";
+    const isUnassigned =
+      forbidden.toLowerCase().includes("not assigned") ||
+      forbidden.toLowerCase().includes("job not found");
+
+    if (
+      sStatus === "completed" ||
+      (sStatus as any) === "no_show" ||
+      jStatus === "completed" ||
+      isUnassigned
+    ) {
+      console.log(
+        "🧹 [JobTimerScreen] Job is finished or unassigned. Dismissing screen.",
+        { sStatus, jStatus, forbidden }
+      );
+
+      dispatch(clearActiveJob());
+
+      if (sStatus === "completed" || jStatus === "completed") {
+        Toast.show({
+          type: "success",
+          text1: "Job Completed",
+          text2: "This work session has been completed.",
+        });
+      } else if (isUnassigned) {
+        Toast.show({
+          type: "info",
+          text1: "Job Ended",
+          text2: "You are no longer assigned to this job or it has closed.",
+        });
+      }
+
+      // Reset navigation back to MainHome tab layout
+      navigation.reset({
+        index: 0,
+        routes: [{ name: "MainHome" as never }],
+      });
+    }
+  }, [
+    isEmployer,
+    loading,
+    workerSession.session?.session?.status,
+    (workerSession.session?.job as any)?.jobStatus,
+    workerSession.forbiddenMessage,
+    dispatch,
+    navigation,
+  ]);
+
 
   // Handle refresh
   const handleRefresh = async () => {
@@ -112,6 +182,27 @@ const JobTimerScreen = () => {
         comment
       );
       setIsRatingModalVisible(false);
+      dispatch(clearActiveJob());
+
+      // If all workers are now rated, toast and smoothly navigate back to Home
+      const workers = employerDashboard.dashboard?.summary?.workers || [];
+      const remainingUnrated = workers.filter(
+        (w: any) => w.id !== selectedWorkerForRating.id && !w.hasRated
+      );
+
+      if (remainingUnrated.length === 0) {
+        Toast.show({
+          type: "success",
+          text1: "Rating Submitted",
+          text2: "Job complete! Returning to Home.",
+        });
+        setTimeout(() => {
+          navigation.reset({
+            index: 0,
+            routes: [{ name: "MainHome" as never }],
+          });
+        }, 1200);
+      }
     } catch (error) {
       // Error handled in hook
     }
@@ -190,8 +281,9 @@ const JobTimerScreen = () => {
     <View style={styles.container}>
       <Header
         title={isEmployer ? "Job Dashboard" : "Job Timer"}
-        showBackButton={!hasActiveJob}
-        disableButtonPress={hasActiveJob}
+        showBackButton={true}
+        disableButtonPress={false}
+        onBackPress={handleBackPress}
       />
       {loading ? (
         <JobDetailsSkeleton />

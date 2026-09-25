@@ -87,6 +87,14 @@ export interface SocketEvents {
   job_created: (data: any) => void;
   job_updated: (data: any) => void;
   job_deleted: (data: any) => void;
+
+  "session_status_updated": (data: any) => void;
+  "worker-arrival-approved": (data: any) => void;
+  "arrival-approved": (data: any) => void;
+  "worker-marked-no-show": (data: any) => void;
+  "worker-late-arrival-allowed": (data: any) => void;
+  "worker-arrived": (data: any) => void;
+  session_completed: (data: any) => void;
 }
 
 // ─── Service ──────────────────────────────────────────────────────────────────

@@ -423,7 +423,8 @@ const HomeScreen = () => {
         j.isRemote ||
         j.distance === null ||
         j.distance === undefined ||
-        j.distance <= NEARBY_RADIUS_KM
+        j.distance <= NEARBY_RADIUS_KM ||
+        j.isAssignedWorker
     );
   }, [jobsWithDistance, location]);
 
@@ -600,23 +601,16 @@ const HomeScreen = () => {
     }, [])
   );
 
+  const [arrivedJobIds, setArrivedJobIds] = useState<Set<string>>(new Set());
+
   const handleArrival = async (item: any) => {
     const jobId = item._id;
-    const jobName = item.name;
     setArrivingJobId(jobId);
     const result = await handleArrivalAction(jobId, setArrivalLoading);
     setArrivingJobId(null);
     if (result.success) {
-      navigation.navigate("JobTimer", {
-        jobId,
-        jobName,
-        isEmployer: false,
-        employerId: item.userId?._id || item.userId?.id || item.userId,
-        employerName:
-          `${item.userId?.firstName || ""} ${item.userId?.lastName || ""}`.trim(),
-        employerPhoneNumber: item.userId?.phoneNumber,
-        employerImage: item.userId?.profilePicture,
-      });
+      setArrivedJobIds((prev) => new Set(prev).add(jobId));
+      refetchJobs();
     }
   };
 
@@ -624,19 +618,25 @@ const HomeScreen = () => {
     item,
   }: {
     item: JobPost & { distance?: number | null };
-  }) => (
-    <HomeJobCard
-      item={item}
-      userData={userData}
-      colors={colors}
-      styles={styles}
-      navigation={navigation}
-      arrivingJobId={arrivingJobId}
-      arrivalLoading={arrivalLoading}
-      locationAddress={locationAddress}
-      handleArrival={handleArrival}
-    />
-  );
+  }) => {
+    const itemWithArrived = arrivedJobIds.has(item._id)
+      ? { ...item, hasArrived: true, arrivalStatus: "arrived" }
+      : item;
+
+    return (
+      <HomeJobCard
+        item={itemWithArrived as any}
+        userData={userData}
+        colors={colors}
+        styles={styles}
+        navigation={navigation}
+        arrivingJobId={arrivingJobId}
+        arrivalLoading={arrivalLoading}
+        locationAddress={locationAddress}
+        handleArrival={handleArrival}
+      />
+    );
+  };
 
   const renderFilterRow = () => {
     const getFilterButtonStyle = (isSelected) => [
@@ -1015,7 +1015,6 @@ const HomeScreen = () => {
         ]}
         contentContainerStyle={styles.flatListContent}
         showsVerticalScrollIndicator={false}
-        bounces={false}
         onScroll={(event) => {
           const offsetY = event.nativeEvent.contentOffset.y;
           setIsFilterSticky(offsetY >= STICKY_OFFSET);

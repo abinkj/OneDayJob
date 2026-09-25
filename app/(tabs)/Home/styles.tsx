@@ -507,6 +507,13 @@ export const createStyles = (colors: ThemeColors) =>
       textAlign: "center",
       fontFamily: "medium",
     },
+    scheduledText: {
+      fontSize: fontSizes.size14,
+      color: colors.grey,
+      marginTop: 4,
+      textAlign: "center",
+      fontFamily: "medium",
+    },
     locationInfoContainer: {
       marginTop: 6,
       paddingHorizontal: 4,

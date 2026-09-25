@@ -6,9 +6,9 @@ import {
   RefreshControl,
   ScrollView,
   TouchableOpacity,
-  Alert,
   Platform,
 } from "react-native";
+import { useAlert } from "../../../components/CustomAlert/AlertProvider";
 import {
   Ionicons,
   MaterialCommunityIcons,
@@ -23,6 +23,69 @@ import * as Haptics from "expo-haptics";
 import { createStyles } from "./styles";
 
 const SEGMENT_VALUES = ["All", "Job Updates", "Messages", "System"] as const;
+
+// ---------------------------------------------------------------------------
+// DEV-ONLY: Mock notifications for UI testing. Removed automatically in prod.
+// ---------------------------------------------------------------------------
+const MOCK_NOTIFICATIONS: import("../../../services/notificationService").NotificationData[] =
+  __DEV__
+    ? [
+        {
+          id: "mock-1",
+          title: "Application Accepted",
+          body: "Nagendar Broski accepted your application for Del del delivery.",
+          type: "application_status",
+          read: false,
+          timestamp: new Date(Date.now() - 5 * 60 * 1000).toISOString(), // 5m ago
+          jobId: "mock-job-1",
+        },
+        {
+          id: "mock-2",
+          title: "New Message",
+          body: "Hey, can you arrive 30 minutes early tomorrow?",
+          type: "message",
+          read: false,
+          timestamp: new Date(Date.now() - 45 * 60 * 1000).toISOString(), // 45m ago
+          data: { conversationId: "mock-conv-1", senderName: "Nagendar" },
+        },
+        {
+          id: "mock-3",
+          title: "Job Posted Successfully",
+          body: "Your job \"Grocery delivery\" is now live and accepting applicants.",
+          type: "job_update",
+          read: true,
+          timestamp: new Date(Date.now() - 3 * 3600 * 1000).toISOString(), // 3h ago
+          jobId: "mock-job-2",
+        },
+        {
+          id: "mock-4",
+          title: "Worker Arrived at Location",
+          body: "Ravi Kumar has marked arrival at your job site. Tap to verify.",
+          type: "job_update",
+          read: false,
+          timestamp: new Date(Date.now() - 10 * 60 * 1000).toISOString(), // 10m ago
+          jobId: "mock-job-3",
+          data: { clickAction: "VERIFY_ARRIVAL", workerId: "mock-worker-1" },
+        },
+        {
+          id: "mock-5",
+          title: "Payment Released",
+          body: "Payment of INR 1,500 has been released for \"Plumbing fix\".",
+          type: "system",
+          read: true,
+          timestamp: new Date(Date.now() - 2 * 86400 * 1000).toISOString(), // 2d ago
+        },
+        {
+          id: "mock-6",
+          title: "Job Reminder",
+          body: "Your scheduled job \"Del del delivery\" starts tomorrow at 10:00 AM.",
+          type: "system",
+          read: false,
+          timestamp: new Date(Date.now() - 30 * 60 * 1000).toISOString(), // 30m ago
+          jobId: "mock-job-1",
+        },
+      ]
+    : [];
 
 interface FilterChipProps {
   label: string;
@@ -71,14 +134,21 @@ const NotificationListItem = React.memo<NotificationListItemProps>(
     }, [item.id, onDelete]);
 
     const time = useMemo(() => {
-      if (!item.timestamp) return "Now";
+      if (!item.timestamp) return "Just now";
       try {
-        return new Date(item.timestamp).toLocaleTimeString([], {
-          hour: "2-digit",
-          minute: "2-digit",
+        const now = Date.now();
+        const ts = new Date(item.timestamp).getTime();
+        const diff = Math.floor((now - ts) / 1000); // seconds
+        if (diff < 60) return "Just now";
+        if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+        if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+        if (diff < 604800) return `${Math.floor(diff / 86400)}d ago`;
+        return new Date(item.timestamp).toLocaleDateString([], {
+          day: "numeric",
+          month: "short",
         });
       } catch {
-        return "Now";
+        return "Just now";
       }
     }, [item.timestamp]);
 
@@ -134,23 +204,26 @@ const Notification = () => {
     }
   }, [refreshNotifications]);
 
+  const { showAlert } = useAlert();
+
   const handleDelete = useCallback(
     (id: string) => {
       if (!id) return;
-      Alert.alert(
-        "Delete Notification",
-        "Are you sure you want to delete this notification?",
-        [
+      showAlert({
+        type: "warning",
+        title: "Delete Notification",
+        message: "Are you sure you want to delete this notification?",
+        buttons: [
           { text: "Cancel", style: "cancel" },
           {
             text: "Delete",
             style: "destructive",
             onPress: () => deleteNotification(id),
           },
-        ]
-      );
+        ],
+      });
     },
-    [deleteNotification]
+    [deleteNotification, showAlert]
   );
 
   const handleNotificationPress = useCallback(
@@ -239,12 +312,17 @@ const Notification = () => {
   );
 
   const filteredNotifications = useMemo(() => {
+    // Merge real notifications with DEV mock data for UI testing
+    const allNotifications = __DEV__
+      ? [...MOCK_NOTIFICATIONS, ...notifications]
+      : notifications;
+
     if (SEGMENT_VALUES[selectedIndex] === "All") {
-      return notifications;
+      return allNotifications;
     }
 
     const filterType = SEGMENT_VALUES[selectedIndex].toLowerCase();
-    return notifications.filter((n) => {
+    return allNotifications.filter((n) => {
       switch (filterType) {
         case "job updates":
           return n.type === "job_update" || n.type === "application_status";
@@ -268,7 +346,7 @@ const Notification = () => {
       <TouchableOpacity onPress={markAllAsRead} style={styles.markAllBtn}>
         <MaterialCommunityIcons
           name="check-all"
-          size={22}
+          size={16}
           color={colors.primary}
         />
         <Text style={styles.markAllText}>Read All</Text>
@@ -354,6 +432,20 @@ const Notification = () => {
           ))}
         </ScrollView>
       </View>
+
+      {/* Section label */}
+      {filteredNotifications.length > 0 && (
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>
+            {filteredNotifications.filter((n) => !n.read).length > 0
+              ? `${filteredNotifications.filter((n) => !n.read).length} Unread`
+              : "All caught up"}
+          </Text>
+          <Text style={styles.sectionCount}>
+            {filteredNotifications.length} total
+          </Text>
+        </View>
+      )}
 
       <FlatList
         style={styles.list}

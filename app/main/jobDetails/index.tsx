@@ -28,6 +28,7 @@ import {
   getEmployeeVerificationStatus,
   markArrival,
   getJobPosting,
+  startWorkerSession,
 } from "../../../services/api";
 import { applyJobOffline } from "../../../services/offlineQueueExamples";
 import socketService from "../../../services/socketService";
@@ -160,27 +161,31 @@ const JobDetails = () => {
   }, [jobId, jobData]);
 
   useEffect(() => {
-    if (!jobId || !job?.requiresVerification || isEmployer) return;
+    if (!jobId || isEmployer) return;
 
     const handleVerificationStatusUpdated = (data: any) => {
-      console.log("📊 Verification status updated via Socket.IO:", data);
-      if (data.jobId === jobId) {
+      console.log("📊 Verification/arrival status updated via Socket.IO:", data);
+      if (!data || data.jobId === jobId || data.id === jobId) {
         checkVerificationStatus();
       }
     };
 
-    socketService.on(
-      "verification-status-updated",
-      handleVerificationStatusUpdated
-    );
+    socketService.on("verification-status-updated", handleVerificationStatusUpdated);
+    socketService.on("worker-arrival-approved", handleVerificationStatusUpdated);
+    socketService.on("arrival-approved", handleVerificationStatusUpdated);
+    socketService.on("worker-marked-no-show", handleVerificationStatusUpdated);
+    socketService.on("worker-late-arrival-allowed", handleVerificationStatusUpdated);
+    socketService.on("session_status_updated", handleVerificationStatusUpdated);
 
     return () => {
-      socketService.off(
-        "verification-status-updated",
-        handleVerificationStatusUpdated
-      );
+      socketService.off("verification-status-updated", handleVerificationStatusUpdated);
+      socketService.off("worker-arrival-approved", handleVerificationStatusUpdated);
+      socketService.off("arrival-approved", handleVerificationStatusUpdated);
+      socketService.off("worker-marked-no-show", handleVerificationStatusUpdated);
+      socketService.off("worker-late-arrival-allowed", handleVerificationStatusUpdated);
+      socketService.off("session_status_updated", handleVerificationStatusUpdated);
     };
-  }, [jobId, job?.requiresVerification, isEmployer]);
+  }, [jobId, isEmployer]);
 
   const checkVerificationStatus = async () => {
     if (!jobId) return;
@@ -206,27 +211,76 @@ const JobDetails = () => {
 
   const dispatch = useDispatch();
 
-  // Inside the canStartWork block's onPress:
-  const handleStartWork = () => {
+  const [startingWork, setStartingWork] = useState(false);
+
+  // Worker starts work explicitly
+  const handleStartWork = async () => {
     console.log("Starting work for job:", job);
-    dispatch(
-      setActiveJob({
-        activeJobId: job._id,
-        activeJobName: job.name,
+    const sStatus = verificationStatus?.sessionStatus;
+
+    // If session is already active or paused, navigate to timer
+    if (sStatus === "active" || sStatus === "paused") {
+      dispatch(
+        setActiveJob({
+          activeJobId: job._id,
+          activeJobName: job.name,
+          employerId: job.userId?._id || job.userId?.id || job.userId,
+          employerName:
+            `${job.userId?.firstName || ""} ${job.userId?.lastName || ""}`.trim(),
+          employerImage: job.userId?.profilePicture,
+        })
+      );
+      navigation.navigate("JobTimer", {
+        jobId: job._id,
+        jobName: job.name,
         employerId: job.userId?._id || job.userId?.id || job.userId,
         employerName:
           `${job.userId?.firstName || ""} ${job.userId?.lastName || ""}`.trim(),
         employerImage: job.userId?.profilePicture,
-      })
-    );
-    navigation.navigate("JobTimer", {
-      jobId: job._id,
-      jobName: job.name,
-      employerId: job.userId?._id || job.userId?.id || job.userId,
-      employerName:
-        `${job.userId?.firstName || ""} ${job.userId?.lastName || ""}`.trim(),
-      employerImage: job.userId?.profilePicture,
-    });
+      });
+      return;
+    }
+
+    try {
+      setStartingWork(true);
+      const response = await startWorkerSession(job._id);
+
+      if (response.data?.success) {
+        dispatch(
+          setActiveJob({
+            activeJobId: job._id,
+            activeJobName: job.name,
+            employerId: job.userId?._id || job.userId?.id || job.userId,
+            employerName:
+              `${job.userId?.firstName || ""} ${job.userId?.lastName || ""}`.trim(),
+            employerImage: job.userId?.profilePicture,
+          })
+        );
+        navigation.navigate("JobTimer", {
+          jobId: job._id,
+          jobName: job.name,
+          employerId: job.userId?._id || job.userId?.id || job.userId,
+          employerName:
+            `${job.userId?.firstName || ""} ${job.userId?.lastName || ""}`.trim(),
+          employerImage: job.userId?.profilePicture,
+        });
+      } else {
+        Toast.show({
+          type: "error",
+          text1: "Failed to Start",
+          text2: response.data?.message || "Could not start work session.",
+        });
+      }
+    } catch (error: any) {
+      Toast.show({
+        type: "error",
+        text1: "Error",
+        text2:
+          error?.response?.data?.message || "Failed to start work session.",
+      });
+    } finally {
+      setStartingWork(false);
+    }
   };
 
   // const handleApply = () => {
@@ -722,9 +776,17 @@ const JobDetails = () => {
             </View>
             <View style={styles.detailItem}>
               <Ionicons name="calendar-outline" size={20} color={colors.grey} />
-              <Text style={styles.detailLabel}>Posted</Text>
+              <Text style={styles.detailLabel}>
+                {job.isFlexible && job.beforeDate && !job.onDate ? "Before" : "Date"}
+              </Text>
               <Text style={styles.detailValue}>
-                {job.createdAt ? formatDateDDMMYYYY(job.createdAt) : "N/A"}
+                {job.onDate
+                  ? formatDateDDMMYYYY(job.onDate)
+                  : job.beforeDate
+                  ? formatDateDDMMYYYY(job.beforeDate)
+                  : job.createdAt
+                  ? formatDateDDMMYYYY(job.createdAt)
+                  : "N/A"}
               </Text>
             </View>
           </View>
@@ -816,12 +878,80 @@ const JobDetails = () => {
               </View>
             ) : (
               <View style={styles.verificationStatusContainer}>
-                {/* Status based on arrivalStatus from API */}
+                {/* Status based on arrivalStatus and sessionStatus from API */}
                 {(() => {
                   const arrivalStatus =
                     verificationStatus?.arrivalStatus || "pending";
+                  const sessionStatus = verificationStatus?.sessionStatus;
                   const canStartWork =
                     verificationStatus?.canStartWork || false;
+                  const isNoShow =
+                    arrivalStatus === "no_show" || sessionStatus === "no_show";
+                  const isCompleted = sessionStatus === "completed";
+
+                  if (isNoShow) {
+                    return (
+                      <View style={styles.verificationStatusRow}>
+                        <Ionicons
+                          name="close-circle-outline"
+                          size={24}
+                          color="#EF4444"
+                        />
+                        <View style={styles.verificationStatusInfo}>
+                          <Text
+                            style={[
+                              styles.verificationStatusText,
+                              { color: "#EF4444" },
+                            ]}
+                          >
+                            Marked as absent
+                          </Text>
+                          <Text style={styles.verificationMessageText}>
+                            Contact the employer if you arrived late.
+                          </Text>
+                          <TouchableOpacity
+                            style={[
+                              styles.refreshCodeButtonLarge,
+                              {
+                                marginTop: 12,
+                                backgroundColor: colors.primary,
+                              },
+                            ]}
+                            onPress={checkVerificationStatus}
+                          >
+                            <Text style={styles.refreshCodeButtonText}>
+                              Refresh Status
+                            </Text>
+                          </TouchableOpacity>
+                        </View>
+                      </View>
+                    );
+                  }
+
+                  if (isCompleted) {
+                    return (
+                      <View style={styles.verificationStatusRow}>
+                        <Ionicons
+                          name="checkmark-done-circle"
+                          size={24}
+                          color="#10B981"
+                        />
+                        <View style={styles.verificationStatusInfo}>
+                          <Text
+                            style={[
+                              styles.verificationStatusText,
+                              { color: "#10B981" },
+                            ]}
+                          >
+                            Work Completed
+                          </Text>
+                          <Text style={styles.verificationMessageText}>
+                            You have completed your shift for this job.
+                          </Text>
+                        </View>
+                      </View>
+                    );
+                  }
 
                   if (arrivalStatus === "pending") {
                     return (
@@ -927,7 +1057,10 @@ const JobDetails = () => {
                         </View>
                       </View>
                     );
-                  } else if (canStartWork) {
+                  } else if (canStartWork || arrivalStatus === "verified") {
+                    const isWorking = sessionStatus === "active";
+                    const isPaused = sessionStatus === "paused";
+
                     return (
                       <View style={styles.verificationStatusRow}>
                         <Ionicons
@@ -945,32 +1078,34 @@ const JobDetails = () => {
                             Verified
                           </Text>
                           <Text style={styles.verificationMessageText}>
-                            You are verified and can start working!
+                            {isWorking
+                              ? "You are currently working."
+                              : isPaused
+                                ? "Your work session is paused."
+                                : "Ready to start"}
                           </Text>
                           <TouchableOpacity
                             style={[
                               styles.refreshCodeButtonLarge,
                               {
                                 marginTop: 12,
-                                backgroundColor: colors.primary,
+                                backgroundColor: isWorking
+                                  ? colors.darkGreen
+                                  : colors.primary,
                               },
                             ]}
                             onPress={handleStartWork}
-                            // navigation.navigate("JobTimer", {
-                            //   jobId: job._id,
-                            //   jobName: job.name,
-                            //   employerId:
-                            //     job.userId?._id ||
-                            //     job.userId?.id ||
-                            //     job.userId,
-                            //   employerName:
-                            //     `${job.userId?.firstName || ""} ${job.userId?.lastName || ""}`.trim(),
-                            //   employerImage: job.userId?.profilePicture,
-                            // })
+                            disabled={startingWork}
                           >
-                            <Text style={styles.refreshCodeButtonText}>
-                              Go to Timer
-                            </Text>
+                            {startingWork ? (
+                              <ActivityIndicator size="small" color="#fff" />
+                            ) : (
+                              <Text style={styles.refreshCodeButtonText}>
+                                {isWorking || isPaused
+                                  ? "Go to Timer"
+                                  : "Start Work"}
+                              </Text>
+                            )}
                           </TouchableOpacity>
                         </View>
                       </View>

@@ -49,6 +49,8 @@ const JobCard = ({
     applicantCount,
     location,
     createdAt,
+    onDate,
+    beforeDate,
     status = "active",
     jobStatus, // Backend job status
     category,
@@ -164,7 +166,13 @@ const JobCard = ({
           style={{ marginLeft: 14 }}
         />
         <Text style={styles.metaText}>
-          {createdAt ? formatDateDDMMYYYY(createdAt) : "N/A"}
+          {onDate
+            ? formatDateDDMMYYYY(onDate)
+            : beforeDate
+            ? formatDateDDMMYYYY(beforeDate)
+            : createdAt
+            ? formatDateDDMMYYYY(createdAt)
+            : "N/A"}
         </Text>
       </View>
 

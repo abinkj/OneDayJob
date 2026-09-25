@@ -1,13 +1,8 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { useQueryClient } from "@tanstack/react-query";
 import { useSelector } from "react-redux";
-import {
-  getJobPostingsByUserId,
-  getJobDashboard,
-  getAppliedJobsByUserId,
-} from "../services/api";
+import { getActiveJobSession } from "../services/api";
 import socketService from "../services/socketService";
-import { AppState, AppStateStatus } from "react-native";
+import { AppState, AppStateStatus, DeviceEventEmitter } from "react-native";
 import { JobPost } from "../types";
 
 export interface ActiveJobState {
@@ -22,15 +17,20 @@ export interface ActiveJobState {
     timestamp: number;
   } | null;
   allWorkersCompleted: boolean;
+  role?: "employer" | "worker" | null;
 }
 
 // Global throttle variable (module-level)
 let globalLastActiveJobFetch = 0;
 
+export const resetActiveJobThrottle = () => {
+  globalLastActiveJobFetch = 0;
+  DeviceEventEmitter.emit("REFETCH_ACTIVE_JOB");
+};
+
 export const useActiveJob = () => {
   const userData = useSelector((state: any) => state.authentication.userData);
   const userId = userData?.id || userData?._id;
-  const queryClient = useQueryClient();
 
   const [activeJobState, setActiveJobState] = useState<ActiveJobState>({
     job: null,
@@ -43,260 +43,134 @@ export const useActiveJob = () => {
   });
 
   const appState = useRef<AppStateStatus>(AppState.currentState);
-  const completedWorkersRef = useRef<Set<string>>(new Set());
-  const isFirstLoad = useRef(true);
-
   const lastFetchRef = useRef<number>(0);
-  const THROTTLE_MS = 5000; // Minimum 5 seconds between checks
+  const THROTTLE_MS = 2500; // 2.5s throttle to coalesce burst socket events
 
   const checkForActiveJob = useCallback(async () => {
     const now = Date.now();
-    // Use global throttle to prevent multiple hooks from firing
     if (now - globalLastActiveJobFetch < THROTTLE_MS) {
-      // Silently skip without logging
       return;
     }
 
     globalLastActiveJobFetch = now;
-    lastFetchRef.current = now; // update local ref too just in case
+    lastFetchRef.current = now;
 
     if (!userId) {
-      setActiveJobState((prev) => ({ ...prev, loading: false }));
+      setActiveJobState((prev) => ({ ...prev, loading: false, job: null }));
       return;
     }
 
     try {
-      // 1. Get recent jobs (posted by user AND applied by user)
-      // Use queryClient to cache responses and avoid 429s
-      // We use standard query keys that might be used elsewhere
-      const [postedRes, appliedRes] = await Promise.all([
-        queryClient.fetchQuery({
-          queryKey: ["userJobs", userId, "activeCheck"], // Unique key for this check to avoid conflict with infinite query
-          queryFn: () => getJobPostingsByUserId(userId, 1, 5),
-          staleTime: 1000 * 60 * 2, // 2 minutes stale time
-        }),
-        queryClient.fetchQuery({
-          queryKey: ["userAppliedJobs", userId, "activeCheck"],
-          queryFn: () => getAppliedJobsByUserId(userId, 1, 5),
-          staleTime: 1000 * 60 * 2, // 2 minutes stale time
-        }),
-      ]);
+      const response = await getActiveJobSession();
 
-      const postedJobs = postedRes.data || [];
+      if (response.data?.success && response.data.data) {
+        const {
+          hasActiveJob,
+          role,
+          job,
+          activeWorkerCount,
+          completedWorkerCount,
+          totalWorkerCount,
+          allWorkersCompleted,
+          lastWorkerCompletion,
+        } = response.data.data;
 
-      // Extract jobs from applications - applications have structure: { job: {...}, applicationId, status }
-      const appliedJobs = (appliedRes.data || [])
-        .filter((app: any) => app && app.job && app.job._id) // Only valid applications with jobs
-        .map((app: any) => app.job); // Extract the nested job object
+        if (hasActiveJob && job) {
+          console.log("[useActiveJob] Active job found:", {
+            jobId: job._id,
+            name: job.name,
+            role,
+            activeWorkerCount,
+            totalWorkerCount,
+            allWorkersCompleted,
+          });
 
-      const allJobs = [...postedJobs, ...appliedJobs];
-
-      console.log("[useActiveJob] Checking for active jobs:", {
-        postedJobsCount: postedJobs.length,
-        appliedJobsCount: appliedJobs.length,
-        totalJobs: allJobs.length,
-        jobStatuses: allJobs.map((j) => ({
-          id: j?._id,
-          status: j?.jobStatus || j?.status,
-        })),
-      });
-
-      const inProgressJob = allJobs.find((job: JobPost) => {
-        const status = (job?.jobStatus || job?.status || "").toLowerCase();
-        return (
-          status === "in_progress" &&
-          !job?.isCompletedByWorker &&
-          Boolean(job?._id)
-        );
-      });
-
-      if (inProgressJob) {
-        console.log(
-          "[useActiveJob] Found in-progress job:",
-          inProgressJob._id,
-          inProgressJob.name
-        );
-      } else {
-        console.log("[useActiveJob] No in-progress job found");
-      }
-
-      if (!inProgressJob) {
-        setActiveJobState((prev) => ({
-          ...prev,
-          job: null,
-          loading: false,
-          activeWorkerCount: 0,
-          completedWorkerCount: 0,
-          totalWorkerCount: 0,
-        }));
-        return;
-      }
-
-      // Check if current user is the employer (job creator)
-      // job.userId can be either a string ID or an object with id property
-      const jobCreatorId =
-        typeof inProgressJob.userId === "object" &&
-        inProgressJob.userId !== null
-          ? inProgressJob.userId.id || inProgressJob.userId._id
-          : inProgressJob.userId;
-
-      const isEmployer = jobCreatorId === userId;
-
-      console.log("[useActiveJob] User role:", {
-        isEmployer,
-        jobCreatorId,
-        currentUser: userId,
-        jobUserId: inProgressJob.userId,
-      });
-
-      // For workers: Just show the active job bar without dashboard details
-      if (!isEmployer) {
-        console.log(
-          "[useActiveJob] Worker - showing active job bar without dashboard"
-        );
-        setActiveJobState((prev) => ({
-          ...prev,
-          job: inProgressJob,
-          loading: false,
-          activeWorkerCount: 0,
-          completedWorkerCount: 0,
-          totalWorkerCount: 0,
-        }));
-        return;
-      }
-
-      // 2. For employers: Get dashboard details to check worker status
-      console.log("[useActiveJob] Employer - fetching dashboard");
-      const dashboardRes = await getJobDashboard(inProgressJob._id, true);
-
-      if (dashboardRes.data?.success) {
-        const dashboard = dashboardRes.data.data;
-        const workers = dashboard.summary?.workers || [];
-
-        // Count workers by status
-        const activeWorkers = workers.filter(
-          (w: any) => w.status === "active" || w.status === "paused"
-        );
-        const completedWorkers = workers.filter(
-          (w: any) => w.status === "completed"
-        );
-        const notStartedWorkers = workers.filter(
-          (w: any) => w.status === "not_started"
-        );
-
-        // Check for new completions
-        let lastCompletion = activeJobState.lastWorkerCompletion;
-        let hasNewCompletion = false;
-
-        completedWorkers.forEach((w: any) => {
-          if (!completedWorkersRef.current.has(w.id)) {
-            completedWorkersRef.current.add(w.id);
-            // Only set lastCompletion if it's NOT the first load
-            if (!isFirstLoad.current) {
-              lastCompletion = {
-                workerId: w.id,
-                workerName: w.name,
-                timestamp: Date.now(),
-              };
-              hasNewCompletion = true;
-            }
-          }
-        });
-
-        // After processing all workers, mark first load as done
-        if (isFirstLoad.current) {
-          isFirstLoad.current = false;
-        }
-
-        const isAllCompleted =
-          workers.length > 0 && completedWorkers.length === workers.length;
-
-        // Condition: "worker started working"
-        // We consider it "live" if at least one worker is active/paused
-        // OR if some workers completed but not all (job still in progress)
-        // OR if all completed but job status is still 'in_progress' (waiting for employer to close?? user said "only gets stop when the job is completed")
-        // User said: "only gets stop when the job is completed" -> jobStatus becomes 'completed'
-
-        const hasStarted =
-          activeWorkers.length > 0 || completedWorkers.length > 0;
-
-        if (hasStarted) {
           setActiveJobState({
-            job: inProgressJob,
+            job,
+            role,
             loading: false,
-            activeWorkerCount: activeWorkers.length,
-            completedWorkerCount: completedWorkers.length,
-            totalWorkerCount: workers.length,
-            lastWorkerCompletion: lastCompletion,
-            allWorkersCompleted: isAllCompleted,
+            activeWorkerCount: activeWorkerCount ?? 0,
+            completedWorkerCount: completedWorkerCount ?? 0,
+            totalWorkerCount: totalWorkerCount ?? 0,
+            allWorkersCompleted: Boolean(allWorkersCompleted),
+            lastWorkerCompletion: lastWorkerCompletion ?? null,
           });
         } else {
-          // Job is in_progress (initiated) but no worker started yet
-          // User requirement: "started working". So maybe we don't show it yet?
-          // But if we don't show it, how do they know?
-          // "when any job is live that i the employer initated the job and the worker started working"
-          // Strict interpretation: Don't show if only 'not_started' workers.
-          setActiveJobState((prev) => ({
-            ...prev,
+          setActiveJobState({
             job: null,
+            role: null,
             loading: false,
-          }));
+            activeWorkerCount: 0,
+            completedWorkerCount: 0,
+            totalWorkerCount: 0,
+            allWorkersCompleted: false,
+            lastWorkerCompletion: null,
+          });
         }
-      }
-    } catch (error) {
-      console.error("Error checking for active job:", error);
-      // Don't modify loading state on error to avoid flickering if it was already loaded
-      // But if it was the first load, we should probably stop loading
-      if (activeJobState.loading) {
+      } else {
         setActiveJobState((prev) => ({ ...prev, loading: false }));
       }
+    } catch (error) {
+      console.error("[useActiveJob] Error checking for active job:", error);
+      setActiveJobState((prev) => ({ ...prev, loading: false }));
     }
-  }, [userId, queryClient]);
+  }, [userId]);
 
   // Initial load
   useEffect(() => {
     checkForActiveJob();
   }, [checkForActiveJob]);
 
-  // Poll every 30s or listen to socket
+  // Event-driven: Listen to internal reset events
+  useEffect(() => {
+    const sub = DeviceEventEmitter.addListener("REFETCH_ACTIVE_JOB", () => {
+      console.log("[useActiveJob] REFETCH_ACTIVE_JOB event received");
+      globalLastActiveJobFetch = 0;
+      checkForActiveJob();
+    });
+    return () => {
+      sub.remove();
+    };
+  }, [checkForActiveJob]);
+
+  // Event-driven: Listen to WebSocket lifecycle events (Zero periodic polling)
   useEffect(() => {
     if (!userId) return;
 
-    const handleUpdate = async () => {
-      console.log("Job updated event received, invalidating queries...");
-      globalLastActiveJobFetch = 0; // Reset throttle so socket event triggers immediate refetch
-      // Invalidate queries to force a fresh fetch
-      await Promise.all([
-        queryClient.invalidateQueries({
-          queryKey: ["userJobs", userId, "activeCheck"],
-        }),
-        queryClient.invalidateQueries({
-          queryKey: ["userAppliedJobs", userId, "activeCheck"],
-        }),
-      ]);
+    const handleUpdate = () => {
+      console.log("[useActiveJob] Job socket update received, refetching immediately...");
+      globalLastActiveJobFetch = 0;
       checkForActiveJob();
     };
 
     socketService.on("job_updated", handleUpdate);
-    socketService.on("session_completed" as any, handleUpdate); // Listen for session completion too
-
-    // Add polling as backup
-    const interval = setInterval(checkForActiveJob, 60000);
+    socketService.on("session_completed" as any, handleUpdate);
+    socketService.on("session_status_updated", handleUpdate);
+    socketService.on("worker-arrival-approved", handleUpdate);
+    socketService.on("arrival-approved", handleUpdate);
+    socketService.on("worker-marked-no-show", handleUpdate);
+    socketService.on("worker-late-arrival-allowed", handleUpdate);
 
     return () => {
       socketService.off("job_updated", handleUpdate);
       socketService.off("session_completed" as any, handleUpdate);
-      clearInterval(interval);
+      socketService.off("session_status_updated", handleUpdate);
+      socketService.off("worker-arrival-approved", handleUpdate);
+      socketService.off("arrival-approved", handleUpdate);
+      socketService.off("worker-marked-no-show", handleUpdate);
+      socketService.off("worker-late-arrival-allowed", handleUpdate);
     };
-  }, [userId, checkForActiveJob, queryClient]);
+  }, [userId, checkForActiveJob]);
 
-  // Handle app state (refetch on foreground)
+  // Lifecycle: Foreground resume refetch
   useEffect(() => {
     const subscription = AppState.addEventListener("change", (nextAppState) => {
       if (
         appState.current.match(/inactive|background/) &&
         nextAppState === "active"
       ) {
+        console.log("[useActiveJob] App foregrounded, refreshing active job state...");
+        globalLastActiveJobFetch = 0;
         checkForActiveJob();
       }
       appState.current = nextAppState;
