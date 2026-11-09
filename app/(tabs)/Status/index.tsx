@@ -48,7 +48,9 @@ import {
   isJobToday,
   isJobLiveOrDueToday,
   formatJobDate,
+  normalizeLocationCoordinates,
 } from "../../../utilities/jobUtils";
+import RepostJobModal from "../../../components/RepostJobModal";
 import { fontSizes } from "../../../themes/fonts";
 
 type Route = {
@@ -79,6 +81,8 @@ const MyPostTab = () => {
   const deleteJobMutation = useDeleteJob();
 
   const [selectedStatus, setSelectedStatus] = useState<string | null>(null);
+  const [selectedJobForRepost, setSelectedJobForRepost] = useState<JobPost | null>(null);
+  const [showRepostModal, setShowRepostModal] = useState(false);
   // const [paymentModalVisible, setPaymentModalVisible] = useState(false);
   // const [selectedJobForPayment, setSelectedJobForPayment] = useState<JobPost | null>(null);
 
@@ -200,6 +204,11 @@ const MyPostTab = () => {
     getJobStatusInfo(JOB_STATUSES.CANCELLED),
   ];
 
+  const handleRepost = (job: JobPost) => {
+    setSelectedJobForRepost(job);
+    setShowRepostModal(true);
+  };
+
   const renderItem = ({ item }: { item: JobPost }) => (
     <JobCard
       key={item._id}
@@ -207,9 +216,8 @@ const MyPostTab = () => {
       onPress={() => handleNext(item._id)}
       onDelete={() => handleDelete(item._id)}
       onSummary={() => handleSummary(item._id, item.name)}
-      // onPayment={() => handlePayment(item)}
+      onRepost={(job: any) => handleRepost(job)}
       isEmployer={true}
-      // showPaymentButton={true}
     />
   );
 
@@ -406,6 +414,21 @@ const MyPostTab = () => {
         onEndReachedThreshold={0.5}
         ListEmptyComponent={renderEmpty}
         ListFooterComponent={renderFooter}
+      />
+
+      <RepostJobModal
+        visible={showRepostModal}
+        job={selectedJobForRepost}
+        onClose={() => {
+          setShowRepostModal(false);
+          setSelectedJobForRepost(null);
+        }}
+        onSuccess={() => {
+          refetch();
+        }}
+        onEditFullDetails={(jobData) => {
+          navigation.navigate("PostJob", { editJob: jobData });
+        }}
       />
       {/* {selectedJobForPayment && (
         <PaymentModal

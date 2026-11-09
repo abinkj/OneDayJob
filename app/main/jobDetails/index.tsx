@@ -38,6 +38,7 @@ import { useNotifications } from "../../../contexts/NotificationContext";
 import { JobDetailsSkeleton } from "../../../components/Shimmer/Skeletons";
 import * as Location from "expo-location";
 import CustomButton from "../../../components/CustomButton";
+import RepostJobModal from "../../../components/RepostJobModal";
 import { CustomAlertManager } from "../../../components/CustomAlert/AlertProvider";
 import {
   defaultJobCategories,
@@ -50,6 +51,7 @@ import {
   formatDateDDMMYYYY,
   formatTimePreference,
   format24to12h,
+  normalizeLocationCoordinates,
 } from "../../../utilities/jobUtils";
 import { useQueryClient } from "@tanstack/react-query";
 import { setActiveJob } from "../../../redux/reducers/jobReducer";
@@ -80,6 +82,7 @@ const JobDetails = () => {
   const { sendJobUpdateNotification } = useNotifications();
 
   const [arrivalLoading, setArrivalLoading] = useState(false);
+  const [showRepostModal, setShowRepostModal] = useState(false);
   const [currentLocationAddress, setCurrentLocationAddress] = useState<string>(
     "Getting location..."
   );
@@ -1221,6 +1224,52 @@ const JobDetails = () => {
           )}
         </View>
       )}
+
+      {/* Action Buttons for Employer (Elderly Friendly Repost) */}
+      {isEmployer && (
+        <View style={styles.actionContainer}>
+          <TouchableOpacity
+            style={{
+              flex: 1,
+              flexDirection: "row",
+              alignItems: "center",
+              justifyContent: "center",
+              backgroundColor: "#10B981",
+              paddingVertical: 14,
+              borderRadius: 12,
+              gap: 8,
+              shadowColor: "#10B981",
+              shadowOffset: { width: 0, height: 2 },
+              shadowOpacity: 0.25,
+              shadowRadius: 4,
+              elevation: 3,
+            }}
+            onPress={() => setShowRepostModal(true)}
+            activeOpacity={0.8}
+          >
+            <Ionicons name="repeat" size={20} color="#fff" />
+            <Text style={{ fontSize: 16, fontWeight: "800", color: "#fff" }}>
+              Repost This Job
+            </Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
+      {/* Elderly-Friendly Fast Repost Modal */}
+      <RepostJobModal
+        visible={showRepostModal}
+        job={job}
+        onClose={() => setShowRepostModal(false)}
+        onSuccess={() => {
+          navigation.goBack();
+        }}
+        onEditFullDetails={(jobData) => {
+          navigation.navigate("(tabs)", {
+            screen: "PostJob",
+            params: { editJob: jobData },
+          });
+        }}
+      />
     </View>
   );
 };

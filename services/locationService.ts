@@ -1,4 +1,10 @@
 import * as Location from "expo-location";
+import {
+  saveCachedLocation,
+  getCachedLocation,
+} from "../utilities/mmkvStore";
+
+export { saveCachedLocation, getCachedLocation };
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -82,22 +88,22 @@ const GOOGLE_PLACES_AUTOCOMPLETE_URL = "https://maps.googleapis.com/maps/api/pla
 const GOOGLE_PLACE_DETAILS_URL = "https://maps.googleapis.com/maps/api/place/details/json";
 
 /** Default timeout for all Google API network calls (ms). */
-const NETWORK_TIMEOUT_MS = 10_000;
+const NETWORK_TIMEOUT_MS = 5_000;
 
-/** GPS acquisition: max age for a cached fix to be considered fresh (ms). */
-const GPS_CACHE_MAX_AGE_MS = 30_000;
+/** GPS acquisition: max age for a cached fix to be considered fresh (ms) - 10 minutes. */
+const GPS_CACHE_MAX_AGE_MS = 10 * 60 * 1000;
 
 /** GPS acquisition: accuracy threshold below which a cached fix is acceptable (m). */
-const GPS_CACHE_REQUIRED_ACCURACY_M = 20;
+const GPS_CACHE_REQUIRED_ACCURACY_M = 100;
 
 /** GPS acquisition: accuracy threshold below which we stop retrying (m). */
-const GPS_TARGET_ACCURACY_M = 15;
+const GPS_TARGET_ACCURACY_M = 25;
 
 /** GPS acquisition: max retry attempts for a fresh fix. */
-const GPS_MAX_RETRIES = 3;
+const GPS_MAX_RETRIES = 1;
 
 /** GPS acquisition: delay between retries (ms). */
-const GPS_RETRY_DELAY_MS = 800;
+const GPS_RETRY_DELAY_MS = 400;
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -269,75 +275,62 @@ export const getHighAccuracyLocation =
   async (): Promise<Location.LocationObject> => {
     const t0 = Date.now();
 
-    // Check device location services are on
+    // Fast path: use a recent, reasonably accurate cached fix if available (<100m, <10 mins)
     try {
-      const servicesEnabled = await Location.hasServicesEnabledAsync();
-      console.log(`[Location] Device location services enabled: ${servicesEnabled}`);
-      if (!servicesEnabled) {
-        console.warn("[Location] ⚠️ Device location services (GPS) are currently disabled!");
-      }
-    } catch (e) {
-      console.warn("[Location] Could not check hasServicesEnabledAsync:", e);
-    }
-
-    // Fast path: use a recent, accurate cached fix if available
-    const lastKnown = await Location.getLastKnownPositionAsync({
-      maxAge: GPS_CACHE_MAX_AGE_MS,
-      requiredAccuracy: GPS_CACHE_REQUIRED_ACCURACY_M,
-    });
-    if (lastKnown) {
-      console.log(
-        `[Location] GPS fix via cache — ${Date.now() - t0} ms` +
-          ` | lat: ${lastKnown.coords.latitude.toFixed(6)}, lng: ${lastKnown.coords.longitude.toFixed(6)}` +
-          ` | accuracy: ${lastKnown.coords.accuracy?.toFixed(1) ?? "??"} m`
-      );
-      return lastKnown;
-    }
-
-    // Slow path: request a fresh fix, retry for best accuracy
-    let best = await Location.getCurrentPositionAsync({
-      accuracy: Location.Accuracy.Highest,
-    });
-    console.log(
-      `[Location] Initial GPS fix — ${Date.now() - t0} ms` +
-        ` | lat: ${best.coords.latitude.toFixed(6)}, lng: ${best.coords.longitude.toFixed(6)}` +
-        ` | accuracy: ${best.coords.accuracy?.toFixed(1) ?? "??"} m`
-    );
-
-    for (let attempt = 0; attempt < GPS_MAX_RETRIES; attempt++) {
-      const bestAcc = best.coords.accuracy ?? Infinity;
-      if (bestAcc <= GPS_TARGET_ACCURACY_M) {
-        console.log(`[Location] Accuracy satisfactory (≤ ${GPS_TARGET_ACCURACY_M}m: ${bestAcc.toFixed(1)}m), skipping further retries.`);
-        break;
-      }
-
-      await new Promise((r) => setTimeout(r, GPS_RETRY_DELAY_MS));
-
-      try {
-        const candidate = await Location.getCurrentPositionAsync({
-          accuracy: Location.Accuracy.Highest,
-        });
-        const candidateAcc = candidate.coords.accuracy ?? Infinity;
+      const lastKnown = await Location.getLastKnownPositionAsync({
+        maxAge: GPS_CACHE_MAX_AGE_MS,
+        requiredAccuracy: GPS_CACHE_REQUIRED_ACCURACY_M,
+      });
+      if (lastKnown) {
         console.log(
-          `[Location] GPS retry ${attempt + 1} — ${Date.now() - t0} ms` +
-            ` | accuracy: ${candidateAcc.toFixed(1)} m` +
-            (candidateAcc < bestAcc ? " ✓ improved" : " — no improvement")
+          `[Location] GPS fix via cache (fast path) — ${Date.now() - t0} ms` +
+            ` | lat: ${lastKnown.coords.latitude.toFixed(6)}, lng: ${lastKnown.coords.longitude.toFixed(6)}` +
+            ` | accuracy: ${lastKnown.coords.accuracy?.toFixed(1) ?? "??"} m`
         );
-        if (candidateAcc < bestAcc) best = candidate;
-      } catch (retryErr) {
-        console.warn(
-          `[Location] GPS retry ${attempt + 1} failed — ${Date.now() - t0} ms | error:`,
-          retryErr
-        );
+        return lastKnown;
       }
+    } catch (cacheErr) {
+      console.warn("[Location] Last known position check failed:", cacheErr);
     }
 
-    console.log(
-      `[Location] GPS acquisition done — ${Date.now() - t0} ms total` +
-        ` | final: (${best.coords.latitude.toFixed(6)}, ${best.coords.longitude.toFixed(6)})` +
-        ` | best accuracy: ${best.coords.accuracy?.toFixed(1) ?? "??"} m`
-    );
-    return best;
+    // Fresh fix path: request Balanced accuracy (cell + wifi + GPS) with a 4-second timeout
+    try {
+      const freshPositionPromise = Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.Balanced,
+      });
+      const timeoutPromise = new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error("GPS_TIMEOUT")), 4000)
+      );
+
+      const fix = await Promise.race([freshPositionPromise, timeoutPromise]);
+      console.log(
+        `[Location] Acquired fresh GPS fix — ${Date.now() - t0} ms` +
+          ` | lat: ${fix.coords.latitude.toFixed(6)}, lng: ${fix.coords.longitude.toFixed(6)}` +
+          ` | accuracy: ${fix.coords.accuracy?.toFixed(1) ?? "??"} m`
+      );
+      return fix;
+    } catch (freshErr) {
+      console.warn(
+        `[Location] Fresh GPS fix timed out/failed (${freshErr}), trying unconstrained cache fallback...`
+      );
+    }
+
+    // Fallback: any available cached location regardless of age or accuracy
+    try {
+      const unconstrained = await Location.getLastKnownPositionAsync({});
+      if (unconstrained) {
+        console.log(`[Location] Unconstrained cache fallback succeeded — ${Date.now() - t0} ms`);
+        return unconstrained;
+      }
+    } catch (fallbackErr) {
+      console.warn("[Location] Unconstrained fallback failed:", fallbackErr);
+    }
+
+    // Final fallback: fast low accuracy fix
+    console.log("[Location] Fetching low accuracy emergency fix...");
+    return await Location.getCurrentPositionAsync({
+      accuracy: Location.Accuracy.Low,
+    });
   };
 
 // ─── Reverse Geocoding ────────────────────────────────────────────────────────
@@ -598,7 +591,9 @@ export const getCurrentLocation = async (): Promise<LocationData | null> => {
           ` | accuracy: ${accuracy?.toFixed(1) ?? "??"} m` +
           (isMocked ? " | ⚠️ mocked" : "")
       );
-      return { ...googleResult, ...extras };
+      const finalResult = { ...googleResult, ...extras };
+      saveCachedLocation(finalResult).catch(() => {});
+      return finalResult;
     }
 
     console.log("[Location] Falling back to Expo geocoder...");
@@ -614,13 +609,16 @@ export const getCurrentLocation = async (): Promise<LocationData | null> => {
           ` | accuracy: ${accuracy?.toFixed(1) ?? "??"} m` +
           (isMocked ? " | ⚠️ mocked" : "")
       );
+      saveCachedLocation(expoResult).catch(() => {});
       return expoResult;
     }
 
     console.warn(
       `[Location] ⚠️ Geocoding failed on all providers, returning raw coordinates — total: ${Date.now() - t0} ms`
     );
-    return emptyLocationAt(latitude, longitude, extras);
+    const bareLocation = emptyLocationAt(latitude, longitude, extras);
+    saveCachedLocation(bareLocation).catch(() => {});
+    return bareLocation;
   } catch (err) {
     console.error(`[Location] ✗ getCurrentLocation failed with exception — ${Date.now() - t0} ms:`, err);
     return null;

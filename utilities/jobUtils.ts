@@ -240,3 +240,150 @@ export const format24to12h = (time24?: string): string => {
   const hour12 = hour % 12 || 12;
   return `${hour12}:${String(minute).padStart(2, "0")} ${amPm}`;
 };
+
+/**
+ * Safely extracts latitude and longitude numbers from any job or location object/array
+ */
+export const extractCoordinates = (
+  source: any
+): { latitude: number; longitude: number } | null => {
+  if (!source) return null;
+
+  // 1. Direct object: { latitude, longitude }
+  if (
+    typeof source.latitude === "number" &&
+    !isNaN(source.latitude) &&
+    typeof source.longitude === "number" &&
+    !isNaN(source.longitude)
+  ) {
+    return { latitude: Number(source.latitude), longitude: Number(source.longitude) };
+  }
+
+  // 2. Nested source.coordinates: { latitude, longitude }
+  if (
+    source.coordinates &&
+    typeof source.coordinates.latitude === "number" &&
+    !isNaN(source.coordinates.latitude) &&
+    typeof source.coordinates.longitude === "number" &&
+    !isNaN(source.coordinates.longitude)
+  ) {
+    return {
+      latitude: Number(source.coordinates.latitude),
+      longitude: Number(source.coordinates.longitude),
+    };
+  }
+
+  // 3. Nested source.location.coordinates: { latitude, longitude }
+  if (
+    source.location?.coordinates &&
+    typeof source.location.coordinates.latitude === "number" &&
+    !isNaN(source.location.coordinates.latitude) &&
+    typeof source.location.coordinates.longitude === "number" &&
+    !isNaN(source.location.coordinates.longitude)
+  ) {
+    return {
+      latitude: Number(source.location.coordinates.latitude),
+      longitude: Number(source.location.coordinates.longitude),
+    };
+  }
+
+  // 4. GeoJSON Point in source.coordinates.coordinates: [lng, lat]
+  if (
+    Array.isArray(source.coordinates?.coordinates) &&
+    source.coordinates.coordinates.length >= 2
+  ) {
+    const lng = Number(source.coordinates.coordinates[0]);
+    const lat = Number(source.coordinates.coordinates[1]);
+    if (!isNaN(lat) && !isNaN(lng)) {
+      return { latitude: lat, longitude: lng };
+    }
+  }
+
+  // 5. GeoJSON Point in source.location?.coordinates?.coordinates: [lng, lat]
+  if (
+    Array.isArray(source.location?.coordinates?.coordinates) &&
+    source.location.coordinates.coordinates.length >= 2
+  ) {
+    const lng = Number(source.location.coordinates.coordinates[0]);
+    const lat = Number(source.location.coordinates.coordinates[1]);
+    if (!isNaN(lat) && !isNaN(lng)) {
+      return { latitude: lat, longitude: lng };
+    }
+  }
+
+  // 6. Array [lng, lat] in source.coordinates
+  if (Array.isArray(source.coordinates) && source.coordinates.length >= 2) {
+    const lng = Number(source.coordinates[0]);
+    const lat = Number(source.coordinates[1]);
+    if (!isNaN(lat) && !isNaN(lng)) {
+      return { latitude: lat, longitude: lng };
+    }
+  }
+
+  // 7. Array [lng, lat] in source.location?.coordinates
+  if (
+    Array.isArray(source.location?.coordinates) &&
+    source.location.coordinates.length >= 2
+  ) {
+    const lng = Number(source.location.coordinates[0]);
+    const lat = Number(source.location.coordinates[1]);
+    if (!isNaN(lat) && !isNaN(lng)) {
+      return { latitude: lat, longitude: lng };
+    }
+  }
+
+  // 8. Array [lng, lat] in source itself
+  if (Array.isArray(source) && source.length >= 2) {
+    const lng = Number(source[0]);
+    const lat = Number(source[1]);
+    if (!isNaN(lat) && !isNaN(lng)) {
+      return { latitude: lat, longitude: lng };
+    }
+  }
+
+  // 9. Lat/lng properties
+  const latProp =
+    source.lat ??
+    source.latitude ??
+    source.location?.lat ??
+    source.location?.latitude;
+  const lngProp =
+    source.lng ??
+    source.lon ??
+    source.longitude ??
+    source.location?.lng ??
+    source.location?.longitude;
+  if (latProp !== undefined && lngProp !== undefined) {
+    const parsedLat = Number(latProp);
+    const parsedLng = Number(lngProp);
+    if (!isNaN(parsedLat) && !isNaN(parsedLng)) {
+      return { latitude: parsedLat, longitude: parsedLng };
+    }
+  }
+
+  return null;
+};
+
+/**
+ * Normalizes location from backend formats (GeoJSON [lng, lat] or nested)
+ * to client-friendly { coordinates: { latitude, longitude } }
+ */
+export const normalizeLocationCoordinates = (rawLoc: any): any => {
+  if (!rawLoc) return null;
+  const coords = extractCoordinates(rawLoc);
+
+  if (coords) {
+    return {
+      address: rawLoc.address || rawLoc.location?.address || "",
+      city: rawLoc.city || rawLoc.location?.city || "",
+      state: rawLoc.state || rawLoc.location?.state || "",
+      country: rawLoc.country || rawLoc.location?.country || "",
+      zipCode: rawLoc.zipCode || rawLoc.location?.zipCode || "",
+      name: rawLoc.name || null,
+      district: rawLoc.district || null,
+      coordinates: coords,
+    };
+  }
+
+  return rawLoc;
+};

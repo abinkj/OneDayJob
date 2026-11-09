@@ -202,7 +202,7 @@ const ProfileCompletion = () => {
       <Animated.View
         entering={FadeInDown.delay(400).duration(1000).springify()}
       >
-        {/* Profile Image — Front Camera Selfie */}
+        {/* Profile Image — Front Camera Selfie Only */}
         <TouchableOpacity
           activeOpacity={0.8}
           onPress={handleCapturePhoto}
@@ -223,6 +223,17 @@ const ProfileCompletion = () => {
             <Ionicons name="camera" size={16} color="#fff" />
           </View>
         </TouchableOpacity>
+        <Text
+          style={{
+            fontSize: 12,
+            color: colors.grey,
+            textAlign: "center",
+            marginTop: 6,
+            marginBottom: 16,
+          }}
+        >
+          📸 Front camera selfie only for identity verification
+        </Text>
 
         <LabeledInput
           title={strings.auth.profileCompletion.labelFirstName}

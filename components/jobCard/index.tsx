@@ -24,6 +24,7 @@ const JobCard = ({
   onDelete,
   onPayment,
   onSummary,
+  onRepost,
   withdraw = false,
   isEmployer = false,
   applicationStatus,
@@ -35,6 +36,7 @@ const JobCard = ({
   onDelete?: Function;
   onPayment?: Function;
   onSummary?: Function;
+  onRepost?: Function;
   withdraw?: boolean;
   isEmployer?: boolean;
   applicationStatus?: string;
@@ -222,22 +224,38 @@ const JobCard = ({
           </Text>
         </View>
         {isWorkFinished ? (
-          <TouchableOpacity
-            style={[styles.button, styles.summaryButton]}
-            onPress={() => onSummary && onSummary()}
-          >
-            <Ionicons
-              name="document-text-outline"
-              size={16}
-              color={colors.white}
-              style={{ marginRight: 6 }}
-            />
-            <Text style={styles.buttonText}>View Summary</Text>
-          </TouchableOpacity>
+          <View style={{ flexDirection: "row", gap: 6, alignItems: "center" }}>
+            {isEmployer && onRepost && (
+              <TouchableOpacity
+                style={styles.smallRepostButton}
+                onPress={() => onRepost(data)}
+                activeOpacity={0.7}
+              >
+                <Ionicons
+                  name="repeat"
+                  size={14}
+                  color={colors.white}
+                />
+                <Text style={styles.smallRepostButtonText}>Repost</Text>
+              </TouchableOpacity>
+            )}
+            <TouchableOpacity
+              style={[styles.primaryButton, styles.summaryButton]}
+              onPress={() => onSummary && onSummary()}
+            >
+              <Ionicons
+                name="document-text-outline"
+                size={15}
+                color={colors.white}
+                style={{ marginRight: 4 }}
+              />
+              <Text style={styles.buttonText}>View Summary</Text>
+            </TouchableOpacity>
+          </View>
         ) : (
           <View style={styles.bottomRow}>
             {/* Primary button */}
-            <TouchableOpacity style={styles.button} onPress={() => onPress()}>
+            <TouchableOpacity style={styles.primaryButton} onPress={() => onPress()}>
               {!isEmployer ? (
                 // Workers always see "View Details" regardless of withdraw state
                 <Text style={styles.buttonText}>View Details</Text>
@@ -248,35 +266,43 @@ const JobCard = ({
               )}
             </TouchableOpacity>
 
+            {/* Employer: show Repost button */}
+            {isEmployer && onRepost && (
+              <TouchableOpacity
+                style={styles.smallRepostButton}
+                onPress={() => onRepost(data)}
+                activeOpacity={0.7}
+              >
+                <Ionicons
+                  name="repeat"
+                  size={14}
+                  color={colors.white}
+                />
+                <Text style={styles.smallRepostButtonText}>
+                  Repost
+                </Text>
+              </TouchableOpacity>
+            )}
+
             {/* Secondary button */}
             {isEmployer ? (
-              // Employer: show Delete button
+              // Employer: show Delete button as compact icon button
               <TouchableOpacity
-                style={[
-                  styles.button,
-                  {
-                    backgroundColor: colors.red,
-                    marginLeft: 12,
-                    shadowColor: colors.red,
-                  },
-                ]}
+                style={styles.deleteIconButton}
                 onPress={() => {
                   if (onDelete) onDelete();
                 }}
+                activeOpacity={0.7}
               >
-                <Text style={[styles.buttonText, { color: colors.white }]}>
-                  Delete
-                </Text>
+                <Ionicons name="trash-outline" size={15} color={colors.white} />
               </TouchableOpacity>
             ) : withdraw ? (
               // Worker + cutoff not passed: show Withdraw button
               <TouchableOpacity
                 style={[
-                  styles.button,
+                  styles.primaryButton,
                   {
                     backgroundColor: colors.red,
-                    marginLeft: 12,
-                    shadowColor: colors.red,
                   },
                 ]}
                 onPress={() => {
@@ -388,17 +414,20 @@ const createStyles = (colors: ThemeColors) =>
       flexDirection: "row",
       justifyContent: "flex-end",
       alignItems: "center",
-      marginTop: 12,
+      gap: 6,
+      flexShrink: 1,
     },
     bottomRow1: {
       flexDirection: "row",
       justifyContent: "space-between",
       alignItems: "center",
       marginTop: 12,
+      gap: 6,
     },
     avatars: {
       flexDirection: "row",
       alignItems: "center",
+      flexShrink: 0,
     },
     avatar: {
       width: 18,
@@ -414,16 +443,46 @@ const createStyles = (colors: ThemeColors) =>
     },
     button: {
       backgroundColor: colors.primary,
-      borderRadius: 12,
-      paddingHorizontal: 16,
-      paddingVertical: 12,
+      borderRadius: 10,
+      paddingHorizontal: 12,
+      paddingVertical: 9,
       alignItems: "center",
       justifyContent: "center",
-      shadowColor: colors.primary,
-      shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.2,
-      shadowRadius: 8,
-      elevation: 4,
+      elevation: 2,
+    },
+    primaryButton: {
+      backgroundColor: colors.primary,
+      borderRadius: 10,
+      paddingHorizontal: 11,
+      paddingVertical: 9,
+      alignItems: "center",
+      justifyContent: "center",
+      elevation: 2,
+    },
+    smallRepostButton: {
+      backgroundColor: "#10B981",
+      borderRadius: 10,
+      paddingHorizontal: 9,
+      paddingVertical: 9,
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: 4,
+      elevation: 2,
+    },
+    smallRepostButtonText: {
+      fontSize: 12,
+      fontWeight: "700",
+      color: colors.white,
+    },
+    deleteIconButton: {
+      width: 33,
+      height: 33,
+      borderRadius: 9,
+      backgroundColor: colors.red,
+      alignItems: "center",
+      justifyContent: "center",
+      elevation: 2,
     },
     summaryButton: {
       flexDirection: "row",
@@ -431,7 +490,7 @@ const createStyles = (colors: ThemeColors) =>
     },
     buttonText: {
       fontSize: 12,
-      fontWeight: "600",
+      fontWeight: "700",
       color: colors.white,
     },
     paymentButtonContent: {

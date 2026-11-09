@@ -18,6 +18,7 @@ import {
   searchPlacesWithGoogle, // FIX 3: was searchPlacesFallback — now uses the full Google→Expo chain
   formatLocationDisplay, // FIX 5: shared display formatter, removes duplicated splitting logic
   LocationData,
+  getCachedLocation,
 } from "../../../services/locationService";
 import { useDispatch, useSelector } from "react-redux";
 import Toast from "react-native-toast-message";
@@ -530,6 +531,22 @@ const HomeScreen = () => {
         setLoading(true);
         await dispatch(restoreSession() as any);
         await loadCategories();
+
+        // Fast path: load cached location immediately (0ms instant render)
+        try {
+          const cached = await getCachedLocation();
+          if (cached && cached.coordinates) {
+            setLocation(cached.coordinates);
+            setLocationReady(true);
+            const { specific, broad } = formatLocationDisplay(cached);
+            setLocationDetails({ specific, broad });
+            setLocationAddress(specific);
+            console.log("[HomeScreen] Instant location loaded from cache:", specific);
+          }
+        } catch (cacheLoadErr) {
+          console.warn("[HomeScreen] Failed to load cached location on mount:", cacheLoadErr);
+        }
+
         setIsInitialized(true);
         console.log("[HomeScreen] Initialization complete");
       } catch (error) {

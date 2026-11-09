@@ -272,11 +272,36 @@ const RequestsVerifyTab = ({
         throw new Error(response.data.message || "Failed to start job");
       }
     } catch (error: any) {
-      Toast.show({
-        type: "error",
-        text1: "Start Job Error",
-        text2: error?.response?.data?.message || "Failed to start job.",
-      });
+      const serverMessage: string =
+        error?.response?.data?.message || error?.message || "";
+
+      // If the error is about no active/arrived workers, show a clear explanation
+      const isNoWorkerError =
+        /no\s+(active|arrived|designated|assigned)\s+worker/i.test(
+          serverMessage
+        ) ||
+        /worker.*not\s+(arrived|active)/i.test(serverMessage) ||
+        /no\s+worker/i.test(serverMessage) ||
+        error?.response?.status === 400;
+
+      if (isNoWorkerError) {
+        Alert.alert(
+          "Workers Haven't Arrived Yet",
+          "Manual Activation only works when at least one accepted worker has already pressed the \"I Have Arrived\" button on their app using GPS.\n\n" +
+          "Here's what needs to happen first:\n" +
+          "1\uFE0F\u20E3  Accept applicants from the \"Requests\" tab.\n" +
+          "2\uFE0F\u20E3  Workers travel to the job site.\n" +
+          "3\uFE0F\u20E3  Workers tap \"I Have Arrived\" on their app (GPS-verified).\n" +
+          "4\uFE0F\u20E3  Then you can use Manual Activation to approve them if GPS fails.",
+          [{ text: "Got it", style: "default" }]
+        );
+      } else {
+        Toast.show({
+          type: "error",
+          text1: "Start Job Error",
+          text2: serverMessage || "Failed to start job.",
+        });
+      }
     } finally {
       setInitiatingJob(false);
     }
@@ -512,11 +537,10 @@ const RequestsVerifyTab = ({
                     style={[
                       styles.progressFill,
                       {
-                        width: `${
-                          participatingWorkers.length > 0
+                        width: `${participatingWorkers.length > 0
                             ? (verifiedWorkers.length / participatingWorkers.length) * 100
                             : 0
-                        }%`,
+                          }%`,
                       },
                     ]}
                   />
@@ -1013,33 +1037,33 @@ const RequestsVerifyTab = ({
                 {/* Timer display for active workers */}
                 {(item.arrivalStatus === "verified" || item.isVerified) &&
                   item.totalWorkedSeconds > 0 && (
-                  <View
-                    style={{
-                      marginTop: 10,
-                      paddingTop: 10,
-                      borderTopWidth: 1,
-                      borderTopColor: colors.border,
-                      flexDirection: "row",
-                      alignItems: "center",
-                    }}
-                  >
-                    <Ionicons
-                      name="timer-outline"
-                      size={14}
-                      color={colors.grey}
-                    />
-                    <Text
+                    <View
                       style={{
-                        fontSize: 12,
-                        color: colors.grey,
-                        marginLeft: 4,
+                        marginTop: 10,
+                        paddingTop: 10,
+                        borderTopWidth: 1,
+                        borderTopColor: colors.border,
+                        flexDirection: "row",
+                        alignItems: "center",
                       }}
                     >
-                      Time worked: {Math.floor(item.totalWorkedSeconds / 3600)}h{" "}
-                      {Math.floor((item.totalWorkedSeconds % 3600) / 60)}m
-                    </Text>
-                  </View>
-                )}
+                      <Ionicons
+                        name="timer-outline"
+                        size={14}
+                        color={colors.grey}
+                      />
+                      <Text
+                        style={{
+                          fontSize: 12,
+                          color: colors.grey,
+                          marginLeft: 4,
+                        }}
+                      >
+                        Time worked: {Math.floor(item.totalWorkedSeconds / 3600)}h{" "}
+                        {Math.floor((item.totalWorkedSeconds % 3600) / 60)}m
+                      </Text>
+                    </View>
+                  )}
               </View>
             );
           }}

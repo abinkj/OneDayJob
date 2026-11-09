@@ -10,7 +10,7 @@ import {
   KeyboardAvoidingView,
 } from "react-native";
 import { Image } from "expo-image";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useRoute } from "@react-navigation/native";
 import { useSelector } from "react-redux";
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "../../../contexts/ThemeContext";
@@ -47,6 +47,7 @@ const PostJobScreen = ({ navigation: navProp }) => {
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const navigation = useNavigation();
+  const route = useRoute<any>();
   const { kycStatus } = useSelector((state: any) => state.authentication);
   const { showAlert } = useAlert();
   const scrollViewRef = useRef<ScrollView>(null);
@@ -103,6 +104,49 @@ const PostJobScreen = ({ navigation: navProp }) => {
   useEffect(() => {
     loadCategories();
   }, []);
+
+  // Pre-fill form when navigating from Repost Job with "Edit Full Details"
+  useEffect(() => {
+    const editJob = route?.params?.editJob;
+    if (editJob) {
+      console.log("[PostJob] Prefilling form with job to repost:", editJob.name);
+      if (editJob.name) setJobName(editJob.name);
+      if (editJob.description) setJobDescription(editJob.description);
+      if (editJob.budget) setBudget(String(editJob.budget));
+      if (editJob.isMultiVacancy !== undefined) {
+        setIsMultipleVacancy(editJob.isMultiVacancy);
+      }
+      if (editJob.participantsNumber) {
+        setVacancyCount(editJob.participantsNumber);
+      }
+      if (editJob.isRemote !== undefined) {
+        setCanBeDoneRemotely(editJob.isRemote);
+      }
+      if (editJob.location) setSelectedLocation(editJob.location);
+      if (editJob.address || editJob.location?.address) {
+        setTaskAddress(editJob.address || editJob.location?.address);
+      }
+      if (Array.isArray(editJob.requirements)) {
+        setRequirements(editJob.requirements);
+      }
+      if (editJob.onDate) {
+        setScheduleDate(new Date(editJob.onDate));
+      }
+
+      // Match category
+      const catId =
+        typeof editJob.category === "object"
+          ? editJob.category?._id || editJob.category?.id
+          : editJob.category;
+      if (catId) {
+        setSelectedCategory(catId);
+        const catName =
+          typeof editJob.category === "object" ? editJob.category?.name : "";
+        if (catName) setSelectedValue(catName);
+      }
+      setCurrentStep(1);
+    }
+  }, [route?.params?.editJob]);
   // useEffect(() => {
   //   const fetchUser = async () => {
   //     try {

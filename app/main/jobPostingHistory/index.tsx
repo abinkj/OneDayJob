@@ -18,7 +18,12 @@ import StatusFilter from "../../../components/statusFilter";
 import { JobCardSkeleton } from "../../../components/Shimmer/Skeletons";
 import { useUserJobPostings, useDeleteJob } from "../../../hooks/useJobs";
 import { JobPost } from "../../../types";
-import { getJobStatusInfo, JOB_STATUSES } from "../../../utilities/statusUtils";
+import {
+  getJobStatusInfo,
+  JOB_STATUSES,
+} from "../../../utilities/statusUtils";
+import { normalizeLocationCoordinates } from "../../../utilities/jobUtils";
+import RepostJobModal from "../../../components/RepostJobModal";
 import { createStyles } from "./styles";
 
 const JobPostingHistory = () => {
@@ -42,6 +47,8 @@ const JobPostingHistory = () => {
 
   const deleteJobMutation = useDeleteJob();
   const [selectedStatus, setSelectedStatus] = useState<string | null>(null);
+  const [selectedJobForRepost, setSelectedJobForRepost] = useState<JobPost | null>(null);
+  const [showRepostModal, setShowRepostModal] = useState(false);
 
   // Flatten data from paginated response
   const posts = useMemo(() => {
@@ -121,6 +128,11 @@ const JobPostingHistory = () => {
     );
   }
 
+  const handleRepost = (job: JobPost) => {
+    setSelectedJobForRepost(job);
+    setShowRepostModal(true);
+  };
+
   const renderItem = ({ item }: { item: JobPost }) => (
     <JobCard
       key={item._id}
@@ -128,6 +140,7 @@ const JobPostingHistory = () => {
       onPress={() => handleNext(item._id)}
       onDelete={() => handleDelete(item._id)}
       onSummary={() => handleSummary(item._id, item.name)}
+      onRepost={(job: any) => handleRepost(job)}
       isEmployer={true}
     />
   );
@@ -189,6 +202,24 @@ const JobPostingHistory = () => {
         onEndReachedThreshold={0.5}
         ListEmptyComponent={renderEmpty}
         ListFooterComponent={renderFooter}
+      />
+
+      <RepostJobModal
+        visible={showRepostModal}
+        job={selectedJobForRepost}
+        onClose={() => {
+          setShowRepostModal(false);
+          setSelectedJobForRepost(null);
+        }}
+        onSuccess={() => {
+          refetch();
+        }}
+        onEditFullDetails={(jobData) => {
+          navigation.navigate("(tabs)", {
+            screen: "PostJob",
+            params: { editJob: jobData },
+          });
+        }}
       />
     </View>
   );
