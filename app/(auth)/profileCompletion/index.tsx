@@ -39,6 +39,7 @@ const ProfileCompletion = () => {
       }
       : null
   );
+  const [isAgeConfirmed, setIsAgeConfirmed] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
   const navigation = useNavigation<any>();
@@ -95,6 +96,17 @@ const ProfileCompletion = () => {
         message:
           strings.auth.profileCompletion.profilePicRequired ||
           "Please take a selfie using your front camera to continue.",
+      });
+      return;
+    }
+
+    // 4. Validate Age (Mandatory 18+)
+    if (!isAgeConfirmed) {
+      showAlert({
+        type: "error",
+        title: "Age Confirmation Required",
+        message:
+          "You must be 18 years of age or older to register and use Zoopol. Please confirm the age disclaimer to proceed.",
       });
       return;
     }
@@ -256,6 +268,65 @@ const ProfileCompletion = () => {
           autoCorrect={false}
           maxLength={30}
         />
+
+        {/* Age 18+ Disclaimer & Confirmation */}
+        <TouchableOpacity
+          activeOpacity={0.8}
+          onPress={() => setIsAgeConfirmed((prev) => !prev)}
+          style={{
+            flexDirection: "row",
+            alignItems: "flex-start",
+            backgroundColor: isAgeConfirmed
+              ? colors.primary + "18"
+              : colors.white,
+            borderWidth: 1.5,
+            borderColor: isAgeConfirmed ? colors.primary : colors.border,
+            borderRadius: 14,
+            padding: 14,
+            marginTop: 18,
+            marginBottom: 6,
+            gap: 12,
+          }}
+        >
+          <View
+            style={{
+              width: 22,
+              height: 22,
+              borderRadius: 6,
+              borderWidth: 2,
+              borderColor: isAgeConfirmed ? colors.primary : colors.grey,
+              backgroundColor: isAgeConfirmed ? colors.primary : "transparent",
+              alignItems: "center",
+              justifyContent: "center",
+              marginTop: 2,
+            }}
+          >
+            {isAgeConfirmed && (
+              <Ionicons name="checkmark" size={16} color="#fff" />
+            )}
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text
+              style={{
+                fontSize: 14,
+                fontWeight: "700",
+                color: colors.black,
+                marginBottom: 2,
+              }}
+            >
+              I am 18 years of age or older
+            </Text>
+            <Text
+              style={{
+                fontSize: 12,
+                color: colors.grey,
+                lineHeight: 18,
+              }}
+            >
+              Zoopol is strictly for individuals aged 18 and above. By continuing, you declare and verify that you are legally 18+ to post or accept jobs.
+            </Text>
+          </View>
+        </TouchableOpacity>
 
         <View style={styles.buttonContainer}>
           <CustomButton

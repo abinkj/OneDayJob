@@ -44,8 +44,7 @@ export const RepostJobModal: React.FC<RepostJobModalProps> = ({
   const user = useSelector((state: RootState) => state.authentication.userData);
   const queryClient = useQueryClient();
 
-  // Date presets
-  const today = useMemo(() => new Date(), []);
+  // Date presets (Tomorrow & Day After — Today is excluded for reposts)
   const tomorrow = useMemo(() => {
     const d = new Date();
     d.setDate(d.getDate() + 1);
@@ -59,7 +58,7 @@ export const RepostJobModal: React.FC<RepostJobModalProps> = ({
 
   const [selectedDate, setSelectedDate] = useState<Date>(tomorrow);
   const [dateChoice, setDateChoice] = useState<
-    "today" | "tomorrow" | "dayAfter" | "custom"
+    "tomorrow" | "dayAfter" | "custom"
   >("tomorrow");
   const [showDatePicker, setShowDatePicker] = useState(false);
 
@@ -86,11 +85,10 @@ export const RepostJobModal: React.FC<RepostJobModalProps> = ({
   }, [job, tomorrow]);
 
   const handleDateSelect = (
-    choice: "today" | "tomorrow" | "dayAfter" | "custom"
+    choice: "tomorrow" | "dayAfter" | "custom"
   ) => {
     setDateChoice(choice);
-    if (choice === "today") setSelectedDate(today);
-    else if (choice === "tomorrow") setSelectedDate(tomorrow);
+    if (choice === "tomorrow") setSelectedDate(tomorrow);
     else if (choice === "dayAfter") setSelectedDate(dayAfter);
     else if (choice === "custom") setShowDatePicker(true);
   };
@@ -98,8 +96,21 @@ export const RepostJobModal: React.FC<RepostJobModalProps> = ({
   const handleCustomDateChange = (_: any, date?: Date) => {
     setShowDatePicker(false);
     if (date) {
-      setSelectedDate(date);
-      setDateChoice("custom");
+      // Today and past dates are strictly not allowed for repost
+      const now = new Date();
+      now.setHours(23, 59, 59, 999);
+      if (date <= now) {
+        Toast.show({
+          type: "info",
+          text1: "Date Adjusted",
+          text2: "Reposting is only allowed starting from tomorrow.",
+        });
+        setSelectedDate(tomorrow);
+        setDateChoice("tomorrow");
+      } else {
+        setSelectedDate(date);
+        setDateChoice("custom");
+      }
     }
   };
 
@@ -345,34 +356,8 @@ export const RepostJobModal: React.FC<RepostJobModalProps> = ({
                 📅 When do you need this done?
               </Text>
 
-              {/* Row 1 */}
+              {/* Row 1: Tomorrow and Day After */}
               <View style={styles.gridRow}>
-                <TouchableOpacity
-                  style={[
-                    styles.chip,
-                    dateChoice === "today" && styles.chipActive,
-                  ]}
-                  onPress={() => handleDateSelect("today")}
-                  activeOpacity={0.8}
-                >
-                  <Text
-                    style={[
-                      styles.chipTitle,
-                      dateChoice === "today" && styles.chipTitleActive,
-                    ]}
-                  >
-                    Today
-                  </Text>
-                  <Text
-                    style={[
-                      styles.chipSub,
-                      dateChoice === "today" && styles.chipSubActive,
-                    ]}
-                  >
-                    {formatDateLabel(today)}
-                  </Text>
-                </TouchableOpacity>
-
                 <TouchableOpacity
                   style={[
                     styles.chip,
@@ -401,10 +386,7 @@ export const RepostJobModal: React.FC<RepostJobModalProps> = ({
                     {formatDateLabel(tomorrow)}
                   </Text>
                 </TouchableOpacity>
-              </View>
 
-              {/* Row 2 */}
-              <View style={styles.gridRow}>
                 <TouchableOpacity
                   style={[
                     styles.chip,
@@ -430,41 +412,49 @@ export const RepostJobModal: React.FC<RepostJobModalProps> = ({
                     {formatDateLabel(dayAfter)}
                   </Text>
                 </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={[
-                    styles.chip,
-                    dateChoice === "custom" && styles.chipActive,
-                  ]}
-                  onPress={() => handleDateSelect("custom")}
-                  activeOpacity={0.8}
-                >
-                  <Ionicons
-                    name="calendar-outline"
-                    size={16}
-                    color={
-                      dateChoice === "custom" ? colors.primary : colors.black
-                    }
-                  />
-                  <Text
-                    style={[
-                      styles.chipTitle,
-                      dateChoice === "custom" && styles.chipTitleActive,
-                    ]}
-                  >
-                    {dateChoice === "custom"
-                      ? formatDateLabel(selectedDate)
-                      : "Pick Date"}
-                  </Text>
-                </TouchableOpacity>
               </View>
+
+              {/* Row 2: Pick Another Date */}
+              <TouchableOpacity
+                style={[
+                  styles.chip,
+                  dateChoice === "custom" && styles.chipActive,
+                  {
+                    flexDirection: "row",
+                    gap: 8,
+                    paddingHorizontal: 16,
+                    minHeight: 50,
+                  },
+                ]}
+                onPress={() => handleDateSelect("custom")}
+                activeOpacity={0.8}
+              >
+                <Ionicons
+                  name="calendar-outline"
+                  size={18}
+                  color={
+                    dateChoice === "custom" ? colors.primary : colors.black
+                  }
+                />
+                <Text
+                  style={[
+                    styles.chipTitle,
+                    { marginBottom: 0 },
+                    dateChoice === "custom" && styles.chipTitleActive,
+                  ]}
+                >
+                  {dateChoice === "custom"
+                    ? `Selected: ${formatDateLabel(selectedDate)}`
+                    : "Pick Another Date..."}
+                </Text>
+              </TouchableOpacity>
 
               {/* Selected Date Confirmation Banner */}
               <View style={styles.selectedDateBanner}>
                 <Ionicons
                   name="checkmark-circle"
                   size={16}
-                  color={colors.primary}
+                  color={isDark ? colors.darkGreen : colors.primary}
                 />
                 <Text style={styles.selectedDateBannerText}>
                   Scheduled for:{" "}
@@ -650,7 +640,7 @@ export const RepostJobModal: React.FC<RepostJobModalProps> = ({
           value={selectedDate}
           mode="date"
           display={Platform.OS === "ios" ? "inline" : "default"}
-          minimumDate={new Date()}
+          minimumDate={tomorrow}
           onChange={handleCustomDateChange}
         />
       )}

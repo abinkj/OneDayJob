@@ -42,6 +42,7 @@ import {
 } from "../../../constants/JobConstants";
 import { RootState } from "../../../redux/store";
 import Images from "../../../utilities/images";
+import JobPostSuccessModal from "../../../components/JobPostSuccessModal";
 
 const PostJobScreen = ({ navigation: navProp }) => {
   const { colors } = useTheme();
@@ -53,6 +54,7 @@ const PostJobScreen = ({ navigation: navProp }) => {
   const scrollViewRef = useRef<ScrollView>(null);
 
   // State variables
+  const [showPostSuccessModal, setShowPostSuccessModal] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
   const [jobCategories, setJobCategories] = useState(defaultJobCategories);
   const [selectedCategory, setSelectedCategory] = useState(null);
@@ -681,20 +683,7 @@ const PostJobScreen = ({ navigation: navProp }) => {
       const response = await createJobPosting(jobData);
 
       if (response.data) {
-        showAlert({
-          type: "success",
-          title: "Success!",
-          message: "Your job has been posted successfully!",
-          buttons: [
-            {
-              text: "OK",
-              onPress: () => {
-                resetAllFields();
-                navigation.goBack();
-              },
-            },
-          ],
-        });
+        setShowPostSuccessModal(true);
       }
     } catch (error) {
       console.error("Error posting job:", error);
@@ -2052,6 +2041,27 @@ const PostJobScreen = ({ navigation: navProp }) => {
             </View>
           </View>
         </Modal>
+
+        {/* Peak UI Job Post Confirmation Modal */}
+        <JobPostSuccessModal
+          visible={showPostSuccessModal}
+          jobTitle={jobName}
+          onClose={() => {
+            setShowPostSuccessModal(false);
+            resetAllFields();
+            (navigation as any).goBack();
+          }}
+          onTrackStatus={() => {
+            setShowPostSuccessModal(false);
+            resetAllFields();
+            (navigation as any).navigate("Status");
+          }}
+          onBackToHome={() => {
+            setShowPostSuccessModal(false);
+            resetAllFields();
+            (navigation as any).navigate("Home");
+          }}
+        />
       </KeyboardAvoidingView>
     </View>
   );

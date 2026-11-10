@@ -33,6 +33,7 @@ import {
 import { applyJobOffline } from "../../../services/offlineQueueExamples";
 import socketService from "../../../services/socketService";
 import SuccessAnimation from "../../../components/SuccessAnimation";
+import JobAppliedModal from "../../../components/JobAppliedModal";
 import Toast from "react-native-toast-message";
 import { useNotifications } from "../../../contexts/NotificationContext";
 import { JobDetailsSkeleton } from "../../../components/Shimmer/Skeletons";
@@ -74,6 +75,7 @@ const JobDetails = () => {
   const [error, setError] = useState<string | null>(null);
   const [applied, setApplied] = useState(false);
   const [showSuccessAnimation, setShowSuccessAnimation] = useState(false);
+  const [showAppliedModal, setShowAppliedModal] = useState(false);
   const [verificationStatus, setVerificationStatus] = useState<any>(null);
   const [checkingVerification, setCheckingVerification] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -90,6 +92,7 @@ const JobDetails = () => {
   // Helper variables for role-based logic
   const isEmployer = isJobOwner(job, userData?.id || userData?._id);
   const isAccepted = isAssignedWorker(job, userData?.id || userData?._id);
+  const isPhoneUnlocked = isEmployer || isAccepted;
 
   // Fetch current location on mount
   useEffect(() => {
@@ -336,10 +339,7 @@ const JobDetails = () => {
           }));
 
           setApplied(true);
-          setShowSuccessAnimation(true); // ✅ show success animation
-          setTimeout(() => {
-            navigation.goBack(); // ✅ go back after animation
-          }, 3000); // Adjust delay based on animation length
+          setShowAppliedModal(true); // ✅ show interactive peak modal
         }
       }
     } catch (err: any) {
@@ -364,7 +364,7 @@ const JobDetails = () => {
           hasApplied: true,
         }));
         setApplied(true);
-        setShowSuccessAnimation(true);
+        setShowAppliedModal(true);
         Toast.show({
           type: "info",
           text1: "Already Applied",
@@ -472,6 +472,19 @@ const JobDetails = () => {
   };
 
   const handleCall = async () => {
+    if (!isPhoneUnlocked) {
+      CustomAlertManager.show(
+        "Phone Number Locked",
+        "The employer's direct phone number is locked until your application is accepted for this job.\n\nYou can use in-app chat anytime to message the employer directly.",
+        [
+          { text: "Open In-App Chat", onPress: handleChat },
+          { text: "OK", style: "cancel" },
+        ],
+        { type: "info" }
+      );
+      return;
+    }
+
     if (!job?.userId?.phoneNumber) {
       Toast.show({
         type: "error",
@@ -1165,12 +1178,41 @@ const JobDetails = () => {
                 <Text style={styles.employerName}>
                   {job.userId?.firstName} {job.userId?.lastName}
                 </Text>
-                <Text style={styles.employerPhone}>
-                  {job.userId?.phoneNumber}
-                </Text>
+                {isPhoneUnlocked ? (
+                  <Text style={styles.employerPhone}>
+                    {job.userId?.phoneNumber || "Phone on file"}
+                  </Text>
+                ) : (
+                  <TouchableOpacity
+                    activeOpacity={0.7}
+                    onPress={handleCall}
+                    style={{ flexDirection: "row", alignItems: "center", gap: 4, marginTop: 2 }}
+                  >
+                    <Ionicons name="lock-closed" size={12} color={colors.grey} />
+                    <Text style={styles.employerPhone}>
+                      +91 ••••• ••••• (Locked)
+                    </Text>
+                  </TouchableOpacity>
+                )}
               </View>
-              <TouchableOpacity style={styles.contactButton} onPress={handleCall}>
-                <Ionicons name="call" size={20} color="#fff" />
+
+              <TouchableOpacity
+                style={[
+                  styles.contactButton,
+                  !isPhoneUnlocked && {
+                    backgroundColor: colors.border,
+                    shadowOpacity: 0,
+                    elevation: 0,
+                  },
+                ]}
+                onPress={handleCall}
+                activeOpacity={0.8}
+              >
+                <Ionicons
+                  name={isPhoneUnlocked ? "call" : "lock-closed"}
+                  size={18}
+                  color="#fff"
+                />
               </TouchableOpacity>
             </View>
           </View>
@@ -1268,6 +1310,26 @@ const JobDetails = () => {
             screen: "PostJob",
             params: { editJob: jobData },
           });
+        }}
+      />
+
+      {/* Interactive Worker Job Applied Peak Modal */}
+      <JobAppliedModal
+        visible={showAppliedModal}
+        jobTitle={job?.name}
+        onClose={() => {
+          setShowAppliedModal(false);
+          navigation.goBack();
+        }}
+        onViewApplications={() => {
+          setShowAppliedModal(false);
+          (navigation as any).navigate("(tabs)", {
+            screen: "Status",
+          });
+        }}
+        onExploreMore={() => {
+          setShowAppliedModal(false);
+          navigation.goBack();
         }}
       />
     </View>
