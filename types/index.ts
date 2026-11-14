@@ -196,6 +196,8 @@ export interface JobPost {
   // Arrival state (derived from worker's session in the job list response)
   hasArrived?: boolean; // true if this worker has already pressed 'I Have Reached'
   arrivalStatus?: "pending" | "arrived" | "verified" | "no_show"; // mirrors JobSession.arrivalStatus
+  canEdit?: boolean;
+  editRestrictionReason?: string;
 }
 
 // For backward compatibility and convenience
@@ -222,4 +224,8 @@ export interface JobCardData {
   isCompletedByWorker?: boolean; // Backend flag for worker completion
   isVerifiedByEmployer?: boolean; // Backend flag for employer verification
   isPaymentDone?: boolean; // Backend flag for payment completion
+  assignedUsers?: any[];
+  applicants?: any[];
+  canEdit?: boolean;
+  editRestrictionReason?: string;
 }

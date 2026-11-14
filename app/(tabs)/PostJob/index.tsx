@@ -21,9 +21,11 @@ import { createStyles } from "./styles";
 import CustomSwitch from "../../../components/CustomSwich";
 import {
   createJobPosting,
+  updateJobPosting,
   getCategories,
   // uploadJobPhotos
 } from "../../../services/api"; // Adjust the path according to your project structure
+import { useQueryClient } from "@tanstack/react-query";
 import { LocationData } from "../../../services/locationService";
 import Toast from "react-native-toast-message";
 import { useAlert } from "../../../components/CustomAlert/AlertProvider";
@@ -49,9 +51,14 @@ const PostJobScreen = ({ navigation: navProp }) => {
   const styles = useMemo(() => createStyles(colors), [colors]);
   const navigation = useNavigation();
   const route = useRoute<any>();
+  const queryClient = useQueryClient();
   const { kycStatus } = useSelector((state: any) => state.authentication);
   const { showAlert } = useAlert();
   const scrollViewRef = useRef<ScrollView>(null);
+
+  // Edit mode states
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [editingJobId, setEditingJobId] = useState<string | null>(null);
 
   // State variables
   const [showPostSuccessModal, setShowPostSuccessModal] = useState(false);
@@ -75,6 +82,7 @@ const PostJobScreen = ({ navigation: navProp }) => {
   const [scheduleDate, setScheduleDate] = useState<Date | null>(null);
   const [scheduleType, setScheduleType] = useState<"on" | "before">("on");
   const [isFlexible, setIsFlexible] = useState(false);
+  const [isExactTime, setIsExactTime] = useState(false);
 
   // Time range settings - fromTime and toTime are required for non-flexible jobs
   const [fromHour, setFromHour] = useState("00");
@@ -107,11 +115,22 @@ const PostJobScreen = ({ navigation: navProp }) => {
     loadCategories();
   }, []);
 
-  // Pre-fill form when navigating from Repost Job with "Edit Full Details"
+  // Pre-fill form when navigating from Edit Job or Repost Job
   useEffect(() => {
     const editJob = route?.params?.editJob;
+    const isEdit = Boolean(route?.params?.isEditMode);
+
     if (editJob) {
-      console.log("[PostJob] Prefilling form with job to repost:", editJob.name);
+      if (isEdit) {
+        setIsEditMode(true);
+        setEditingJobId(editJob._id);
+        console.log("[PostJob] Entering EDIT mode for job:", editJob._id, editJob.name);
+      } else {
+        setIsEditMode(false);
+        setEditingJobId(null);
+        console.log("[PostJob] Prefilling form for reposting job:", editJob.name);
+      }
+
       if (editJob.name) setJobName(editJob.name);
       if (editJob.description) setJobDescription(editJob.description);
       if (editJob.budget) setBudget(String(editJob.budget));
@@ -131,8 +150,39 @@ const PostJobScreen = ({ navigation: navProp }) => {
       if (Array.isArray(editJob.requirements)) {
         setRequirements(editJob.requirements);
       }
+      if (Array.isArray(editJob.photos)) {
+        setPhotos(editJob.photos);
+        setUploadedPhotoUrls(editJob.photos);
+      }
       if (editJob.onDate) {
         setScheduleDate(new Date(editJob.onDate));
+      } else if (editJob.beforeDate) {
+        setScheduleDate(new Date(editJob.beforeDate));
+      }
+
+      if (Array.isArray(editJob.timePreference) && editJob.timePreference.length > 0) {
+        setSelectedTimePreferences(editJob.timePreference);
+      }
+
+      if (editJob.fromTime && editJob.toTime) {
+        setIsExactTime(true);
+        const [fH, fM] = editJob.fromTime.split(":");
+        let fromH = parseInt(fH, 10);
+        const fromAm = fromH >= 12 ? "PM" : "AM";
+        fromH = fromH % 12 || 12;
+        setFromHour(String(fromH));
+        setFromMinute(fM || "00");
+        setFromAmPm(fromAm);
+
+        const [tH, tM] = editJob.toTime.split(":");
+        let toH = parseInt(tH, 10);
+        const toAm = toH >= 12 ? "PM" : "AM";
+        toH = toH % 12 || 12;
+        setToHour(String(toH));
+        setToMinute(tM || "00");
+        setToAmPm(toAm);
+      } else {
+        setIsExactTime(false);
       }
 
       // Match category
@@ -147,8 +197,11 @@ const PostJobScreen = ({ navigation: navProp }) => {
         if (catName) setSelectedValue(catName);
       }
       setCurrentStep(1);
+    } else {
+      setIsEditMode(false);
+      setEditingJobId(null);
     }
-  }, [route?.params?.editJob]);
+  }, [route?.params?.editJob, route?.params?.isEditMode]);
   // useEffect(() => {
   //   const fetchUser = async () => {
   //     try {
@@ -538,13 +591,16 @@ const PostJobScreen = ({ navigation: navProp }) => {
         ? ""
         : selectedLocation?.address || taskAddress,
       requirements: requirements,
-      photos: photoUrls,
+      photos: photoUrls.length > 0 ? photoUrls : photos,
       timePreference: selectedTimePreferences, // Send as array
-      budget: parseFloat(budget),
+      budget: parseFloat(budget || "300"),
       isOpen: true,
-      createdAt: currentDate,
       updatedAt: currentDate,
     };
+
+    if (!isEditMode) {
+      jobData.createdAt = currentDate;
+    }
 
     // Add location data if available and not remote
     if (!canBeDoneRemotely && selectedLocation) {
@@ -596,6 +652,8 @@ const PostJobScreen = ({ navigation: navProp }) => {
   const resetAllFields = () => {
     // Reset step
     setCurrentStep(1);
+    setIsEditMode(false);
+    setEditingJobId(null);
 
     // Reset category
     setSelectedCategory(null);
@@ -615,6 +673,7 @@ const PostJobScreen = ({ navigation: navProp }) => {
     setScheduleDate(null);
     setScheduleType("on");
     setIsFlexible(false);
+    setIsExactTime(false);
     setFromHour("00");
     setFromMinute("00");
     setFromAmPm("AM");
@@ -642,18 +701,11 @@ const PostJobScreen = ({ navigation: navProp }) => {
     console.log("All form fields have been reset");
   };
 
-  // Handle job posting
-  // Debug handlePost function
+  // Handle job posting or updating
   const handlePost = async () => {
-
     if (!validateJobData()) {
       return;
     }
-
-    // const isAuth = await checkAuthStatus();
-    // if (!isAuth) {
-    //   return;
-    // }
 
     // Double-check user data is available
     if (!user || !user.id) {
@@ -666,36 +718,51 @@ const PostJobScreen = ({ navigation: navProp }) => {
       return;
     }
 
-    console.log("Selected category before posting:", selectedCategory);
+    console.log("Selected category before saving:", selectedCategory);
     console.log("Category mapping:", categoryMapping);
     console.log("Backend category ID:", categoryMapping[selectedCategory]);
     setIsSubmitting(true);
     setIsLoading(true);
 
     try {
-      // Create job posting
+      // Create or update job posting
       const jobData = formatJobData();
       console.log(
         "Final job data being sent:",
         JSON.stringify(jobData, null, 2)
       );
 
-      const response = await createJobPosting(jobData);
-
-      if (response.data) {
-        setShowPostSuccessModal(true);
+      if (isEditMode && editingJobId) {
+        const response = await updateJobPosting(editingJobId, jobData);
+        if (response.data) {
+          Toast.show({
+            type: "success",
+            text1: "Job Updated",
+            text2: "Your job posting has been successfully updated",
+          });
+          queryClient.invalidateQueries({ queryKey: ["userJobs"] });
+          queryClient.invalidateQueries({ queryKey: ["jobs"] });
+          queryClient.invalidateQueries({ queryKey: ["jobPosting", editingJobId] });
+          resetAllFields();
+          navigation.goBack();
+        }
+      } else {
+        const response = await createJobPosting(jobData);
+        if (response.data) {
+          setShowPostSuccessModal(true);
+        }
       }
-    } catch (error) {
-      console.error("Error posting job:", error);
+    } catch (error: any) {
+      console.error("Error saving job:", error);
       console.error("Error response data:", error.response?.data);
 
-      let errorMessage = "Failed to post job. Please try again.";
+      let errorMessage = isEditMode
+        ? "Failed to update job. Please try again."
+        : "Failed to post job. Please try again.";
 
-      // Handle specific authentication errors
+      // Handle specific authentication or validation errors
       if (error.response?.status === 401 || error.response?.status === 403) {
-        errorMessage = "Authentication expired. Please log in again.";
-        // Optionally navigate to login
-        // navigation.navigate('Login');
+        errorMessage = error.response?.data?.message || "Authentication expired or permission denied.";
       } else if (error.response?.data?.message) {
         errorMessage = error.response.data.message;
       } else if (error.response?.data?.errors) {
@@ -705,7 +772,7 @@ const PostJobScreen = ({ navigation: navProp }) => {
 
       showAlert({
         type: "error",
-        title: "Error",
+        title: isEditMode ? "Update Failed" : "Error",
         message: errorMessage,
       });
     } finally {
@@ -1000,6 +1067,9 @@ const PostJobScreen = ({ navigation: navProp }) => {
       // Scroll to top when moving to previous step
       scrollViewRef.current?.scrollTo({ y: 0, animated: true });
     } else {
+      if (isEditMode) {
+        resetAllFields();
+      }
       navigation.goBack();
     }
   };
@@ -1886,7 +1956,7 @@ const PostJobScreen = ({ navigation: navProp }) => {
         <TouchableOpacity onPress={handleBack} disabled={isSubmitting}>
           <Ionicons name="chevron-back" size={24} color={colors.black} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Post a Job</Text>
+        <Text style={styles.headerTitle}>{isEditMode ? "Edit Job" : "Post a Job"}</Text>
         <View style={{ width: 24 }} />
       </View>
 
@@ -1923,7 +1993,7 @@ const PostJobScreen = ({ navigation: navProp }) => {
         >
           {currentStep === 5 ? (
             <CustomButton
-              text={"Post"}
+              text={isEditMode ? "Update Job" : "Post"}
               color={colors.primary}
               onPress={handlePost}
               disabled={isSubmitting}

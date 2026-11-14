@@ -464,9 +464,7 @@ const RequestsVerifyTab = ({
                 >
                   This is a backup for when workers are on-site but their GPS
                   isn't marking them as "Arrived".{"\n\n"}• Only use this if you
-                  see the worker in person.{"\n"}• You must first{" "}
-                  <Text style={{ fontWeight: "700" }}>Accept</Text> a worker
-                  from the "Requests" tab.
+                  see the worker in person.{"\n"}
                 </Text>
               </View>
             </View>
@@ -538,8 +536,8 @@ const RequestsVerifyTab = ({
                       styles.progressFill,
                       {
                         width: `${participatingWorkers.length > 0
-                            ? (verifiedWorkers.length / participatingWorkers.length) * 100
-                            : 0
+                          ? (verifiedWorkers.length / participatingWorkers.length) * 100
+                          : 0
                           }%`,
                       },
                     ]}

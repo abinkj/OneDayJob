@@ -9,6 +9,7 @@ import {
   getJobPostingsByUserId,
   getAppliedJobsByUserId,
   deleteJobPosting,
+  updateJobPosting,
   withdrawApplication,
 } from "../services/api";
 import { JobPost } from "../types";
@@ -168,6 +169,18 @@ export const useDeleteJob = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["userJobs"] });
       queryClient.invalidateQueries({ queryKey: ["jobs"] });
+    },
+  });
+};
+
+export const useUpdateJob = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data: any }) => updateJobPosting(id, data),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["userJobs"] });
+      queryClient.invalidateQueries({ queryKey: ["jobs"] });
+      queryClient.invalidateQueries({ queryKey: ["jobPosting", variables.id] });
     },
   });
 };

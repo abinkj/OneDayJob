@@ -369,7 +369,53 @@ export const test = () => api.get("/auth/test");
 export const protectedRoute = () => api.get("/auth/protected");
 
 export const getJobPosting = (id) => api.get(`/jobs/${id}`);
-export const updateJobPosting = (id, data) => api.put(`/jobs/${id}`, data);
+
+// Enhanced job updating function with validation and location formatting
+export const updateJobPosting = async (id: string, data: any) => {
+  try {
+    const payload = { ...data };
+
+    // Ensure arrays are properly formatted
+    if (payload.timePreference && !Array.isArray(payload.timePreference)) {
+      payload.timePreference = [payload.timePreference];
+    }
+    if (payload.requirements && !Array.isArray(payload.requirements)) {
+      payload.requirements = [payload.requirements];
+    }
+    if (payload.photos && !Array.isArray(payload.photos)) {
+      payload.photos = [payload.photos];
+    }
+
+    // Transform location data if coordinates exist
+    if (payload.location && payload.location.coordinates) {
+      const coords = payload.location.coordinates;
+      const lat = coords.latitude !== undefined ? coords.latitude : (Array.isArray(coords.coordinates) ? coords.coordinates[1] : undefined);
+      const lng = coords.longitude !== undefined ? coords.longitude : (Array.isArray(coords.coordinates) ? coords.coordinates[0] : undefined);
+
+      if (lat !== undefined && lng !== undefined) {
+        payload.location = {
+          coordinates: {
+            latitude: lat,
+            longitude: lng,
+          },
+          ...(payload.location.address && { address: payload.location.address.trim() }),
+          ...(payload.location.city && { city: payload.location.city.trim() }),
+          ...(payload.location.state && { state: payload.location.state.trim() }),
+          ...(payload.location.country && { country: payload.location.country.trim() }),
+          ...(payload.location.zipCode && { zipCode: payload.location.zipCode.trim() }),
+        };
+      }
+    }
+
+    const response = await api.put(`/jobs/${id}`, payload);
+    return response;
+  } catch (error) {
+    console.error("Error in updateJobPosting:", error);
+    throw error;
+  }
+};
+
+export const checkJobCanEdit = (id: string) => api.get(`/jobs/${id}/can-edit`);
 export const deleteJobPosting = (id) => api.delete(`/jobs/${id}`);
 
 // Report a job for offensive content or policy violations

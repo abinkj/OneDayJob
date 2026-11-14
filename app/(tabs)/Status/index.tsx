@@ -49,6 +49,7 @@ import {
   isJobLiveOrDueToday,
   formatJobDate,
   normalizeLocationCoordinates,
+  canEditJob,
 } from "../../../utilities/jobUtils";
 import RepostJobModal from "../../../components/RepostJobModal";
 import { fontSizes } from "../../../themes/fonts";
@@ -209,6 +210,20 @@ const MyPostTab = () => {
     setShowRepostModal(true);
   };
 
+  const handleEdit = (job: JobPost) => {
+    const eligibility = canEditJob(job, userId);
+    if (!eligibility.canEdit) {
+      Toast.show({
+        type: "info",
+        text1: "Cannot Edit Job",
+        text2: eligibility.reason || "This job can no longer be edited",
+        visibilityTime: 4000,
+      });
+      return;
+    }
+    navigation.navigate("PostJob", { editJob: job, isEditMode: true });
+  };
+
   const renderItem = ({ item }: { item: JobPost }) => (
     <JobCard
       key={item._id}
@@ -217,6 +232,7 @@ const MyPostTab = () => {
       onDelete={() => handleDelete(item._id)}
       onSummary={() => handleSummary(item._id, item.name)}
       onRepost={(job: any) => handleRepost(job)}
+      onEdit={(job: any) => handleEdit(job)}
       isEmployer={true}
     />
   );

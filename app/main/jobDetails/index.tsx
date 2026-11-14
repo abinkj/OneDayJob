@@ -53,6 +53,7 @@ import {
   formatTimePreference,
   format24to12h,
   normalizeLocationCoordinates,
+  canEditJob,
 } from "../../../utilities/jobUtils";
 import { useQueryClient } from "@tanstack/react-query";
 import { setActiveJob } from "../../../redux/reducers/jobReducer";
@@ -93,6 +94,30 @@ const JobDetails = () => {
   const isEmployer = isJobOwner(job, userData?.id || userData?._id);
   const isAccepted = isAssignedWorker(job, userData?.id || userData?._id);
   const isPhoneUnlocked = isEmployer || isAccepted;
+
+  const isEditable = useMemo(() => {
+    if (!job || !isEmployer) return false;
+    if (job.canEdit !== undefined) return job.canEdit;
+    return canEditJob(job, userData?.id || userData?._id).canEdit;
+  }, [job, isEmployer, userData]);
+
+  const handleEdit = () => {
+    if (!job) return;
+    const eligibility = canEditJob(job, userData?.id || userData?._id);
+    if (!eligibility.canEdit) {
+      CustomAlertManager.show(
+        "Cannot Edit Job",
+        eligibility.reason || "This job can no longer be edited.",
+        [{ text: "OK", style: "cancel" }],
+        { type: "warning" }
+      );
+      return;
+    }
+    navigation.navigate("(tabs)", {
+      screen: "PostJob",
+      params: { editJob: job, isEditMode: true },
+    });
+  };
 
   // Fetch current location on mount
   useEffect(() => {
@@ -634,7 +659,17 @@ const JobDetails = () => {
         disableButtonPress={isLoading}
         onChatPress={handleChat}
         headerRight={
-          !job?.isExpired ? (
+          isEmployer ? (
+            isEditable ? (
+              <TouchableOpacity
+                onPress={handleEdit}
+                style={{ marginLeft: 10, padding: 4 }}
+                activeOpacity={0.7}
+              >
+                <Ionicons name="create-outline" size={22} color={colors.primary} />
+              </TouchableOpacity>
+            ) : null
+          ) : !job?.isExpired ? (
             <TouchableOpacity
               onPress={handleReportJob}
               style={{ marginLeft: 10 }}
@@ -1267,9 +1302,36 @@ const JobDetails = () => {
         </View>
       )}
 
-      {/* Action Buttons for Employer (Elderly Friendly Repost) */}
+      {/* Action Buttons for Employer */}
       {isEmployer && (
         <View style={styles.actionContainer}>
+          {isEditable && (
+            <TouchableOpacity
+              style={{
+                flex: 1,
+                flexDirection: "row",
+                alignItems: "center",
+                justifyContent: "center",
+                backgroundColor: colors.primary,
+                paddingVertical: 14,
+                borderRadius: 12,
+                gap: 8,
+                shadowColor: colors.primary,
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: 0.25,
+                shadowRadius: 4,
+                elevation: 3,
+              }}
+              onPress={handleEdit}
+              activeOpacity={0.8}
+            >
+              <Ionicons name="create-outline" size={20} color="#fff" />
+              <Text style={{ fontSize: 16, fontWeight: "800", color: "#fff" }}>
+                Edit Job
+              </Text>
+            </TouchableOpacity>
+          )}
+
           <TouchableOpacity
             style={{
               flex: 1,
@@ -1291,7 +1353,7 @@ const JobDetails = () => {
           >
             <Ionicons name="repeat" size={20} color="#fff" />
             <Text style={{ fontSize: 16, fontWeight: "800", color: "#fff" }}>
-              Repost This Job
+              {isEditable ? "Repost" : "Repost This Job"}
             </Text>
           </TouchableOpacity>
         </View>

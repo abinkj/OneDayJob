@@ -15,6 +15,7 @@ import { useTheme } from "../../contexts/ThemeContext";
 import {
   formatDateDDMMYYYY,
   formatTimePreference,
+  canEditJob,
 } from "../../utilities/jobUtils";
 
 const JobCard = ({
@@ -25,6 +26,7 @@ const JobCard = ({
   onPayment,
   onSummary,
   onRepost,
+  onEdit,
   withdraw = false,
   isEmployer = false,
   applicationStatus,
@@ -37,6 +39,7 @@ const JobCard = ({
   onPayment?: Function;
   onSummary?: Function;
   onRepost?: Function;
+  onEdit?: Function;
   withdraw?: boolean;
   isEmployer?: boolean;
   applicationStatus?: string;
@@ -44,6 +47,11 @@ const JobCard = ({
 }) => {
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
+
+  const isEditable = useMemo(() => {
+    if (data?.canEdit !== undefined) return data.canEdit;
+    return canEditJob(data).canEdit;
+  }, [data]);
 
   const {
     name,
@@ -284,6 +292,17 @@ const JobCard = ({
               </TouchableOpacity>
             )}
 
+            {/* Employer: show Edit button if eligible */}
+            {isEmployer && onEdit && isEditable && (
+              <TouchableOpacity
+                style={styles.editIconButton}
+                onPress={() => onEdit(data)}
+                activeOpacity={0.7}
+              >
+                <Ionicons name="create-outline" size={16} color={colors.white} />
+              </TouchableOpacity>
+            )}
+
             {/* Secondary button */}
             {isEmployer ? (
               // Employer: show Delete button as compact icon button
@@ -480,6 +499,15 @@ const createStyles = (colors: ThemeColors) =>
       height: 33,
       borderRadius: 9,
       backgroundColor: colors.red,
+      alignItems: "center",
+      justifyContent: "center",
+      elevation: 2,
+    },
+    editIconButton: {
+      width: 33,
+      height: 33,
+      borderRadius: 9,
+      backgroundColor: colors.primary,
       alignItems: "center",
       justifyContent: "center",
       elevation: 2,

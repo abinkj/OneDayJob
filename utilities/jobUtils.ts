@@ -93,6 +93,104 @@ export const formatJobDate = (dateStr?: string): string => {
   });
 };
 
+/**
+ * Calculates the cutoff date/time after which a job cannot be edited.
+ * Rule:
+ * Cannot edit on or after the day before the job date.
+ * (e.g., if job is scheduled for Nov 23, employer can only edit until Nov 21 23:59:59.999 IST).
+ * Cutoff is Nov 22 00:00:00 IST.
+ */
+export const getJobEditCutoffDate = (job: any): Date | null => {
+  const targetDateRaw = job?.onDate || job?.beforeDate;
+  if (!targetDateRaw) return null;
+
+  const jobDate = new Date(targetDateRaw);
+  if (isNaN(jobDate.getTime())) return null;
+
+  try {
+    const formatter = new Intl.DateTimeFormat("en-CA", {
+      timeZone: "Asia/Kolkata",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    });
+    const parts = formatter.format(jobDate); // "YYYY-MM-DD"
+    const [year, month, day] = parts.split("-").map(Number);
+
+    // The day before the job date starts at 00:00:00 IST (+05:30)
+    const targetDayBefore = new Date(Date.UTC(year, month - 1, day - 1, 0, 0, 0, 0));
+    // Subtract 5.5 hours to convert IST 00:00:00 to UTC Date
+    return new Date(targetDayBefore.getTime() - 5.5 * 60 * 60 * 1000);
+  } catch (err) {
+    const cutoff = new Date(jobDate);
+    cutoff.setDate(cutoff.getDate() - 1);
+    cutoff.setHours(0, 0, 0, 0);
+    return cutoff;
+  }
+};
+
+export interface EditEligibilityResult {
+  canEdit: boolean;
+  reason?: string;
+}
+
+/**
+ * Checks if a job can be edited by the given user.
+ * Rules:
+ * 1. Must be the job owner / employer who posted the job.
+ * 2. Job status must be 'posted' or 'open' (not 'in_progress', 'completed', 'cancelled', 'expired').
+ * 3. Cannot be expired.
+ * 4. Zero workers have applied (no applicants have applied, applicantCount === 0).
+ * 5. Must not be on or after the day before the job date (e.g. for Nov 23, can only edit until Nov 21 23:59:59 IST).
+ */
+export const canEditJob = (job: any, userId?: string | null): EditEligibilityResult => {
+  if (!job) return { canEdit: false, reason: "Job not found" };
+
+  // 1. Role check
+  if (userId && !isJobOwner(job, userId)) {
+    return { canEdit: false, reason: "Only the employer who posted this job can edit it." };
+  }
+
+  // 2. Status check
+  const status = job.jobStatus || job.status || "posted";
+  if (status !== "posted" && status !== "open") {
+    return {
+      canEdit: false,
+      reason: `Cannot edit a ${status} job. Only posted jobs can be edited.`,
+    };
+  }
+
+  if (job.isExpired) {
+    return {
+      canEdit: false,
+      reason: "This job has expired. You can repost it instead.",
+    };
+  }
+
+  // 3. Applicants check - if even 1 worker has applied, editing is blocked
+  const count = typeof job.applicantCount === "number" ? job.applicantCount : 0;
+  const assigned = Array.isArray(job.assignedUsers) ? job.assignedUsers.length : 0;
+  const applicantsList = Array.isArray(job.applicants) ? job.applicants.length : 0;
+  if (count > 0 || assigned > 0 || applicantsList > 0) {
+    return {
+      canEdit: false,
+      reason: "This job cannot be edited because one or more workers have already applied.",
+    };
+  }
+
+  // 4. Date cutoff check (cannot edit on or after the day before the job date)
+  const cutoff = getJobEditCutoffDate(job);
+  if (cutoff && new Date() >= cutoff) {
+    return {
+      canEdit: false,
+      reason:
+        "Jobs can only be edited up to two days before the scheduled date (editing is locked on and after the day before the job).",
+    };
+  }
+
+  return { canEdit: true };
+};
+
 // ─────────────────────────────────────────────────────────────
 // 3. ARRIVAL ACTION (shared between Home and JobDetails)
 // ─────────────────────────────────────────────────────────────
