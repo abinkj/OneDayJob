@@ -63,12 +63,13 @@ export const HomeJobCard: React.FC<HomeJobCardProps> = ({
   const isEmployer = isJobOwner(item, userId);
   const isAccepted = isAssignedWorker(item, userId);
   const isToday = isJobToday(item);
+  const isPermanent = item.jobType === "permanent";
 
   const showArrivalFeature = !isEmployer && isAccepted && !isCompleted && !isExpired && isToday;
 
   const handleJobPress = () => {
     if (isExpired) return;
-    if (isEmployer && isInProgress) {
+    if (isEmployer && isInProgress && !isPermanent) {
       navigation.navigate("JobTimer", {
         jobId: item._id,
         jobName: item.name,
@@ -88,7 +89,8 @@ export const HomeJobCard: React.FC<HomeJobCardProps> = ({
     <TouchableOpacity
       style={[
         styles.jobCard,
-        isInProgress && { borderLeftColor: "#FF9800" },
+        isPermanent && { borderLeftColor: "#6366F1", borderLeftWidth: 4 },
+        isInProgress && !isPermanent && { borderLeftColor: "#FF9800" },
         isExpired && styles.jobCardExpired,
       ]}
       onPress={handleJobPress}
@@ -96,24 +98,44 @@ export const HomeJobCard: React.FC<HomeJobCardProps> = ({
       activeOpacity={isExpired ? 1 : 0.7}
     >
       <View style={styles.jobCardHeader}>
-        <View
-          style={[
-            styles.categoryContainer,
-            isExpired && { backgroundColor: "#E5E7EB" },
-          ]}
-        >
-          <Image
-            style={[styles.avatarContainer, isExpired && { opacity: 0.5 }]}
-            source={getCategoryIcon(item.category?.name)}
-          />
-          <Text
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+          <View
             style={[
-              styles.categoryText,
-              isExpired && { color: "#6B7280" },
+              styles.categoryContainer,
+              isExpired && { backgroundColor: "#E5E7EB" },
             ]}
           >
-            {item.category?.name || "GENERAL"}
-          </Text>
+            <Image
+              style={[styles.avatarContainer, isExpired && { opacity: 0.5 }]}
+              source={getCategoryIcon(item.category?.name)}
+            />
+            <Text
+              style={[
+                styles.categoryText,
+                isExpired && { color: "#6B7280" },
+              ]}
+            >
+              {item.category?.name || "GENERAL"}
+            </Text>
+          </View>
+          {isPermanent && (
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                backgroundColor: "rgba(99, 102, 241, 0.15)",
+                paddingHorizontal: 8,
+                paddingVertical: 3,
+                borderRadius: 8,
+                gap: 4,
+              }}
+            >
+              <Ionicons name="briefcase" size={12} color="#6366F1" />
+              <Text style={{ fontSize: 10, fontWeight: "700", color: "#6366F1" }}>
+                PERMANENT
+              </Text>
+            </View>
+          )}
         </View>
         <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
           {isExpired && (
@@ -125,10 +147,11 @@ export const HomeJobCard: React.FC<HomeJobCardProps> = ({
             <Text
               style={[
                 styles.priceText,
+                isPermanent && { color: "#6366F1", fontWeight: "800" },
                 isExpired && { color: "#9CA3AF" },
               ]}
             >
-              ₹{item.budget || 0}
+              ₹{(item.monthlySalary || item.budget || 0).toLocaleString("en-IN")}{isPermanent ? "/mo" : ""}
             </Text>
           </View>
         </View>
@@ -210,10 +233,13 @@ export const HomeJobCard: React.FC<HomeJobCardProps> = ({
         <Text
           style={[
             styles.timeAgoText,
+            isPermanent && { color: "#6366F1", fontWeight: "600" },
             isExpired && { color: "#9CA3AF" },
           ]}
         >
-          {item.onDate
+          {isPermanent
+            ? `Starts: ${formatDateDDMMYYYY(item.startDate || item.onDate)}`
+            : item.onDate
             ? formatDateDDMMYYYY(item.onDate)
             : item.beforeDate
             ? formatDateDDMMYYYY(item.beforeDate)

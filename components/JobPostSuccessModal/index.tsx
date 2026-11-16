@@ -17,6 +17,7 @@ export interface JobPostSuccessModalProps {
   onTrackStatus?: () => void;
   onBackToHome?: () => void;
   jobTitle?: string;
+  isPermanent?: boolean;
 }
 
 export const JobPostSuccessModal: React.FC<JobPostSuccessModalProps> = ({
@@ -25,6 +26,7 @@ export const JobPostSuccessModal: React.FC<JobPostSuccessModalProps> = ({
   onTrackStatus,
   onBackToHome,
   jobTitle,
+  isPermanent = false,
 }) => {
   const { colors, theme } = useTheme();
   const isDark = theme === "dark";
@@ -83,11 +85,15 @@ export const JobPostSuccessModal: React.FC<JobPostSuccessModalProps> = ({
             {/* Pill Tag */}
             <View style={styles.statusPill}>
               <View style={styles.statusDot} />
-              <Text style={styles.statusPillText}>Zoopol Smart Matching ⚡</Text>
+              <Text style={styles.statusPillText}>
+                {isPermanent ? "Zoopol Permanent Staff Desk ✨" : "Zoopol Smart Matching ⚡"}
+              </Text>
             </View>
 
             {/* Title */}
-            <Text style={styles.title}>Congrats on Your Job Post! 🎉</Text>
+            <Text style={styles.title}>
+              {isPermanent ? "Permanent Job Posted! 🎉" : "Congrats on Your Job Post! 🎉"}
+            </Text>
 
             {/* Job Title if provided */}
             {jobTitle ? (
@@ -106,13 +112,14 @@ export const JobPostSuccessModal: React.FC<JobPostSuccessModalProps> = ({
             {/* Reassuring Hero Message */}
             <View style={styles.heroBox}>
               <Text style={styles.heroText}>
-                Zoopol will actively manage the workers and accept the best
-                selected match for you.
+                {isPermanent
+                  ? "The Zoopol team handles applicants and candidate screening directly."
+                  : "Zoopol will actively manage the workers and accept the best selected match for you."}
               </Text>
               <Text style={styles.heroSubText}>
-                You don't need to worry about anything — sit back and relax!
-                We'll notify you the moment people are confirmed. See you on the
-                workday! 🤝
+                {isPermanent
+                  ? "Our dedicated recruitment desk reviews background checks, interviews candidates, and selects the ideal staff for you. We will notify you once a suitable worker is picked!"
+                  : "You don't need to worry about anything — sit back and relax! We'll notify you the moment people are confirmed. See you on the workday! 🤝"}
               </Text>
             </View>
 
@@ -133,10 +140,13 @@ export const JobPostSuccessModal: React.FC<JobPostSuccessModalProps> = ({
                   />
                 </View>
                 <View style={styles.featureTextBox}>
-                  <Text style={styles.featureTitle}>Automated Processing</Text>
+                  <Text style={styles.featureTitle}>
+                    {isPermanent ? "Zoopol Handpicked Staff" : "Automated Processing"}
+                  </Text>
                   <Text style={styles.featureDesc}>
-                    Zoopol screens and accepts verified, top-rated workers for
-                    your task.
+                    {isPermanent
+                      ? "Vetted candidates with identity & background verification."
+                      : "Zoopol screens and accepts verified, top-rated workers for your task."}
                   </Text>
                 </View>
               </View>
@@ -150,15 +160,19 @@ export const JobPostSuccessModal: React.FC<JobPostSuccessModalProps> = ({
                   ]}
                 >
                   <Ionicons
-                    name="notifications"
+                    name="gift-outline"
                     size={20}
                     color={isDark ? "#34D399" : "#10B981"}
                   />
                 </View>
                 <View style={styles.featureTextBox}>
-                  <Text style={styles.featureTitle}>Instant Updates</Text>
+                  <Text style={styles.featureTitle}>
+                    {isPermanent ? "Zero Placement Fee" : "Instant Updates"}
+                  </Text>
                   <Text style={styles.featureDesc}>
-                    Get pinged instantly when workers are selected and assigned.
+                    {isPermanent
+                      ? "Early supporter perk: 100% free placement assistance."
+                      : "Get pinged instantly when workers are selected and assigned."}
                   </Text>
                 </View>
               </View>
@@ -178,10 +192,13 @@ export const JobPostSuccessModal: React.FC<JobPostSuccessModalProps> = ({
                   />
                 </View>
                 <View style={styles.featureTextBox}>
-                  <Text style={styles.featureTitle}>Sit Back & Relax</Text>
+                  <Text style={styles.featureTitle}>
+                    {isPermanent ? "7-Day Trial Guarantee" : "Sit Back & Relax"}
+                  </Text>
                   <Text style={styles.featureDesc}>
-                    Zero hassle. We handle the process so you can focus on what
-                    matters.
+                    {isPermanent
+                      ? "Zero hassle. Rate your worker after 7 days or request a replacement."
+                      : "Zero hassle. We handle the process so you can focus on what matters."}
                   </Text>
                 </View>
               </View>

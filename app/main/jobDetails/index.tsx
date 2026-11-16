@@ -683,7 +683,7 @@ const JobDetails = () => {
       <ScrollView
         style={styles.content}
         showsVerticalScrollIndicator={false}
-        //bounces={false}
+      //bounces={false}
       >
         {/* Job Header */}
         <View style={styles.jobHeader}>
@@ -696,6 +696,29 @@ const JobDetails = () => {
               {job.category?.name?.toUpperCase() || "GENERAL"}
             </Text>
           </View>
+          {job.jobType === "permanent" && (
+            <View
+              style={{
+                backgroundColor: "#EEF2FF",
+                paddingHorizontal: 10,
+                paddingVertical: 4,
+                borderRadius: 8,
+                borderWidth: 1,
+                borderColor: "#C7D2FE",
+              }}
+            >
+              <Text
+                style={{
+                  color: "#4F46E5",
+                  fontWeight: "800",
+                  fontSize: 11,
+                  letterSpacing: 0.5,
+                }}
+              >
+                PERMANENT ROLE
+              </Text>
+            </View>
+          )}
           {job?.isExpired && (
             <View style={[styles.statusContainer, { backgroundColor: "#FFEBEE" }]}>
               <Text style={[styles.statusText, { color: "#F44336" }]}>Expired</Text>
@@ -706,9 +729,16 @@ const JobDetails = () => {
         {/* Job Title and Budget */}
         <View style={styles.titleSection}>
           <Text style={styles.jobTitle}>{job.name}</Text>
-          <Text style={styles.budgetText}>
-            ₹{job.budget?.toLocaleString() || "0"}
-          </Text>
+          <View style={{ alignItems: "flex-end" }}>
+            <Text style={styles.budgetText}>
+              ₹{job.budget?.toLocaleString() || "0"}
+            </Text>
+            {job.jobType === "permanent" && (
+              <Text style={{ fontSize: 11, color: colors.grey, fontWeight: "600" }}>
+                per month
+              </Text>
+            )}
+          </View>
         </View>
 
         {/* Description */}
@@ -750,11 +780,9 @@ const JobDetails = () => {
               >
                 {job.isRemote
                   ? "Remote Work"
-                  : `${job.location?.address || ""}${
-                      job.location?.city ? ", " + job.location.city : ""
-                    }${job.location?.state ? ", " + job.location.state : ""}${
-                      job.location?.country ? ", " + job.location.country : ""
-                    }`}
+                  : `${job.location?.address || ""}${job.location?.city ? ", " + job.location.city : ""
+                  }${job.location?.state ? ", " + job.location.state : ""}${job.location?.country ? ", " + job.location.country : ""
+                  }`}
               </Text>
               {!job.isRemote &&
                 !(
@@ -780,13 +808,17 @@ const JobDetails = () => {
 
         {/* Time Preference */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Time Preference</Text>
+          <Text style={styles.sectionTitle}>
+            {job.jobType === "permanent" ? "Reporting Time" : "Time Preference"}
+          </Text>
           <View style={styles.timeContainer}>
             <Ionicons name="time-outline" size={20} color={colors.grey} />
             <Text style={styles.timeText}>
-              {formatTimePreference(job.timePreference)}
+              {job.jobType === "permanent" && job.reportingTime
+                ? `Report by: ${job.reportingTime}`
+                : formatTimePreference(job.timePreference)}
               {job.isFlexible && " (Flexible)"}
-              {job.fromTime && job.toTime && (
+              {job.fromTime && job.toTime && !job.reportingTime && (
                 <Text style={{ fontWeight: "600", color: colors.black }}>
                   {`\nExact Time: ${format24to12h(
                     job.fromTime
@@ -828,16 +860,22 @@ const JobDetails = () => {
             <View style={styles.detailItem}>
               <Ionicons name="calendar-outline" size={20} color={colors.grey} />
               <Text style={styles.detailLabel}>
-                {job.isFlexible && job.beforeDate && !job.onDate ? "Before" : "Date"}
+                {job.jobType === "permanent"
+                  ? "Start Date"
+                  : job.isFlexible && job.beforeDate && !job.onDate
+                    ? "Before"
+                    : "Date"}
               </Text>
               <Text style={styles.detailValue}>
-                {job.onDate
-                  ? formatDateDDMMYYYY(job.onDate)
-                  : job.beforeDate
-                  ? formatDateDDMMYYYY(job.beforeDate)
-                  : job.createdAt
-                  ? formatDateDDMMYYYY(job.createdAt)
-                  : "N/A"}
+                {job.startDate
+                  ? formatDateDDMMYYYY(job.startDate)
+                  : job.onDate
+                    ? formatDateDDMMYYYY(job.onDate)
+                    : job.beforeDate
+                      ? formatDateDDMMYYYY(job.beforeDate)
+                      : job.createdAt
+                        ? formatDateDDMMYYYY(job.createdAt)
+                        : "N/A"}
               </Text>
             </View>
           </View>
@@ -1129,35 +1167,39 @@ const JobDetails = () => {
                             Verified
                           </Text>
                           <Text style={styles.verificationMessageText}>
-                            {isWorking
-                              ? "You are currently working."
-                              : isPaused
-                                ? "Your work session is paused."
-                                : "Ready to start"}
+                            {job?.jobType === "permanent"
+                              ? "Day 1 arrival confirmed! Active 7-day trial period."
+                              : isWorking
+                                ? "You are currently working."
+                                : isPaused
+                                  ? "Your work session is paused."
+                                  : "Ready to start"}
                           </Text>
-                          <TouchableOpacity
-                            style={[
-                              styles.refreshCodeButtonLarge,
-                              {
-                                marginTop: 12,
-                                backgroundColor: isWorking
-                                  ? colors.darkGreen
-                                  : colors.primary,
-                              },
-                            ]}
-                            onPress={handleStartWork}
-                            disabled={startingWork}
-                          >
-                            {startingWork ? (
-                              <ActivityIndicator size="small" color="#fff" />
-                            ) : (
-                              <Text style={styles.refreshCodeButtonText}>
-                                {isWorking || isPaused
-                                  ? "Go to Timer"
-                                  : "Start Work"}
-                              </Text>
-                            )}
-                          </TouchableOpacity>
+                          {job?.jobType !== "permanent" && (
+                            <TouchableOpacity
+                              style={[
+                                styles.refreshCodeButtonLarge,
+                                {
+                                  marginTop: 12,
+                                  backgroundColor: isWorking
+                                    ? colors.darkGreen
+                                    : colors.primary,
+                                },
+                              ]}
+                              onPress={handleStartWork}
+                              disabled={startingWork}
+                            >
+                              {startingWork ? (
+                                <ActivityIndicator size="small" color="#fff" />
+                              ) : (
+                                <Text style={styles.refreshCodeButtonText}>
+                                  {isWorking || isPaused
+                                    ? "Go to Timer"
+                                    : "Start Work"}
+                                </Text>
+                              )}
+                            </TouchableOpacity>
+                          )}
                         </View>
                       </View>
                     );
@@ -1263,20 +1305,20 @@ const JobDetails = () => {
           ]}
         >
           {applied ||
-          job.hasApplied ||
-          isAccepted ||
-          (job.applicants &&
-            Array.isArray(job.applicants) &&
-            job.applicants.some(
-              (applicant: any) =>
-                applicant === userData?.id ||
-                applicant === userData?._id ||
-                applicant?.id === userData?.id ||
-                applicant?._id === userData?._id
-            )) ? (
+            job.hasApplied ||
+            isAccepted ||
+            (job.applicants &&
+              Array.isArray(job.applicants) &&
+              job.applicants.some(
+                (applicant: any) =>
+                  applicant === userData?.id ||
+                  applicant === userData?._id ||
+                  applicant?.id === userData?.id ||
+                  applicant?._id === userData?._id
+              )) ? (
             <CustomButton
               text="Applied"
-              onPress={() => {}}
+              onPress={() => { }}
               disabled={true}
               color="#ccc"
               style={{ flex: 1 }}
@@ -1286,7 +1328,7 @@ const JobDetails = () => {
             job.jobStatus === "filled" ? (
             <CustomButton
               text={job.jobStatus === "filled" ? "Job Filled" : "Job Completed"}
-              onPress={() => {}}
+              onPress={() => { }}
               disabled={true}
               color="#ccc"
               style={{ flex: 1 }}

@@ -115,7 +115,7 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => {
     console.log(
-      `[API Response] ${response.status} ${response.config.method?.toUpperCase()} ${JSON.stringify(response.data,null,2)}`
+      `[API Response] ${response.status} ${response.config.method?.toUpperCase()} ${JSON.stringify(response.data, null, 2)}`
     );
     return response;
   },
@@ -1684,6 +1684,57 @@ export const getWorkerPayouts = async (workerId: string) => {
     return { data: [] }; // Mock empty response
   } catch (error) {
     console.error("Error getting worker payouts:", error);
+    throw error;
+  }
+};
+
+/**
+ * Get pending permanent modals (Candidate matched / 7-day trial rating)
+ * GET /jobs/pending-permanent-modals
+ */
+export const getPendingPermanentModals = async () => {
+  try {
+    const response = await api.get('/jobs/pending-permanent-modals');
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching pending permanent modals:', error);
+    return { success: false, data: { hasModal: false } };
+  }
+};
+
+/**
+ * Acknowledge permanent candidate match modal
+ * POST /jobs/:id/acknowledge-candidate-match
+ */
+export const acknowledgeCandidateMatch = async (jobId: string) => {
+  try {
+    const response = await api.post(`/jobs/${jobId}/acknowledge-candidate-match`);
+    return response.data;
+  } catch (error) {
+    console.error('Error acknowledging candidate match:', error);
+    throw error;
+  }
+};
+
+/**
+ * Submit 7-day permanent trial evaluation / rating / grievance
+ * POST /jobs/:id/submit-trial-feedback
+ */
+export const submitPermanentTrialFeedback = async (
+  jobId: string,
+  data: {
+    rating: number;
+    comment?: string;
+    isSatisfied: boolean;
+    grievanceReason?: string;
+    grievanceNote?: string;
+  }
+) => {
+  try {
+    const response = await api.post(`/jobs/${jobId}/submit-trial-feedback`, data);
+    return response.data;
+  } catch (error) {
+    console.error('Error submitting permanent trial feedback:', error);
     throw error;
   }
 };

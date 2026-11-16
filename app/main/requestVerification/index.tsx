@@ -28,6 +28,7 @@ import {
   allowLateArrival,
 } from "../../../services/api";
 import Toast from "react-native-toast-message";
+import { PermanentDay1VerifiedModal } from "../../../components/PermanentDay1VerifiedModal";
 
 /* -------------------- Verify Tab (Accepted Users) -------------------- */
 interface RequestsVerifyTabProps {
@@ -61,6 +62,8 @@ const RequestsVerifyTab = ({
   const [jobInitiated, setJobInitiated] = useState(false);
   const [initiatingJob, setInitiatingJob] = useState(false);
   const [hasInitiallyLoaded, setHasInitiallyLoaded] = useState(false);
+  const [showPermanentVerifiedModal, setShowPermanentVerifiedModal] = useState(false);
+  const [verifiedWorkerName, setVerifiedWorkerName] = useState("");
 
   const fetchWorkers = useCallback(
     async (isRefresh = false) => {
@@ -135,11 +138,16 @@ const RequestsVerifyTab = ({
       const response = await approveWorkerArrival(jobId, workerId);
 
       if (response.data?.success) {
-        Toast.show({
-          type: "success",
-          text1: "Worker Approved ✅",
-          text2: `${workerName} can now start working.`,
-        });
+        if (response.data?.isPermanent) {
+          setVerifiedWorkerName(workerName);
+          setShowPermanentVerifiedModal(true);
+        } else {
+          Toast.show({
+            type: "success",
+            text1: "Worker Approved ✅",
+            text2: `${workerName} can now start working.`,
+          });
+        }
         await fetchWorkers();
       } else {
         Toast.show({
@@ -1067,6 +1075,12 @@ const RequestsVerifyTab = ({
           }}
         />
       )}
+
+      <PermanentDay1VerifiedModal
+        visible={showPermanentVerifiedModal}
+        workerName={verifiedWorkerName}
+        onClose={() => setShowPermanentVerifiedModal(false)}
+      />
     </View>
   );
 };

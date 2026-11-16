@@ -60,7 +60,7 @@ export const isAssignedWorker = (job: any, userId?: string | null): boolean => {
  * Returns true if the job is scheduled for today (using `onDate` field from backend).
  */
 export const isJobToday = (job: JobPost): boolean => {
-  const dateStr = job.onDate || (job as any).date;
+  const dateStr = (job as any).startDate || job.onDate || (job as any).date;
   if (!dateStr) return false;
 
   const jobDate = new Date(dateStr);

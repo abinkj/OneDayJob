@@ -182,6 +182,15 @@ export interface JobPost {
   timePreference: string[];
   fromTime?: string; // HH:MM format for non-flexible jobs
   toTime?: string; // HH:MM format for non-flexible jobs
+  jobType?: 'one_day' | 'permanent';
+  startDate?: string;
+  reportingTime?: string;
+  monthlySalary?: number;
+  placementStatus?: string;
+  candidateMatchedModalShown?: boolean;
+  trialStartDate?: string;
+  trialEndDate?: string;
+  trialRatingCompleted?: boolean;
   onDate?: string; // ISO date string — the actual scheduled work date (from backend `onDate` field)
   beforeDate?: string; // ISO date string for flexible jobs
   updatedAt: string;
@@ -220,6 +229,15 @@ export interface JobCardData {
   timePreference: string[];
   fromTime?: string; // HH:MM format for non-flexible jobs
   toTime?: string; // HH:MM format for non-flexible jobs
+  jobType?: 'one_day' | 'permanent';
+  startDate?: string;
+  reportingTime?: string;
+  monthlySalary?: number;
+  placementStatus?: string;
+  candidateMatchedModalShown?: boolean;
+  trialStartDate?: string;
+  trialEndDate?: string;
+  trialRatingCompleted?: boolean;
   userId: JobUser;
   isCompletedByWorker?: boolean; // Backend flag for worker completion
   isVerifiedByEmployer?: boolean; // Backend flag for employer verification

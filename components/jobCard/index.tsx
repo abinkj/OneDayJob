@@ -45,8 +45,9 @@ const JobCard = ({
   applicationStatus?: string;
   showPaymentButton?: boolean;
 }) => {
-  const { colors } = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const { colors, theme } = useTheme();
+  const isDark = theme === "dark";
+  const styles = useMemo(() => createStyles(colors, isDark), [colors, isDark]);
 
   const isEditable = useMemo(() => {
     if (data?.canEdit !== undefined) return data.canEdit;
@@ -69,7 +70,13 @@ const JobCard = ({
     isFlexible,
     requirements,
     timePreference,
-  } = data || {};
+    jobType,
+    startDate,
+    reportingTime,
+    monthlySalary,
+  } = (data as any) || {};
+
+  const isPermanent = jobType === "permanent";
 
   // Use jobStatus if available, otherwise fall back to status
   const actualStatus = jobStatus || status;
@@ -108,9 +115,8 @@ const JobCard = ({
 
 
   const formattedLocation = location?.address
-    ? `${location.address}${location.city ? ", " + location.city : ""}${
-        location.state ? ", " + location.state : ""
-      }${location.country ? ", " + location.country : ""}`
+    ? `${location.address}${location.city ? ", " + location.city : ""}${location.state ? ", " + location.state : ""
+    }${location.country ? ", " + location.country : ""}`
     : location?.country || "Remote";
 
   const formatRequirements = (reqs: string[]) => {
@@ -122,16 +128,51 @@ const JobCard = ({
   };
 
   return (
-    <View style={styles.card}>
+    <View
+      style={[
+        styles.card,
+        isPermanent && styles.permanentCard,
+      ]}
+    >
+      {/* Permanent Job Exclusive Top Accent Banner */}
+      {isPermanent && (
+        <View style={styles.permanentTopBanner}>
+          <View style={styles.permanentBadge}>
+            <Ionicons name="sparkles" size={11} color="#FFFFFF" />
+            <Text style={styles.permanentBadgeText}>PERMANENT JOB</Text>
+          </View>
+          <View style={styles.permanentTierBadge}>
+            <Ionicons name="shield-checkmark" size={12} color={isDark ? "#818CF8" : "#4F46E5"} />
+            <Text style={styles.permanentTierText}>Zoopol Placement</Text>
+          </View>
+        </View>
+      )}
+
       {/* Header Row */}
       <View style={styles.headerRow}>
-        <View style={styles.categoryContainer}>
-          <Text style={styles.category}>
-            {category?.name?.toUpperCase() || "GENERAL"}
-          </Text>
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 6, flexShrink: 1 }}>
+          <View style={[styles.categoryContainer, isPermanent && styles.permanentCategoryContainer]}>
+            <Text style={[styles.category, isPermanent && styles.permanentCategoryText]}>
+              {category?.name?.toUpperCase() || "GENERAL"}
+            </Text>
+          </View>
         </View>
 
-        <StatusBadge statusInfo={statusInfo} size="medium" showIcon={true} />
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+          <StatusBadge statusInfo={statusInfo} size="medium" showIcon={true} />
+
+          {/* Employer: show Edit icon at the top right of the job card */}
+          {isEmployer && onEdit && isEditable && (
+            <TouchableOpacity
+              style={[styles.topRightEditButton, isPermanent && styles.permanentEditButton]}
+              onPress={() => onEdit(data)}
+              activeOpacity={0.7}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            >
+              <Ionicons name="create-outline" size={16} color={isPermanent ? (isDark ? "#818CF8" : "#6366F1") : colors.primary} />
+            </TouchableOpacity>
+          )}
+        </View>
       </View>
 
       {/* Job Title */}
@@ -144,39 +185,66 @@ const JobCard = ({
         </Text>
       )}
 
-      {/* Price & Applicants */}
-      <View style={styles.metaRow}>
-        <Text style={styles.price}>
-          ₹{budget ? budget.toLocaleString() : "0"}
-        </Text>
-        <Text style={styles.separator}>|</Text>
-        <Text style={styles.slots}>{applicantCount || 0}</Text>
-        <Ionicons
-          name="person"
-          size={14}
-          color="#386BF6"
-          style={{ marginLeft: 8 }}
-        />
-      </View>
+      {/* Price & Applicants Display */}
+      {!isPermanent ? (
+        <View style={styles.metaRow}>
+          <Text style={styles.price}>
+            ₹{(budget ? budget.toLocaleString() : "0")}
+          </Text>
+          <Text style={styles.separator}>|</Text>
+          <Text style={styles.slots}>{applicantCount || 0}</Text>
+          <Ionicons
+            name="person"
+            size={14}
+            color="#386BF6"
+            style={{ marginLeft: 8 }}
+          />
+        </View>
+      ) : (
+        <View style={styles.permanentSalaryCard}>
+          <View>
+            <Text style={styles.permanentSalaryLabel}>MONTHLY SALARY</Text>
+            <View style={{ flexDirection: "row", alignItems: "baseline" }}>
+              <Text style={styles.permanentSalaryAmount}>
+                ₹{(monthlySalary || budget ? (monthlySalary || budget).toLocaleString() : "0")}
+              </Text>
+              <Text style={styles.permanentSalaryPeriod}> / month</Text>
+            </View>
+          </View>
+          <View style={styles.permanentApplicantsPill}>
+            <Ionicons name="people" size={13} color={isDark ? "#818CF8" : "#4F46E5"} />
+            <Text style={styles.permanentApplicantsText}>
+              {applicantCount || 0} {applicantCount === 1 ? "Candidate" : "Candidates"}
+            </Text>
+          </View>
+        </View>
+      )}
 
       {/* Location & Date */}
       <View style={styles.metaRow}>
         <Ionicons
           name={isRemote ? "laptop" : "location"}
           size={14}
-          color={colors.iconBlack}
+          color={isPermanent ? (isDark ? "#A5B4FC" : "#6366F1") : colors.iconBlack}
         />
-        <Text style={styles.metaLocation}>
+        <Text style={[styles.metaLocation, isPermanent && styles.permanentMetaText]}>
           {isRemote ? "Remote Work" : formattedLocation}
         </Text>
         <Ionicons
           name="calendar"
           size={14}
-          color={colors.iconBlack}
+          color={isPermanent ? (isDark ? "#A5B4FC" : "#6366F1") : colors.iconBlack}
           style={{ marginLeft: 14 }}
         />
-        <Text style={styles.metaText}>
-          {onDate
+        <Text
+          style={[
+            styles.metaText,
+            isPermanent && styles.permanentDateHighlight,
+          ]}
+        >
+          {isPermanent
+            ? `Starts: ${formatDateDDMMYYYY(startDate || onDate)}`
+            : onDate
             ? formatDateDDMMYYYY(onDate)
             : beforeDate
             ? formatDateDDMMYYYY(beforeDate)
@@ -188,9 +256,19 @@ const JobCard = ({
 
       {/* Time Preference */}
       <View style={styles.metaRow}>
-        <Ionicons name="time" size={14} color={colors.iconBlack} />
-        <Text style={styles.metaText}>
-          {formatTimePreference(timePreference)}
+        <Ionicons
+          name="time"
+          size={14}
+          color={isPermanent ? (isDark ? "#A5B4FC" : "#6366F1") : colors.iconBlack}
+        />
+        <Text style={[styles.metaText, isPermanent && styles.permanentMetaText]}>
+          {isPermanent
+            ? data.fromTime && data.toTime
+              ? `Hours: ${data.fromTime} - ${data.toTime}`
+              : reportingTime
+              ? `Report by: ${reportingTime}`
+              : formatTimePreference(timePreference)
+            : formatTimePreference(timePreference)}
         </Text>
         {isFlexible && (
           <>
@@ -263,14 +341,28 @@ const JobCard = ({
         ) : (
           <View style={styles.bottomRow}>
             {/* Primary button */}
-            <TouchableOpacity style={styles.primaryButton} onPress={() => onPress()}>
+            <TouchableOpacity
+              style={[
+                styles.primaryButton,
+                isPermanent && styles.permanentPrimaryButton,
+              ]}
+              onPress={() => onPress()}
+            >
               {!isEmployer ? (
-                // Workers always see "View Details" regardless of withdraw state
-                <Text style={styles.buttonText}>View Details</Text>
-              ) : isInProgress ? (
+                // Workers always see View Details / Role Details
+                <Text style={styles.buttonText}>
+                  {isPermanent ? "View Role Details" : "View Details"}
+                </Text>
+              ) : isInProgress && !isPermanent ? (
                 <Text style={styles.buttonText}>Start Timer</Text>
               ) : (
-                <Text style={styles.buttonText}>View Requests</Text>
+                <Text style={styles.buttonText}>
+                  {isInProgress
+                    ? "Manage Staff"
+                    : isPermanent
+                    ? "Review Candidates"
+                    : "View Requests"}
+                </Text>
               )}
             </TouchableOpacity>
 
@@ -289,17 +381,6 @@ const JobCard = ({
                 <Text style={styles.smallRepostButtonText}>
                   Repost
                 </Text>
-              </TouchableOpacity>
-            )}
-
-            {/* Employer: show Edit button if eligible */}
-            {isEmployer && onEdit && isEditable && (
-              <TouchableOpacity
-                style={styles.editIconButton}
-                onPress={() => onEdit(data)}
-                activeOpacity={0.7}
-              >
-                <Ionicons name="create-outline" size={16} color={colors.white} />
               </TouchableOpacity>
             )}
 
@@ -340,18 +421,134 @@ const JobCard = ({
   );
 };
 
-const createStyles = (colors: ThemeColors) =>
+const createStyles = (colors: ThemeColors, isDark: boolean) =>
   StyleSheet.create({
     card: {
       backgroundColor: colors.white,
       borderRadius: 16,
-      padding: 12,
+      padding: 14,
       shadowColor: "#000",
-      shadowOpacity: 0.05,
-      shadowRadius: 8,
+      shadowOpacity: isDark ? 0.3 : 0.06,
+      shadowRadius: 10,
+      shadowOffset: { width: 0, height: 4 },
       elevation: 2,
       marginVertical: 8,
       width: "100%",
+    },
+    permanentCard: {
+      backgroundColor: isDark ? "#17192A" : "#FAFAFF",
+      borderWidth: 1.5,
+      borderColor: isDark ? "rgba(129, 140, 248, 0.4)" : "rgba(99, 102, 241, 0.28)",
+      borderLeftWidth: 5,
+      borderLeftColor: isDark ? "#818CF8" : "#6366F1",
+      shadowColor: "#6366F1",
+      shadowOpacity: isDark ? 0.35 : 0.12,
+      shadowRadius: 10,
+      elevation: 4,
+    },
+    permanentTopBanner: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      marginBottom: 10,
+      paddingBottom: 8,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: isDark ? "rgba(255, 255, 255, 0.08)" : "rgba(99, 102, 241, 0.12)",
+    },
+    permanentBadge: {
+      flexDirection: "row",
+      alignItems: "center",
+      backgroundColor: isDark ? "#6366F1" : "#4F46E5",
+      paddingHorizontal: 8,
+      paddingVertical: 3.5,
+      borderRadius: 6,
+      gap: 4,
+    },
+    permanentBadgeText: {
+      color: "#FFFFFF",
+      fontSize: 10,
+      fontWeight: "800",
+      letterSpacing: 0.5,
+    },
+    permanentTierBadge: {
+      flexDirection: "row",
+      alignItems: "center",
+      backgroundColor: isDark ? "rgba(129, 140, 248, 0.15)" : "rgba(99, 102, 241, 0.1)",
+      paddingHorizontal: 8,
+      paddingVertical: 3,
+      borderRadius: 6,
+      gap: 4,
+    },
+    permanentTierText: {
+      color: isDark ? "#A5B4FC" : "#4F46E5",
+      fontSize: 10,
+      fontWeight: "700",
+    },
+    permanentCategoryContainer: {
+      backgroundColor: isDark ? "rgba(129, 140, 248, 0.18)" : "rgba(99, 102, 241, 0.1)",
+      borderColor: isDark ? "rgba(129, 140, 248, 0.3)" : "rgba(99, 102, 241, 0.2)",
+      borderWidth: 1,
+    },
+    permanentCategoryText: {
+      color: isDark ? "#A5B4FC" : "#4F46E5",
+      fontWeight: "700",
+    },
+    permanentSalaryCard: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+      backgroundColor: isDark ? "rgba(99, 102, 241, 0.12)" : "rgba(99, 102, 241, 0.07)",
+      paddingHorizontal: 12,
+      paddingVertical: 8,
+      borderRadius: 10,
+      marginBottom: 10,
+      borderWidth: 1,
+      borderColor: isDark ? "rgba(129, 140, 248, 0.22)" : "rgba(99, 102, 241, 0.18)",
+    },
+    permanentSalaryLabel: {
+      fontSize: 9,
+      fontWeight: "800",
+      letterSpacing: 0.6,
+      color: isDark ? "#A5B4FC" : "#6366F1",
+      marginBottom: 2,
+    },
+    permanentSalaryAmount: {
+      fontSize: 16,
+      fontWeight: "800",
+      color: isDark ? "#FFFFFF" : "#1E1B4B",
+    },
+    permanentSalaryPeriod: {
+      fontSize: 12,
+      fontWeight: "600",
+      color: isDark ? "#A5B4FC" : "#6366F1",
+    },
+    permanentApplicantsPill: {
+      flexDirection: "row",
+      alignItems: "center",
+      backgroundColor: isDark ? "rgba(129, 140, 248, 0.18)" : "rgba(99, 102, 241, 0.12)",
+      paddingHorizontal: 9,
+      paddingVertical: 4,
+      borderRadius: 8,
+      gap: 5,
+    },
+    permanentApplicantsText: {
+      fontSize: 11,
+      fontWeight: "700",
+      color: isDark ? "#E0E7FF" : "#3730A3",
+    },
+    permanentMetaText: {
+      color: isDark ? "#CBD5E1" : "#475569",
+    },
+    permanentDateHighlight: {
+      color: isDark ? "#818CF8" : "#4F46E5",
+      fontWeight: "700",
+    },
+    permanentPrimaryButton: {
+      backgroundColor: isDark ? "#6366F1" : "#4F46E5",
+    },
+    permanentEditButton: {
+      backgroundColor: isDark ? "rgba(129, 140, 248, 0.2)" : "rgba(99, 102, 241, 0.15)",
+      borderColor: isDark ? "rgba(129, 140, 248, 0.4)" : "rgba(99, 102, 241, 0.3)",
     },
     headerRow: {
       flexDirection: "row",
@@ -502,6 +699,16 @@ const createStyles = (colors: ThemeColors) =>
       alignItems: "center",
       justifyContent: "center",
       elevation: 2,
+    },
+    topRightEditButton: {
+      width: 28,
+      height: 28,
+      borderRadius: 14,
+      backgroundColor: colors.primary + "18",
+      alignItems: "center",
+      justifyContent: "center",
+      borderWidth: 1,
+      borderColor: colors.primary + "35",
     },
     editIconButton: {
       width: 33,
