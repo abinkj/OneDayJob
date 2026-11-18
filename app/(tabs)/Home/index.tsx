@@ -18,6 +18,7 @@ import {
   searchPlacesWithGoogle, // FIX 3: was searchPlacesFallback — now uses the full Google→Expo chain
   formatLocationDisplay, // FIX 5: shared display formatter, removes duplicated splitting logic
   LocationData,
+  getCachedLocation,
 } from "../../../services/locationService";
 import { useDispatch, useSelector } from "react-redux";
 import Toast from "react-native-toast-message";
@@ -27,6 +28,9 @@ import NotificationBadge from "../../../components/notificationBadge";
 import {
   updateUserLocationWithRetry,
   getCategoriesForFilter,
+  getPendingPermanentModals,
+  acknowledgeCandidateMatch,
+  submitPermanentTrialFeedback,
 } from "../../../services/api";
 import { restoreSession } from "../../../utilities/authentication";
 import { JobPost } from "../../../types";
@@ -37,6 +41,8 @@ import { HomeJobCard } from "../../../components/jobCard/HomeJobCard";
 import LiveJobHeader from "./components/LiveJobHeader";
 import SuccessAnimation from "../../../components/SuccessAnimation";
 import BannerCarousel from "./components/BannerCarousel";
+import { PermanentCandidateMatchedModal } from "../../../components/PermanentCandidateMatchedModal";
+import { PermanentTrialRatingModal } from "../../../components/PermanentTrialRatingModal";
 import FilterActionSheet, {
   FilterActionSheetRef,
 } from "../../../components/FilterActionSheet";
@@ -110,6 +116,11 @@ const HomeScreen = () => {
   const [searchRadius, setSearchRadius] = useState(10);
   const [isInitialized, setIsInitialized] = useState(false);
   const [isFilterSticky, setIsFilterSticky] = useState(false);
+  const [selectedJobType, setSelectedJobType] = useState<"all" | "one_day" | "permanent">("all");
+  const [candidateMatchedJob, setCandidateMatchedJob] = useState<any | null>(null);
+  const [showCandidateMatchedModal, setShowCandidateMatchedModal] = useState(false);
+  const [trialRatingJob, setTrialRatingJob] = useState<any | null>(null);
+  const [showTrialRatingModal, setShowTrialRatingModal] = useState(false);
 
   const categorySheetRef = useRef<FilterActionSheetRef>(null);
   const priceSheetRef = useRef<FilterActionSheetRef>(null);
@@ -359,6 +370,7 @@ const HomeScreen = () => {
       search: searchQuery.trim() || undefined,
       category: selectedCategory || undefined,
       priceSort: selectedPriceSort || undefined,
+      jobType: selectedJobType !== "all" ? selectedJobType : undefined,
       distance:
         selectedDistance && (location || isRemote)
           ? selectedDistance
@@ -372,6 +384,7 @@ const HomeScreen = () => {
     searchQuery,
     selectedCategory,
     selectedPriceSort,
+    selectedJobType,
     selectedDistance,
     location?.latitude,
     location?.longitude,
@@ -512,7 +525,62 @@ const HomeScreen = () => {
     setSelectedCategory(null);
     setSelectedPriceSort(null);
     setSelectedDistance(null);
+    setSelectedJobType("all");
     setSearchQuery("");
+  };
+
+  const checkPendingPermanentModals = useCallback(async () => {
+    if (!userData?.id && !userData?._id) return;
+    try {
+      const res = await getPendingPermanentModals();
+      if (res?.success) {
+        const payload = res.data || res;
+        if (payload?.hasModal && payload?.job) {
+          if (payload.modalType === "candidate_matched") {
+            setCandidateMatchedJob(payload.job);
+            setShowCandidateMatchedModal(true);
+          } else if (payload.modalType === "trial_rating") {
+            setTrialRatingJob(payload.job);
+            setShowTrialRatingModal(true);
+          }
+        } else if (res.candidateMatchedJob) {
+          setCandidateMatchedJob(res.candidateMatchedJob);
+          setShowCandidateMatchedModal(true);
+        } else if (res.trialRatingJob) {
+          setTrialRatingJob(res.trialRatingJob);
+          setShowTrialRatingModal(true);
+        }
+      }
+    } catch (err) {
+      console.log("[HomeScreen] Error fetching pending permanent modals:", err);
+    }
+  }, [userData]);
+
+  const handleAcknowledgeCandidateMatch = async () => {
+    if (candidateMatchedJob?._id) {
+      try {
+        await acknowledgeCandidateMatch(candidateMatchedJob._id);
+      } catch (err) {
+        console.error("Failed to acknowledge candidate match:", err);
+      }
+    }
+    setShowCandidateMatchedModal(false);
+    setCandidateMatchedJob(null);
+  };
+
+  const handleSubmitTrialFeedback = async (feedback: {
+    rating: number;
+    comment: string;
+    isSatisfied: boolean;
+    grievanceReason?: string;
+    grievanceNote?: string;
+  }) => {
+    if (trialRatingJob?._id) {
+      await submitPermanentTrialFeedback(trialRatingJob._id, feedback);
+    }
+    setShowTrialRatingModal(false);
+    setTrialRatingJob(null);
+    refetchJobs();
   };
 
   const handleLoadMore = () => {
@@ -530,6 +598,22 @@ const HomeScreen = () => {
         setLoading(true);
         await dispatch(restoreSession() as any);
         await loadCategories();
+
+        // Fast path: load cached location immediately (0ms instant render)
+        try {
+          const cached = await getCachedLocation();
+          if (cached && cached.coordinates) {
+            setLocation(cached.coordinates);
+            setLocationReady(true);
+            const { specific, broad } = formatLocationDisplay(cached);
+            setLocationDetails({ specific, broad });
+            setLocationAddress(specific);
+            console.log("[HomeScreen] Instant location loaded from cache:", specific);
+          }
+        } catch (cacheLoadErr) {
+          console.warn("[HomeScreen] Failed to load cached location on mount:", cacheLoadErr);
+        }
+
         setIsInitialized(true);
         console.log("[HomeScreen] Initialization complete");
       } catch (error) {
@@ -544,6 +628,9 @@ const HomeScreen = () => {
   // FIX 1: Throttle location fetch on focus — skip if fetched within the last 30s
   useFocusEffect(
     useCallback(() => {
+      // Check for candidate matched or 7-day review modals whenever Home focuses
+      checkPendingPermanentModals();
+
       const fetchLocationAndRefetch = async () => {
         if (!isInitialized) return;
 
@@ -568,7 +655,7 @@ const HomeScreen = () => {
       };
 
       fetchLocationAndRefetch();
-    }, [isInitialized, refetchJobs])
+    }, [isInitialized, refetchJobs, checkPendingPermanentModals])
   );
 
   const backPressedOnce = useRef(false);
@@ -690,6 +777,24 @@ const HomeScreen = () => {
           bounces={false}
           data={[
             {
+              id: "job_type_all",
+              name: "All Jobs",
+              isSelected: selectedJobType === "all",
+              isJobType: true,
+            },
+            {
+              id: "job_type_one_day",
+              name: "One-Day",
+              isSelected: selectedJobType === "one_day",
+              isJobType: true,
+            },
+            {
+              id: "job_type_permanent",
+              name: "Permanent ⭐",
+              isSelected: selectedJobType === "permanent",
+              isJobType: true,
+            },
+            {
               id: "category",
               name: getSelectedCategoryName(),
               isSelected: !!selectedCategory,
@@ -709,9 +814,17 @@ const HomeScreen = () => {
           keyExtractor={(item) => item.id}
           renderItem={({ item }) => (
             <TouchableOpacity
-              style={getFilterButtonStyle(item.isSelected)}
+              style={[
+                getFilterButtonStyle(item.isSelected),
+                item.id === "job_type_permanent" && item.isSelected && {
+                  backgroundColor: "#6366F1",
+                },
+              ]}
               onPress={() => {
-                if (item.id === "category") categorySheetRef.current?.show();
+                if (item.id === "job_type_all") setSelectedJobType("all");
+                else if (item.id === "job_type_one_day") setSelectedJobType("one_day");
+                else if (item.id === "job_type_permanent") setSelectedJobType("permanent");
+                else if (item.id === "category") categorySheetRef.current?.show();
                 else if (item.id === "price") priceSheetRef.current?.show();
                 else if (item.id === "distance")
                   distanceSheetRef.current?.show();
@@ -721,7 +834,7 @@ const HomeScreen = () => {
               <Text style={getFilterTextStyle(item.isSelected)}>
                 {item.name}
               </Text>
-              {item.id !== "clear" && (
+              {item.id !== "clear" && !(item as any).isJobType && (
                 <Ionicons
                   name="chevron-down"
                   size={16}
@@ -1060,6 +1173,32 @@ const HomeScreen = () => {
         options={distanceOptions}
         selectedValue={selectedDistance}
         onSelect={handleDistanceFilter}
+      />
+
+      <PermanentCandidateMatchedModal
+        visible={showCandidateMatchedModal}
+        jobData={candidateMatchedJob}
+        onAcknowledge={handleAcknowledgeCandidateMatch}
+        onViewJob={() => {
+          const targetJob = candidateMatchedJob;
+          handleAcknowledgeCandidateMatch();
+          if (targetJob?._id) {
+            navigation.navigate("JobDetails", {
+              jobId: targetJob._id,
+              job: targetJob,
+            });
+          }
+        }}
+      />
+
+      <PermanentTrialRatingModal
+        visible={showTrialRatingModal}
+        jobData={trialRatingJob}
+        onSubmit={handleSubmitTrialFeedback}
+        onClose={() => {
+          setShowTrialRatingModal(false);
+          setTrialRatingJob(null);
+        }}
       />
     </View>
   );

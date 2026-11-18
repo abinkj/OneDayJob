@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
-import { View, TouchableOpacity, ScrollView } from "react-native";
+import { View, Text, TouchableOpacity, ScrollView } from "react-native";
 import { Image } from "expo-image";
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
@@ -283,6 +283,17 @@ const EditProfile: React.FC = () => {
             <Ionicons name="camera" size={16} color="#fff" />
           </View>
         </TouchableOpacity>
+        <Text
+          style={{
+            fontSize: 12,
+            color: colors.grey,
+            textAlign: "center",
+            marginTop: 6,
+            marginBottom: 16,
+          }}
+        >
+          📸 Front camera selfie only for identity verification
+        </Text>
 
         {/* First Name */}
         <LabeledInput

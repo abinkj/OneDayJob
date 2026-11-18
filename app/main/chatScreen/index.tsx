@@ -426,7 +426,7 @@ export default function ChatScreen() {
       }}
       textStyle={{
         right: {
-          color: colors.white,
+          color: "#FFFFFF",
           fontSize: fontSizes.size16,
           fontFamily: "regular",
         },
@@ -549,6 +549,13 @@ export default function ChatScreen() {
           placeholderTextColor: colors.grey,
           onChangeText: handleInputChange,
           editable: !isBlocked,
+          style: {
+            color: colors.black,
+            fontSize: fontSizes.size16,
+            paddingTop: Platform.OS === "ios" ? 8 : 4,
+            paddingBottom: Platform.OS === "ios" ? 8 : 4,
+            lineHeight: 20,
+          },
         }}
         isTyping={otherUserTyping}
         renderFooter={() =>

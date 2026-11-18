@@ -182,6 +182,15 @@ export interface JobPost {
   timePreference: string[];
   fromTime?: string; // HH:MM format for non-flexible jobs
   toTime?: string; // HH:MM format for non-flexible jobs
+  jobType?: 'one_day' | 'permanent';
+  startDate?: string;
+  reportingTime?: string;
+  monthlySalary?: number;
+  placementStatus?: string;
+  candidateMatchedModalShown?: boolean;
+  trialStartDate?: string;
+  trialEndDate?: string;
+  trialRatingCompleted?: boolean;
   onDate?: string; // ISO date string — the actual scheduled work date (from backend `onDate` field)
   beforeDate?: string; // ISO date string for flexible jobs
   updatedAt: string;
@@ -196,6 +205,8 @@ export interface JobPost {
   // Arrival state (derived from worker's session in the job list response)
   hasArrived?: boolean; // true if this worker has already pressed 'I Have Reached'
   arrivalStatus?: "pending" | "arrived" | "verified" | "no_show"; // mirrors JobSession.arrivalStatus
+  canEdit?: boolean;
+  editRestrictionReason?: string;
 }
 
 // For backward compatibility and convenience
@@ -218,8 +229,21 @@ export interface JobCardData {
   timePreference: string[];
   fromTime?: string; // HH:MM format for non-flexible jobs
   toTime?: string; // HH:MM format for non-flexible jobs
+  jobType?: 'one_day' | 'permanent';
+  startDate?: string;
+  reportingTime?: string;
+  monthlySalary?: number;
+  placementStatus?: string;
+  candidateMatchedModalShown?: boolean;
+  trialStartDate?: string;
+  trialEndDate?: string;
+  trialRatingCompleted?: boolean;
   userId: JobUser;
   isCompletedByWorker?: boolean; // Backend flag for worker completion
   isVerifiedByEmployer?: boolean; // Backend flag for employer verification
   isPaymentDone?: boolean; // Backend flag for payment completion
+  assignedUsers?: any[];
+  applicants?: any[];
+  canEdit?: boolean;
+  editRestrictionReason?: string;
 }
