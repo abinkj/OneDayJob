@@ -169,3 +169,31 @@ const nativeVersion = Application.nativeApplicationVersion; // e.g. "1.0.1"
 const buildNumber = Application.nativeBuildVersion; // e.g. "3"
 ```
 This guarantees the UI will always reflect the exact version installed without manual string editing.
+
+---
+
+## 5. Backend Version Gating & Store Update Handshake
+
+To alert installed native binaries (such as `1.0.1`) that a new store version (`1.0.2`) has been published on Google Play, the mobile client executes a lightweight handshake with `onedayjob-api`:
+
+```
+┌─────────────────────────────────┐                    ┌──────────────────────────────────┐
+│   MOBILE APP (OneDayJob)        │                    │   BACKEND (onedayjob-api)        │
+│                                 │                    │                                  │
+│   hooks/useStoreUpdateCheck.ts  │                    │   GET /api/app-config            │
+│   currentVersion: "1.0.1"       │─── HTTP GET ──────▶│   latest_version: "1.0.2"        │
+│                                 │                    │   min_supported_version: "1.0.1" │
+│   Compares versions             │◀── JSON Data ──────│   update_type: "SOFT"            │
+│   Prompts user to update        │                    └──────────────────────────────────┘
+│   Redirects to Play Store       │
+└─────────────────────────────────┘
+```
+
+### Backend Contract Reference:
+* **Backend Endpoint**: `GET /api/app-config`
+* **Backend Implementation Docs**: `onedayjob-api/docs/APP_CONFIG_AND_VERSIONING.md`
+* **Backend Code Location**: `onedayjob-api/src/services/appConfig.service.ts`
+
+### Operational Workflow for Releasing a New Store Version:
+1. When you release `1.0.2` on Google Play, set `LATEST_APP_VERSION=1.0.2` on your backend server.
+2. All older clients running `1.0.1` will automatically detect the new version on next launch and prompt the user to update directly on Google Play.
