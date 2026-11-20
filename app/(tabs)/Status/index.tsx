@@ -42,6 +42,7 @@ import {
 import { createStyles } from "./styles";
 import { useTheme } from "../../../contexts/ThemeContext";
 import Toast from "react-native-toast-message";
+import { useAlert } from "../../../components/CustomAlert/AlertProvider";
 import {
   isJobOwner,
   isAssignedWorker,
@@ -80,6 +81,7 @@ const MyPostTab = () => {
   } = useUserJobPostings(userId);
 
   const deleteJobMutation = useDeleteJob();
+  const { showAlert } = useAlert();
 
   const [selectedStatus, setSelectedStatus] = useState<string | null>(null);
   const [selectedJobForRepost, setSelectedJobForRepost] = useState<JobPost | null>(null);
@@ -127,7 +129,7 @@ const MyPostTab = () => {
   //   });
   // };
 
-  const handleDelete = async (jobId: string) => {
+  const confirmDelete = async (jobId: string) => {
     try {
       await deleteJobMutation.mutateAsync(jobId);
       Toast.show({
@@ -143,6 +145,27 @@ const MyPostTab = () => {
         text2: error.response?.data?.message || "Failed to delete job",
       });
     }
+  };
+
+  const handleDelete = (jobId: string) => {
+    if (!jobId) return;
+    showAlert({
+      type: "warning",
+      title: "Delete Job Post",
+      message:
+        "Are you sure you want to delete this job post? This action cannot be undone.",
+      buttons: [
+        {
+          text: "Cancel",
+          style: "cancel",
+        },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: () => confirmDelete(jobId),
+        },
+      ],
+    });
   };
 
   const handleSummary = (jobId: string, jobName: string) => {
