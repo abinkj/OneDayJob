@@ -16,6 +16,7 @@ import AppLayout from "../components/ui/layout";
 import { AlertProvider } from "../components/CustomAlert/AlertProvider";
 import { ThemeProvider } from "../contexts/ThemeContext";
 import { KeyboardProvider } from "react-native-keyboard-controller";
+import { useOTAUpdate } from "../hooks/useOTAupdates";
 
 import NetworkSyncBootstrap from "../offline/NetworkSyncBootstrap";
 
@@ -23,6 +24,7 @@ import NetworkSyncBootstrap from "../offline/NetworkSyncBootstrap";
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
+  useOTAUpdate();
   const [ready, setReady] = useState(false);
   const [fontsLoaded, fontError] = useFonts({
     regular: require("../assets/fonts/Roboto-Regular.ttf"),
