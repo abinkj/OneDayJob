@@ -216,7 +216,7 @@ const AadhaarVerificationContent = () => {
 
             <Text style={styles.stepTitle}>Verify Your Identity</Text>
             <Text style={styles.stepSubtitle}>
-              To apply for jobs on OneDayJob, we need to verify your identity
+              To apply for jobs on Zoopol, we need to verify your identity
               using DigiLocker — India's official digital document wallet.
             </Text>
 
@@ -282,7 +282,7 @@ const AadhaarVerificationContent = () => {
             <Text style={styles.successTitle}>Identity Verified!</Text>
             <Text style={styles.successSubtitle}>
               Your identity has been authenticated via DigiLocker. You can now
-              apply for jobs across OneDayJob.
+              apply for jobs across Zoopol.
             </Text>
 
             <View style={styles.detailsBox}>

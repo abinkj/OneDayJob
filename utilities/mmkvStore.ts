@@ -199,6 +199,30 @@ export const getHasSeenOnboarding = async (): Promise<boolean> => {
   }
 };
 
+// ─── Cached Location ──────────────────────────────────────────────────────────
+
+const CACHED_LOCATION_KEY = "cachedUserLocation";
+
+export const saveCachedLocation = async (locationData: any): Promise<void> => {
+  try {
+    await initializeStorage();
+    getStorage().set(CACHED_LOCATION_KEY, JSON.stringify(locationData));
+  } catch (error) {
+    console.error("Failed to save cached location:", error);
+  }
+};
+
+export const getCachedLocation = async (): Promise<any | null> => {
+  try {
+    await initializeStorage();
+    const raw = getStorage().getString(CACHED_LOCATION_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch (error) {
+    console.error("Failed to load cached location:", error);
+    return null;
+  }
+};
+
 // ─── Direct instance access (advanced use only) ───────────────────────────────
 
 /**

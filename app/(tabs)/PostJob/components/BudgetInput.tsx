@@ -7,36 +7,69 @@ interface BudgetInputProps {
   setBudget: (value: string) => void;
   styles: any;
   colors: ThemeColors;
+  isPermanent?: boolean;
 }
 
-const PRESET_AMOUNTS = [300, 500, 800, 1000, 1500, 2000];
+const ONE_DAY_PRESETS = [300, 500, 800, 1000, 1500, 2000];
+const PERMANENT_PRESETS = [5000, 8000, 10000, 12000, 15000, 20000];
 
 const BudgetInput: React.FC<BudgetInputProps> = ({
   budget,
   setBudget,
   styles,
   colors,
+  isPermanent = false,
 }) => {
+  const minAmount = isPermanent ? 5000 : 300;
+  const presets = isPermanent ? PERMANENT_PRESETS : ONE_DAY_PRESETS;
+
   const numericBudget = budget ? parseFloat(budget) : null;
   const isBelowMin =
-    numericBudget !== null && !isNaN(numericBudget) && numericBudget < 300;
+    numericBudget !== null && !isNaN(numericBudget) && numericBudget < minAmount;
+
+  const formatPresetText = (amt: number) => {
+    if (amt >= 1000) {
+      return `₹${amt.toLocaleString("en-IN")}`;
+    }
+    return `₹${amt}`;
+  };
 
   return (
     <View style={styles.stepContainer}>
-      <Text style={styles.sectionTitle}>Enter Your Budget</Text>
+      <Text style={styles.sectionTitle}>
+        {isPermanent ? "Enter Monthly Salary Budget" : "Enter Your Budget"}
+      </Text>
 
-      {/* Info card matching the style of previous page Exact Time card */}
+      {/* Info card */}
       <View style={styles.switchCard}>
         <View style={styles.switchHeader}>
           <View style={styles.switchTitleContainer}>
             <View style={styles.switchTitleRow}>
-              <Text style={styles.switchLabel}>Budget Per Person</Text>
-              <View style={styles.optionalBadge}>
-                <Text style={styles.optionalBadgeText}>Min ₹300</Text>
+              <Text style={styles.switchLabel}>
+                {isPermanent
+                  ? "Monthly Salary Per Person"
+                  : "Budget Per Person"}
+              </Text>
+              <View
+                style={[
+                  styles.optionalBadge,
+                  isPermanent && { backgroundColor: "rgba(99, 102, 241, 0.12)" },
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.optionalBadgeText,
+                    isPermanent && { color: "#6366F1", fontWeight: "700" },
+                  ]}
+                >
+                  Min ₹{minAmount.toLocaleString("en-IN")}{isPermanent ? " / mo" : ""}
+                </Text>
               </View>
             </View>
             <Text style={styles.switchSubtitle}>
-              The budget amount is per person. For multiple vacancies, total payment is calculated accordingly.
+              {isPermanent
+                ? "Monthly salary offered per worker. Monthly wages are paid directly to your staff after the trial."
+                : "The budget amount is per person. For multiple vacancies, total payment is calculated accordingly."}
             </Text>
           </View>
         </View>
@@ -65,21 +98,37 @@ const BudgetInput: React.FC<BudgetInputProps> = ({
             ]}
             value={budget ?? ""}
             onChangeText={setBudget}
-            placeholder="300"
+            placeholder={String(minAmount)}
             placeholderTextColor={colors.grey}
             keyboardType="number-pad"
             inputMode="decimal"
-            maxLength={7}
+            maxLength={8}
             autoFocus={true}
             autoCorrect={false}
             autoCapitalize="none"
           />
+          {isPermanent && (
+            <Text
+              style={{
+                fontSize: 16,
+                fontWeight: "600",
+                color: colors.grey || "#64748B",
+                marginLeft: 4,
+                marginBottom: 6,
+                alignSelf: "flex-end",
+              }}
+            >
+              / month
+            </Text>
+          )}
         </View>
 
         {/* Real-time validation warning */}
         {isBelowMin && (
           <Text style={styles.budgetErrorText}>
-            Amount must be at least ₹300
+            {isPermanent
+              ? `Monthly salary must be at least ₹${minAmount.toLocaleString("en-IN")}`
+              : `Amount must be at least ₹${minAmount}`}
           </Text>
         )}
 
@@ -87,7 +136,7 @@ const BudgetInput: React.FC<BudgetInputProps> = ({
         <View style={styles.quickAmountSection}>
           <Text style={styles.quickAmountTitle}>Quick Select Amount</Text>
           <View style={styles.quickAmountGrid}>
-            {PRESET_AMOUNTS.map((amt) => {
+            {presets.map((amt) => {
               const isSelected = budget === String(amt);
               return (
                 <TouchableOpacity
@@ -95,6 +144,7 @@ const BudgetInput: React.FC<BudgetInputProps> = ({
                   style={[
                     styles.quickAmountCard,
                     isSelected && styles.quickAmountCardActive,
+                    isPermanent && isSelected && { borderColor: "#6366F1", backgroundColor: "rgba(99, 102, 241, 0.08)" },
                   ]}
                   onPress={() => setBudget(String(amt))}
                   activeOpacity={0.7}
@@ -103,9 +153,10 @@ const BudgetInput: React.FC<BudgetInputProps> = ({
                     style={[
                       styles.quickAmountText,
                       isSelected && styles.quickAmountTextActive,
+                      isPermanent && isSelected && { color: "#6366F1", fontWeight: "700" },
                     ]}
                   >
-                    ₹{amt}
+                    {formatPresetText(amt)}
                   </Text>
                 </TouchableOpacity>
               );

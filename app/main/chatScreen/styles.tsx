@@ -70,6 +70,8 @@ export const createStyles = (colors: ThemeColors) =>
       borderRadius: 24,
       backgroundColor: colors.white,
       borderTopWidth: 0,
+      borderWidth: 1,
+      borderColor: colors.border,
     },
     subInputContainer: {
       flex: 1,

@@ -8,9 +8,10 @@ import {
   Modal,
   Platform,
   KeyboardAvoidingView,
+  BackHandler,
 } from "react-native";
 import { Image } from "expo-image";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useRoute, useFocusEffect } from "@react-navigation/native";
 import { useSelector } from "react-redux";
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "../../../contexts/ThemeContext";
@@ -21,9 +22,11 @@ import { createStyles } from "./styles";
 import CustomSwitch from "../../../components/CustomSwich";
 import {
   createJobPosting,
+  updateJobPosting,
   getCategories,
   // uploadJobPhotos
 } from "../../../services/api"; // Adjust the path according to your project structure
+import { useQueryClient } from "@tanstack/react-query";
 import { LocationData } from "../../../services/locationService";
 import Toast from "react-native-toast-message";
 import { useAlert } from "../../../components/CustomAlert/AlertProvider";
@@ -38,20 +41,29 @@ import BudgetInput from "./components/BudgetInput";
 
 import {
   defaultJobCategories,
+  defaultPermanentCategories,
   timeSlots,
 } from "../../../constants/JobConstants";
 import { RootState } from "../../../redux/store";
 import Images from "../../../utilities/images";
+import JobPostSuccessModal from "../../../components/JobPostSuccessModal";
 
 const PostJobScreen = ({ navigation: navProp }) => {
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const navigation = useNavigation();
+  const route = useRoute<any>();
+  const queryClient = useQueryClient();
   const { kycStatus } = useSelector((state: any) => state.authentication);
   const { showAlert } = useAlert();
   const scrollViewRef = useRef<ScrollView>(null);
 
+  // Edit mode states
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [editingJobId, setEditingJobId] = useState<string | null>(null);
+
   // State variables
+  const [showPostSuccessModal, setShowPostSuccessModal] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
   const [jobCategories, setJobCategories] = useState(defaultJobCategories);
   const [selectedCategory, setSelectedCategory] = useState(null);
@@ -72,6 +84,8 @@ const PostJobScreen = ({ navigation: navProp }) => {
   const [scheduleDate, setScheduleDate] = useState<Date | null>(null);
   const [scheduleType, setScheduleType] = useState<"on" | "before">("on");
   const [isFlexible, setIsFlexible] = useState(false);
+  const [isExactTime, setIsExactTime] = useState(false);
+  const [jobType, setJobType] = useState<"one_day" | "permanent">("one_day");
 
   // Time range settings - fromTime and toTime are required for non-flexible jobs
   const [fromHour, setFromHour] = useState("00");
@@ -103,6 +117,154 @@ const PostJobScreen = ({ navigation: navProp }) => {
   useEffect(() => {
     loadCategories();
   }, []);
+
+  // Pre-fill form when navigating from Edit Job or Repost Job
+  useEffect(() => {
+    const editJob = route?.params?.editJob;
+    const isEdit = Boolean(route?.params?.isEditMode);
+
+    if (editJob) {
+      if (isEdit) {
+        setIsEditMode(true);
+        setEditingJobId(editJob._id);
+        console.log("[PostJob] Entering EDIT mode for job:", editJob._id, editJob.name);
+      } else {
+        setIsEditMode(false);
+        setEditingJobId(null);
+        console.log("[PostJob] Prefilling form for reposting job:", editJob.name);
+      }
+
+      if (editJob.name) setJobName(editJob.name);
+      if (editJob.description) setJobDescription(editJob.description);
+      if (editJob.isMultiVacancy !== undefined) {
+        setIsMultipleVacancy(editJob.isMultiVacancy);
+      }
+      if (editJob.participantsNumber) {
+        setVacancyCount(editJob.participantsNumber);
+      }
+      if (editJob.isRemote !== undefined) {
+        setCanBeDoneRemotely(editJob.isRemote);
+      }
+      if (editJob.location) setSelectedLocation(editJob.location);
+      if (editJob.address || editJob.location?.address) {
+        setTaskAddress(editJob.address || editJob.location?.address);
+      }
+      if (Array.isArray(editJob.requirements)) {
+        setRequirements(editJob.requirements);
+      }
+      if (Array.isArray(editJob.photos)) {
+        setPhotos(editJob.photos);
+        setUploadedPhotoUrls(editJob.photos);
+      }
+
+      // Job Type & Specific Dates/Budgets
+      const isPerm = editJob.jobType === "permanent";
+      setJobType(isPerm ? "permanent" : "one_day");
+
+      if (isPerm) {
+        if (editJob.startDate) {
+          setScheduleDate(new Date(editJob.startDate));
+        } else if (editJob.onDate) {
+          setScheduleDate(new Date(editJob.onDate));
+        }
+
+        if (editJob.monthlySalary) {
+          setBudget(String(editJob.monthlySalary));
+        } else if (editJob.budget) {
+          setBudget(String(editJob.budget));
+        }
+
+        if (Array.isArray(editJob.timePreference) && editJob.timePreference.length > 0) {
+          setSelectedTimePreferences(editJob.timePreference);
+        }
+
+        if (editJob.fromTime && editJob.toTime) {
+          setIsExactTime(true);
+          const [fH, fM] = editJob.fromTime.split(":");
+          let fromH = parseInt(fH, 10);
+          const fromAm = fromH >= 12 ? "PM" : "AM";
+          fromH = fromH % 12 || 12;
+          setFromHour(String(fromH));
+          setFromMinute(fM || "00");
+          setFromAmPm(fromAm);
+
+          const [tH, tM] = editJob.toTime.split(":");
+          let toH = parseInt(tH, 10);
+          const toAm = toH >= 12 ? "PM" : "AM";
+          toH = toH % 12 || 12;
+          setToHour(String(toH));
+          setToMinute(tM || "00");
+          setToAmPm(toAm);
+        } else if (editJob.reportingTime && editJob.reportingTime.includes(":")) {
+          setIsExactTime(true);
+          const [rH, rM] = editJob.reportingTime.split(":");
+          let rHour = parseInt(rH, 10);
+          const rAm = rHour >= 12 ? "PM" : "AM";
+          rHour = rHour % 12 || 12;
+          setFromHour(String(rHour));
+          setFromMinute(rM || "00");
+          setFromAmPm(rAm);
+        } else {
+          setIsExactTime(false);
+        }
+      } else {
+        if (editJob.budget) setBudget(String(editJob.budget));
+
+        if (editJob.onDate) {
+          setScheduleDate(new Date(editJob.onDate));
+        } else if (editJob.beforeDate) {
+          setScheduleDate(new Date(editJob.beforeDate));
+        }
+
+        if (Array.isArray(editJob.timePreference) && editJob.timePreference.length > 0) {
+          setSelectedTimePreferences(editJob.timePreference);
+        }
+
+        if (editJob.fromTime && editJob.toTime) {
+          setIsExactTime(true);
+          const [fH, fM] = editJob.fromTime.split(":");
+          let fromH = parseInt(fH, 10);
+          const fromAm = fromH >= 12 ? "PM" : "AM";
+          fromH = fromH % 12 || 12;
+          setFromHour(String(fromH));
+          setFromMinute(fM || "00");
+          setFromAmPm(fromAm);
+
+          const [tH, tM] = editJob.toTime.split(":");
+          let toH = parseInt(tH, 10);
+          const toAm = toH >= 12 ? "PM" : "AM";
+          toH = toH % 12 || 12;
+          setToHour(String(toH));
+          setToMinute(tM || "00");
+          setToAmPm(toAm);
+        } else {
+          setIsExactTime(false);
+        }
+      }
+
+      // Match category
+      const catObj = typeof editJob.category === "object" ? editJob.category : null;
+      const rawCatId = catObj ? (catObj._id || catObj.id) : editJob.category;
+      const catName = catObj?.name || "";
+
+      const allDefs = [...defaultJobCategories, ...defaultPermanentCategories];
+      const matchedDefault = allDefs.find(
+        (def) =>
+          (rawCatId && (def.id === rawCatId || (def as any).backendId === rawCatId)) ||
+          (catName && def.name.toLowerCase() === catName.toLowerCase())
+      );
+
+      const finalCatId = matchedDefault ? matchedDefault.id : rawCatId;
+      if (finalCatId) {
+        setSelectedCategory(finalCatId);
+        setSelectedValue(matchedDefault ? matchedDefault.name : (catName || ""));
+      }
+      setCurrentStep(1);
+    } else {
+      setIsEditMode(false);
+      setEditingJobId(null);
+    }
+  }, [route?.params?.editJob, route?.params?.isEditMode]);
   // useEffect(() => {
   //   const fetchUser = async () => {
   //     try {
@@ -156,18 +318,21 @@ const PostJobScreen = ({ navigation: navProp }) => {
         const mapping = {};
 
         // Map API categories to match your existing structure
+        const allDefaults = [...defaultJobCategories, ...defaultPermanentCategories];
         const apiCategories = response.data.data
           .map((category) => {
             console.log("Processing API category:", category);
 
             // Find matching default category by name (case insensitive)
-            const matchingDefault = defaultJobCategories.find(
+            const matchingDefault = allDefaults.find(
               (def) => def.name.toLowerCase() === category.name.toLowerCase()
             );
 
             if (matchingDefault) {
-              // Store the mapping: frontend ID -> backend ID
+              // Store the mapping: frontend ID -> backend ID, backend ID -> backend ID, and name -> backend ID
               mapping[matchingDefault.id] = category._id;
+              mapping[category._id] = category._id;
+              mapping[category.name.toLowerCase()] = category._id;
               console.log(`Mapped ${matchingDefault.id} -> ${category._id}`);
 
               // Use the frontend ID but store backend ID in mapping
@@ -181,6 +346,7 @@ const PostJobScreen = ({ navigation: navProp }) => {
               // Handle categories that don't exist in defaults
               console.log(`No matching default found for: ${category.name}`);
               mapping[category._id] = category._id;
+              mapping[category.name.toLowerCase()] = category._id;
               return {
                 id: category._id,
                 backendId: category._id,
@@ -199,9 +365,10 @@ const PostJobScreen = ({ navigation: navProp }) => {
       } else {
         console.log("No API categories found, using defaults");
         // If no API categories, use defaults but create identity mapping
-        const identityMapping = {};
-        defaultJobCategories.forEach((cat) => {
+        const identityMapping: Record<string, string> = {};
+        allDefaults.forEach((cat) => {
           identityMapping[cat.id] = cat.id;
+          identityMapping[cat.name.toLowerCase()] = cat.id;
         });
         setCategoryMapping(identityMapping);
         setJobCategories(defaultJobCategories);
@@ -209,9 +376,11 @@ const PostJobScreen = ({ navigation: navProp }) => {
     } catch (error) {
       console.error("Error loading categories:", error);
       // Create identity mapping for defaults
-      const identityMapping = {};
-      defaultJobCategories.forEach((cat) => {
+      const identityMapping: Record<string, string> = {};
+      const allDefaults = [...defaultJobCategories, ...defaultPermanentCategories];
+      allDefaults.forEach((cat) => {
         identityMapping[cat.id] = cat.id;
+        identityMapping[cat.name.toLowerCase()] = cat.id;
       });
       setCategoryMapping(identityMapping);
       setJobCategories(defaultJobCategories);
@@ -341,28 +510,62 @@ const PostJobScreen = ({ navigation: navProp }) => {
       errors.push("Please provide a location for onsite jobs");
     }
 
-    // Validate budget/hourly rate
-    const rateValidation = validateHourlyRate(budget?.toString() || "");
-    if (!rateValidation.status) {
-      errors.push(rateValidation.rateError);
-    }
-
-    // Validate time fields for non-flexible jobs
-    if (!isFlexible) {
-      if (!fromHour || !fromMinute || !fromAmPm) {
-        errors.push("Please set the start time for the job");
+    if (jobType === "permanent") {
+      const numBudget = parseFloat(budget?.toString() || "0");
+      if (isNaN(numBudget) || numBudget < 5000) {
+        errors.push("Monthly budget for permanent jobs must be at least ₹5,000");
       }
-      if (!toHour || !toMinute || !toAmPm) {
-        errors.push("Please set the end time for the job");
+      if (!scheduleDate) {
+        errors.push("Please select a start date for the permanent job");
+      }
+      if (isExactTime) {
+        if (!fromHour || !fromMinute || !fromAmPm) {
+          errors.push("Please set the start time for the job");
+        }
+        if (!toHour || !toMinute || !toAmPm) {
+          errors.push("Please set the end time for the job");
+        }
+        if (fromHour && fromMinute && fromAmPm && toHour && toMinute && toAmPm) {
+          const fromTime24 = get24HourTime(fromHour, fromMinute, fromAmPm);
+          const toTime24 = get24HourTime(toHour, toMinute, toAmPm);
+          if (fromTime24 >= toTime24) {
+            errors.push("End time must be after start time");
+          }
+        }
+      } else {
+        if (selectedTimePreferences.length === 0) {
+          errors.push("Please select a time preference for the permanent job");
+        }
+      }
+    } else {
+      // Validate budget/hourly rate
+      const rateValidation = validateHourlyRate(budget?.toString() || "");
+      if (!rateValidation.status) {
+        errors.push(rateValidation.rateError);
       }
 
-      // Validate that end time is after start time
-      if (fromHour && fromMinute && fromAmPm && toHour && toMinute && toAmPm) {
-        const fromTime24 = get24HourTime(fromHour, fromMinute, fromAmPm);
-        const toTime24 = get24HourTime(toHour, toMinute, toAmPm);
+      // Validate time fields for non-flexible jobs
+      if (!isFlexible) {
+        if (!scheduleDate) {
+          errors.push("Please select a date for the job");
+        }
+        if (isExactTime) {
+          if (!fromHour || !fromMinute || !fromAmPm) {
+            errors.push("Please set the start time for the job");
+          }
+          if (!toHour || !toMinute || !toAmPm) {
+            errors.push("Please set the end time for the job");
+          }
 
-        if (fromTime24 >= toTime24) {
-          errors.push("End time must be after start time");
+          // Validate that end time is after start time
+          if (fromHour && fromMinute && fromAmPm && toHour && toMinute && toAmPm) {
+            const fromTime24 = get24HourTime(fromHour, fromMinute, fromAmPm);
+            const toTime24 = get24HourTime(toHour, toMinute, toAmPm);
+
+            if (fromTime24 >= toTime24) {
+              errors.push("End time must be after start time");
+            }
+          }
         }
       }
     }
@@ -464,24 +667,50 @@ const PostJobScreen = ({ navigation: navProp }) => {
 
   // Fixed formatJobData function
   const formatJobData = (photoUrls = []) => {
-    if (!user || !user.id) {
-      throw new Error("User data is not available");
+    const effectiveUserId = user?.id || user?._id;
+    if (!effectiveUserId) {
+      throw new Error("User information is not available. Please try logging in again.");
     }
 
     // Get the backend category ID from the mapping
-    const backendCategoryId = categoryMapping[selectedCategory];
+    let backendCategoryId = categoryMapping[selectedCategory];
+
+    // Fallback 1: If selectedCategory is already a 24-char hex Mongo ObjectId
+    if (!backendCategoryId && typeof selectedCategory === "string" && /^[0-9a-fA-F]{24}$/.test(selectedCategory)) {
+      backendCategoryId = selectedCategory;
+    }
+
+    // Fallback 2: Check matching default category by id or name
+    if (!backendCategoryId) {
+      const allDefs = [...defaultJobCategories, ...defaultPermanentCategories];
+      const matched = allDefs.find(
+        (c) => c.id === selectedCategory || c.name.toLowerCase() === selectedCategory?.toLowerCase()
+      );
+      if (matched && categoryMapping[matched.id]) {
+        backendCategoryId = categoryMapping[matched.id];
+      } else if (matched && typeof (matched as any).backendId === "string") {
+        backendCategoryId = (matched as any).backendId;
+      } else if (matched && /^[0-9a-fA-F]{24}$/.test(matched.id)) {
+        backendCategoryId = matched.id;
+      }
+    }
+
+    // Fallback 3: If still not resolved but selectedCategory is present
+    if (!backendCategoryId && selectedCategory) {
+      backendCategoryId = selectedCategory;
+    }
 
     if (!backendCategoryId) {
       console.error("Category mapping not found for:", selectedCategory);
       console.error("Available mappings:", categoryMapping);
-      throw new Error("Invalid category selection");
+      throw new Error("Please select a job category before submitting.");
     }
 
     console.log("Selected category:", selectedCategory);
     console.log("Backend category ID from mapping:", backendCategoryId);
 
     const jobData: any = {
-      userId: user.id,
+      userId: effectiveUserId,
       category: backendCategoryId, // Use the mapped backend ID
       name: jobName,
       description: jobDescription,
@@ -492,13 +721,16 @@ const PostJobScreen = ({ navigation: navProp }) => {
         ? ""
         : selectedLocation?.address || taskAddress,
       requirements: requirements,
-      photos: photoUrls,
+      photos: photoUrls.length > 0 ? photoUrls : photos,
       timePreference: selectedTimePreferences, // Send as array
-      budget: parseFloat(budget),
+      budget: parseFloat(budget || "300"),
       isOpen: true,
-      createdAt: currentDate,
       updatedAt: currentDate,
     };
+
+    if (!isEditMode) {
+      jobData.createdAt = currentDate;
+    }
 
     // Add location data if available and not remote
     if (!canBeDoneRemotely && selectedLocation) {
@@ -516,33 +748,55 @@ const PostJobScreen = ({ navigation: navProp }) => {
       );
     }
 
-    // Handle simplified date/time
-    if (!isFlexible && scheduleDate) {
-      // If it's "On Date", we combine the date with the "From Time"
-      // Since specific type selection is removed/hidden, we default to treating it as "onDate"
-      const dateTime = combineDateAndTime(
-        scheduleDate.toISOString().split("T")[0],
-        fromHour,
-        fromMinute,
-        fromAmPm as "AM" | "PM"
-      );
-      jobData.onDate = dateTime;
-      // jobData.scheduleType = "on"; // Removed as backend doesn't support it anymore
+    // Handle permanent vs one-day date/time
+    jobData.jobType = jobType === "permanent" ? "permanent" : "one_day";
 
-      jobData.isFlexible = false;
+    if (jobType === "permanent") {
+      const startDateIso = scheduleDate ? scheduleDate.toISOString() : new Date().toISOString();
+      jobData.startDate = startDateIso;
+      jobData.onDate = startDateIso;
+      jobData.monthlySalary = parseFloat(budget || "5000");
+      jobData.budget = parseFloat(budget || "5000");
+      jobData.timePreference = selectedTimePreferences;
+
+      if (isExactTime) {
+        const fromTime24 = get24HourTime(fromHour, fromMinute, fromAmPm);
+        const toTime24 = get24HourTime(toHour, toMinute, toAmPm);
+        jobData.fromTime = fromTime24;
+        jobData.toTime = toTime24;
+        jobData.reportingTime = fromTime24;
+        jobData.isFlexible = false;
+      } else {
+        jobData.isFlexible = true;
+        jobData.fromTime = undefined;
+        jobData.toTime = undefined;
+        jobData.reportingTime = selectedTimePreferences.length > 0 ? selectedTimePreferences[0] : undefined;
+      }
     } else {
-      jobData.isFlexible = true;
-      jobData.onDate = null;
-    }
+      // Handle simplified date/time
+      if (!isFlexible && scheduleDate) {
+        // If it's "On Date", we combine the date with the "From Time"
+        // Since specific type selection is removed/hidden, we default to treating it as "onDate"
+        const dateTime = combineDateAndTime(
+          scheduleDate.toISOString().split("T")[0],
+          fromHour,
+          fromMinute,
+          fromAmPm as "AM" | "PM"
+        );
+        jobData.onDate = dateTime;
+        jobData.isFlexible = false;
+      } else {
+        jobData.isFlexible = true;
+        jobData.onDate = null;
+      }
 
-    // Add time fields ONLY if Exact Time is set
-    if (isExactTime) {
-      jobData.fromTime = get24HourTime(fromHour, fromMinute, fromAmPm);
-      jobData.toTime = get24HourTime(toHour, toMinute, toAmPm);
-      jobData.isFlexible = false;
+      // Add time fields ONLY if Exact Time is set
+      if (isExactTime) {
+        jobData.fromTime = get24HourTime(fromHour, fromMinute, fromAmPm);
+        jobData.toTime = get24HourTime(toHour, toMinute, toAmPm);
+        jobData.isFlexible = false;
+      }
     }
-    // Else: we do not set fromTime/toTime, allowing for "Date Only" jobs
-    // Backend validation has been relaxed to allow this.
 
     return jobData;
   };
@@ -550,6 +804,9 @@ const PostJobScreen = ({ navigation: navProp }) => {
   const resetAllFields = () => {
     // Reset step
     setCurrentStep(1);
+    setIsEditMode(false);
+    setEditingJobId(null);
+    setJobType("one_day");
 
     // Reset category
     setSelectedCategory(null);
@@ -569,6 +826,7 @@ const PostJobScreen = ({ navigation: navProp }) => {
     setScheduleDate(null);
     setScheduleType("on");
     setIsFlexible(false);
+    setIsExactTime(false);
     setFromHour("00");
     setFromMinute("00");
     setFromAmPm("AM");
@@ -593,24 +851,23 @@ const PostJobScreen = ({ navigation: navProp }) => {
     setShowMenu(false);
     setNewRequirement("");
 
+    // Clear navigation edit params
+    try {
+      (navigation as any).setParams({ editJob: undefined, isEditMode: undefined });
+    } catch (e) {}
+
     console.log("All form fields have been reset");
   };
 
-  // Handle job posting
-  // Debug handlePost function
+  // Handle job posting or updating
   const handlePost = async () => {
-
     if (!validateJobData()) {
       return;
     }
 
-    // const isAuth = await checkAuthStatus();
-    // if (!isAuth) {
-    //   return;
-    // }
-
     // Double-check user data is available
-    if (!user || !user.id) {
+    const effectiveUserId = user?.id || user?._id;
+    if (!effectiveUserId) {
       showAlert({
         type: "error",
         title: "User Error",
@@ -620,59 +877,78 @@ const PostJobScreen = ({ navigation: navProp }) => {
       return;
     }
 
-    console.log("Selected category before posting:", selectedCategory);
+    console.log("Selected category before saving:", selectedCategory);
     console.log("Category mapping:", categoryMapping);
     console.log("Backend category ID:", categoryMapping[selectedCategory]);
     setIsSubmitting(true);
     setIsLoading(true);
 
     try {
-      // Create job posting
+      // Create or update job posting
       const jobData = formatJobData();
       console.log(
         "Final job data being sent:",
         JSON.stringify(jobData, null, 2)
       );
 
-      const response = await createJobPosting(jobData);
-
-      if (response.data) {
-        showAlert({
-          type: "success",
-          title: "Success!",
-          message: "Your job has been posted successfully!",
-          buttons: [
-            {
-              text: "OK",
-              onPress: () => {
-                resetAllFields();
-                navigation.goBack();
-              },
-            },
-          ],
-        });
+      if (isEditMode && editingJobId) {
+        const response = await updateJobPosting(editingJobId, jobData);
+        if (response.data) {
+          Toast.show({
+            type: "success",
+            text1: "Job Updated",
+            text2: "Your job posting has been successfully updated",
+          });
+          queryClient.invalidateQueries({ queryKey: ["userJobs"] });
+          queryClient.invalidateQueries({ queryKey: ["jobs"] });
+          queryClient.invalidateQueries({ queryKey: ["jobPosting", editingJobId] });
+          resetAllFields();
+          navigation.goBack();
+        }
+      } else {
+        const response = await createJobPosting(jobData);
+        if (response.data) {
+          setShowPostSuccessModal(true);
+        }
       }
-    } catch (error) {
-      console.error("Error posting job:", error);
+    } catch (error: any) {
+      console.error("Error saving job:", error);
       console.error("Error response data:", error.response?.data);
 
-      let errorMessage = "Failed to post job. Please try again.";
+      let errorMessage = isEditMode
+        ? "Failed to update job. Please try again."
+        : "Failed to post job. Please try again.";
 
-      // Handle specific authentication errors
-      if (error.response?.status === 401 || error.response?.status === 403) {
-        errorMessage = "Authentication expired. Please log in again.";
-        // Optionally navigate to login
-        // navigation.navigate('Login');
+      // Extract specific error messages from backend response or local errors
+      if (error.response?.data?.error?.message) {
+        errorMessage = error.response.data.error.message;
       } else if (error.response?.data?.message) {
         errorMessage = error.response.data.message;
+      } else if (typeof error.response?.data?.error === "string") {
+        errorMessage = error.response.data.error;
       } else if (error.response?.data?.errors) {
-        const errors = Object.values(error.response.data.errors).flat();
-        errorMessage = errors.join("\n");
+        if (Array.isArray(error.response.data.errors)) {
+          errorMessage = error.response.data.errors
+            .map((e: any) => (typeof e === "string" ? e : e.message || JSON.stringify(e)))
+            .join("\n");
+        } else if (typeof error.response.data.errors === "object") {
+          const errors = Object.values(error.response.data.errors).flat();
+          errorMessage = errors.join("\n");
+        }
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+
+      if (error.response?.status === 401 || error.response?.status === 403) {
+        errorMessage =
+          error.response?.data?.error?.message ||
+          error.response?.data?.message ||
+          "Authentication expired or permission denied. Please log in again.";
       }
 
       showAlert({
         type: "error",
-        title: "Error",
+        title: isEditMode ? "Update Failed" : "Error",
         message: errorMessage,
       });
     } finally {
@@ -699,8 +975,6 @@ const PostJobScreen = ({ navigation: navProp }) => {
       day: "numeric",
     });
   };
-
-  const [isExactTime, setIsExactTime] = useState(false);
 
   // Sync time preference when exact time is changed
   useEffect(() => {
@@ -839,19 +1113,24 @@ const PostJobScreen = ({ navigation: navProp }) => {
         showAlert({
           type: "info",
           title: "Date Required",
-          message: "Please select a date for your job",
+          message:
+            jobType === "permanent"
+              ? "Please select a start date for the permanent job"
+              : "Please select a date for your job",
         });
         return;
       }
 
-      // Check if no time preference is selected
-      if (selectedTimePreferences.length === 0) {
-        showAlert({
-          type: "info",
-          title: "Time Preference Required",
-          message: "Please select a time preference for your job",
-        });
-        return;
+      // Check if no time preference is selected when Exact Time is OFF
+      if (!isExactTime) {
+        if (selectedTimePreferences.length === 0) {
+          showAlert({
+            type: "info",
+            title: "Time Preference Required",
+            message: "Please select a time preference for your job",
+          });
+          return;
+        }
       }
 
       // Validate time fields for Exact Time jobs
@@ -885,44 +1164,7 @@ const PostJobScreen = ({ navigation: navProp }) => {
           });
           return;
         }
-      }
 
-      // Removed strict validation block for (!isFlexible && !isExactTime)
-      // because we now support "Date Only" jobs without specific times.
-
-      // Validate time selection when time preference is selected
-      if (selectedTimePreferences.length > 0) {
-        // Check if time is still at initial values (00:00 AM)
-        if (
-          fromHour === "00" &&
-          fromMinute === "00" &&
-          fromAmPm === "AM" &&
-          toHour === "00" &&
-          toMinute === "00" &&
-          toAmPm === "AM"
-        ) {
-          showAlert({
-            type: "info",
-            title: "Time Selection Required",
-            message: "Please select the time range for your job",
-          });
-          return;
-        }
-
-        // Validate that end time is after start time for time preferences
-        const fromTime24 = get24HourTime(fromHour, fromMinute, fromAmPm);
-        const toTime24 = get24HourTime(toHour, toMinute, toAmPm);
-
-        if (fromTime24 >= toTime24) {
-          showAlert({
-            type: "info",
-            title: "Invalid Time",
-            message: "End time must be after start time",
-          });
-          return;
-        }
-
-        // Validate time is within 12 AM to 11:59 PM range
         if (!isValidTimeRange(fromHour, fromMinute, fromAmPm)) {
           showAlert({
             type: "info",
@@ -960,6 +1202,29 @@ const PostJobScreen = ({ navigation: navProp }) => {
     scrollViewRef.current?.scrollTo({ y: 0, animated: true });
   };
 
+  // Confirm and cleanly exit edit mode without leaving pre-filled fields
+  const confirmExitEditMode = useCallback(() => {
+    showAlert({
+      type: "info",
+      title: "Exit Edit Mode?",
+      message: "Are you sure you don't want to edit this job? All your changes will be discarded.",
+      buttons: [
+        {
+          text: "Continue Editing",
+          style: "cancel",
+        },
+        {
+          text: "Discard & Exit",
+          style: "destructive",
+          onPress: () => {
+            resetAllFields();
+            navigation.goBack();
+          },
+        },
+      ],
+    });
+  }, [navigation, resetAllFields, showAlert]);
+
   // Navigate to previous step
   const handleBack = () => {
     if (currentStep > 1) {
@@ -967,9 +1232,44 @@ const PostJobScreen = ({ navigation: navProp }) => {
       // Scroll to top when moving to previous step
       scrollViewRef.current?.scrollTo({ y: 0, animated: true });
     } else {
-      navigation.goBack();
+      if (isEditMode) {
+        confirmExitEditMode();
+      } else {
+        navigation.goBack();
+      }
     }
   };
+
+  // Hardware back button support for Android
+  useEffect(() => {
+    if (!isEditMode) return;
+
+    const onHardwareBack = () => {
+      if (currentStep > 1) {
+        setCurrentStep((prev) => prev - 1);
+        return true;
+      }
+      confirmExitEditMode();
+      return true;
+    };
+
+    const subscription = BackHandler.addEventListener(
+      "hardwareBackPress",
+      onHardwareBack
+    );
+
+    return () => subscription.remove();
+  }, [isEditMode, currentStep, confirmExitEditMode]);
+
+  // When focusing on the PostJob screen directly without edit params, clear stale edit state
+  useFocusEffect(
+    useCallback(() => {
+      if (!route?.params?.editJob && isEditMode) {
+        console.log("[PostJob] Focused fresh without editJob param, resetting form");
+        resetAllFields();
+      }
+    }, [route?.params?.editJob, isEditMode])
+  );
 
   // Increase vacancy count
   const increaseVacancy = useCallback(() => {
@@ -1076,11 +1376,23 @@ const PostJobScreen = ({ navigation: navProp }) => {
   }, [jobCategories, selectedCategory]);
 
   const handleCategorySelect = useCallback(
-    (categoryId: string, categoryName: string) => {
+    (categoryId: string, categoryName: string, type?: "one_day" | "permanent") => {
       setSelectedCategory(categoryId);
       setSelectedValue(categoryName);
+      if (type) {
+        setJobType(type);
+        if (type === "permanent") {
+          if (!budget || parseFloat(budget) < 5000) {
+            setBudget("8000");
+          }
+        } else {
+          if (budget && parseFloat(budget) > 4000) {
+            setBudget("300");
+          }
+        }
+      }
     },
-    []
+    [budget]
   );
 
   // Render Step 1: Select Category
@@ -1088,7 +1400,25 @@ const PostJobScreen = ({ navigation: navProp }) => {
     <CategorySelector
       categories={jobCategories}
       selectedCategory={selectedCategory}
-      onSelect={handleCategorySelect}
+      selectedJobType={jobType}
+      isEditMode={isEditMode}
+      onSelectJobType={(type) => {
+        if (isEditMode) return;
+        setJobType(type);
+        if (type === "permanent") {
+          if (!budget || parseFloat(budget) < 5000) {
+            setBudget("8000");
+          }
+        } else {
+          if (budget && parseFloat(budget) > 4000) {
+            setBudget("300");
+          }
+        }
+      }}
+      onSelect={(catId, catName, type) => {
+        if (isEditMode) return;
+        handleCategorySelect(catId, catName, type);
+      }}
       styles={styles}
       loading={categoriesLoading}
     />
@@ -1133,10 +1463,11 @@ const PostJobScreen = ({ navigation: navProp }) => {
   const renderStep3 = () => (
     <View style={styles.stepContainer}>
       <Text style={styles.sectionTitle}>
-        When does the job need to be done?
+        {jobType === "permanent"
+          ? "When should the permanent worker start?"
+          : "When does the job need to be done?"}
       </Text>
 
-      {/* Date Picker Input */}
       {/* Date Picker Input */}
       <TouchableOpacity
         style={styles.selectedCategoryCard}
@@ -1146,7 +1477,9 @@ const PostJobScreen = ({ navigation: navProp }) => {
           <Ionicons name="calendar-outline" size={24} color={colors.primary} />
         </View>
         <View style={styles.categoryTextContainer}>
-          <Text style={styles.categoryLabel}>SCHEDULE DATE</Text>
+          <Text style={styles.categoryLabel}>
+            {jobType === "permanent" ? "START DATE / JOINING DATE" : "SCHEDULE DATE"}
+          </Text>
           <Text style={styles.categoryValue}>
             {scheduleDate ? formatDateForDisplay(scheduleDate) : "Select Date"}
           </Text>
@@ -1189,7 +1522,7 @@ const PostJobScreen = ({ navigation: navProp }) => {
         </View>
       </Modal>
 
-      {/* Only show Exact Time Toggle if Date is selected */}
+      {/* Date & Time settings - Unified for both One-Day and Permanent jobs */}
       {scheduleDate && (
         <View style={styles.switchCard}>
           <View style={styles.switchHeader}>
@@ -1201,7 +1534,9 @@ const PostJobScreen = ({ navigation: navProp }) => {
                 </View>
               </View>
               <Text style={styles.switchSubtitle}>
-                Enable this only if you need workers to arrive at a sharp scheduled time. Otherwise, select flexible time preferences below.
+                {jobType === "permanent"
+                  ? "Enable this if you want to set specific daily working hours (e.g. 09:00 AM to 05:00 PM). Otherwise, select a general time preference below."
+                  : "Enable this only if you need workers to arrive at a sharp scheduled time. Otherwise, select flexible time preferences below."}
               </Text>
             </View>
             <CustomSwitch
@@ -1220,271 +1555,271 @@ const PostJobScreen = ({ navigation: navProp }) => {
         </View>
       )}
 
-      {/* Show Time Preferences / Time Slots */}
-      {!isExactTime && (
-        <>
-          <Text style={styles.sectionTitle}>Mention your time preference</Text>
+          {/* Show Time Preferences / Time Slots */}
+          {!isExactTime && (
+            <>
+              <Text style={styles.sectionTitle}>Mention your time preference</Text>
 
-          <View style={styles.timeSlotGrid}>
-            {timeSlots.slice(0, 2).map((slot) => (
-              <TouchableOpacity
-                key={slot.id}
-                style={[
-                  styles.timeSlot,
-                  selectedTimePreferences.includes(slot.id) &&
-                    styles.selectedTimeSlot,
-                ]}
-                onPress={() => handleTimePreferenceToggle(slot.id)}
-              >
-                <Image
-                  source={
-                    selectedTimePreferences.includes(slot.id)
-                      ? slot.false
-                      : slot.true
-                  }
-                  style={[
-                    styles.timeSlotIcon,
-                    {
-                      tintColor: selectedTimePreferences.includes(slot.id)
-                        ? colors.white
-                        : colors.black,
-                    },
-                  ]}
-                  resizeMode="contain"
-                />
-                <Text
-                  style={[
-                    styles.timeSlotName,
-                    selectedTimePreferences.includes(slot.id)
-                      ? { color: colors.white }
-                      : { color: colors.black },
-                  ]}
-                >
-                  {slot.name}
-                </Text>
-                <Text
-                  style={[
-                    styles.timeSlotTime,
-                    selectedTimePreferences.includes(slot.id)
-                      ? { color: colors.white }
-                      : { color: colors.grey },
-                  ]}
-                >
-                  {slot.time}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-
-          <View style={styles.timeSlotGrid}>
-            {timeSlots.slice(2).map((slot) => (
-              <TouchableOpacity
-                key={slot.id}
-                style={[
-                  styles.timeSlot,
-                  selectedTimePreferences.includes(slot.id) &&
-                    styles.selectedTimeSlot,
-                ]}
-                onPress={() => handleTimePreferenceToggle(slot.id)}
-              >
-                <Image
-                  source={
-                    selectedTimePreferences.includes(slot.id)
-                      ? slot.false
-                      : slot.true
-                  }
-                  style={[
-                    styles.timeSlotIcon,
-                    {
-                      tintColor: selectedTimePreferences.includes(slot.id)
-                        ? colors.white
-                        : colors.black,
-                    },
-                  ]}
-                  resizeMode="contain"
-                />
-                <Text
-                  style={[
-                    styles.timeSlotName,
-                    selectedTimePreferences.includes(slot.id)
-                      ? { color: colors.white }
-                      : { color: colors.black },
-                  ]}
-                >
-                  {slot.name}
-                </Text>
-                <Text
-                  style={[
-                    styles.timeSlotTime,
-                    selectedTimePreferences.includes(slot.id)
-                      ? { color: colors.white }
-                      : { color: colors.grey },
-                  ]}
-                >
-                  {slot.time}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        </>
-      )}
-
-      {/* Time Range Picker - Required for Exact Time jobs */}
-      {isExactTime && (
-        <View style={styles.timeRangeContainer}>
-          <Text style={styles.sectionTitle}>Set time range (Required)</Text>
-
-          {/* From Time */}
-          <View style={styles.timeRangeSection}>
-            <Text style={styles.timeRangeLabel}>From:</Text>
-            <View style={styles.timePickerContainer}>
-              <View style={styles.timePickerColumn}>
-                <TouchableOpacity
-                  onPress={incrementFromHour}
-                  style={styles.timePickerArrow}
-                >
-                  <Ionicons name="chevron-up" size={24} color={colors.grey} />
-                </TouchableOpacity>
-                <Text style={styles.timePickerValue}>
-                  {String(fromHour).padStart(2, "0")}
-                </Text>
-                <TouchableOpacity
-                  onPress={decrementFromHour}
-                  style={styles.timePickerArrow}
-                >
-                  <Ionicons name="chevron-down" size={24} color={colors.grey} />
-                </TouchableOpacity>
+              <View style={styles.timeSlotGrid}>
+                {timeSlots.slice(0, 2).map((slot) => (
+                  <TouchableOpacity
+                    key={slot.id}
+                    style={[
+                      styles.timeSlot,
+                      selectedTimePreferences.includes(slot.id) &&
+                        styles.selectedTimeSlot,
+                    ]}
+                    onPress={() => handleTimePreferenceToggle(slot.id)}
+                  >
+                    <Image
+                      source={
+                        selectedTimePreferences.includes(slot.id)
+                          ? slot.false
+                          : slot.true
+                      }
+                      style={[
+                        styles.timeSlotIcon,
+                        {
+                          tintColor: selectedTimePreferences.includes(slot.id)
+                            ? colors.white
+                            : colors.black,
+                        },
+                      ]}
+                      resizeMode="contain"
+                    />
+                    <Text
+                      style={[
+                        styles.timeSlotName,
+                        selectedTimePreferences.includes(slot.id)
+                          ? { color: colors.white }
+                          : { color: colors.black },
+                      ]}
+                    >
+                      {slot.name}
+                    </Text>
+                    <Text
+                      style={[
+                        styles.timeSlotTime,
+                        selectedTimePreferences.includes(slot.id)
+                          ? { color: colors.white }
+                          : { color: colors.grey },
+                      ]}
+                    >
+                      {slot.time}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
               </View>
 
-              <Text style={styles.timePickerSeparator}>:</Text>
+              <View style={styles.timeSlotGrid}>
+                {timeSlots.slice(2).map((slot) => (
+                  <TouchableOpacity
+                    key={slot.id}
+                    style={[
+                      styles.timeSlot,
+                      selectedTimePreferences.includes(slot.id) &&
+                        styles.selectedTimeSlot,
+                    ]}
+                    onPress={() => handleTimePreferenceToggle(slot.id)}
+                  >
+                    <Image
+                      source={
+                        selectedTimePreferences.includes(slot.id)
+                          ? slot.false
+                          : slot.true
+                      }
+                      style={[
+                        styles.timeSlotIcon,
+                        {
+                          tintColor: selectedTimePreferences.includes(slot.id)
+                            ? colors.white
+                            : colors.black,
+                        },
+                      ]}
+                      resizeMode="contain"
+                    />
+                    <Text
+                      style={[
+                        styles.timeSlotName,
+                        selectedTimePreferences.includes(slot.id)
+                          ? { color: colors.white }
+                          : { color: colors.black },
+                      ]}
+                    >
+                      {slot.name}
+                    </Text>
+                    <Text
+                      style={[
+                        styles.timeSlotTime,
+                        selectedTimePreferences.includes(slot.id)
+                          ? { color: colors.white }
+                          : { color: colors.grey },
+                      ]}
+                    >
+                      {slot.time}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </>
+          )}
 
-              <View style={styles.timePickerColumn}>
-                <TouchableOpacity
-                  onPress={incrementFromMinute}
-                  style={styles.timePickerArrow}
-                >
-                  <Ionicons name="chevron-up" size={24} color={colors.grey} />
-                </TouchableOpacity>
-                <Text style={styles.timePickerValue}>
-                  {String(fromMinute).padStart(2, "0")}
-                </Text>
-                <TouchableOpacity
-                  onPress={decrementFromMinute}
-                  style={styles.timePickerArrow}
-                >
-                  <Ionicons name="chevron-down" size={24} color={colors.grey} />
-                </TouchableOpacity>
+          {/* Time Range Picker - Required for Exact Time jobs */}
+          {isExactTime && (
+            <View style={styles.timeRangeContainer}>
+              <Text style={styles.sectionTitle}>Set time range (Required)</Text>
+
+              {/* From Time */}
+              <View style={styles.timeRangeSection}>
+                <Text style={styles.timeRangeLabel}>From:</Text>
+                <View style={styles.timePickerContainer}>
+                  <View style={styles.timePickerColumn}>
+                    <TouchableOpacity
+                      onPress={incrementFromHour}
+                      style={styles.timePickerArrow}
+                    >
+                      <Ionicons name="chevron-up" size={24} color={colors.grey} />
+                    </TouchableOpacity>
+                    <Text style={styles.timePickerValue}>
+                      {String(fromHour).padStart(2, "0")}
+                    </Text>
+                    <TouchableOpacity
+                      onPress={decrementFromHour}
+                      style={styles.timePickerArrow}
+                    >
+                      <Ionicons name="chevron-down" size={24} color={colors.grey} />
+                    </TouchableOpacity>
+                  </View>
+
+                  <Text style={styles.timePickerSeparator}>:</Text>
+
+                  <View style={styles.timePickerColumn}>
+                    <TouchableOpacity
+                      onPress={incrementFromMinute}
+                      style={styles.timePickerArrow}
+                    >
+                      <Ionicons name="chevron-up" size={24} color={colors.grey} />
+                    </TouchableOpacity>
+                    <Text style={styles.timePickerValue}>
+                      {String(fromMinute).padStart(2, "0")}
+                    </Text>
+                    <TouchableOpacity
+                      onPress={decrementFromMinute}
+                      style={styles.timePickerArrow}
+                    >
+                      <Ionicons name="chevron-down" size={24} color={colors.grey} />
+                    </TouchableOpacity>
+                  </View>
+
+                  <View style={styles.amPmContainer}>
+                    <TouchableOpacity
+                      style={[
+                        styles.amPmButton,
+                        fromAmPm === "AM" && styles.selectedAmPm,
+                      ]}
+                      onPress={() => setFromAmPm("AM")}
+                    >
+                      <Text
+                        style={
+                          fromAmPm === "AM" ? styles.amPmText2 : styles.amPmText
+                        }
+                      >
+                        AM
+                      </Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[
+                        styles.amPmButton,
+                        fromAmPm === "PM" && styles.selectedAmPm,
+                      ]}
+                      onPress={() => setFromAmPm("PM")}
+                    >
+                      <Text
+                        style={
+                          fromAmPm === "PM" ? styles.amPmText2 : styles.amPmText
+                        }
+                      >
+                        PM
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
               </View>
 
-              <View style={styles.amPmContainer}>
-                <TouchableOpacity
-                  style={[
-                    styles.amPmButton,
-                    fromAmPm === "AM" && styles.selectedAmPm,
-                  ]}
-                  onPress={() => setFromAmPm("AM")}
-                >
-                  <Text
-                    style={
-                      fromAmPm === "AM" ? styles.amPmText2 : styles.amPmText
-                    }
-                  >
-                    AM
-                  </Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[
-                    styles.amPmButton,
-                    fromAmPm === "PM" && styles.selectedAmPm,
-                  ]}
-                  onPress={() => setFromAmPm("PM")}
-                >
-                  <Text
-                    style={
-                      fromAmPm === "PM" ? styles.amPmText2 : styles.amPmText
-                    }
-                  >
-                    PM
-                  </Text>
-                </TouchableOpacity>
+              {/* To Time */}
+              <View style={styles.timeRangeSection}>
+                <Text style={styles.timeRangeLabel}>To:</Text>
+                <View style={styles.timePickerContainer}>
+                  <View style={styles.timePickerColumn}>
+                    <TouchableOpacity
+                      onPress={incrementToHour}
+                      style={styles.timePickerArrow}
+                    >
+                      <Ionicons name="chevron-up" size={24} color={colors.grey} />
+                    </TouchableOpacity>
+                    <Text style={styles.timePickerValue}>
+                      {String(toHour).padStart(2, "0")}
+                    </Text>
+                    <TouchableOpacity
+                      onPress={decrementToHour}
+                      style={styles.timePickerArrow}
+                    >
+                      <Ionicons name="chevron-down" size={24} color={colors.grey} />
+                    </TouchableOpacity>
+                  </View>
+
+                  <Text style={styles.timePickerSeparator}>:</Text>
+
+                  <View style={styles.timePickerColumn}>
+                    <TouchableOpacity
+                      onPress={incrementToMinute}
+                      style={styles.timePickerArrow}
+                    >
+                      <Ionicons name="chevron-up" size={24} color={colors.grey} />
+                    </TouchableOpacity>
+                    <Text style={styles.timePickerValue}>
+                      {String(toMinute).padStart(2, "0")}
+                    </Text>
+                    <TouchableOpacity
+                      onPress={decrementToMinute}
+                      style={styles.timePickerArrow}
+                    >
+                      <Ionicons name="chevron-down" size={24} color={colors.grey} />
+                    </TouchableOpacity>
+                  </View>
+
+                  <View style={styles.amPmContainer}>
+                    <TouchableOpacity
+                      style={[
+                        styles.amPmButton,
+                        toAmPm === "AM" && styles.selectedAmPm,
+                      ]}
+                      onPress={() => setToAmPm("AM")}
+                    >
+                      <Text
+                        style={toAmPm === "AM" ? styles.amPmText2 : styles.amPmText}
+                      >
+                        AM
+                      </Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[
+                        styles.amPmButton,
+                        toAmPm === "PM" && styles.selectedAmPm,
+                      ]}
+                      onPress={() => setToAmPm("PM")}
+                    >
+                      <Text
+                        style={toAmPm === "PM" ? styles.amPmText2 : styles.amPmText}
+                      >
+                        PM
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
               </View>
             </View>
-          </View>
-
-          {/* To Time */}
-          <View style={styles.timeRangeSection}>
-            <Text style={styles.timeRangeLabel}>To:</Text>
-            <View style={styles.timePickerContainer}>
-              <View style={styles.timePickerColumn}>
-                <TouchableOpacity
-                  onPress={incrementToHour}
-                  style={styles.timePickerArrow}
-                >
-                  <Ionicons name="chevron-up" size={24} color={colors.grey} />
-                </TouchableOpacity>
-                <Text style={styles.timePickerValue}>
-                  {String(toHour).padStart(2, "0")}
-                </Text>
-                <TouchableOpacity
-                  onPress={decrementToHour}
-                  style={styles.timePickerArrow}
-                >
-                  <Ionicons name="chevron-down" size={24} color={colors.grey} />
-                </TouchableOpacity>
-              </View>
-
-              <Text style={styles.timePickerSeparator}>:</Text>
-
-              <View style={styles.timePickerColumn}>
-                <TouchableOpacity
-                  onPress={incrementToMinute}
-                  style={styles.timePickerArrow}
-                >
-                  <Ionicons name="chevron-up" size={24} color={colors.grey} />
-                </TouchableOpacity>
-                <Text style={styles.timePickerValue}>
-                  {String(toMinute).padStart(2, "0")}
-                </Text>
-                <TouchableOpacity
-                  onPress={decrementToMinute}
-                  style={styles.timePickerArrow}
-                >
-                  <Ionicons name="chevron-down" size={24} color={colors.grey} />
-                </TouchableOpacity>
-              </View>
-
-              <View style={styles.amPmContainer}>
-                <TouchableOpacity
-                  style={[
-                    styles.amPmButton,
-                    toAmPm === "AM" && styles.selectedAmPm,
-                  ]}
-                  onPress={() => setToAmPm("AM")}
-                >
-                  <Text
-                    style={toAmPm === "AM" ? styles.amPmText2 : styles.amPmText}
-                  >
-                    AM
-                  </Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[
-                    styles.amPmButton,
-                    toAmPm === "PM" && styles.selectedAmPm,
-                  ]}
-                  onPress={() => setToAmPm("PM")}
-                >
-                  <Text
-                    style={toAmPm === "PM" ? styles.amPmText2 : styles.amPmText}
-                  >
-                    PM
-                  </Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-          </View>
-        </View>
-      )}
+          )}
     </View>
   );
 
@@ -1495,6 +1830,7 @@ const PostJobScreen = ({ navigation: navProp }) => {
       setBudget={setBudget}
       styles={styles}
       colors={colors}
+      isPermanent={jobType === "permanent"}
     />
   );
   const renderStep5 = () => {
@@ -1853,8 +2189,14 @@ const PostJobScreen = ({ navigation: navProp }) => {
         <TouchableOpacity onPress={handleBack} disabled={isSubmitting}>
           <Ionicons name="chevron-back" size={24} color={colors.black} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Post a Job</Text>
-        <View style={{ width: 24 }} />
+        <Text style={styles.headerTitle}>{isEditMode ? "Edit Job" : "Post a Job"}</Text>
+        {isEditMode ? (
+          <TouchableOpacity onPress={confirmExitEditMode} disabled={isSubmitting} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+            <Text style={{ color: colors.red, fontSize: 13, fontWeight: "700" }}>Cancel</Text>
+          </TouchableOpacity>
+        ) : (
+          <View style={{ width: 24 }} />
+        )}
       </View>
 
       {renderProgressSteps()}
@@ -1890,7 +2232,7 @@ const PostJobScreen = ({ navigation: navProp }) => {
         >
           {currentStep === 5 ? (
             <CustomButton
-              text={"Post"}
+              text={isEditMode ? "Update Job" : "Post"}
               color={colors.primary}
               onPress={handlePost}
               disabled={isSubmitting}
@@ -2008,6 +2350,28 @@ const PostJobScreen = ({ navigation: navProp }) => {
             </View>
           </View>
         </Modal>
+
+        {/* Peak UI Job Post Confirmation Modal */}
+        <JobPostSuccessModal
+          visible={showPostSuccessModal}
+          jobTitle={jobName}
+          isPermanent={jobType === "permanent"}
+          onClose={() => {
+            setShowPostSuccessModal(false);
+            resetAllFields();
+            (navigation as any).goBack();
+          }}
+          onTrackStatus={() => {
+            setShowPostSuccessModal(false);
+            resetAllFields();
+            (navigation as any).navigate("Status");
+          }}
+          onBackToHome={() => {
+            setShowPostSuccessModal(false);
+            resetAllFields();
+            (navigation as any).navigate("Home");
+          }}
+        />
       </KeyboardAvoidingView>
     </View>
   );
