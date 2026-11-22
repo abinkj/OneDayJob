@@ -1,6 +1,10 @@
 # Mobile Release & Versioning Playbook (Zoopol)
 
-This document outlines the standard release lifecycle, versioning architecture, and tracking protocols used by high-maturity mobile engineering teams to maintain consistency across **Store Builds (Native)** and **Over-The-Air (OTA) Updates**.
+> **Current Production Version**: `1.0.2`  
+> **Runtime Version**: `1.0.2`  
+> **Next Release Target**: Native Store Build (Google Play AAB & App Store IPA)
+
+This document outlines the standard release lifecycle, versioning architecture, and tracking protocols used to maintain consistency across **Store Builds (Native)**, **Native In-App Store Updates**, and **Over-The-Air (OTA) Updates**.
 
 ---
 
@@ -134,45 +138,7 @@ In **Bare Workflow** (where `android/` and `ios/` folders exist in git):
 
 ---
 
-## 4. How FAANG Teams Track & Document Releases
-
-### 1. The Release Matrix (Keep a Changelog)
-Maintain a `CHANGELOG.md` at the root of the repository documenting each release:
-
-```markdown
-## [1.0.2] - 2026-11-20
-### Type: Native Store Release
-- **Runtime Version**: 1.0.2
-- **Android versionCode**: 4
-- **iOS Build**: 4
-- **Git Tag**: v1.0.2
-- **Changes**:
-  - Added new location permissions handling for Android 14.
-  - Upgraded payment gateway native SDK.
-```
-
-### 2. Semantic Versioning Protocol (SemVer)
-- **MAJOR (`X.0.0`)**: Breaking architectural changes, major rebrand, or incompatible backend API migrations requiring forced store update.
-- **MINOR (`1.X.0`)**: New features, new screens, backward-compatible native additions (Native Store Build).
-- **PATCH (`1.0.X`)**: Bug fixes, UI polishes, small adjustments (Can be deployed via OTA `eas update` as long as native code did not change).
-
-### 3. Dynamic In-App Version Display
-Never hardcode the app version in `strings.ts` (e.g. `"Version 1.0.1"`). Instead, display the version dynamically in Settings:
-```tsx
-import * as Application from "expo-application";
-import Constants from "expo-constants";
-
-// The true native version installed from the store
-const nativeVersion = Application.nativeApplicationVersion; // e.g. "1.0.1"
-
-// The true build number
-const buildNumber = Application.nativeBuildVersion; // e.g. "3"
-```
-This guarantees the UI will always reflect the exact version installed without manual string editing.
-
----
-
-## 5. Backend Version Gating & Store Update Handshake
+## 4. Backend Version Gating & Store Update Handshake
 
 To alert installed native binaries (such as `1.0.1`) that a new store version (`1.0.2`) has been published on Google Play, the mobile client executes a lightweight handshake with `onedayjob-api`:
 
@@ -197,3 +163,86 @@ To alert installed native binaries (such as `1.0.1`) that a new store version (`
 ### Operational Workflow for Releasing a New Store Version:
 1. When you release `1.0.2` on Google Play, set `LATEST_APP_VERSION=1.0.2` on your backend server.
 2. All older clients running `1.0.1` will automatically detect the new version on next launch and prompt the user to update directly on Google Play.
+
+---
+
+## 5. Native In-App Updates (`expo-in-app-updates`)
+
+### SOLID Architecture Overview
+
+The native store update subsystem is built around SOLID design principles:
+
+1. **Single Responsibility Principle (SRP)**:
+   - `services/api/inAppUpdateService.ts`: Pure service layer that encapsulates native calls to `expo-in-app-updates`, handles platform checks (Android vs iOS vs Web), sanitizes payloads, and provides concurrency deduplication. It contains no React state or UI logic.
+   - `hooks/useFlexibleStoreUpdate.ts`: React presentation and lifecycle hook that manages component state (`isDownloading`, `isDownloaded`, `isUpdateAvailable`), handles `AppState` foreground checks, and provides user prompt interactions.
+2. **Open / Closed Principle (OCP)**:
+   - Extensible through options (`checkOnMount`, `autoPromptFlexible`, `autoStartFlexible`, custom callbacks) without modifying service internals.
+3. **Liskov Substitution Principle (LSP)**:
+   - Any class implementing `IInAppUpdateService` (e.g., `InAppUpdateService` or mock services for automated testing) can be substituted seamlessly.
+4. **Interface Segregation Principle (ISP)**:
+   - Exposes clean, targeted interfaces (`IInAppUpdateService`, `UpdateCheckResult`, `UseFlexibleStoreUpdateOptions`) so consumers only depend on what they need.
+5. **Dependency Inversion Principle (DIP)**:
+   - The React hook `useFlexibleStoreUpdate` accepts an optional `service?: IInAppUpdateService` parameter (Dependency Injection), depending on an abstraction rather than concrete native modules.
+
+### iOS Configuration (`app.json`)
+StoreKit requires numeric App Store ID and optional country code under `ios.infoPlist` and `ios.config`:
+```json
+{
+  "expo": {
+    "ios": {
+      "bundleIdentifier": "com.zoopol1.app",
+      "config": {
+        "AppStoreID": "6826779182"
+      },
+      "infoPlist": {
+        "AppStoreID": "6826779182",
+        "AppStoreCountry": "in"
+      }
+    }
+  }
+}
+```
+
+### Android In-App Updates
+Uses package name `com.zoopol1.app` and Google Play Core In-App Updates library. Flexible updates download silently in the background; when completed, the user is prompted to restart the application.
+
+### Basic Hook Usage
+```typescript
+import { useFlexibleStoreUpdate } from "../hooks/useFlexibleStoreUpdate";
+
+export default function RootLayout() {
+  const {
+    isChecking,
+    isUpdateAvailable,
+    isDownloading,
+    isDownloaded,
+    startFlexibleUpdate,
+    completeUpdate,
+  } = useFlexibleStoreUpdate({
+    checkOnMount: true,
+    checkOnForeground: true,
+    autoPromptFlexible: true,
+  });
+}
+```
+
+---
+
+## 6. Release History & Changelog
+
+### [1.0.2] - Native Store Release
+* **App Version**: `1.0.2`
+* **Runtime Version**: `1.0.2`
+* **Target Channels**: `production`, `staging`
+* **Key Changes**:
+  - Integrated `expo-in-app-updates` with decoupled SOLID service (`inAppUpdateService.ts`) and presentation hook (`useFlexibleStoreUpdate.ts`).
+  - Added StoreKit `AppStoreID` (`6826779182`) and `AppStoreCountry` (`in`) configuration to `app.json`.
+  - Synced mobile client with backend version gating endpoint (`/api/app-config`).
+  - Safe area inset optimizations across layout components and onboarding flows.
+  - Updated OTA update handling with AppState foreground resume checks.
+
+### [1.0.1] - Initial Production Baseline
+* **App Version**: `1.0.1`
+* **Runtime Version**: `1.0.1`
+* **Target Channels**: `production`
+
