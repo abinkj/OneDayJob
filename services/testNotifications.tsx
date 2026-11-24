@@ -1,21 +1,21 @@
-import { useNotifications } from '../contexts/NotificationContext';
+import { useNotifications } from "../contexts/NotificationContext";
 
 // Test notification functions for development
 export const testNotificationSystem = () => {
   // This function can be called from anywhere in your app to test notifications
-  console.log('Testing notification system...');
-  
+  console.log("Testing notification system...");
+
   // You can call this from a button or console to test
   return {
     sendTestVerificationCode: () => {
       // This would be called from a component that has access to useNotifications
-      console.log('Send test verification code notification');
+      console.log("Send test verification code notification");
     },
     sendTestJobUpdate: () => {
-      console.log('Send test job update notification');
+      console.log("Send test job update notification");
     },
     sendTestMessage: () => {
-      console.log('Send test message notification');
+      console.log("Send test message notification");
     },
   };
 };
@@ -49,14 +49,3 @@ const TestComponent = () => {
   );
 };
 */
-
-
-
-
-
-
-
-
-
-
-

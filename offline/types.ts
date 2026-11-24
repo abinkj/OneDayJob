@@ -1,6 +1,6 @@
-import { AxiosRequestConfig } from 'axios';
+import { AxiosRequestConfig } from "axios";
 
-export type RequestMethod = 'POST' | 'PUT' | 'PATCH' | 'DELETE';
+export type RequestMethod = "POST" | "PUT" | "PATCH" | "DELETE";
 
 export interface QueuedRequest {
   id: string;

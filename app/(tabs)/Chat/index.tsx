@@ -12,25 +12,30 @@ import { createStyles } from "./styles";
 import { RootState } from "../../../redux/store";
 import { formatTime, resolveAvatar } from "../../../utilities/chat";
 
-
 // ─── Component ────────────────────────────────────────────────────────────────
 export default function Chat() {
   const navigation = useNavigation<any>();
   const { colors } = useTheme();
   const styles = React.useMemo(() => createStyles(colors), [colors]);
 
-  const userData = useSelector((state: RootState) => state.authentication.userData);
+  const userData = useSelector(
+    (state: RootState) => state.authentication.userData
+  );
   const currentUserId = String(userData?.id || userData?._id || "");
 
-  const { data: rawConversations, isLoading, refetch, isRefetching } =
-    useConversations();
+  const {
+    data: rawConversations,
+    isLoading,
+    refetch,
+    isRefetching,
+  } = useConversations();
 
   const transformedConversations = React.useMemo(() => {
     if (!rawConversations) return [];
 
     return rawConversations.map((conv: any) => {
       const otherParticipant = conv.participants?.find(
-        (p: any) => String(p.id || p._id) !== currentUserId,
+        (p: any) => String(p.id || p._id) !== currentUserId
       );
 
       return {
@@ -88,9 +93,7 @@ export default function Chat() {
               <View style={styles.emptyIconContainer}>
                 <Ionicons name="chatbubbles" size={60} color={colors.primary} />
               </View>
-              <Text style={styles.emptyTitle}>
-                No Chats Yet
-              </Text>
+              <Text style={styles.emptyTitle}>No Chats Yet</Text>
               <Text style={styles.emptySubtitle}>
                 Connect with employers or job seekers to start a conversation.
               </Text>

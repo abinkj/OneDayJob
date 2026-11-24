@@ -1,11 +1,11 @@
 {
-	"folders": [
-		{
-			"path": "../onedayjob-api"
-		},
-		{
-			"path": "."
-		}
-	],
-	"settings": {}
+  "folders": [
+    {
+      "path": "../onedayjob-api",
+    },
+    {
+      "path": ".",
+    },
+  ],
+  "settings": {},
 }

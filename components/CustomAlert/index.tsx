@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   Dimensions,
   TouchableWithoutFeedback,
+  ActivityIndicator,
 } from "react-native";
 import Animated, {
   useSharedValue,
@@ -26,8 +27,9 @@ export type ButtonStyle = "default" | "cancel" | "destructive";
 
 export interface AlertButton {
   text: string;
-  onPress?: () => void;
+  onPress?: () => void | Promise<any>;
   style?: ButtonStyle;
+  loading?: boolean;
 }
 
 export interface AlertConfig {
@@ -81,6 +83,7 @@ const CustomAlert: React.FC<CustomAlertProps> = ({
 }) => {
   const scale = useSharedValue(0);
   const opacity = useSharedValue(0);
+  const [loadingIndex, setLoadingIndex] = useState<number | null>(null);
 
   useEffect(() => {
     if (visible) {
@@ -89,6 +92,7 @@ const CustomAlert: React.FC<CustomAlertProps> = ({
     } else {
       opacity.value = withTiming(0, { duration: 100 });
       scale.value = withTiming(0, { duration: 100 });
+      setLoadingIndex(null);
     }
   }, [visible]);
 
@@ -103,15 +107,32 @@ const CustomAlert: React.FC<CustomAlertProps> = ({
 
   const alertConfig = ALERT_COLORS[type];
 
-  const handleButtonPress = (button: AlertButton) => {
-    onDismiss();
+  const handleButtonPress = async (button: AlertButton, index: number) => {
+    if (loadingIndex !== null) return;
+
     if (button.onPress) {
-      setTimeout(() => button.onPress!(), 100);
+      try {
+        const result = button.onPress();
+        if (result && typeof (result as any).then === "function") {
+          setLoadingIndex(index);
+          await result;
+          setLoadingIndex(null);
+          onDismiss();
+          return;
+        }
+      } catch (error) {
+        console.error("Alert button action error:", error);
+        setLoadingIndex(null);
+        onDismiss();
+        return;
+      }
     }
+
+    onDismiss();
   };
 
   const handleBackdropPress = () => {
-    if (dismissable) {
+    if (dismissable && loadingIndex === null) {
       onDismiss();
     }
   };
@@ -166,23 +187,37 @@ const CustomAlert: React.FC<CustomAlertProps> = ({
                   buttons.length === 1 && styles.singleButtonContainer,
                 ]}
               >
-                {buttons.map((button, index) => (
-                  <TouchableOpacity
-                    key={index}
-                    onPress={() => handleButtonPress(button)}
-                    style={[
-                      getButtonStyle(button.style, index),
-                      buttons.length === 1 && styles.singleButton,
-                      buttons.length === 2 && styles.doubleButton,
-                      buttons.length > 2 && styles.tripleButton,
-                    ]}
-                    activeOpacity={0.7}
-                  >
-                    <Text style={getButtonTextStyle(button.style)}>
-                      {button.text}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
+                {buttons.map((button, index) => {
+                  const isButtonLoading = button.loading || loadingIndex === index;
+                  const isAnyLoading = loadingIndex !== null;
+
+                  return (
+                    <TouchableOpacity
+                      key={index}
+                      disabled={isAnyLoading}
+                      onPress={() => handleButtonPress(button, index)}
+                      style={[
+                        getButtonStyle(button.style, index),
+                        buttons.length === 1 && styles.singleButton,
+                        buttons.length === 2 && styles.doubleButton,
+                        buttons.length > 2 && styles.tripleButton,
+                        isAnyLoading && !isButtonLoading && { opacity: 0.5 },
+                      ]}
+                      activeOpacity={0.7}
+                    >
+                      {isButtonLoading ? (
+                        <ActivityIndicator
+                          size="small"
+                          color={button.style === "cancel" ? Colors.black : "#FFFFFF"}
+                        />
+                      ) : (
+                        <Text style={getButtonTextStyle(button.style)}>
+                          {button.text}
+                        </Text>
+                      )}
+                    </TouchableOpacity>
+                  );
+                })}
               </View>
             </Animated.View>
           </TouchableWithoutFeedback>

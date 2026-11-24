@@ -75,11 +75,7 @@ export const Header: React.FC<HeaderProps> = ({
         )}
       </View>
 
-      {headerRight && (
-        <View style={styles.rightContainer}>
-          {headerRight}
-        </View>
-      )}
+      {headerRight && <View style={styles.rightContainer}>{headerRight}</View>}
 
       {showSkipButton && (
         <TouchableOpacity

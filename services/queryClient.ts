@@ -3,10 +3,10 @@ import NetInfo from "@react-native-community/netinfo";
 
 // Track network status
 let isOnline = true;
-NetInfo.fetch().then(state => {
+NetInfo.fetch().then((state) => {
   isOnline = state.isConnected ?? false;
 });
-NetInfo.addEventListener(state => {
+NetInfo.addEventListener((state) => {
   isOnline = state.isConnected ?? false;
 });
 
@@ -18,7 +18,10 @@ const networkAwareRetry = (failureCount: number, error: any) => {
   }
 
   // Don't retry network errors when offline
-  if (!isOnline && (error?.message?.includes('Network') || error?.code === 'ECONNABORTED')) {
+  if (
+    !isOnline &&
+    (error?.message?.includes("Network") || error?.code === "ECONNABORTED")
+  ) {
     return false;
   }
 
@@ -37,13 +40,12 @@ export const queryClient = new QueryClient({
       // Don't refetch on window focus in mobile apps
       refetchOnWindowFocus: false,
       // Network mode: only fetch when online
-      networkMode: 'online',
+      networkMode: "online",
     },
     mutations: {
       // Mutations should also respect network status
-      networkMode: 'online',
+      networkMode: "online",
       retry: 1,
     },
   },
 });
-

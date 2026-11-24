@@ -192,6 +192,23 @@ export const createStyles = (colors: ThemeColors) =>
       borderLeftWidth: 5,
       borderLeftColor: colors.primary,
     },
+    jobCardExpired: {
+      backgroundColor: colors.address2 || "#F3F4F6",
+      borderLeftColor: "#9CA3AF",
+      opacity: 0.75,
+    },
+    expiredTag: {
+      backgroundColor: "#FFEBEE",
+      paddingHorizontal: 10,
+      paddingVertical: 4,
+      borderRadius: 12,
+    },
+    expiredTagText: {
+      fontSize: fontSizes.size11,
+      fontFamily: "bold",
+      color: "#F44336",
+      textTransform: "uppercase",
+    },
     jobCardHeader: {
       flexDirection: "row",
       justifyContent: "space-between",
@@ -486,6 +503,13 @@ export const createStyles = (colors: ThemeColors) =>
     arrivalSuccessText: {
       fontSize: fontSizes.size11,
       color: "#10B981",
+      marginTop: 4,
+      textAlign: "center",
+      fontFamily: "medium",
+    },
+    scheduledText: {
+      fontSize: fontSizes.size14,
+      color: colors.grey,
       marginTop: 4,
       textAlign: "center",
       fontFamily: "medium",

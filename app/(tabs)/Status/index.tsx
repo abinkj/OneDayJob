@@ -42,7 +42,17 @@ import {
 import { createStyles } from "./styles";
 import { useTheme } from "../../../contexts/ThemeContext";
 import Toast from "react-native-toast-message";
-import { isJobOwner, isAssignedWorker, isJobToday, isJobLiveOrDueToday, formatJobDate } from "../../../utilities/jobUtils";
+import { useAlert } from "../../../components/CustomAlert/AlertProvider";
+import {
+  isJobOwner,
+  isAssignedWorker,
+  isJobToday,
+  isJobLiveOrDueToday,
+  formatJobDate,
+  normalizeLocationCoordinates,
+  canEditJob,
+} from "../../../utilities/jobUtils";
+import RepostJobModal from "../../../components/RepostJobModal";
 import { fontSizes } from "../../../themes/fonts";
 
 type Route = {
@@ -71,8 +81,11 @@ const MyPostTab = () => {
   } = useUserJobPostings(userId);
 
   const deleteJobMutation = useDeleteJob();
+  const { showAlert } = useAlert();
 
   const [selectedStatus, setSelectedStatus] = useState<string | null>(null);
+  const [selectedJobForRepost, setSelectedJobForRepost] = useState<JobPost | null>(null);
+  const [showRepostModal, setShowRepostModal] = useState(false);
   // const [paymentModalVisible, setPaymentModalVisible] = useState(false);
   // const [selectedJobForPayment, setSelectedJobForPayment] = useState<JobPost | null>(null);
 
@@ -85,9 +98,12 @@ const MyPostTab = () => {
   const flatListRef = React.useRef<FlatList<JobPost>>(null);
 
   React.useEffect(() => {
-    const subscription = DeviceEventEmitter.addListener("scrollToTop_Status", () => {
-      flatListRef.current?.scrollToOffset({ offset: 0, animated: true });
-    });
+    const subscription = DeviceEventEmitter.addListener(
+      "scrollToTop_Status",
+      () => {
+        flatListRef.current?.scrollToOffset({ offset: 0, animated: true });
+      }
+    );
     return () => {
       subscription.remove();
     };
@@ -113,7 +129,7 @@ const MyPostTab = () => {
   //   });
   // };
 
-  const handleDelete = async (jobId: string) => {
+  const confirmDelete = async (jobId: string) => {
     try {
       await deleteJobMutation.mutateAsync(jobId);
       Toast.show({
@@ -129,6 +145,27 @@ const MyPostTab = () => {
         text2: error.response?.data?.message || "Failed to delete job",
       });
     }
+  };
+
+  const handleDelete = (jobId: string) => {
+    if (!jobId) return;
+    showAlert({
+      type: "warning",
+      title: "Delete Job Post",
+      message:
+        "Are you sure you want to delete this job post? This action cannot be undone.",
+      buttons: [
+        {
+          text: "Cancel",
+          style: "cancel",
+        },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: () => confirmDelete(jobId),
+        },
+      ],
+    });
   };
 
   const handleSummary = (jobId: string, jobName: string) => {
@@ -151,6 +188,9 @@ const MyPostTab = () => {
       setFilteredPosts(posts);
     } else {
       const filtered = posts.filter((post) => {
+        if (selectedStatus === "Completed" || selectedStatus === "Work Completed") {
+          return post.jobStatus === "completed" || post.jobStatus === "work_completed";
+        }
         const statusInfo = getJobStatusInfo(post.jobStatus || "posted");
         return statusInfo.label === selectedStatus;
       });
@@ -160,7 +200,13 @@ const MyPostTab = () => {
 
   // Find active jobs for employer highlight
   const activeEmployerJobs = React.useMemo(() => {
-    return posts.filter(post => post.jobStatus === 'in_progress' || (post.onDate === 'today' && post.jobStatus === 'open' && (post.applicantCount || 0) > 0));
+    return posts.filter(
+      (post) =>
+        post.jobStatus === "in_progress" ||
+        (post.onDate === "today" &&
+          post.jobStatus === "open" &&
+          (post.applicantCount || 0) > 0)
+    );
   }, [posts]);
 
   if (isLoading && !isRefetching && posts.length === 0) {
@@ -182,6 +228,25 @@ const MyPostTab = () => {
     getJobStatusInfo(JOB_STATUSES.CANCELLED),
   ];
 
+  const handleRepost = (job: JobPost) => {
+    setSelectedJobForRepost(job);
+    setShowRepostModal(true);
+  };
+
+  const handleEdit = (job: JobPost) => {
+    const eligibility = canEditJob(job, userId);
+    if (!eligibility.canEdit) {
+      Toast.show({
+        type: "info",
+        text1: "Cannot Edit Job",
+        text2: eligibility.reason || "This job can no longer be edited",
+        visibilityTime: 4000,
+      });
+      return;
+    }
+    navigation.navigate("PostJob", { editJob: job, isEditMode: true });
+  };
+
   const renderItem = ({ item }: { item: JobPost }) => (
     <JobCard
       key={item._id}
@@ -189,9 +254,9 @@ const MyPostTab = () => {
       onPress={() => handleNext(item._id)}
       onDelete={() => handleDelete(item._id)}
       onSummary={() => handleSummary(item._id, item.name)}
-      // onPayment={() => handlePayment(item)}
+      onRepost={(job: any) => handleRepost(job)}
+      onEdit={(job: any) => handleEdit(job)}
       isEmployer={true}
-    // showPaymentButton={true}
     />
   );
 
@@ -219,7 +284,14 @@ const MyPostTab = () => {
         }}
       >
         <Ionicons name="document-outline" size={64} color={colors.grey} />
-        <Text style={{ fontSize: fontSizes.size18, fontFamily: "regular", color: colors.grey, marginTop: 16 }}>
+        <Text
+          style={{
+            fontSize: fontSizes.size18,
+            fontFamily: "regular",
+            color: colors.grey,
+            marginTop: 16,
+          }}
+        >
           {selectedStatus
             ? `No ${selectedStatus.toLowerCase()} jobs`
             : "No job posts yet"}
@@ -242,12 +314,34 @@ const MyPostTab = () => {
       {/* Active Job Highlight for Employer */}
       {activeEmployerJobs.length > 0 && selectedStatus === null && (
         <View style={{ paddingHorizontal: 16, marginTop: 16 }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
-            <View style={{ backgroundColor: '#F59E0B', width: 4, height: 16, borderRadius: 2 }} />
-            <Text style={{ fontSize: fontSizes.size16, fontFamily: 'bold', color: colors.black, marginLeft: 8 }}>Live Now</Text>
+          <View
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              marginBottom: 12,
+            }}
+          >
+            <View
+              style={{
+                backgroundColor: "#F59E0B",
+                width: 4,
+                height: 16,
+                borderRadius: 2,
+              }}
+            />
+            <Text
+              style={{
+                fontSize: fontSizes.size16,
+                fontFamily: "bold",
+                color: colors.black,
+                marginLeft: 8,
+              }}
+            >
+              Live Now
+            </Text>
           </View>
-          {activeEmployerJobs.map(job => (
-            <TouchableOpacity 
+          {activeEmployerJobs.map((job) => (
+            <TouchableOpacity
               key={job._id}
               style={{
                 backgroundColor: colors.white,
@@ -255,32 +349,86 @@ const MyPostTab = () => {
                 padding: 14,
                 marginBottom: 10,
                 borderWidth: 1,
-                borderColor: '#F59E0B' + '40',
-                flexDirection: 'row',
-                alignItems: 'center',
-                shadowColor: '#F59E0B',
+                borderColor: "#F59E0B" + "40",
+                flexDirection: "row",
+                alignItems: "center",
+                shadowColor: "#F59E0B",
                 shadowOffset: { width: 0, height: 4 },
                 shadowOpacity: 0.1,
                 shadowRadius: 8,
-                elevation: 3
+                elevation: 3,
               }}
               onPress={() => handleNext(job._id)}
             >
               <View style={{ flex: 1 }}>
-                <Text style={{ fontSize: fontSizes.size15, fontFamily: 'bold', color: colors.black }} numberOfLines={1}>{job.name}</Text>
-                <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 4 }}>
-                  <Text style={{ fontSize: fontSizes.size13, color: '#F59E0B', fontFamily: 'medium' }}>
-                    {job.jobStatus === 'in_progress' ? 'Running' : 'Ready to Start'}
+                <Text
+                  style={{
+                    fontSize: fontSizes.size15,
+                    fontFamily: "bold",
+                    color: colors.black,
+                  }}
+                  numberOfLines={1}
+                >
+                  {job.name}
+                </Text>
+                <View
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    marginTop: 4,
+                  }}
+                >
+                  <Text
+                    style={{
+                      fontSize: fontSizes.size13,
+                      color: "#F59E0B",
+                      fontFamily: "medium",
+                    }}
+                  >
+                    {job.jobStatus === "in_progress"
+                      ? "Running"
+                      : "Ready to Start"}
                   </Text>
-                  <Text style={{ fontSize: fontSizes.size13, color: colors.grey, fontFamily: 'regular' }}> • {job.applicantCount || 0} Workers</Text>
+                  <Text
+                    style={{
+                      fontSize: fontSizes.size13,
+                      color: colors.grey,
+                      fontFamily: "regular",
+                    }}
+                  >
+                    {" "}
+                    • {job.applicantCount || 0} Workers
+                  </Text>
                 </View>
               </View>
-              <View style={{ backgroundColor: '#F59E0B', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8 }}>
-                <Text style={{ color: colors.white, fontFamily: 'bold', fontSize: fontSizes.size13 }}>Verify</Text>
+              <View
+                style={{
+                  backgroundColor: "#F59E0B",
+                  paddingHorizontal: 12,
+                  paddingVertical: 8,
+                  borderRadius: 8,
+                }}
+              >
+                <Text
+                  style={{
+                    color: colors.white,
+                    fontFamily: "bold",
+                    fontSize: fontSizes.size13,
+                  }}
+                >
+                  Verify
+                </Text>
               </View>
             </TouchableOpacity>
           ))}
-          <View style={{ height: 1, backgroundColor: colors.border, marginVertical: 10, opacity: 0.5 }} />
+          <View
+            style={{
+              height: 1,
+              backgroundColor: colors.border,
+              marginVertical: 10,
+              opacity: 0.5,
+            }}
+          />
         </View>
       )}
       <FlatList
@@ -291,10 +439,10 @@ const MyPostTab = () => {
 
         contentContainerStyle={[
           styles.listContent,
-          filteredPosts.length === 0 && { flexGrow: 1 }
+          filteredPosts.length === 0 && { flexGrow: 1 },
         ]}
         showsVerticalScrollIndicator={false}
-        bounces={false}
+        //bounces={false}
         refreshControl={
           <RefreshControl
             refreshing={isRefetching}
@@ -305,7 +453,21 @@ const MyPostTab = () => {
         onEndReachedThreshold={0.5}
         ListEmptyComponent={renderEmpty}
         ListFooterComponent={renderFooter}
+      />
 
+      <RepostJobModal
+        visible={showRepostModal}
+        job={selectedJobForRepost}
+        onClose={() => {
+          setShowRepostModal(false);
+          setSelectedJobForRepost(null);
+        }}
+        onSuccess={() => {
+          refetch();
+        }}
+        onEditFullDetails={(jobData) => {
+          navigation.navigate("PostJob", { editJob: jobData });
+        }}
       />
       {/* {selectedJobForPayment && (
         <PaymentModal
@@ -361,9 +523,12 @@ const AppliedTab = () => {
   const flatListRef = React.useRef<FlatList<any>>(null);
 
   React.useEffect(() => {
-    const subscription = DeviceEventEmitter.addListener("scrollToTop_Status", () => {
-      flatListRef.current?.scrollToOffset({ offset: 0, animated: true });
-    });
+    const subscription = DeviceEventEmitter.addListener(
+      "scrollToTop_Status",
+      () => {
+        flatListRef.current?.scrollToOffset({ offset: 0, animated: true });
+      }
+    );
     return () => {
       subscription.remove();
     };
@@ -396,10 +561,21 @@ const AppliedTab = () => {
       console.error("Error withdrawing application:", error);
       console.error("Error details:", error.response?.data);
 
+      // Extract the specific message from the API response
+      const apiMessage =
+        error.response?.data?.error?.message ||
+        error.response?.data?.message ||
+        null;
+
+      const isValidationError =
+        error.response?.data?.error?.type === "VALIDATION_ERROR" ||
+        error.response?.status === 400;
+
       Toast.show({
-        type: "error",
-        text1: "Error",
-        text2: "Could not withdraw application",
+        type: isValidationError ? "info" : "error",
+        text1: isValidationError ? "Cannot Withdraw" : "Error",
+        text2: apiMessage || "Could not withdraw application",
+        visibilityTime: 3000,
       });
     }
   };
@@ -424,6 +600,12 @@ const AppliedTab = () => {
       setFilteredJobs(appliedJobs);
     } else {
       const filtered = appliedJobs.filter((application) => {
+        if (selectedStatus === "Completed" || selectedStatus === "Work Completed") {
+          return (
+            application.job?.jobStatus === "completed" ||
+            application.job?.jobStatus === "work_completed"
+          );
+        }
         const displayStatus = getDisplayStatus(
           application.job?.jobStatus,
           application.status,
@@ -438,12 +620,12 @@ const AppliedTab = () => {
 
   // Find active jobs for worker highlight
   const activeWorkerJobs = React.useMemo(() => {
-    return appliedJobs.filter(app => {
+    return appliedJobs.filter((app) => {
       const job = app.job;
       if (!job) return false;
-      const isAccepted = app.status === 'accepted';
-      const isLive = job.jobStatus === 'in_progress';
-      const isToday = job.onDate === 'today';
+      const isAccepted = app.status === "accepted";
+      const isLive = job.jobStatus === "in_progress";
+      const isToday = job.onDate === "today";
       return isLive || (isAccepted && isToday);
     });
   }, [appliedJobs]);
@@ -467,6 +649,22 @@ const AppliedTab = () => {
     getJobStatusInfo(JOB_STATUSES.COMPLETED),
   ];
 
+  // Mirror the backend cutoff: withdraw must happen >24h before job start (IST-aware).
+  const canWithdraw = (job: any): boolean => {
+    if (!job) return false;
+    if (job.jobStatus === "in_progress" || job.jobStatus === "completed") return false;
+    const rawDate: Date | undefined = job.isFlexible
+      ? job.beforeDate || job.onDate
+      : job.onDate;
+    if (!rawDate) return true;
+    const fromTime: string = job.fromTime || "00:00";
+    const isoDate = new Date(rawDate).toISOString().slice(0, 10);
+    const jobStart = new Date(`${isoDate}T${fromTime}:00+05:30`);
+    // Cutoff = 24 hours before job start
+    const cutoff = new Date(jobStart.getTime() - 24 * 60 * 60 * 1000);
+    return new Date() < cutoff;
+  };
+
   const renderItem = ({ item }: { item: any }) => {
     if (!item || !item.job || !item.applicationId) {
       return null;
@@ -480,7 +678,7 @@ const AppliedTab = () => {
           status: item.job.jobStatus || "posted",
         }}
         onPress={() => handleNext(item.job)}
-        withdraw={true}
+        withdraw={canWithdraw(item.job)}
         onWithdraw={() => handleWithdraw(item.applicationId, item.job._id)}
         onSummary={() => handleSummary(item.job._id, item.job.name)}
         isEmployer={false}
@@ -513,7 +711,14 @@ const AppliedTab = () => {
         }}
       >
         <Ionicons name="document-outline" size={64} color={colors.grey} />
-        <Text style={{ fontSize: fontSizes.size18, fontFamily: "regular", color: colors.grey, marginTop: 16 }}>
+        <Text
+          style={{
+            fontSize: fontSizes.size18,
+            fontFamily: "regular",
+            color: colors.grey,
+            marginTop: 16,
+          }}
+        >
           {selectedStatus
             ? `No ${selectedStatus.toLowerCase()} applications`
             : "No applied jobs yet"}
@@ -533,15 +738,72 @@ const AppliedTab = () => {
         />
       )}
 
+      {/* 24-hour withdraw notice */}
+      {appliedJobs.length > 0 && (
+        <View
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+            marginHorizontal: 16,
+            marginTop: 10,
+            marginBottom: 2,
+            backgroundColor: colors.primary + "12",
+            borderRadius: 8,
+            paddingHorizontal: 10,
+            paddingVertical: 7,
+          }}
+        >
+          <Ionicons
+            name="information-circle-outline"
+            size={15}
+            color={colors.primary}
+            style={{ marginRight: 6 }}
+          />
+          <Text
+            style={{
+              fontSize: fontSizes.size12,
+              fontFamily: "regular",
+              color: colors.primary,
+              flexShrink: 1,
+            }}
+          >
+            Withdrawal is only available up to 24 hours before the job starts.
+          </Text>
+        </View>
+      )}
+
       {/* Active Job Highlight for Worker */}
+
       {activeWorkerJobs.length > 0 && selectedStatus === null && (
         <View style={{ paddingHorizontal: 16, marginTop: 16 }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
-            <View style={{ backgroundColor: colors.primary, width: 4, height: 16, borderRadius: 2 }} />
-            <Text style={{ fontSize: fontSizes.size16, fontFamily: 'bold', color: colors.black, marginLeft: 8 }}>Live Now</Text>
+          <View
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              marginBottom: 12,
+            }}
+          >
+            <View
+              style={{
+                backgroundColor: colors.primary,
+                width: 4,
+                height: 16,
+                borderRadius: 2,
+              }}
+            />
+            <Text
+              style={{
+                fontSize: fontSizes.size16,
+                fontFamily: "bold",
+                color: colors.black,
+                marginLeft: 8,
+              }}
+            >
+              Live Now
+            </Text>
           </View>
-          {activeWorkerJobs.map(app => (
-            <TouchableOpacity 
+          {activeWorkerJobs.map((app) => (
+            <TouchableOpacity
               key={app.applicationId}
               style={{
                 backgroundColor: colors.white,
@@ -549,34 +811,90 @@ const AppliedTab = () => {
                 padding: 14,
                 marginBottom: 10,
                 borderWidth: 1,
-                borderColor: colors.primary + '30',
-                flexDirection: 'row',
-                alignItems: 'center',
+                borderColor: colors.primary + "30",
+                flexDirection: "row",
+                alignItems: "center",
                 shadowColor: colors.primary,
                 shadowOffset: { width: 0, height: 4 },
                 shadowOpacity: 0.1,
                 shadowRadius: 8,
-                elevation: 3
+                elevation: 3,
               }}
-              onPress={() => app.job.jobStatus === 'in_progress' ? handleSummary(app.job._id, app.job.name) : handleNext(app.job)}
+              onPress={() =>
+                app.job.jobStatus === "in_progress"
+                  ? handleSummary(app.job._id, app.job.name)
+                  : handleNext(app.job)
+              }
             >
               <View style={{ flex: 1 }}>
-                <Text style={{ fontSize: fontSizes.size15, fontFamily: 'bold', color: colors.black }} numberOfLines={1}>{app.job.name}</Text>
-                <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 4 }}>
-                  <Text style={{ fontSize: fontSizes.size13, color: colors.primary, fontFamily: 'medium' }}>
-                    {app.job.jobStatus === 'in_progress' ? 'Running' : 'Ready to Start'}
+                <Text
+                  style={{
+                    fontSize: fontSizes.size15,
+                    fontFamily: "bold",
+                    color: colors.black,
+                  }}
+                  numberOfLines={1}
+                >
+                  {app.job.name}
+                </Text>
+                <View
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    marginTop: 4,
+                  }}
+                >
+                  <Text
+                    style={{
+                      fontSize: fontSizes.size13,
+                      color: colors.primary,
+                      fontFamily: "medium",
+                    }}
+                  >
+                    {app.job.jobStatus === "in_progress"
+                      ? "Running"
+                      : "Ready to Start"}
                   </Text>
-                  <Text style={{ fontSize: fontSizes.size13, color: colors.grey, fontFamily: 'regular' }}> • {app.job.locationName || 'Location site'}</Text>
+                  <Text
+                    style={{
+                      fontSize: fontSizes.size13,
+                      color: colors.grey,
+                      fontFamily: "regular",
+                    }}
+                  >
+                    {" "}
+                    • {app.job.locationName || "Location site"}
+                  </Text>
                 </View>
               </View>
-              <View style={{ backgroundColor: colors.primary, paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8 }}>
-                <Text style={{ color: colors.white, fontFamily: 'bold', fontSize: fontSizes.size13 }}>
-                  {app.job.jobStatus === 'in_progress' ? 'Timer' : 'Arrive'}
+              <View
+                style={{
+                  backgroundColor: colors.primary,
+                  paddingHorizontal: 12,
+                  paddingVertical: 8,
+                  borderRadius: 8,
+                }}
+              >
+                <Text
+                  style={{
+                    color: colors.white,
+                    fontFamily: "bold",
+                    fontSize: fontSizes.size13,
+                  }}
+                >
+                  {app.job.jobStatus === "in_progress" ? "Timer" : "Arrive"}
                 </Text>
               </View>
             </TouchableOpacity>
           ))}
-          <View style={{ height: 1, backgroundColor: colors.border, marginVertical: 10, opacity: 0.5 }} />
+          <View
+            style={{
+              height: 1,
+              backgroundColor: colors.border,
+              marginVertical: 10,
+              opacity: 0.5,
+            }}
+          />
         </View>
       )}
       <FlatList
@@ -587,10 +905,10 @@ const AppliedTab = () => {
         keyExtractor={(item) => item.applicationId}
         contentContainerStyle={[
           styles.listContent,
-          filteredJobs.length === 0 && { flexGrow: 1 }
+          filteredJobs.length === 0 && { flexGrow: 1 },
         ]}
         showsVerticalScrollIndicator={false}
-        bounces={false}
+        //bounces={false}
         refreshControl={
           <RefreshControl
             refreshing={isRefetching}
@@ -601,7 +919,6 @@ const AppliedTab = () => {
         onEndReachedThreshold={0.5}
         ListEmptyComponent={renderEmpty}
         ListFooterComponent={renderFooter}
-
       />
     </View>
   );

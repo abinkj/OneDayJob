@@ -1,11 +1,5 @@
 import React, { useState, useMemo, useEffect } from "react";
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
-  Image,
-} from "react-native";
+import { View, Text, TouchableOpacity, StyleSheet, Image } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import { OtpInput } from "react-native-otp-entry";
 import { useTheme } from "../../../contexts/ThemeContext";
@@ -35,11 +29,18 @@ import CustomButton from "../../../components/CustomButton";
 import { useAlert } from "../../../components/CustomAlert/AlertProvider";
 import { validateOtpCode } from "../../../utilities/formValidation";
 import { useNotifications } from "../../../contexts/NotificationContext";
-import { completeKyc, completeProfile } from "../../../redux/reducers/authReducers";
+import {
+  completeKyc,
+  completeProfile,
+  login,
+  setSuspended,
+} from "../../../redux/reducers/authReducers";
+import socketService from "../../../services/socketService";
 import { strings } from "../../../utilities/strings";
 
 interface RouteParams {
   phoneNumber: string;
+  initialName?: string;
 }
 
 const RotatingBorder = ({ size, color }: { size: number; color: string }) => {
@@ -49,7 +50,7 @@ const RotatingBorder = ({ size, color }: { size: number; color: string }) => {
     rotation.value = withRepeat(
       withTiming(360, { duration: 2000, easing: Easing.linear }),
       -1,
-      false,
+      false
     );
   }, []);
 
@@ -85,19 +86,19 @@ const AnimatedDot = ({ delay, color }: { delay: number; color: string }) => {
       scale.value = withRepeat(
         withSequence(
           withSpring(1.3, { damping: 2, stiffness: 80 }),
-          withSpring(0.7, { damping: 2, stiffness: 80 }),
+          withSpring(0.7, { damping: 2, stiffness: 80 })
         ),
         -1,
-        false,
+        false
       );
 
       opacity.value = withRepeat(
         withSequence(
           withTiming(1, { duration: 600, easing: Easing.inOut(Easing.ease) }),
-          withTiming(0.3, { duration: 600, easing: Easing.inOut(Easing.ease) }),
+          withTiming(0.3, { duration: 600, easing: Easing.inOut(Easing.ease) })
         ),
         -1,
-        false,
+        false
       );
     }, delay);
 
@@ -133,7 +134,7 @@ const Otp = () => {
 
   const route = useRoute();
   const navigation = useNavigation<any>();
-  const { phoneNumber } = route.params as RouteParams;
+  const { phoneNumber, initialName } = (route.params as RouteParams) || {};
   const dispatch = useDispatch();
   const { showAlert } = useAlert();
 
@@ -150,10 +151,10 @@ const Otp = () => {
       logoScale.value = withRepeat(
         withSequence(
           withSpring(1.1, { damping: 3, stiffness: 80 }),
-          withSpring(0.95, { damping: 3, stiffness: 80 }),
+          withSpring(0.95, { damping: 3, stiffness: 80 })
         ),
         -1,
-        false,
+        false
       );
 
       backgroundOpacity.value = withRepeat(
@@ -162,16 +163,16 @@ const Otp = () => {
             duration: 2000,
             easing: Easing.inOut(Easing.ease),
           }),
-          withTiming(1, { duration: 2000, easing: Easing.inOut(Easing.ease) }),
+          withTiming(1, { duration: 2000, easing: Easing.inOut(Easing.ease) })
         ),
         -1,
-        false,
+        false
       );
 
       shimmerTranslate.value = withRepeat(
         withTiming(200, { duration: 2500, easing: Easing.linear }),
         -1,
-        false,
+        false
       );
     } else {
       logoScale.value = withSpring(1);
@@ -208,7 +209,6 @@ const Otp = () => {
 
     try {
       const response = await verifyOtp({ phoneNumber, otpCode: otp });
-      console.log("OTP verification response:", JSON.stringify(response.data, null, 2));
 
       if (response.data.success) {
         const accessToken = response.data.data.tokens.accessToken;
@@ -223,7 +223,7 @@ const Otp = () => {
             setIsOtpSuccess(false);
             setIsSettingUp(true);
 
-            if (userData?.bankAccount) {
+            if (userData?.bankAccount?.isVerified || userData?.bankAccount?.accountNumber) {
               await saveKycStatus("completed");
               dispatch(completeKyc());
             }
@@ -231,28 +231,38 @@ const Otp = () => {
             await requestPermission();
 
             if (!isProfileComplete) {
-              // Profile incomplete — save tokens & data but skip login dispatch
-              // so RootStackLayout doesn't navigate to MainStack prematurely
-              console.log("Profile incomplete, navigating to ProfileCompletion");
+              console.log(
+                "Profile incomplete, setting auth state for ProfileCompletion"
+              );
+
+              const enrichedUserData = {
+                ...userData,
+                ...(initialName && !userData.firstName
+                  ? { firstName: initialName }
+                  : {}),
+              };
 
               await saveToken(accessToken, refreshToken);
-              console.log("✅ Tokens saved");
-
-              await saveUserData(userData);
-              console.log("✅ User data saved");
-
-              const savedData = await getUserData();
-              console.log("🔍 Verified saved data:", JSON.stringify(savedData, null, 2));
-
+              await saveUserData(enrichedUserData);
               await registerDevice();
 
-              navigation.replace("ProfileCompletion");
+              // Connect socket for real-time events
+              socketService.connect().catch((err) => {
+                console.error("Socket connection failed on login:", err);
+              });
+
+              // Dispatch login + incomplete profile:
+              // RootStackLayout will automatically switch to root ProfileCompletion!
+              dispatch(login(enrichedUserData)); // <----Redux login user
+              dispatch(completeProfile(false));
             } else {
               // Profile complete — sync Redux and proceed to MainStack
               console.log("Profile complete, logging in user");
 
-              dispatch(completeProfile()); // ✅ sync Redux isProfileComplete = true
-              await dispatch(loginUser(userData, accessToken, refreshToken) as any);
+              dispatch(completeProfile(true));
+              await dispatch(
+                loginUser(userData, accessToken, refreshToken) as any
+              );
 
               await registerDevice();
             }
@@ -270,7 +280,8 @@ const Otp = () => {
         showAlert({
           type: "error",
           title: strings.auth.otp.verificationFailedTitle,
-          message: response.data.message || strings.auth.otp.defaultVerificationError,
+          message:
+            response.data.message || strings.auth.otp.defaultVerificationError,
         });
       }
     } catch (error) {
@@ -279,9 +290,8 @@ const Otp = () => {
       let errorMessage = "Invalid OTP. Please try again.";
 
       if (error.response?.status === 403) {
-        // User is suspended - navigate to suspended screen
-        errorMessage = error.response.data.message || "Your account has been suspended.";
-        navigation.replace("/auth/suspended");
+        // User is suspended - dispatch to suspended state
+        dispatch(setSuspended(true));
         return;
       }
 
@@ -367,12 +377,7 @@ const Otp = () => {
             style={styles.logoCircle}
           >
             <RotatingBorder size={100} color={colors.primary} />
-            <Animated.View
-              style={[
-                styles.logoCircleInner,
-                logoAnimatedStyle,
-              ]}
-            >
+            <Animated.View style={[styles.logoCircleInner, logoAnimatedStyle]}>
               <Image
                 source={require("../../../assets/icon.png")}
                 style={styles.logoImage}
@@ -389,10 +394,7 @@ const Otp = () => {
               Zoopol
             </Animated.Text>
             <Animated.View
-              style={[
-                styles.shimmerEffect,
-                shimmerAnimatedStyle,
-              ]}
+              style={[styles.shimmerEffect, shimmerAnimatedStyle]}
             />
           </Animated.View>
 
@@ -424,68 +426,71 @@ const Otp = () => {
       bounces={false}
       keyboardShouldPersistTaps="handled"
     >
-        <Animated.View
-          entering={FadeInDown.delay(200).duration(1000).springify()}
-          style={styles.headerContainer}
-        >
-          <Text style={styles.title}>{strings.auth.otp.title}</Text>
-          <Text style={styles.subtitleOtp}>{strings.auth.otp.subtitle}</Text>
-          <Text style={styles.phoneNumberText}>
-            {phoneNumber}
-          </Text>
-        </Animated.View>
+      <Animated.View
+        entering={FadeInDown.delay(200).duration(1000).springify()}
+        style={styles.headerContainer}
+      >
+        <Text style={styles.title}>{strings.auth.otp.title}</Text>
+        <Text style={styles.subtitleOtp}>{strings.auth.otp.subtitle}</Text>
+        <Text style={styles.phoneNumberText}>{phoneNumber}</Text>
+      </Animated.View>
 
-        <Animated.View
-          entering={FadeInDown.delay(400).duration(1000).springify()}
-          style={styles.inputWrapper}
-        >
-          <OtpInput
-            numberOfDigits={6}
-            focusColor={colors.primary}
-            autoFocus={true}
-            hideStick={true}
-            placeholder=""
-            blurOnFilled={true}
-            disabled={isLoading}
-            type="numeric"
-            secureTextEntry={false}
-            focusStickBlinkingDuration={500}
-            onTextChange={(text) => setOtp(text)}
-            onFilled={(text) => setOtp(text)}
-            textInputProps={{
-              accessibilityLabel: "One-Time Password",
-              textContentType: "oneTimeCode",
-              autoComplete: "sms-otp",
-            }}
-            theme={{
-              containerStyle: styles.containerOtp,
-              pinCodeContainerStyle: styles.pinCodeContainer,
-              pinCodeTextStyle: styles.pinCodeText,
-              focusedPinCodeContainerStyle: styles.activePinCodeContainer,
-            }}
-          />
+      <Animated.View
+        entering={FadeInDown.delay(400).duration(1000).springify()}
+        style={styles.inputWrapper}
+      >
+        <OtpInput
+          numberOfDigits={6}
+          focusColor={colors.primary}
+          autoFocus={true}
+          hideStick={true}
+          placeholder=""
+          blurOnFilled={true}
+          disabled={isLoading}
+          type="numeric"
+          secureTextEntry={false}
+          focusStickBlinkingDuration={500}
+          onTextChange={(text) => setOtp(text)}
+          onFilled={(text) => setOtp(text)}
+          textInputProps={{
+            accessibilityLabel: "One-Time Password",
+            textContentType: "oneTimeCode",
+            autoComplete: "sms-otp",
+          }}
+          theme={{
+            containerStyle: styles.containerOtp,
+            pinCodeContainerStyle: styles.pinCodeContainer,
+            pinCodeTextStyle: styles.pinCodeText,
+            focusedPinCodeContainerStyle: styles.activePinCodeContainer,
+          }}
+        />
 
-          <View style={styles.resendContainer}>
-            <Text style={styles.resendText}>
-              {strings.auth.otp.resendPrompt}{" "}
-              <Text
-                style={[styles.resendButton, isResending && styles.disabledOpacity]}
-                onPress={handleResendOtp}
-              >
-                {isResending ? strings.auth.otp.resending : strings.auth.otp.resend}
-              </Text>
+        <View style={styles.resendContainer}>
+          <Text style={styles.resendText}>
+            {strings.auth.otp.resendPrompt}{" "}
+            <Text
+              style={[
+                styles.resendButton,
+                isResending && styles.disabledOpacity,
+              ]}
+              onPress={handleResendOtp}
+            >
+              {isResending
+                ? strings.auth.otp.resending
+                : strings.auth.otp.resend}
             </Text>
-          </View>
+          </Text>
+        </View>
 
-          <View style={styles.buttonContainer}>
-            <CustomButton
-              onPress={handleVerifyOtp}
-              disabled={isLoading || otp.length !== 6}
-              isLoading={isLoading}
-              text={strings.auth.otp.confirm}
-            />
-          </View>
-        </Animated.View>
+        <View style={styles.buttonContainer}>
+          <CustomButton
+            onPress={handleVerifyOtp}
+            disabled={isLoading || otp.length !== 6}
+            isLoading={isLoading}
+            text={strings.auth.otp.confirm}
+          />
+        </View>
+      </Animated.View>
     </KeyboardAwareScrollView>
   );
 };

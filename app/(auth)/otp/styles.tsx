@@ -3,240 +3,241 @@ import DeviceDimensions from "../../../constants/DeviceDimenions";
 import { ThemeColors } from "../../../constants/Colors";
 import { fontSizes } from "../../../themes/fonts";
 
-export const createStyles = (colors: ThemeColors) => StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  scrollContent: {
-    flexGrow: 1,
-    alignItems: "center",
-    paddingHorizontal: 16,
-    paddingTop: 40,
-  },
-  headerContainer: {
-    alignItems: 'center',
-    marginBottom: 40,
-    width: '100%',
-  },
-  title: {
-    fontSize: fontSizes.size28,
-    fontFamily: "bold",
-    color: colors.black,
-    marginBottom: 12,
-    textAlign: "center",
-  },
-  subtitle: {
-    fontSize: fontSizes.size16,
-    lineHeight: 24,
-    textAlign: "center",
-    fontFamily: "regular",
-    color: colors.grey,
-    maxWidth: '80%',
-  },
-  subtitleOtp: {
-    fontSize: fontSizes.size16,
-    lineHeight: 24,
-    textAlign: "center",
-    fontFamily: "regular",
-    color: colors.grey,
-    marginTop: 8,
-    maxWidth: '90%',
-  },
-  // OTP Input Specific Styles
-  containerOtp: {
-    flexDirection: "row",
-    justifyContent: "center",
-    marginTop: 40,
-    marginBottom: 10,
-    width: '100%',
-    gap: 8, // Add gap between inputs
-  },
-  pinCodeContainer: {
-    width: 48,
-    height: 56, // Taller for modern look
-    borderWidth: 1,
-    borderColor: 'transparent', // Remove border color for cleaner look with shadow
-    borderRadius: 12,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: colors.white,
-    // Add shadow
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
+export const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: colors.background,
     },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  activePinCodeContainer: {
-    borderColor: colors.primary,
-    borderWidth: 1,
-    backgroundColor: colors.white,
-    transform: [{ scale: 1.05 }], // Subtle scale effect on focus
-  },
-  pinCodeText: {
-    fontSize: fontSizes.size24,
-    fontFamily: "bold",
-    color: colors.black,
-    textAlign: "center",
-  },
-
-  // Resend Section
-  resendContainer: {
-    marginTop: 20,
-    marginBottom: 10,
-    alignItems: 'center',
-  },
-  resendText: {
-    fontSize: fontSizes.size14,
-    color: colors.grey,
-    textAlign: "center",
-    fontFamily: "regular",
-  },
-  resendButton: {
-    color: colors.primary, // Use primary color for action
-    fontFamily: "bold",
-  },
-
-  buttonOtp: {
-    backgroundColor: colors.primary,
-    width: '100%',
-    height: 56,
-    borderRadius: 16,
-    alignItems: "center",
-    justifyContent: "center",
-    shadowColor: colors.primary,
-    shadowOffset: {
-      width: 0,
-      height: 4,
+    scrollContent: {
+      flexGrow: 1,
+      alignItems: "center",
+      paddingHorizontal: 16,
+      paddingTop: 40,
     },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 4,
-    marginTop: 40,
-  },
-  disabledButton: {
-    backgroundColor: colors.grey,
-    shadowOpacity: 0,
-    elevation: 0,
-  },
-  buttonText: {
-    color: colors.white,
-    fontSize: fontSizes.size18,
-    fontFamily: "bold",
-  },
-
-  // Success view styles
-  center: {
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  animationContainer: {
-    width: 200 * DeviceDimensions.widthRatio,
-    height: 200 * DeviceDimensions.heightRatio,
-  },
-  text: {
-    marginTop: 20,
-    fontSize: fontSizes.size24,
-    color: colors.black,
-    fontFamily: "bold",
-  },
-
-  // Custom loading animation styles
-  loadingContainer: {
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  logoCircle: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    justifyContent: "center",
-    alignItems: "center",
-    marginBottom: 24,
-  },
-  logoCircleInner: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: colors.white,
-    borderWidth: 2,
-    borderColor: colors.primary,
-    shadowColor: colors.primary,
-    shadowOffset: {
-      width: 0,
-      height: 4,
+    headerContainer: {
+      alignItems: "center",
+      marginBottom: 40,
+      width: "100%",
     },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
-  },
-  logoText: {
-    fontSize: fontSizes.size48,
-    fontFamily: "bold",
-    color: colors.white,
-  },
-  logoImage: {
-    width: 70,
-    height: 70,
-  },
-  brandName: {
-    fontSize: fontSizes.size32,
-    fontFamily: "bold",
-    marginBottom: 12,
-  },
-  brandNameContainer: {
-    overflow: "hidden",
-    position: "relative",
-  },
-  shimmerEffect: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: "rgba(255, 255, 255, 0.3)",
-    width: 50,
-  },
-  loadingText: {
-    fontSize: fontSizes.size16,
-    fontFamily: "regular",
-    color: colors.grey,
-    marginBottom: 24,
-  },
-  dotsContainer: {
-    flexDirection: "row",
-    gap: 8,
-  },
-  dot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-  },
-  phoneNumberText: {
-    fontSize: fontSizes.size16,
-    lineHeight: 24,
-    textAlign: "center",
-    fontFamily: "bold",
-    color: colors.black,
-    maxWidth: '80%',
-  },
-  inputWrapper: {
-    width: "100%",
-    alignItems: "center",
-  },
-  buttonContainer: {
-    width: "100%",
-    marginTop: 20,
-  },
-  disabledOpacity: {
-    opacity: 0.5,
-  },
-});
+    title: {
+      fontSize: fontSizes.size28,
+      fontFamily: "bold",
+      color: colors.black,
+      marginBottom: 12,
+      textAlign: "center",
+    },
+    subtitle: {
+      fontSize: fontSizes.size16,
+      lineHeight: 24,
+      textAlign: "center",
+      fontFamily: "regular",
+      color: colors.grey,
+      maxWidth: "80%",
+    },
+    subtitleOtp: {
+      fontSize: fontSizes.size16,
+      lineHeight: 24,
+      textAlign: "center",
+      fontFamily: "regular",
+      color: colors.grey,
+      marginTop: 8,
+      maxWidth: "90%",
+    },
+    // OTP Input Specific Styles
+    containerOtp: {
+      flexDirection: "row",
+      justifyContent: "center",
+      marginTop: 40,
+      marginBottom: 10,
+      width: "100%",
+      gap: 8, // Add gap between inputs
+    },
+    pinCodeContainer: {
+      width: 48,
+      height: 56, // Taller for modern look
+      borderWidth: 1,
+      borderColor: "transparent", // Remove border color for cleaner look with shadow
+      borderRadius: 12,
+      justifyContent: "center",
+      alignItems: "center",
+      backgroundColor: colors.white,
+      // Add shadow
+      shadowColor: "#000",
+      shadowOffset: {
+        width: 0,
+        height: 2,
+      },
+      shadowOpacity: 0.05,
+      shadowRadius: 4,
+      elevation: 2,
+    },
+    activePinCodeContainer: {
+      borderColor: colors.primary,
+      borderWidth: 1,
+      backgroundColor: colors.white,
+      transform: [{ scale: 1.05 }], // Subtle scale effect on focus
+    },
+    pinCodeText: {
+      fontSize: fontSizes.size24,
+      fontFamily: "bold",
+      color: colors.black,
+      textAlign: "center",
+    },
+
+    // Resend Section
+    resendContainer: {
+      marginTop: 20,
+      marginBottom: 10,
+      alignItems: "center",
+    },
+    resendText: {
+      fontSize: fontSizes.size14,
+      color: colors.grey,
+      textAlign: "center",
+      fontFamily: "regular",
+    },
+    resendButton: {
+      color: colors.primary, // Use primary color for action
+      fontFamily: "bold",
+    },
+
+    buttonOtp: {
+      backgroundColor: colors.primary,
+      width: "100%",
+      height: 56,
+      borderRadius: 16,
+      alignItems: "center",
+      justifyContent: "center",
+      shadowColor: colors.primary,
+      shadowOffset: {
+        width: 0,
+        height: 4,
+      },
+      shadowOpacity: 0.2,
+      shadowRadius: 8,
+      elevation: 4,
+      marginTop: 40,
+    },
+    disabledButton: {
+      backgroundColor: colors.grey,
+      shadowOpacity: 0,
+      elevation: 0,
+    },
+    buttonText: {
+      color: colors.white,
+      fontSize: fontSizes.size18,
+      fontFamily: "bold",
+    },
+
+    // Success view styles
+    center: {
+      justifyContent: "center",
+      alignItems: "center",
+    },
+    animationContainer: {
+      width: 200 * DeviceDimensions.widthRatio,
+      height: 200 * DeviceDimensions.heightRatio,
+    },
+    text: {
+      marginTop: 20,
+      fontSize: fontSizes.size24,
+      color: colors.black,
+      fontFamily: "bold",
+    },
+
+    // Custom loading animation styles
+    loadingContainer: {
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    logoCircle: {
+      width: 100,
+      height: 100,
+      borderRadius: 50,
+      justifyContent: "center",
+      alignItems: "center",
+      marginBottom: 24,
+    },
+    logoCircleInner: {
+      width: 100,
+      height: 100,
+      borderRadius: 50,
+      justifyContent: "center",
+      alignItems: "center",
+      backgroundColor: colors.white,
+      borderWidth: 2,
+      borderColor: colors.primary,
+      shadowColor: colors.primary,
+      shadowOffset: {
+        width: 0,
+        height: 4,
+      },
+      shadowOpacity: 0.3,
+      shadowRadius: 8,
+      elevation: 8,
+    },
+    logoText: {
+      fontSize: fontSizes.size48,
+      fontFamily: "bold",
+      color: colors.white,
+    },
+    logoImage: {
+      width: 70,
+      height: 70,
+    },
+    brandName: {
+      fontSize: fontSizes.size32,
+      fontFamily: "bold",
+      marginBottom: 12,
+    },
+    brandNameContainer: {
+      overflow: "hidden",
+      position: "relative",
+    },
+    shimmerEffect: {
+      position: "absolute",
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      backgroundColor: "rgba(255, 255, 255, 0.3)",
+      width: 50,
+    },
+    loadingText: {
+      fontSize: fontSizes.size16,
+      fontFamily: "regular",
+      color: colors.grey,
+      marginBottom: 24,
+    },
+    dotsContainer: {
+      flexDirection: "row",
+      gap: 8,
+    },
+    dot: {
+      width: 8,
+      height: 8,
+      borderRadius: 4,
+    },
+    phoneNumberText: {
+      fontSize: fontSizes.size16,
+      lineHeight: 24,
+      textAlign: "center",
+      fontFamily: "bold",
+      color: colors.black,
+      maxWidth: "80%",
+    },
+    inputWrapper: {
+      width: "100%",
+      alignItems: "center",
+    },
+    buttonContainer: {
+      width: "100%",
+      marginTop: 20,
+    },
+    disabledOpacity: {
+      opacity: 0.5,
+    },
+  });
 
 export default createStyles;

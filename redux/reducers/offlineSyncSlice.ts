@@ -1,5 +1,5 @@
-import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { OfflineSyncState, QueuedRequest } from '../../offline/types';
+import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { OfflineSyncState, QueuedRequest } from "../../offline/types";
 
 const initialState: OfflineSyncState = {
   queue: [],
@@ -8,7 +8,7 @@ const initialState: OfflineSyncState = {
 };
 
 const offlineSyncSlice = createSlice({
-  name: 'offlineSync',
+  name: "offlineSync",
   initialState,
   reducers: {
     enqueueRequest: (state, action: PayloadAction<QueuedRequest>) => {

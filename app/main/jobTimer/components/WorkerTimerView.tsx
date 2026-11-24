@@ -47,6 +47,50 @@ const WorkerTimerView: React.FC<WorkerTimerViewProps> = ({
   const arrivalStatus = (session?.session as any)?.arrivalStatus || "pending";
   const canStartWork = (session?.session as any)?.canStartWork || false;
 
+  // Show absent / no-show state
+  if (arrivalStatus === "no_show" || (sessionStatus as any) === "no_show") {
+    return (
+      <View style={arrivalStyles.container}>
+        <View
+          style={[
+            arrivalStyles.iconContainer,
+            { backgroundColor: "#FEE2E2" },
+          ]}
+        >
+          <Ionicons name="close-circle-outline" size={64} color="#EF4444" />
+        </View>
+        <Text style={[arrivalStyles.title, { color: "#EF4444" }]}>
+          Marked as absent
+        </Text>
+        <Text style={arrivalStyles.subtitle}>
+          Contact the employer if you arrived late.
+        </Text>
+      </View>
+    );
+  }
+
+  // Show completed state
+  if (sessionStatus === "completed") {
+    return (
+      <View style={arrivalStyles.container}>
+        <View
+          style={[
+            arrivalStyles.iconContainer,
+            { backgroundColor: "#ECFDF5" },
+          ]}
+        >
+          <Ionicons name="checkmark-done-circle" size={64} color="#10B981" />
+        </View>
+        <Text style={[arrivalStyles.title, { color: "#10B981" }]}>
+          Work Completed
+        </Text>
+        <Text style={arrivalStyles.subtitle}>
+          You have completed your shift for this job.
+        </Text>
+      </View>
+    );
+  }
+
   // Show arrival states before timer
   if (arrivalStatus === "pending") {
     return (
@@ -103,6 +147,40 @@ const WorkerTimerView: React.FC<WorkerTimerViewProps> = ({
 
   return (
     <>
+      {/* Ready to start banner */}
+      {(!sessionStatus || sessionStatus === "not_started") && (
+        <View
+          style={{
+            backgroundColor: "#ECFDF5",
+            borderRadius: 12,
+            padding: 12,
+            marginHorizontal: 20,
+            marginBottom: 16,
+            flexDirection: "row",
+            alignItems: "center",
+            borderWidth: 1,
+            borderColor: "#A7F3D0",
+          }}
+        >
+          <Ionicons
+            name="checkmark-circle"
+            size={20}
+            color="#059669"
+            style={{ marginRight: 8 }}
+          />
+          <View style={{ flex: 1 }}>
+            <Text
+              style={{ fontSize: 14, fontWeight: "700", color: "#065F46" }}
+            >
+              Verified / Ready to start
+            </Text>
+            <Text style={{ fontSize: 12, color: "#047857", marginTop: 2 }}>
+              Tap "Start Work" below when you begin your shift.
+            </Text>
+          </View>
+        </View>
+      )}
+
       {/* Timer Display */}
       <TimerDisplay
         time={displayTime}

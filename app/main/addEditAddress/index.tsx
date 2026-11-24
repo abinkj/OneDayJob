@@ -44,7 +44,9 @@ const AddEditAddressScreen: React.FC = () => {
   const isEditing = !!address;
 
   const [label, setLabel] = useState<AddressLabel>("Home");
-  const [selectedLocation, setSelectedLocation] = useState<LocationData | null>(null);
+  const [selectedLocation, setSelectedLocation] = useState<LocationData | null>(
+    null
+  );
   const [isDefault, setIsDefault] = useState(false);
   const [saving, setSaving] = useState(false);
   const [manualAddress, setManualAddress] = useState({
@@ -211,23 +213,6 @@ const AddEditAddressScreen: React.FC = () => {
               showSavedAddresses={false}
             />
           </View>
-
-          {/* Selected Location Display */}
-          {selectedLocation && (
-            <View style={styles.selectedLocationCard}>
-              <Ionicons name="location" size={20} color={colors.primary} />
-              <View style={styles.selectedLocationInfo}>
-                <Text style={styles.selectedLocationText}>
-                  {selectedLocation.address ||
-                    `${selectedLocation.city}, ${selectedLocation.state}`}
-                </Text>
-                <Text style={styles.selectedLocationSubText}>
-                  {selectedLocation.city}, {selectedLocation.state}{" "}
-                  {selectedLocation.zipCode}
-                </Text>
-              </View>
-            </View>
-          )}
 
           {/* Manual Address Fields */}
           {selectedLocation && (

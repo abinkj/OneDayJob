@@ -3,149 +3,150 @@ import DeviceDimensions from "../../../constants/DeviceDimenions";
 import { ThemeColors } from "../../../constants/Colors";
 import { fontSizes, fontFamilies } from "../../../themes/fonts";
 
-export const createStyles = (colors: ThemeColors) => StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  scrollContent: {
-    flexGrow: 1,
-    alignItems: "center",
-    paddingHorizontal: 16,
-    paddingTop: 40,
-  },
-  headerContainer: {
-    alignItems: 'center',
-    marginBottom: 30,
-    width: '100%',
-  },
-  title: {
-    fontSize: fontSizes.size28, // Slightly smaller to fit if needed, or keep 32
-    fontFamily: fontFamilies.bold,
-    color: colors.black,
-    marginBottom: 8,
-    textAlign: "center",
-  },
-  subtitle: {
-    fontSize: fontSizes.size16,
-    lineHeight: 24,
-    textAlign: "center",
-    fontFamily: fontFamilies.regular,
-    color: colors.grey,
-    maxWidth: '80%',
-    ...Platform.select({
-      android: {
-        includeFontPadding: false,
-      },
-    }),
-  },
-  image: {
-    width: 180 * DeviceDimensions.widthRatio,
-    height: 135 * DeviceDimensions.heightRatio,
-    marginTop: 20,
-    marginBottom: 20,
-    resizeMode: 'contain',
-  },
-  formContainer: {
-    width: '100%',
-    marginBottom: 20,
-  },
-  inputGroup: {
-    marginBottom: 20,
-  },
-  inputLabel: {
-    fontSize: fontSizes.size14,
-    fontFamily: fontFamilies.medium,
-    color: colors.black,
-    marginBottom: 8,
-    marginLeft: 4,
-  },
-  inputWrapper: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: colors.white,
-    borderRadius: 16,
-    height: 56,
-    paddingHorizontal: 16,
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
+export const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: colors.background,
     },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2,
-    borderWidth: 1,
-    borderColor: 'transparent',
-  },
-  inputWrapperFocused: {
-    borderColor: colors.primary,
-  },
-  countryCode: {
-    fontSize: fontSizes.size16,
-    fontFamily: fontFamilies.medium,
-    color: colors.black,
-    marginRight: 12,
-    paddingRight: 12,
-    borderRightWidth: 1,
-    borderRightColor: colors.addressGrey,
-  },
-  input: {
-    flex: 1,
-    fontSize: fontSizes.size16,
-    fontFamily: fontFamilies.regular,
-    color: colors.black,
-    height: '100%',
-    ...Platform.select({
-      android: {
-        includeFontPadding: false,
-      },
-    }),
-  },
-  button: {
-    backgroundColor: colors.primary,
-    width: '100%',
-    height: 56,
-    borderRadius: 16,
-    alignItems: "center",
-    justifyContent: "center",
-    shadowColor: colors.primary,
-    shadowOffset: {
-      width: 0,
-      height: 4,
+    scrollContent: {
+      flexGrow: 1,
+      alignItems: "center",
+      paddingHorizontal: 16,
+      paddingTop: 40,
     },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 4,
-    marginTop: 10,
-  },
-  buttonDisabled: {
-    backgroundColor: colors.grey,
-    shadowOpacity: 0,
-    elevation: 0,
-  },
-  buttonText: {
-    color: colors.white,
-    fontSize: fontSizes.size18,
-    fontFamily: fontFamilies.bold,
-  },
-  footer: {
-    flexDirection: "row",
-    marginTop: 'auto',
-    marginBottom: 30,
-    alignItems: 'center',
-  },
-  footerText: {
-    fontSize: fontSizes.size14,
-    color: colors.grey,
-    fontFamily: fontFamilies.regular,
-  },
-  createAccount: {
-    fontSize: fontSizes.size14,
-    color: colors.blue,
-    fontFamily: fontFamilies.bold,
-    marginLeft: 4,
-  },
-});
+    headerContainer: {
+      alignItems: "center",
+      marginBottom: 30,
+      width: "100%",
+    },
+    title: {
+      fontSize: fontSizes.size28, // Slightly smaller to fit if needed, or keep 32
+      fontFamily: fontFamilies.bold,
+      color: colors.black,
+      marginBottom: 8,
+      textAlign: "center",
+    },
+    subtitle: {
+      fontSize: fontSizes.size16,
+      lineHeight: 24,
+      textAlign: "center",
+      fontFamily: fontFamilies.regular,
+      color: colors.grey,
+      maxWidth: "80%",
+      ...Platform.select({
+        android: {
+          includeFontPadding: false,
+        },
+      }),
+    },
+    image: {
+      width: 180 * DeviceDimensions.widthRatio,
+      height: 135 * DeviceDimensions.heightRatio,
+      marginTop: 20,
+      marginBottom: 20,
+      resizeMode: "contain",
+    },
+    formContainer: {
+      width: "100%",
+      marginBottom: 20,
+    },
+    inputGroup: {
+      marginBottom: 20,
+    },
+    inputLabel: {
+      fontSize: fontSizes.size14,
+      fontFamily: fontFamilies.medium,
+      color: colors.black,
+      marginBottom: 8,
+      marginLeft: 4,
+    },
+    inputWrapper: {
+      flexDirection: "row",
+      alignItems: "center",
+      backgroundColor: colors.white,
+      borderRadius: 16,
+      height: 56,
+      paddingHorizontal: 16,
+      shadowColor: "#000",
+      shadowOffset: {
+        width: 0,
+        height: 2,
+      },
+      shadowOpacity: 0.05,
+      shadowRadius: 8,
+      elevation: 2,
+      borderWidth: 1,
+      borderColor: "transparent",
+    },
+    inputWrapperFocused: {
+      borderColor: colors.primary,
+    },
+    countryCode: {
+      fontSize: fontSizes.size16,
+      fontFamily: fontFamilies.medium,
+      color: colors.black,
+      marginRight: 12,
+      paddingRight: 12,
+      borderRightWidth: 1,
+      borderRightColor: colors.addressGrey,
+    },
+    input: {
+      flex: 1,
+      fontSize: fontSizes.size16,
+      fontFamily: fontFamilies.regular,
+      color: colors.black,
+      height: "100%",
+      ...Platform.select({
+        android: {
+          includeFontPadding: false,
+        },
+      }),
+    },
+    button: {
+      backgroundColor: colors.primary,
+      width: "100%",
+      height: 56,
+      borderRadius: 16,
+      alignItems: "center",
+      justifyContent: "center",
+      shadowColor: colors.primary,
+      shadowOffset: {
+        width: 0,
+        height: 4,
+      },
+      shadowOpacity: 0.2,
+      shadowRadius: 8,
+      elevation: 4,
+      marginTop: 10,
+    },
+    buttonDisabled: {
+      backgroundColor: colors.grey,
+      shadowOpacity: 0,
+      elevation: 0,
+    },
+    buttonText: {
+      color: colors.white,
+      fontSize: fontSizes.size18,
+      fontFamily: fontFamilies.bold,
+    },
+    footer: {
+      flexDirection: "row",
+      marginTop: "auto",
+      marginBottom: 30,
+      alignItems: "center",
+    },
+    footerText: {
+      fontSize: fontSizes.size14,
+      color: colors.grey,
+      fontFamily: fontFamilies.regular,
+    },
+    createAccount: {
+      fontSize: fontSizes.size14,
+      color: colors.blue,
+      fontFamily: fontFamilies.bold,
+      marginLeft: 4,
+    },
+  });
 
 export default () => null;

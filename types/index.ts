@@ -146,6 +146,15 @@ export interface JobUser {
   profilePicture?: string;
 }
 
+export type JobStatus =
+  | "draft"
+  | "posted"
+  | "filled"
+  | "in_progress"
+  | "completed"
+  | "cancelled"
+  | "expired";
+
 export interface JobPost {
   __v: number;
   _id: string;
@@ -163,7 +172,7 @@ export interface JobPost {
   isPaymentDone: boolean;
   isRemote: boolean;
   isVerifiedByEmployer: boolean;
-  jobStatus: string;
+  jobStatus: JobStatus | string;
   location: JobLocation;
   name: string;
   participantsNumber: number;
@@ -173,18 +182,31 @@ export interface JobPost {
   timePreference: string[];
   fromTime?: string; // HH:MM format for non-flexible jobs
   toTime?: string; // HH:MM format for non-flexible jobs
+  jobType?: 'one_day' | 'permanent';
+  startDate?: string;
+  reportingTime?: string;
+  monthlySalary?: number;
+  placementStatus?: string;
+  candidateMatchedModalShown?: boolean;
+  trialStartDate?: string;
+  trialEndDate?: string;
+  trialRatingCompleted?: boolean;
   onDate?: string; // ISO date string — the actual scheduled work date (from backend `onDate` field)
+  beforeDate?: string; // ISO date string for flexible jobs
   updatedAt: string;
   userId: JobUser;
   requiresVerification?: boolean;
   applicants?: any[];
   hasApplied?: boolean;
+  isExpired?: boolean;
   // Server-computed per-user fields (set by backend in getJobPostings)
-  isEmployer?: boolean;       // true if the current user is the job owner/employer
+  isEmployer?: boolean; // true if the current user is the job owner/employer
   isAssignedWorker?: boolean; // true if the current user is an accepted/assigned worker
   // Arrival state (derived from worker's session in the job list response)
-  hasArrived?: boolean;    // true if this worker has already pressed 'I Have Reached'
-  arrivalStatus?: 'pending' | 'arrived' | 'verified'; // mirrors JobSession.arrivalStatus
+  hasArrived?: boolean; // true if this worker has already pressed 'I Have Reached'
+  arrivalStatus?: "pending" | "arrived" | "verified" | "no_show"; // mirrors JobSession.arrivalStatus
+  canEdit?: boolean;
+  editRestrictionReason?: string;
 }
 
 // For backward compatibility and convenience
@@ -195,6 +217,8 @@ export interface JobCardData {
   applicantCount: number;
   location: JobLocation;
   createdAt: string;
+  onDate?: string;
+  beforeDate?: string;
   status: string;
   jobStatus?: string; // Backend job status
   category: JobCategory;
@@ -205,8 +229,21 @@ export interface JobCardData {
   timePreference: string[];
   fromTime?: string; // HH:MM format for non-flexible jobs
   toTime?: string; // HH:MM format for non-flexible jobs
+  jobType?: 'one_day' | 'permanent';
+  startDate?: string;
+  reportingTime?: string;
+  monthlySalary?: number;
+  placementStatus?: string;
+  candidateMatchedModalShown?: boolean;
+  trialStartDate?: string;
+  trialEndDate?: string;
+  trialRatingCompleted?: boolean;
   userId: JobUser;
   isCompletedByWorker?: boolean; // Backend flag for worker completion
   isVerifiedByEmployer?: boolean; // Backend flag for employer verification
   isPaymentDone?: boolean; // Backend flag for payment completion
+  assignedUsers?: any[];
+  applicants?: any[];
+  canEdit?: boolean;
+  editRestrictionReason?: string;
 }

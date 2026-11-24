@@ -140,4 +140,4 @@ const createStyles = (colors: ThemeColors) =>
     },
   });
 
-export default LabeledInput;
+export default React.memo(LabeledInput);

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -6,10 +6,10 @@ import {
   StyleSheet,
   Alert,
   Linking,
-} from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { Colors } from '../../constants/Colors';
-import { useNotifications } from '../../contexts/NotificationContext';
+} from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import { Colors } from "../../constants/Colors";
+import { useNotifications } from "../../contexts/NotificationContext";
 
 interface NotificationPermissionProps {
   onPermissionGranted?: () => void;
@@ -29,7 +29,7 @@ const NotificationPermission: React.FC<NotificationPermissionProps> = ({
     try {
       setIsRequesting(true);
       const granted = await requestPermission();
-      
+
       if (granted) {
         onPermissionGranted?.();
       } else {
@@ -37,7 +37,7 @@ const NotificationPermission: React.FC<NotificationPermissionProps> = ({
         showPermissionDeniedAlert();
       }
     } catch (error) {
-      console.error('Error requesting notification permission:', error);
+      console.error("Error requesting notification permission:", error);
       onPermissionDenied?.();
     } finally {
       setIsRequesting(false);
@@ -46,12 +46,12 @@ const NotificationPermission: React.FC<NotificationPermissionProps> = ({
 
   const showPermissionDeniedAlert = () => {
     Alert.alert(
-      'Notifications Disabled',
-      'To receive important updates about your jobs and applications, please enable notifications in your device settings.',
+      "Notifications Disabled",
+      "To receive important updates about your jobs and applications, please enable notifications in your device settings.",
       [
-        { text: 'Cancel', style: 'cancel' },
+        { text: "Cancel", style: "cancel" },
         {
-          text: 'Open Settings',
+          text: "Open Settings",
           onPress: () => Linking.openSettings(),
         },
       ]
@@ -67,47 +67,54 @@ const NotificationPermission: React.FC<NotificationPermissionProps> = ({
     <View style={[styles.container, showAsModal && styles.modalContainer]}>
       <View style={styles.content}>
         <View style={styles.iconContainer}>
-          <Ionicons name="notifications-outline" size={32} color={Colors.blue} />
+          <Ionicons
+            name="notifications-outline"
+            size={32}
+            color={Colors.blue}
+          />
         </View>
-        
+
         <Text style={styles.title}>Enable Notifications</Text>
         <Text style={styles.description}>
-          Stay updated with job applications, verification codes, and important messages.
+          Stay updated with job applications, verification codes, and important
+          messages.
         </Text>
-        
+
         <View style={styles.benefits}>
           <View style={styles.benefitItem}>
             <Ionicons name="checkmark-circle" size={16} color={Colors.blue} />
-            <Text style={styles.benefitText}>Instant verification code alerts</Text>
+            <Text style={styles.benefitText}>
+              Instant verification code alerts
+            </Text>
           </View>
           <View style={styles.benefitItem}>
             <Ionicons name="checkmark-circle" size={16} color={Colors.blue} />
-            <Text style={styles.benefitText}>Job application status updates</Text>
+            <Text style={styles.benefitText}>
+              Job application status updates
+            </Text>
           </View>
           <View style={styles.benefitItem}>
             <Ionicons name="checkmark-circle" size={16} color={Colors.blue} />
             <Text style={styles.benefitText}>New message notifications</Text>
           </View>
         </View>
-        
+
         <TouchableOpacity
           style={[styles.button, isRequesting && styles.buttonDisabled]}
           onPress={handleRequestPermission}
           disabled={isRequesting}
         >
           <Text style={styles.buttonText}>
-            {isRequesting ? 'Requesting...' : 'Enable Notifications'}
+            {isRequesting ? "Requesting..." : "Enable Notifications"}
           </Text>
         </TouchableOpacity>
-        
-        {permission?.status === 'denied' && (
+
+        {permission?.status === "denied" && (
           <TouchableOpacity
             style={styles.settingsButton}
             onPress={() => Linking.openSettings()}
           >
-            <Text style={styles.settingsButtonText}>
-              Open Settings
-            </Text>
+            <Text style={styles.settingsButtonText}>Open Settings</Text>
           </TouchableOpacity>
         )}
       </View>
@@ -120,7 +127,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.white,
     borderRadius: 16,
     margin: 16,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOpacity: 0.1,
     shadowRadius: 12,
     elevation: 4,
@@ -129,42 +136,42 @@ const styles = StyleSheet.create({
     margin: 0,
     borderRadius: 0,
     flex: 1,
-    justifyContent: 'center',
+    justifyContent: "center",
   },
   content: {
     padding: 24,
-    alignItems: 'center',
+    alignItems: "center",
   },
   iconContainer: {
     width: 64,
     height: 64,
     borderRadius: 32,
-    backgroundColor: Colors.blue + '20',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: Colors.blue + "20",
+    justifyContent: "center",
+    alignItems: "center",
     marginBottom: 16,
   },
   title: {
     fontSize: 20,
-    fontWeight: '600',
+    fontWeight: "600",
     color: Colors.black,
     marginBottom: 8,
-    textAlign: 'center',
+    textAlign: "center",
   },
   description: {
     fontSize: 14,
     color: Colors.subGrey,
-    textAlign: 'center',
+    textAlign: "center",
     lineHeight: 20,
     marginBottom: 24,
   },
   benefits: {
-    width: '100%',
+    width: "100%",
     marginBottom: 24,
   },
   benefitItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginBottom: 8,
   },
   benefitText: {
@@ -177,8 +184,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 32,
     paddingVertical: 12,
     borderRadius: 8,
-    width: '100%',
-    alignItems: 'center',
+    width: "100%",
+    alignItems: "center",
   },
   buttonDisabled: {
     backgroundColor: Colors.subGrey,
@@ -186,7 +193,7 @@ const styles = StyleSheet.create({
   buttonText: {
     color: Colors.white,
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   settingsButton: {
     marginTop: 12,
@@ -195,9 +202,8 @@ const styles = StyleSheet.create({
   settingsButtonText: {
     color: Colors.blue,
     fontSize: 14,
-    fontWeight: '500',
+    fontWeight: "500",
   },
 });
 
 export default NotificationPermission;
-

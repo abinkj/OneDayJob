@@ -1,0 +1,1742 @@
+import axios from "axios";
+import {
+  getAccessToken,
+  clearTokens,
+  saveToken,
+  getRefreshToken,
+} from "../utilities/secureStore";
+import { normalizeUser, storage } from "../utilities/mmkvStore";
+import { store } from "../redux/store";
+import {
+  logout as logoutAction,
+  setSuspended,
+} from "../redux/reducers/authReducers";
+import NetInfo from "@react-native-community/netinfo";
+
+const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL;
+
+const api = axios.create({
+  baseURL: API_BASE_URL,
+  headers: {
+    "Content-Type": "application/json",
+  },
+  withCredentials: true, // Changed back to true to support cookies
+  timeout: 10000, // 10 second timeout
+});
+
+console.log("🌐 [Axios API Initialized]", {
+  baseURL: API_BASE_URL,
+  timeout: 10000,
+});
+
+import { getDeviceOnline } from "../offline/networkState";
+import { shouldQueueRequest } from "../offline/queuePolicy";
+import { getSyncDispatch } from "../offline/syncBridge";
+import { enqueueRequest } from "../redux/reducers/offlineSyncSlice";
+import { RequestMethod } from "../offline/types";
+
+api.interceptors.request.use(
+  async (config) => {
+    // ── 1. Network check — quickly check synchronous mirror
+    const isOffline = !getDeviceOnline();
+
+    if (isOffline) {
+      // Check if this request should be queued
+      if (shouldQueueRequest(config)) {
+        console.log("📴 Offline: Queuing request to", config.url);
+
+        try {
+          const dispatch = getSyncDispatch();
+          const queuedRequest = {
+            id: Math.random().toString(36).substr(2, 9),
+            url: config.url || "",
+            method: (config.method?.toUpperCase() || "POST") as RequestMethod,
+            data: config.data,
+            headers: config.headers as any,
+            createdAt: Date.now(),
+            retryCount: 0,
+          };
+
+          dispatch(enqueueRequest(queuedRequest));
+
+          // Return a pseudo-success so the caller doesn't catch an error immediately
+          // but knows it was queued.
+          return Promise.resolve({
+            ...config,
+            data: { offlineQueued: true, requestId: queuedRequest.id },
+            status: 202, // Accepted
+            statusText: "Accepted (Queued Offline)",
+            headers: {},
+            config,
+          } as any);
+        } catch (error) {
+          console.error("Failed to enqueue offline request:", error);
+        }
+      }
+
+      // If not queueable or enqueue failed, reject with offline error
+      return Promise.reject(
+        Object.assign(new Error("No internet connection"), {
+          code: "ERR_NETWORK_OFFLINE",
+          isOfflineError: true,
+        })
+      );
+    }
+
+    // ── 2. Attach auth token
+    try {
+      const token = await getAccessToken();
+      // ... rest of the original logic
+
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+      } else {
+        console.warn("No token found for request to:", config.url);
+      }
+
+      console.log(
+        `🚀 [API Request] ${config.method?.toUpperCase()} ${config.baseURL || ""}${config.url}`,
+        config.params ? { params: config.params } : ""
+      );
+
+      return config;
+    } catch (error) {
+      console.error("Error in request interceptor:", error);
+      return config;
+    }
+  },
+  (error) => {
+    console.error("Request interceptor error:", error);
+    return Promise.reject(error);
+  }
+);
+
+// ─── RESPONSE INTERCEPTOR ────────────────────────────────────────────────────
+api.interceptors.response.use(
+  (response) => {
+    console.log(
+      `[API Response] ${response.status} ${response.config.method?.toUpperCase()} ${JSON.stringify(response.data, null, 2)}`
+    );
+    return response;
+  },
+  async (error) => {
+    const originalRequest = error.config;
+
+    // ── Offline error (thrown from request interceptor) — don't log noise
+    if (error.isOfflineError || error.code === "ERR_NETWORK_OFFLINE") {
+      console.warn(
+        "Request blocked — device is offline:",
+        originalRequest?.url
+      );
+      return Promise.reject(error);
+    }
+
+    // ── Canceled requests — don't log
+    if (axios.isCancel(error) || error.message === "canceled") {
+      return Promise.reject(error);
+    }
+
+    console.error("API Response Error:", {
+      status: error.response?.status,
+      statusText: error.response?.statusText,
+      url: originalRequest?.url,
+      method: originalRequest?.method?.toUpperCase(),
+      data: error.response?.data,
+      message: error.message,
+    });
+
+    // ── 401 → attempt token refresh once
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true;
+
+      try {
+        console.log("Attempting token refresh...");
+        const refreshTokenValue = await getRefreshToken();
+
+        if (!refreshTokenValue) {
+          throw new Error("No refresh token available");
+        }
+
+        const refreshResponse = await axios.post(
+          `${API_BASE_URL}auth/refresh-token`,
+          { refreshToken: refreshTokenValue },
+          {
+            headers: { "Content-Type": "application/json" },
+            withCredentials: true,
+          }
+        );
+
+        const newToken = refreshResponse.data.accessToken;
+
+        if (newToken) {
+          await saveToken(newToken, refreshResponse.data.refreshToken);
+          console.log("Token refreshed successfully");
+          originalRequest.headers.Authorization = `Bearer ${newToken}`;
+          return api(originalRequest);
+        }
+      } catch (refreshError) {
+        console.error("Token refresh failed:", refreshError);
+        await clearAuthData();
+        store.dispatch(logoutAction());
+        console.log("Session expired, please login again");
+        return Promise.reject(refreshError);
+      }
+    }
+
+    // 401 = Unauthorized → logout
+    if (error.response?.status === 401) {
+      console.error("Unauthorized (401) - logging out");
+      await clearAuthData();
+      store.dispatch(logoutAction());
+      return Promise.reject(error);
+    }
+
+    // 403 = Forbidden → show error, do NOT logout unless suspended
+    if (error.response?.status === 403) {
+      const message =
+        error.response.data?.error?.message ||
+        error.response.data?.message ||
+        "";
+      if (message.toLowerCase().includes("suspended")) {
+        console.warn("Account suspended, redirecting...");
+        store.dispatch(setSuspended(true));
+        return Promise.reject(error);
+      }
+
+      // Skip warning for expected verification flow
+      if (
+        !message.toLowerCase().includes("verified") &&
+        !message.toLowerCase().includes("verification")
+      ) {
+        console.warn("Forbidden (403):", message || "Permission denied");
+      }
+
+      return Promise.reject(error);
+    }
+
+    return Promise.reject(error);
+  }
+);
+
+// Enhanced job posting function with validation
+export const createJobPosting = async (data) => {
+  try {
+    // Validate required fields before sending
+    const requiredFields = ["userId", "category", "name", "budget"];
+    const missingFields = requiredFields.filter((field) => !data[field]);
+
+    if (missingFields.length > 0) {
+      throw new Error(`Missing required fields: ${missingFields.join(", ")}`);
+    }
+
+    // Log the data being sent (for debugging)
+    console.log(
+      "Creating job posting with data:",
+      JSON.stringify(data, null, 2)
+    );
+
+    // Ensure arrays are properly formatted
+    if (data.timePreference && !Array.isArray(data.timePreference)) {
+      data.timePreference = [data.timePreference];
+    }
+
+    if (data.requirements && !Array.isArray(data.requirements)) {
+      data.requirements = [data.requirements];
+    }
+
+    if (data.photos && !Array.isArray(data.photos)) {
+      data.photos = [data.photos];
+    }
+
+    // Transform location data to match backend Joi schema
+    if (data.location && data.location.coordinates) {
+      console.log(
+        "Original location data:",
+        JSON.stringify(data.location, null, 2)
+      );
+      console.log("Location coordinates:", data.location.coordinates);
+
+      // Validate coordinates exist
+      if (
+        !data.location.coordinates.latitude ||
+        !data.location.coordinates.longitude
+      ) {
+        console.error("Missing latitude or longitude in location coordinates");
+        throw new Error(
+          "Invalid location coordinates: missing latitude or longitude"
+        );
+      }
+
+      // Keep the coordinates as latitude/longitude to match Joi schema
+      // Only include non-empty fields to avoid validation errors
+      const locationData: any = {
+        coordinates: {
+          latitude: data.location.coordinates.latitude,
+          longitude: data.location.coordinates.longitude,
+        },
+      };
+
+      // Only add address fields if they have content
+      if (data.location.address && data.location.address.trim()) {
+        locationData.address = data.location.address.trim();
+      }
+      if (data.location.city && data.location.city.trim()) {
+        locationData.city = data.location.city.trim();
+      }
+      if (data.location.state && data.location.state.trim()) {
+        locationData.state = data.location.state.trim();
+      }
+      if (data.location.country && data.location.country.trim()) {
+        locationData.country = data.location.country.trim();
+      }
+      if (data.location.zipCode && data.location.zipCode.trim()) {
+        locationData.zipCode = data.location.zipCode.trim();
+      }
+
+      data.location = locationData;
+
+      console.log(
+        "Transformed location data:",
+        JSON.stringify(data.location, null, 2)
+      );
+    } else {
+      console.warn("No location data or coordinates found in job data");
+      console.log("Data location:", data.location);
+    }
+
+    const response = await api.post("/jobs", data);
+    console.log("Job posting created successfully:", response.data);
+    return response;
+  } catch (error) {
+    console.error("Error in createJobPosting:", error);
+    throw error;
+  }
+};
+
+
+// FIXED: Improved authentication check
+// FIXED: Improved authentication check - Local only
+export const isAuthenticated = async () => {
+  try {
+    const token = await getAccessToken();
+    const user = storage.getString("USER");
+
+    // console.log("Checking authentication (local):", {
+    //   hasToken: !!token,
+    //   hasUser: !!user,
+    // });
+
+    if (!token || !user) {
+      return false;
+    }
+
+    // We accept the token as valid.
+    // If it's expired, the Axios interceptor will handle the 401 response
+    // by attempting a refresh or logging the user out.
+    return true;
+  } catch (error) {
+    console.error("Error checking authentication:", error);
+    return false;
+  }
+};
+
+// Enhanced clear auth data function
+export const clearAuthData = async () => {
+  try {
+    storage.remove("USER");
+    storage.remove("kycStatus");
+    await clearTokens();
+    console.log("Auth data cleared successfully");
+  } catch (error) {
+    console.error("Error clearing auth data:", error);
+  }
+};
+
+// Auth endpoints (unchanged)
+export const register = (data) => api.post("/auth/register", data);
+export const login = (data) => api.post("/auth/login", data);
+export const refreshToken = async () => {
+  const refreshTokenValue = await getRefreshToken();
+  if (!refreshTokenValue) {
+    throw new Error("No refresh token available");
+  }
+  return api.post("/auth/refresh-token", { refreshToken: refreshTokenValue });
+};
+export const logout = () => api.post("/auth/logout");
+export const requestOtp = (data) => api.post("/auth/otp/request", data);
+export const verifyOtp = (data) => api.post("/auth/otp/verify", data);
+export const test = () => api.get("/auth/test");
+export const protectedRoute = () => api.get("/auth/protected");
+
+export const getJobPosting = (id) => api.get(`/jobs/${id}`);
+
+// Enhanced job updating function with validation and location formatting
+export const updateJobPosting = async (id: string, data: any) => {
+  try {
+    const payload = { ...data };
+
+    // Ensure arrays are properly formatted
+    if (payload.timePreference && !Array.isArray(payload.timePreference)) {
+      payload.timePreference = [payload.timePreference];
+    }
+    if (payload.requirements && !Array.isArray(payload.requirements)) {
+      payload.requirements = [payload.requirements];
+    }
+    if (payload.photos && !Array.isArray(payload.photos)) {
+      payload.photos = [payload.photos];
+    }
+
+    // Transform location data if coordinates exist
+    if (payload.location && payload.location.coordinates) {
+      const coords = payload.location.coordinates;
+      const lat = coords.latitude !== undefined ? coords.latitude : (Array.isArray(coords.coordinates) ? coords.coordinates[1] : undefined);
+      const lng = coords.longitude !== undefined ? coords.longitude : (Array.isArray(coords.coordinates) ? coords.coordinates[0] : undefined);
+
+      if (lat !== undefined && lng !== undefined) {
+        payload.location = {
+          coordinates: {
+            latitude: lat,
+            longitude: lng,
+          },
+          ...(payload.location.address && { address: payload.location.address.trim() }),
+          ...(payload.location.city && { city: payload.location.city.trim() }),
+          ...(payload.location.state && { state: payload.location.state.trim() }),
+          ...(payload.location.country && { country: payload.location.country.trim() }),
+          ...(payload.location.zipCode && { zipCode: payload.location.zipCode.trim() }),
+        };
+      }
+    }
+
+    const response = await api.put(`/jobs/${id}`, payload);
+    return response;
+  } catch (error) {
+    console.error("Error in updateJobPosting:", error);
+    throw error;
+  }
+};
+
+export const checkJobCanEdit = (id: string) => api.get(`/jobs/${id}/can-edit`);
+export const deleteJobPosting = (id) => api.delete(`/jobs/${id}`);
+
+// Report a job for offensive content or policy violations
+export const reportJob = (jobId: string, reason: string, details?: string) => {
+  return api.post(`/jobs/${jobId}/report`, {
+    reason,
+    details,
+    timestamp: new Date().toISOString(),
+  });
+};
+
+// FIXED: Update user location - send simple latitude/longitude instead of GeoJSON
+export const updateUserLocation = async (locationData) => {
+  try {
+    console.log("Updating user location with data:", locationData);
+
+    // Check if user is authenticated first
+    const isAuth = await isAuthenticated();
+    if (!isAuth) {
+      console.log("User not authenticated, skipping location update");
+      return null;
+    }
+
+    // Validate location data structure
+    if (!locationData || !locationData.coordinates) {
+      console.error("Invalid location data - missing coordinates");
+      throw new Error("Invalid location data: missing coordinates");
+    }
+
+    if (
+      !locationData.coordinates.latitude ||
+      !locationData.coordinates.longitude
+    ) {
+      console.error("Invalid coordinates - missing latitude or longitude");
+      throw new Error("Invalid coordinates: missing latitude or longitude");
+    }
+
+    // FIXED: Send simple latitude/longitude format (not GeoJSON)
+    const locationPayload = {
+      latitude: locationData.coordinates.latitude,
+      longitude: locationData.coordinates.longitude,
+      // Include address info if available
+      ...(locationData.address && { address: locationData.address }),
+      ...(locationData.city && { city: locationData.city }),
+      ...(locationData.state && { state: locationData.state }),
+      ...(locationData.country && { country: locationData.country }),
+      ...(locationData.zipCode && { zipCode: locationData.zipCode }),
+    };
+
+    console.log("Location payload:", JSON.stringify(locationPayload, null, 2));
+
+    const response = await api.put(
+      "/users/update-user-location",
+      locationPayload
+    );
+
+    console.log("User location updated successfully:", response.data);
+    return response;
+  } catch (error) {
+    console.error("Error updating user location:", error);
+    console.error("Error details:", error.response?.data);
+    throw error;
+  }
+};
+
+// Updated getJobsByLocation function in api.js
+export const getJobsByLocation = async (radius = 10, categoryId = null) => {
+  try {
+    // Check if user is authenticated first
+    const isAuth = await isAuthenticated();
+    if (!isAuth) {
+      console.log("User not authenticated, falling back to all jobs");
+      return getJobPostings();
+    }
+
+    let url = `/jobs/nearby-jobs?radius=${radius}`;
+    if (categoryId) {
+      url += `&categoryId=${categoryId}`;
+    }
+
+    console.log("Fetching location-based jobs with URL:", url);
+    const response = await api.get(url);
+
+    const jobsData = response.data?.data || response.data || [];
+    console.log(
+      `Jobs by location fetched successfully: ${jobsData.length} jobs`
+    );
+
+    // Return the response as-is, let the caller decide whether to fallback
+    return response;
+  } catch (error) {
+    console.error("Error fetching jobs by location:", error);
+
+    // Better error handling - check specific error types
+    if (error.response?.status === 500) {
+      console.log("Server error (500) - will fallback in caller");
+    } else if (
+      error.response?.status === 403 ||
+      error.response?.status === 401
+    ) {
+      console.log("Authentication error - already handled by interceptor");
+    } else {
+      console.log("Network or other error - will fallback in caller");
+    }
+
+    // Throw the error so the caller can handle fallback logic
+    throw error;
+  }
+};
+
+export const getJobPostings = async (
+  filters: any = {},
+  signal?: AbortSignal
+) => {
+  try {
+    const params = new URLSearchParams();
+
+    // Add pagination parameters
+    if (filters.page) params.append("page", filters.page.toString());
+    if (filters.limit) params.append("limit", filters.limit.toString());
+
+    // Add filters to query parameters
+    if (filters.category) params.append("category", filters.category);
+    if (filters.priceSort) params.append("priceSort", filters.priceSort);
+    if (filters.distance) params.append("distance", filters.distance);
+    if (filters.search) params.append("search", filters.search);
+
+    // Add user location if available (for distance filtering)
+    if (filters.userLocation) {
+      params.append("userLatitude", filters.userLocation.latitude.toString());
+      params.append("userLongitude", filters.userLocation.longitude.toString());
+    }
+
+    const queryString = params.toString();
+    const url = queryString ? `/jobs?${queryString}` : "/jobs";
+
+    console.log("Fetching jobs with filters:", url, filters);
+
+    const response = await api.get(url, { signal });
+
+    // Log the actual response structure for debugging
+    console.log("Backend response structure:", {
+      hasData: !!response.data?.data,
+      hasPagination: !!response.data?.pagination,
+      isArray: Array.isArray(response.data),
+      dataType: typeof response.data,
+    });
+
+    return response;
+  } catch (error: any) {
+    if (error.name === "CanceledError" || error.code === "ERR_CANCELED") {
+      console.log("Request canceled:", filters);
+      throw error;
+    }
+    console.error("Error fetching jobs with filters:", error);
+    throw error;
+  }
+};
+export const getCategoriesForFilter = async () => {
+  try {
+    const response = await getCategories();
+    return response.data?.data || response.data || [];
+  } catch (error) {
+    console.error("Error fetching categories for filter:", error);
+    return [];
+  }
+};
+
+// services/jobService.ts
+export const getJobPostingsByUserId = async (
+  userId: string,
+  page: number = 1,
+  limit: number = 10,
+  signal?: AbortSignal
+) => {
+  const res = await api.get(
+    `jobs/user-posts/${userId}?page=${page}&limit=${limit}`,
+    { signal }
+  );
+  return res.data;
+};
+
+export const getAppliedJobsByUserId = async (
+  userId: string,
+  page: number = 1,
+  limit: number = 10,
+  signal?: AbortSignal
+) => {
+  const res = await api.get(
+    `applications/user/${userId}/applied-jobs?page=${page}&limit=${limit}`,
+    { signal }
+  );
+  return res.data;
+};
+
+export const withdrawApplication = async (jobId: string) => {
+  const res = await api.post(`applications/jobs/${jobId}/withdraw`);
+  return res.data;
+};
+
+export const getAppliedUser = async (jobId: string) => {
+  const res = await api.get(`applications/jobs/${jobId}/applied-users`);
+  return res.data;
+};
+
+export const applyJob = async (jobId: string) => {
+  console.log("Applying for job with ID:", jobId);
+  const data = await api.post(`applications/jobs/${jobId}/apply`);
+  return data;
+};
+
+export const selectApplicants = async (
+  jobId: string,
+  selectedApplicationIds: string[] // Changed from selectedUserIds
+) => {
+  const res = await api.post(`/jobs/${jobId}/select-applicants`, {
+    selectedApplicationIds, // Changed from selectedUserIds
+  });
+  return res.data;
+};
+
+export const rejectApplicants = async (
+  jobId: string,
+  rejectedApplicationIds: string[] // Changed from selectedUserIds
+) => {
+  const res = await api.post(`/jobs/${jobId}/reject-applicants`, {
+    rejectedApplicationIds, // Changed from selectedUserIds
+  });
+  return res.data;
+};
+
+// api/jobs.ts
+// export const rejectApplicants = async (jobId: string, applicants: string[]) => {
+//   console.log("Rejecting applicants for job ID:", jobId, applicants);
+//   const res = await api.post(`applications/jobs/${jobId}/reject`, {
+//     applicants, // backend expects this in body
+//   });
+//   return res.data;
+// };
+
+// Get user profile by ID
+export const getUserProfile = async (userId: string) => {
+  const res = await api.get(`/users/${userId}`);
+  return res.data;
+};
+
+// Update user profile
+export const updateUserProfile = async (userId: string, profileData: any) => {
+  const res = await api.put(`/users/${userId}`, profileData);
+  return res.data;
+};
+
+// FIXED: Enhanced location update with retry logic
+export const updateUserLocationWithRetry = async (
+  locationData,
+  maxRetries = 3
+) => {
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      console.log(`Location update attempt ${attempt}/${maxRetries}`);
+      const result = await updateUserLocation(locationData);
+      console.log(`Location update successful on attempt ${attempt}`);
+      return result;
+    } catch (error) {
+      console.error(
+        `Location update attempt ${attempt} failed:`,
+        error.response?.status,
+        error.response?.data
+      );
+
+      if (attempt === maxRetries) {
+        console.error("All location update attempts failed");
+        throw error;
+      }
+
+      // Wait before retry
+      await new Promise((resolve) => setTimeout(resolve, 1000 * attempt));
+    }
+  }
+};
+
+// Categories endpoint (unchanged)
+export const getCategories = () => api.get("/categories");
+
+// Enhanced getCurrentUser with validation
+export const getCurrentUser = async () => {
+  try {
+    // Prefer new key; migrate from legacy if needed
+    let userString = storage.getString("USER");
+    if (!userString) {
+      const legacy = storage.getString("user");
+      if (legacy) {
+        const normalizedLegacy = normalizeUser(JSON.parse(legacy));
+        storage.set("USER", JSON.stringify(normalizedLegacy));
+        storage.remove("user");
+        userString = JSON.stringify(normalizedLegacy);
+      }
+    }
+    if (userString) {
+      const user = JSON.parse(userString);
+      const normalized = normalizeUser(user);
+      console.log("Retrieved user from storage:", {
+        id: normalized.id || normalized._id,
+        phone: normalized.phoneNumber || normalized.phone,
+        role: normalized.role,
+      });
+
+      // Validate user structure
+      if (!normalized.id && !normalized._id) {
+        console.warn("User object missing ID field");
+        return null;
+      }
+
+      return normalized;
+    }
+    console.log("No user found in storage");
+    return null;
+  } catch (error) {
+    console.error("Error getting current user:", error);
+    return null;
+  }
+};
+
+// Update user profile
+export const updateProfile = (id, data) => api.put(`/users/${id}`, data);
+
+// Upload profile picture
+export const uploadProfilePicture = async (imageUri: string) => {
+  try {
+    const formData = new FormData();
+
+    // Extract filename from URI
+    const filename = imageUri.split("/").pop() || "profile.jpg";
+    const match = /\.(\w+)$/.exec(filename);
+    const type = match ? `image/${match[1]}` : "image/jpeg";
+
+    // Append image to FormData
+    formData.append("profilePicture", {
+      uri: imageUri,
+      name: filename,
+      type: type,
+    } as any);
+
+    console.log("Uploading profile picture:", { filename, type });
+
+    const response = await api.post("/upload/profile-picture", formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
+
+    console.log("Profile picture upload response:", response.data);
+    return response.data;
+  } catch (error) {
+    console.error("Error uploading profile picture:", error);
+    throw error;
+  }
+};
+
+// Delete user account
+export const deleteUser = (id) => api.delete(`/users/${id}`);
+
+// Report user for offensive behavior or content (UGC policy requirement)
+export const reportUser = (
+  userId: string,
+  reason: string,
+  details?: string
+) => {
+  return api.post(`/users/${userId}/report`, {
+    reason,
+    details,
+    timestamp: new Date().toISOString(),
+  });
+};
+
+// Block user (UGC policy requirement)
+export const blockUser = (userId: string) => {
+  return api.post(`/users/${userId}/block`, {
+    timestamp: new Date().toISOString(),
+  });
+};
+
+// ==================== ADMIN MODERATION API ====================
+
+// Admin: Ban a user
+export const adminBanUser = (userId: string, reason: string) => {
+  return api.post(`/admin/users/${userId}/ban`, {
+    reason,
+    timestamp: new Date().toISOString(),
+  });
+};
+
+// Admin: Unban a user
+export const adminUnbanUser = (userId: string) => {
+  return api.post(`/admin/users/${userId}/unban`, {
+    timestamp: new Date().toISOString(),
+  });
+};
+
+// Admin: Get reports
+export const adminGetReports = (status?: string, page: number = 1) => {
+  const query = status ? `?status=${status}&page=${page}` : `?page=${page}`;
+  return api.get(`/admin/reports${query}`);
+};
+
+// Admin: Update report status
+export const adminUpdateReportStatus = (
+  reportId: string,
+  status: string,
+  notes?: string
+) => {
+  return api.patch(`/admin/reports/${reportId}`, {
+    status,
+    adminNotes: notes,
+  });
+};
+
+// Conversation API endpoints
+export const getConversations = async () => {
+  try {
+    const response = await api.get("/conversations");
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching conversations:", error);
+    throw error;
+  }
+};
+
+export const getConversation = async (conversationId: string) => {
+  try {
+    const response = await api.get(`/conversations/${conversationId}`);
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching conversation:", error);
+    throw error;
+  }
+};
+
+export const getConversationMessages = async (conversationId: string) => {
+  try {
+    const response = await api.get(`/conversations/${conversationId}/messages`);
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching conversation messages:", error);
+    throw error;
+  }
+};
+
+export const createConversation = async (participantId: string) => {
+  try {
+    const response = await api.post("/conversations", {
+      participants: [participantId],
+      type: "individual",
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error creating conversation:", error);
+    throw error;
+  }
+};
+
+export const sendMessage = async (
+  conversationId: string,
+  text: string,
+  type: string = "text"
+) => {
+  try {
+    const response = await api.post(
+      `/conversations/${conversationId}/messages`,
+      {
+        content: {
+          text: text,
+        },
+        messageType: type,
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error sending message:", error);
+    throw error;
+  }
+};
+
+export const markMessagesAsRead = async (conversationId: string) => {
+  try {
+    const response = await api.put(`/conversations/${conversationId}/read`);
+    return response.data;
+  } catch (error) {
+    console.error("Error marking messages as read:", error);
+    throw error;
+  }
+};
+
+// ==================== VERIFICATION API ENDPOINTS ====================
+
+/**
+ * Verify an employee using their verification code
+ * POST /api/jobs/:jobId/verify-employee
+ */
+export const verifyEmployee = async (
+  jobId: string,
+  employeeId: string,
+  verificationCode: string
+) => {
+  try {
+    console.log("Verifying employee:", { jobId, employeeId, verificationCode });
+
+    const response = await api.post(`/jobs/${jobId}/verify-employee`, {
+      employeeId,
+      verificationCode,
+    });
+
+    console.log("Employee verification response:", response.data);
+    return response;
+  } catch (error) {
+    console.error("Error verifying employee:", error);
+    throw error;
+  }
+};
+
+/**
+ * Get verification status for a job (employer view)
+ * GET /api/jobs/:jobId/verification-status
+ */
+export const getJobVerificationStatus = async (jobId: string) => {
+  try {
+    console.log("Getting verification status for job:", jobId);
+
+    const response = await api.get(`/jobs/${jobId}/verification-status`);
+
+    console.log("Verification status response:", response.data);
+    return response;
+  } catch (error) {
+    console.error("Error getting verification status:", error);
+    throw error;
+  }
+};
+
+/**
+ * Resend verification codes for a job
+ * POST /api/jobs/:jobId/resend-codes
+ */
+export const resendVerificationCodes = async (
+  jobId: string,
+  reason?: string
+) => {
+  try {
+    console.log(
+      "Resending verification codes for job:",
+      jobId,
+      "Reason:",
+      reason
+    );
+
+    const response = await api.post(`/jobs/${jobId}/resend-codes`, {
+      reason: reason || "Manual resend requested",
+    });
+
+    console.log("Resend codes response:", response.data);
+    return response;
+  } catch (error) {
+    console.error("Error resending verification codes:", error);
+    throw error;
+  }
+};
+
+/**
+ * Get employee's personal verification status for a job
+ * GET /api/jobs/:jobId/my-verification-status
+ */
+export const getEmployeeVerificationStatus = async (jobId: string) => {
+  try {
+    console.log("Getting employee verification status for job:", jobId);
+
+    const response = await api.get(`/jobs/${jobId}/my-verification-status`);
+
+    console.log("Employee verification status response:", response.data);
+    return response;
+  } catch (error) {
+    console.error("Error getting employee verification status:", error);
+    throw error;
+  }
+};
+
+/**
+ * Get employee's verification code for a job
+ * GET /api/jobs/:jobId/my-verification-code
+ */
+export const getEmployeeVerificationCode = async (jobId: string) => {
+  try {
+    console.log("Getting employee verification code for job:", jobId);
+
+    const response = await api.get(`/jobs/${jobId}/my-verification-code`);
+
+    console.log("Employee verification code response:", response.data);
+    return response;
+  } catch (error) {
+    console.error("Error getting employee verification code:", error);
+    throw error;
+  }
+};
+
+// ==================== ARRIVAL VERIFICATION API ENDPOINTS ====================
+
+/**
+ * Worker marks arrival at job site
+ * POST /api/jobs/:jobId/arrive
+ */
+export const markArrival = async (
+  jobId: string,
+  latitude: number,
+  longitude: number
+) => {
+  try {
+    console.log("Marking arrival for job:", jobId, { latitude, longitude });
+    const response = await api.post(`/jobs/${jobId}/arrive`, {
+      latitude,
+      longitude,
+    });
+    console.log("Mark arrival response:", response.data);
+    return response;
+  } catch (error) {
+    console.error("Error marking arrival:", error);
+    throw error;
+  }
+};
+
+/**
+ * Get arrived workers list (employer view)
+ * GET /api/jobs/:jobId/arrived-workers
+ */
+export const getArrivedWorkers = async (jobId: string) => {
+  try {
+    console.log("Getting arrived workers for job:", jobId);
+    const response = await api.get(`/jobs/${jobId}/arrived-workers`);
+    console.log("Arrived workers response:", response.data);
+    return response;
+  } catch (error) {
+    console.error("Error getting arrived workers:", error);
+    throw error;
+  }
+};
+
+/**
+ * Employer approves a worker's arrival
+ * POST /api/jobs/:jobId/approve-arrival
+ */
+export const approveWorkerArrival = async (jobId: string, workerId: string) => {
+  try {
+    console.log("Approving worker arrival:", { jobId, workerId });
+    const response = await api.post(`/jobs/${jobId}/approve-arrival`, {
+      workerId,
+    });
+    console.log("Approve arrival response:", response.data);
+    return response;
+  } catch (error) {
+    console.error("Error approving worker arrival:", error);
+    throw error;
+  }
+};
+
+/**
+ * Check if worker is eligible to mark arrival (pre-check)
+ * POST /api/jobs/:jobId/check-arrival
+ */
+export const checkArrivalEligibility = async (
+  jobId: string,
+  latitude: number,
+  longitude: number
+) => {
+  try {
+    console.log("Checking arrival eligibility:", jobId, {
+      latitude,
+      longitude,
+    });
+    const response = await api.post(`/jobs/${jobId}/check-arrival`, {
+      latitude,
+      longitude,
+    });
+    console.log("Check arrival response:", response.data);
+    return response;
+  } catch (error) {
+    console.error("Error checking arrival eligibility:", error);
+    throw error;
+  }
+};
+
+/**
+ * Worker sends reminder to employer for arrival approval
+ * POST /api/jobs/:jobId/remind-arrival
+ */
+export const remindArrivalEmployer = async (jobId: string) => {
+  try {
+    console.log("Sending arrival reminder to employer:", jobId);
+    const response = await api.post(`/jobs/${jobId}/remind-arrival`);
+    console.log("Remind arrival response:", response.data);
+    return response;
+  } catch (error) {
+    console.error("Error sending arrival reminder:", error);
+    throw error;
+  }
+};
+
+/**
+ * Employer marks a worker as absent / no-show
+ * POST /api/jobs/:jobId/mark-no-show
+ */
+export const markWorkerNoShow = async (
+  jobId: string,
+  workerId: string,
+  reason?: string
+) => {
+  try {
+    console.log("Marking worker as no-show:", { jobId, workerId, reason });
+    const response = await api.post(`/jobs/${jobId}/mark-no-show`, {
+      workerId,
+      reason,
+    });
+    console.log("Mark no-show response:", response.data);
+    return response;
+  } catch (error) {
+    console.error("Error marking worker as no-show:", error);
+    throw error;
+  }
+};
+
+/**
+ * Employer allows late arrival for an absent / no-show worker
+ * POST /api/jobs/:jobId/allow-late-arrival
+ */
+export const allowLateArrival = async (jobId: string, workerId: string) => {
+  try {
+    console.log("Allowing late arrival for worker:", { jobId, workerId });
+    const response = await api.post(`/jobs/${jobId}/allow-late-arrival`, {
+      workerId,
+    });
+    console.log("Allow late arrival response:", response.data);
+    return response;
+  } catch (error) {
+    console.error("Error allowing late arrival:", error);
+    throw error;
+  }
+};
+
+// ==================== RATING API ENDPOINTS ====================
+
+/**
+ * Submit a rating for a user
+ * POST /api/users/rate
+ */
+export const submitRating = async (data: {
+  ratedUser: string;
+  job: string;
+  role: "employer" | "employee";
+  rating: number;
+  comment?: string;
+}) => {
+  try {
+    console.log("Submitting rating:", data);
+    const response = await api.post("/users/rate", data);
+    console.log("Rating submitted successfully:", response.data);
+    return response;
+  } catch (error) {
+    console.error("Error submitting rating:", error);
+    throw error;
+  }
+};
+
+/**
+ * Get ratings for a user
+ * GET /api/users/:id/ratings
+ */
+export const getUserRatings = async (
+  userId: string,
+  role: "employer" | "employee"
+) => {
+  try {
+    console.log(`Getting ratings for user ${userId} as ${role}`);
+    const response = await api.get(`/users/${userId}/ratings?role=${role}`);
+    console.log("Ratings fetched successfully:", response.data);
+    return response;
+  } catch (error) {
+    console.error("Error fetching ratings:", error);
+    throw error;
+  }
+};
+
+/**
+ * Schedule verification for a job (manual trigger)
+ * POST /api/verification/schedule/:jobId
+ */
+export const scheduleVerification = async (jobId: string) => {
+  try {
+    console.log("Scheduling verification for job:", jobId);
+
+    const response = await api.post(`/verification/schedule/${jobId}`);
+
+    console.log("Schedule verification response:", response.data);
+    return response;
+  } catch (error) {
+    console.error("Error scheduling verification:", error);
+    throw error;
+  }
+};
+
+/**
+ * Force generate verification codes immediately (for testing)
+ * This bypasses the normal scheduling logic
+ */
+export const forceGenerateVerificationCodes = async (jobId: string) => {
+  try {
+    console.log("Force generating verification codes for job:", jobId);
+
+    // Use the resend codes endpoint which generates codes immediately
+    const response = await api.post(`/jobs/${jobId}/resend-codes`, {
+      reason: "Force generation for immediate testing",
+    });
+
+    console.log("Force generate codes response:", response.data);
+    return response;
+  } catch (error) {
+    console.error("Error force generating codes:", error);
+    throw error;
+  }
+};
+
+/**
+ * Cancel scheduled verification for a job
+ * POST /api/verification/cancel/:jobId
+ */
+export const cancelVerification = async (jobId: string) => {
+  try {
+    console.log("Cancelling verification for job:", jobId);
+
+    const response = await api.post(`/verification/cancel/${jobId}`);
+
+    console.log("Cancel verification response:", response.data);
+    return response;
+  } catch (error) {
+    console.error("Error cancelling verification:", error);
+    throw error;
+  }
+};
+
+/**
+ * Sync accepted applications with job's assignedUsers field
+ * This is a helper function to fix the mismatch between accepted applications and job assignments
+ */
+export const syncAcceptedApplications = async (
+  jobId: string,
+  applicationIds: string[]
+) => {
+  try {
+    console.log(
+      "Syncing accepted applications for job:",
+      jobId,
+      "Applications:",
+      applicationIds
+    );
+
+    const response = await selectApplicants(jobId, applicationIds);
+
+    console.log("Sync applications response:", response);
+    return response;
+  } catch (error) {
+    console.error("Error syncing applications:", error);
+    throw error;
+  }
+};
+
+// ============================================================================
+// JOB TIMER API FUNCTIONS
+// ============================================================================
+// JOB TIMER API ENDPOINTS
+// ============================================================================
+
+/**
+ * Get active job session summary for authenticated user (Employer or Worker)
+ * GET /api/job-timer/active
+ */
+export const getActiveJobSession = async () => {
+  try {
+    const response = await api.get('/job-timer/active');
+    return response;
+  } catch (error) {
+    console.error("Error getting active job session:", error);
+    throw error;
+  }
+};
+
+/**
+ * Initiate job execution (Employer)
+ * POST /api/job-timer/jobs/:jobId/initiate
+ */
+export const initiateJobExecution = async (jobId: string) => {
+  try {
+    console.log("Initiating job execution for job:", jobId);
+
+    const response = await api.post(`/job-timer/jobs/${jobId}/initiate`);
+
+    console.log("Job execution initiated:", response.data);
+    return response;
+  } catch (error) {
+    console.error("Error initiating job execution:", error);
+    throw error;
+  }
+};
+
+/**
+ * Get employer dashboard data
+ * GET /api/job-timer/jobs/:jobId/dashboard
+ */
+export const getJobDashboard = async (jobId: string, refresh = false) => {
+  try {
+    console.log("Getting dashboard for job:", jobId, "Refresh:", refresh);
+
+    const url = `/job-timer/jobs/${jobId}/dashboard?refresh=${refresh}`;
+    const response = await api.get(url);
+
+    console.log("Dashboard data retrieved:", response.data);
+    return response;
+  } catch (error) {
+    console.error("Error getting dashboard:", error);
+    throw error;
+  }
+};
+
+/**
+ * Start worker session
+ * POST /api/job-timer/jobs/:jobId/sessions/start
+ */
+export const startWorkerSession = async (jobId: string) => {
+  try {
+    console.log("Starting worker session for job:", jobId);
+
+    const response = await api.post(`/job-timer/jobs/${jobId}/sessions/start`);
+
+    console.log("Worker session started:", response.data);
+    return response;
+  } catch (error) {
+    console.error("Error starting worker session:", error);
+    throw error;
+  }
+};
+
+/**
+ * Get worker session details
+ * GET /api/job-timer/jobs/:jobId/sessions/worker
+ */
+export const getWorkerSession = async (
+  jobId: string,
+  includeHistory = false
+) => {
+  try {
+    console.log(
+      "Getting worker session for job:",
+      jobId,
+      "Include history:",
+      includeHistory
+    );
+
+    const url = `/job-timer/jobs/${jobId}/sessions/worker?includeHistory=${includeHistory}`;
+    const response = await api.get(url);
+
+    console.log("Worker session data retrieved:", response.data);
+    return response;
+  } catch (error: any) {
+    if (error.response?.status !== 403 && error.response?.status !== 404) {
+      console.error("Error getting worker session:", error);
+    }
+    throw error;
+  }
+};
+
+/**
+ * Pause worker session
+ * PUT /api/job-timer/sessions/:sessionId/pause
+ */
+export const pauseWorkerSession = async (sessionId: string) => {
+  try {
+    console.log("Pausing worker session:", sessionId);
+
+    const response = await api.put(`/job-timer/sessions/${sessionId}/pause`);
+
+    console.log("Worker session paused:", response.data);
+    return response;
+  } catch (error) {
+    console.error("Error pausing worker session:", error);
+    throw error;
+  }
+};
+
+/**
+ * Resume worker session
+ * PUT /api/job-timer/sessions/:sessionId/resume
+ */
+export const resumeWorkerSession = async (sessionId: string) => {
+  try {
+    console.log("Resuming worker session:", sessionId);
+
+    const response = await api.put(`/job-timer/sessions/${sessionId}/resume`);
+
+    console.log("Worker session resumed:", response.data);
+    return response;
+  } catch (error) {
+    console.error("Error resuming worker session:", error);
+    throw error;
+  }
+};
+
+/**
+ * Complete worker session
+ * PUT /api/job-timer/sessions/:sessionId/complete
+ */
+export const completeWorkerSession = async (
+  sessionId: string,
+  notes = "",
+  location?: { latitude: number; longitude: number }
+) => {
+  try {
+    console.log("Completing worker session:", sessionId, "Notes:", notes, "Location:", location);
+
+    const payload: any = { notes };
+    if (location) {
+      payload.latitude = location.latitude;
+      payload.longitude = location.longitude;
+    }
+
+    const response = await api.put(
+      `/job-timer/sessions/${sessionId}/complete`,
+      payload
+    );
+
+    console.log("Worker session completed:", response.data);
+    return response;
+  } catch (error) {
+    console.error("Error completing worker session:", error);
+    throw error;
+  }
+};
+
+/**
+ * Sync time for worker session
+ * PUT /api/job-timer/sessions/:sessionId/sync
+ */
+export const syncWorkerTime = async (
+  sessionId: string,
+  additionalSeconds: number,
+  currentStatus: string,
+  heartbeat = false
+) => {
+  try {
+    console.log(
+      "Syncing worker time:",
+      sessionId,
+      "Additional seconds:",
+      additionalSeconds,
+      "Status:",
+      currentStatus
+    );
+
+    const response = await api.put(`/job-timer/sessions/${sessionId}/sync`, {
+      additionalSeconds: Math.min(
+        3600,
+        Math.max(0, Math.floor(additionalSeconds))
+      ),
+      currentStatus,
+      heartbeat,
+      timestamp: new Date().toISOString(),
+    });
+    console.log("Worker time synced:", response.data);
+    return response;
+  } catch (error) {
+    console.error("Error syncing worker time:", error);
+    throw error;
+  }
+};
+
+// ============================================================================
+// TIME FORMAT UTILITIES
+// ============================================================================
+
+/**
+ * Convert seconds to readable format (HH:MM:SS or MM:SS)
+ */
+export const formatTime = (seconds: number): string => {
+  const hours = Math.floor(seconds / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+  const secs = seconds % 60;
+
+  if (hours > 0) {
+    return `${hours}:${minutes.toString().padStart(2, "0")}:${secs
+      .toString()
+      .padStart(2, "0")}`;
+  }
+  return `${minutes}:${secs.toString().padStart(2, "0")}`;
+};
+
+/**
+ * Convert seconds to hours and minutes
+ */
+export const formatDuration = (seconds: number): string => {
+  const hours = Math.floor(seconds / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+
+  if (hours > 0) {
+    return `${hours}h ${minutes}m`;
+  }
+  return `${minutes}m`;
+};
+
+/**
+ * Calculate completion percentage
+ */
+export const calculateCompletion = (
+  workedSeconds: number,
+  targetHours: number
+): number => {
+  if (!targetHours) return 0;
+  const targetSeconds = targetHours * 3600;
+  return Math.min((workedSeconds / targetSeconds) * 100, 100);
+};
+
+// ============================================================================
+// PAYMENT API FUNCTIONS
+// ============================================================================
+
+/**
+ * Create payment order for a completed job (Employer)
+ * POST /api/payments/create-order
+ */
+export const createPaymentOrder = async (jobId: string) => {
+  try {
+    console.log("Creating payment order for job:", jobId);
+
+    const response = await api.post(`/payments/create-order`, {
+      jobId,
+    });
+
+    console.log("Payment order created:", response.data);
+    return response;
+  } catch (error) {
+    console.error("Error creating payment order:", error);
+    throw error;
+  }
+};
+
+/**
+ * Verify payment after successful transaction
+ * POST /api/payments/verify
+ */
+export const verifyPayment = async (
+  orderId: string,
+  paymentId: string,
+  signature: string
+) => {
+  try {
+    console.log("Verifying payment:", { orderId, paymentId });
+
+    const response = await api.post(`/payments/verify`, {
+      orderId,
+      paymentId,
+      signature,
+    });
+
+    console.log("Payment verified:", response.data);
+    return response;
+  } catch (error) {
+    console.error("Error verifying payment:", error);
+    throw error;
+  }
+};
+
+/**
+ * Get payment status for a job
+ * GET /api/payments/status/:jobId
+ */
+export const getPaymentStatus = async (jobId: string) => {
+  try {
+    console.log("Getting payment status for job:", jobId);
+
+    const response = await api.get(`/payments/status/${jobId}`);
+
+    console.log("Payment status:", response.data);
+    return response;
+  } catch (error) {
+    console.error("Error getting payment status:", error);
+    throw error;
+  }
+};
+
+/**
+ * Get all payments for a job
+ * GET /api/payments/job/:jobId
+ */
+export const getJobPayments = async (jobId: string) => {
+  try {
+    console.log("Getting job payments for job:", jobId);
+
+    const response = await api.get(`/payments/job/${jobId}`);
+
+    console.log("Job payments:", response.data);
+    return response;
+  } catch (error) {
+    console.error("Error getting job payments:", error);
+    throw error;
+  }
+};
+
+/**
+ * Add bank account details for worker payouts
+ * POST /api/users/bank-details
+ */
+export const addBankAccount = async (bankDetails: {
+  accountHolderName: string;
+  accountNumber: string;
+  ifscCode: string;
+  bankName: string;
+  accountType: "savings" | "current";
+}) => {
+  try {
+    console.log("Adding bank account");
+
+    const response = await api.post(`/users/bank-details`, bankDetails);
+
+    console.log("Bank account added:", response.data);
+    return response;
+  } catch (error) {
+    console.error("Error adding bank account:", error);
+    throw error;
+  }
+};
+
+/**
+ * Add UPI details for worker payouts
+ * POST /api/users/upi-details
+ */
+export const addUpiDetails = async (upiId: string) => {
+  try {
+    console.log("Adding UPI details");
+
+    const response = await api.post(`/users/upi-details`, {
+      upiId,
+    });
+
+    console.log("UPI details added:", response.data);
+    return response;
+  } catch (error) {
+    console.error("Error adding UPI details:", error);
+    throw error;
+  }
+};
+
+/**
+ * Get worker's payout status
+ * GET /api/payouts/status/:workerId
+ */
+export const getWorkerPayouts = async (workerId: string) => {
+  try {
+    console.log("Getting worker payouts for worker:", workerId);
+
+    //const response = await api.get(`/payouts/status/${workerId}`);
+
+    //console.log("Worker payouts:", response.data);
+    // return response;
+    return { data: [] }; // Mock empty response
+  } catch (error) {
+    console.error("Error getting worker payouts:", error);
+    throw error;
+  }
+};
+
+/**
+ * Get pending permanent modals (Candidate matched / 7-day trial rating)
+ * GET /jobs/pending-permanent-modals
+ */
+export const getPendingPermanentModals = async () => {
+  try {
+    const response = await api.get('/jobs/pending-permanent-modals');
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching pending permanent modals:', error);
+    return { success: false, data: { hasModal: false } };
+  }
+};
+
+/**
+ * Acknowledge permanent candidate match modal
+ * POST /jobs/:id/acknowledge-candidate-match
+ */
+export const acknowledgeCandidateMatch = async (jobId: string) => {
+  try {
+    const response = await api.post(`/jobs/${jobId}/acknowledge-candidate-match`);
+    return response.data;
+  } catch (error) {
+    console.error('Error acknowledging candidate match:', error);
+    throw error;
+  }
+};
+
+/**
+ * Submit 7-day permanent trial evaluation / rating / grievance
+ * POST /jobs/:id/submit-trial-feedback
+ */
+export const submitPermanentTrialFeedback = async (
+  jobId: string,
+  data: {
+    rating: number;
+    comment?: string;
+    isSatisfied: boolean;
+    grievanceReason?: string;
+    grievanceNote?: string;
+  }
+) => {
+  try {
+    const response = await api.post(`/jobs/${jobId}/submit-trial-feedback`, data);
+    return response.data;
+  } catch (error) {
+    console.error('Error submitting permanent trial feedback:', error);
+    throw error;
+  }
+};
+
+export default api;

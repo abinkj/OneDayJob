@@ -42,7 +42,7 @@ const ImagePickerActionSheet = forwardRef<
       cancelTextStyle,
       showRemoveButton = false,
     },
-    ref,
+    ref
   ) => {
     const actionSheetRef = useRef<ActionSheetRef>(null);
     const { colors } = useTheme();
@@ -127,7 +127,7 @@ const ImagePickerActionSheet = forwardRef<
         borderTopRightRadius: 20,
         ...containerStyle,
       }),
-      [colors.white, containerStyle],
+      [colors.white, containerStyle]
     );
 
     const defaultTitleStyle = useMemo(
@@ -139,7 +139,7 @@ const ImagePickerActionSheet = forwardRef<
         color: colors.black,
         ...titleStyle,
       }),
-      [colors.black, titleStyle],
+      [colors.black, titleStyle]
     );
 
     const defaultButtonStyle = useMemo(
@@ -152,7 +152,7 @@ const ImagePickerActionSheet = forwardRef<
         marginBottom: 10,
         ...buttonStyle,
       }),
-      [buttonStyle],
+      [buttonStyle]
     );
 
     const defaultButtonTextStyle = useMemo(
@@ -162,7 +162,7 @@ const ImagePickerActionSheet = forwardRef<
         color: colors.black,
         ...buttonTextStyle,
       }),
-      [colors.black, buttonTextStyle],
+      [colors.black, buttonTextStyle]
     );
 
     const defaultCancelButtonStyle = useMemo(
@@ -173,7 +173,7 @@ const ImagePickerActionSheet = forwardRef<
         alignItems: "center" as const,
         ...cancelButtonStyle,
       }),
-      [colors.address2, cancelButtonStyle],
+      [colors.address2, cancelButtonStyle]
     );
 
     const defaultCancelTextStyle = useMemo(
@@ -183,7 +183,7 @@ const ImagePickerActionSheet = forwardRef<
         fontWeight: "500" as const,
         ...cancelTextStyle,
       }),
-      [colors.grey, cancelTextStyle],
+      [colors.grey, cancelTextStyle]
     );
 
     return (
@@ -243,7 +243,7 @@ const ImagePickerActionSheet = forwardRef<
         </View>
       </ActionSheet>
     );
-  },
+  }
 );
 
 ImagePickerActionSheet.displayName = "ImagePickerActionSheet";

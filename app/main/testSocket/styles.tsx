@@ -142,7 +142,7 @@ const styles = StyleSheet.create({
   },
   bannerSubtitle: {
     fontSize: 13,
-  }
+  },
 });
 
 export default styles;

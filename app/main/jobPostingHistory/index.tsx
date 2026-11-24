@@ -22,13 +22,15 @@ import {
   getJobStatusInfo,
   JOB_STATUSES,
 } from "../../../utilities/statusUtils";
+import { normalizeLocationCoordinates } from "../../../utilities/jobUtils";
+import RepostJobModal from "../../../components/RepostJobModal";
 import { createStyles } from "./styles";
 
 const JobPostingHistory = () => {
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const navigation = useNavigation<any>();
-  
+
   const userData = useSelector((state: any) => state.authentication.userData);
   const userId = userData?.id || userData?._id;
 
@@ -45,6 +47,8 @@ const JobPostingHistory = () => {
 
   const deleteJobMutation = useDeleteJob();
   const [selectedStatus, setSelectedStatus] = useState<string | null>(null);
+  const [selectedJobForRepost, setSelectedJobForRepost] = useState<JobPost | null>(null);
+  const [showRepostModal, setShowRepostModal] = useState(false);
 
   // Flatten data from paginated response
   const posts = useMemo(() => {
@@ -60,6 +64,9 @@ const JobPostingHistory = () => {
       setFilteredPosts(posts);
     } else {
       const filtered = posts.filter((post) => {
+        if (selectedStatus === "Completed" || selectedStatus === "Work Completed") {
+          return post.jobStatus === "completed" || post.jobStatus === "work_completed";
+        }
         const statusInfo = getJobStatusInfo(post.jobStatus || "posted");
         return statusInfo.label === selectedStatus;
       });
@@ -121,6 +128,11 @@ const JobPostingHistory = () => {
     );
   }
 
+  const handleRepost = (job: JobPost) => {
+    setSelectedJobForRepost(job);
+    setShowRepostModal(true);
+  };
+
   const renderItem = ({ item }: { item: JobPost }) => (
     <JobCard
       key={item._id}
@@ -128,6 +140,7 @@ const JobPostingHistory = () => {
       onPress={() => handleNext(item._id)}
       onDelete={() => handleDelete(item._id)}
       onSummary={() => handleSummary(item._id, item.name)}
+      onRepost={(job: any) => handleRepost(job)}
       isEmployer={true}
     />
   );
@@ -159,7 +172,7 @@ const JobPostingHistory = () => {
   return (
     <View style={styles.container}>
       <Header title="Job Posting History" showBackButton />
-      
+
       {/* {posts.length > 0 && (
         <StatusFilter
           statuses={availableStatuses}
@@ -176,7 +189,7 @@ const JobPostingHistory = () => {
         keyExtractor={(item) => item._id}
         contentContainerStyle={[
           styles.listContent,
-          filteredPosts.length === 0 && { flexGrow: 1 }
+          filteredPosts.length === 0 && { flexGrow: 1 },
         ]}
         showsVerticalScrollIndicator={false}
         refreshControl={
@@ -189,6 +202,24 @@ const JobPostingHistory = () => {
         onEndReachedThreshold={0.5}
         ListEmptyComponent={renderEmpty}
         ListFooterComponent={renderFooter}
+      />
+
+      <RepostJobModal
+        visible={showRepostModal}
+        job={selectedJobForRepost}
+        onClose={() => {
+          setShowRepostModal(false);
+          setSelectedJobForRepost(null);
+        }}
+        onSuccess={() => {
+          refetch();
+        }}
+        onEditFullDetails={(jobData) => {
+          navigation.navigate("(tabs)", {
+            screen: "PostJob",
+            params: { editJob: jobData },
+          });
+        }}
       />
     </View>
   );

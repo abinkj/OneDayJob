@@ -78,6 +78,40 @@ export const defaultJobCategories: DefaultCategory[] = [
   },
 ];
 
+// Default Permanent Job Categories (Monthly Roles)
+export const defaultPermanentCategories: DefaultCategory[] = [
+  {
+    id: "housemaid",
+    name: "Housemaid",
+    icon: require("../assets/images/cleaning.png"),
+  },
+  {
+    id: "babysitter",
+    name: "Babysitter",
+    icon: require("../assets/images/custom.png"),
+  },
+  {
+    id: "cook",
+    name: "Cook",
+    icon: require("../assets/images/catering.png"),
+  },
+  {
+    id: "elderly_caretaker",
+    name: "Elderly Caretaker",
+    icon: require("../assets/images/yardwork.png"),
+  },
+  {
+    id: "driver",
+    name: "Driver",
+    icon: require("../assets/images/delivery.png"),
+  },
+  {
+    id: "office_assistant",
+    name: "Office Assistant",
+    icon: require("../assets/images/computer.png"),
+  },
+];
+
 // Time Slot Data
 export const timeSlots: TimeSlot[] = [
   {
@@ -113,11 +147,10 @@ export const timeSlots: TimeSlot[] = [
 // Helper function to get category icon by name
 export const getCategoryIcon = (categoryName?: string): ImageSourcePropType => {
   if (!categoryName) return require("../assets/images/custom.png");
-  
-  const category = defaultJobCategories.find(
+
+  const category = [...defaultJobCategories, ...defaultPermanentCategories].find(
     (cat) => cat.name.toLowerCase() === categoryName.toLowerCase()
   );
-  
+
   return category ? category.icon : require("../assets/images/custom.png");
 };
-

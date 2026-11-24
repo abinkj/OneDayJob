@@ -1,12 +1,12 @@
 /**
  * OFFLINE QUEUE INTEGRATION EXAMPLES
- * 
+ *
  * This file demonstrates how to integrate the offline queue service
  * with critical API endpoints in your application.
  */
 
-import { offlineQueue, enqueueOrExecute } from './offlineQueue';
-import { applyJob, completeWorkerSession, createPaymentOrder } from './api';
+import { offlineQueue, enqueueOrExecute } from "./offlineQueue";
+import { applyJob, completeWorkerSession, createPaymentOrder } from "./api";
 
 // ============================================================================
 // EXAMPLE 1: Apply for a Job (with offline support)
@@ -14,13 +14,13 @@ import { applyJob, completeWorkerSession, createPaymentOrder } from './api';
 
 /**
  * Apply for a job with automatic offline queueing
- * 
+ *
  * Usage in your component:
  * ```tsx
  * const handleApplyJob = async () => {
  *   try {
  *     const result = await applyJobOffline(jobId);
- *     
+ *
  *     if ('queued' in result && result.queued) {
  *       // Request was queued (offline)
  *       Alert.alert(
@@ -38,13 +38,13 @@ import { applyJob, completeWorkerSession, createPaymentOrder } from './api';
  * ```
  */
 export async function applyJobOffline(jobId: string) {
-    return enqueueOrExecute(
-        () => applyJob(jobId),
-        `/applications/jobs/${jobId}/apply`,
-        'POST',
-        undefined, // No body data needed
-        undefined  // No custom headers
-    );
+  return enqueueOrExecute(
+    () => applyJob(jobId),
+    `/applications/jobs/${jobId}/apply`,
+    "POST",
+    undefined, // No body data needed
+    undefined // No custom headers
+  );
 }
 
 // ============================================================================
@@ -53,13 +53,13 @@ export async function applyJobOffline(jobId: string) {
 
 /**
  * Complete a worker session with automatic offline queueing
- * 
+ *
  * Usage in your component:
  * ```tsx
  * const handleCompleteSession = async () => {
  *   try {
  *     const result = await completeWorkerSessionOffline(sessionId, notes);
- *     
+ *
  *     if ('queued' in result && result.queued) {
  *       Alert.alert(
  *         'Queued',
@@ -75,15 +75,15 @@ export async function applyJobOffline(jobId: string) {
  * ```
  */
 export async function completeWorkerSessionOffline(
-    sessionId: string,
-    notes: string = ''
+  sessionId: string,
+  notes: string = ""
 ) {
-    return enqueueOrExecute(
-        () => completeWorkerSession(sessionId, notes),
-        `/job-timer/sessions/${sessionId}/complete`,
-        'PUT',
-        { notes }
-    );
+  return enqueueOrExecute(
+    () => completeWorkerSession(sessionId, notes),
+    `/job-timer/sessions/${sessionId}/complete`,
+    "PUT",
+    { notes }
+  );
 }
 
 // ============================================================================
@@ -92,13 +92,13 @@ export async function completeWorkerSessionOffline(
 
 /**
  * Create a payment order with automatic offline queueing
- * 
+ *
  * Usage in your component:
  * ```tsx
  * const handleInitiatePayment = async () => {
  *   try {
  *     const result = await createPaymentOrderOffline(jobId);
- *     
+ *
  *     if ('queued' in result && result.queued) {
  *       Alert.alert(
  *         'Queued',
@@ -116,12 +116,12 @@ export async function completeWorkerSessionOffline(
  * ```
  */
 export async function createPaymentOrderOffline(jobId: string) {
-    return enqueueOrExecute(
-        () => createPaymentOrder(jobId),
-        '/payments/create-order',
-        'POST',
-        { jobId }
-    );
+  return enqueueOrExecute(
+    () => createPaymentOrder(jobId),
+    "/payments/create-order",
+    "POST",
+    { jobId }
+  );
 }
 
 // ============================================================================
@@ -130,17 +130,17 @@ export async function createPaymentOrderOffline(jobId: string) {
 
 /**
  * Get current queue status
- * 
+ *
  * Usage in a settings/debug screen:
  * ```tsx
  * const QueueStatusComponent = () => {
  *   const [status, setStatus] = useState(null);
- * 
+ *
  *   useEffect(() => {
  *     const status = getOfflineQueueStatus();
  *     setStatus(status);
  *   }, []);
- * 
+ *
  *   return (
  *     <View>
  *       <Text>Total Requests: {status?.totalRequests}</Text>
@@ -153,17 +153,17 @@ export async function createPaymentOrderOffline(jobId: string) {
  * ```
  */
 export function getOfflineQueueStatus() {
-    return offlineQueue.getQueueStatus();
+  return offlineQueue.getQueueStatus();
 }
 
 /**
  * Get all queued requests
- * 
+ *
  * Usage for displaying pending requests to user:
  * ```tsx
  * const PendingRequestsList = () => {
  *   const requests = getQueuedRequests();
- * 
+ *
  *   return (
  *     <FlatList
  *       data={requests}
@@ -182,12 +182,12 @@ export function getOfflineQueueStatus() {
  * ```
  */
 export function getQueuedRequests() {
-    return offlineQueue.getQueuedRequests();
+  return offlineQueue.getQueuedRequests();
 }
 
 /**
  * Manually trigger queue processing
- * 
+ *
  * Usage: Call this when user manually refreshes or when you detect network is back
  * ```tsx
  * const handleRefresh = async () => {
@@ -197,36 +197,36 @@ export function getQueuedRequests() {
  * ```
  */
 export async function processOfflineQueue() {
-    return offlineQueue.processQueue();
+  return offlineQueue.processQueue();
 }
 
 /**
  * Retry a specific failed request
  */
 export async function retryFailedRequest(requestId: string) {
-    return offlineQueue.retryRequest(requestId);
+  return offlineQueue.retryRequest(requestId);
 }
 
 /**
  * Clear all failed requests
- * 
+ *
  * Usage in settings:
  * ```tsx
- * <Button 
- *   title="Clear Failed Requests" 
+ * <Button
+ *   title="Clear Failed Requests"
  *   onPress={clearFailedRequests}
  * />
  * ```
  */
 export async function clearFailedRequests() {
-    return offlineQueue.clearFailedRequests();
+  return offlineQueue.clearFailedRequests();
 }
 
 /**
  * Clear entire queue (use with caution!)
  */
 export async function clearEntireQueue() {
-    return offlineQueue.clearQueue();
+  return offlineQueue.clearQueue();
 }
 
 // ============================================================================
@@ -235,9 +235,9 @@ export async function clearEntireQueue() {
 
 /**
  * Directly enqueue a custom request
- * 
+ *
  * Use this when you need more control or for endpoints not covered by helpers
- * 
+ *
  * ```tsx
  * const handleCustomAction = async () => {
  *   try {
@@ -246,7 +246,7 @@ export async function clearEntireQueue() {
  *       'POST',
  *       { customData: 'value' }
  *     );
- *     
+ *
  *     console.log('Request queued with ID:', requestId);
  *   } catch (error) {
  *     console.error('Failed to queue request:', error);
@@ -255,13 +255,13 @@ export async function clearEntireQueue() {
  * ```
  */
 export async function enqueueCustomRequest(
-    endpoint: string,
-    method: 'POST' | 'PUT' | 'DELETE',
-    data?: any,
-    headers?: Record<string, string>,
-    maxRetries: number = 3
+  endpoint: string,
+  method: "POST" | "PUT" | "DELETE",
+  data?: any,
+  headers?: Record<string, string>,
+  maxRetries: number = 3
 ) {
-    return offlineQueue.enqueue(endpoint, method, data, headers, maxRetries);
+  return offlineQueue.enqueue(endpoint, method, data, headers, maxRetries);
 }
 
 // ============================================================================
@@ -270,14 +270,14 @@ export async function enqueueCustomRequest(
 
 /**
  * Custom hook to monitor queue status in real-time
- * 
+ *
  * Usage:
  * ```tsx
  * import { useOfflineQueue } from './services/offlineQueueExamples';
- * 
+ *
  * const MyComponent = () => {
  *   const { status, requests, isOnline } = useOfflineQueue();
- * 
+ *
  *   return (
  *     <View>
  *       <Text>Network: {isOnline ? '🟢 Online' : '🔴 Offline'}</Text>
@@ -292,29 +292,29 @@ export async function enqueueCustomRequest(
  * };
  * ```
  */
-import { useState, useEffect } from 'react';
+import { useState, useEffect } from "react";
 
 export function useOfflineQueue() {
-    const [status, setStatus] = useState(offlineQueue.getQueueStatus());
-    const [requests, setRequests] = useState(offlineQueue.getQueuedRequests());
+  const [status, setStatus] = useState(offlineQueue.getQueueStatus());
+  const [requests, setRequests] = useState(offlineQueue.getQueuedRequests());
 
-    useEffect(() => {
-        // Poll for status updates every 2 seconds
-        const interval = setInterval(() => {
-            setStatus(offlineQueue.getQueueStatus());
-            setRequests(offlineQueue.getQueuedRequests());
-        }, 2000);
+  useEffect(() => {
+    // Poll for status updates every 2 seconds
+    const interval = setInterval(() => {
+      setStatus(offlineQueue.getQueueStatus());
+      setRequests(offlineQueue.getQueuedRequests());
+    }, 2000);
 
-        return () => clearInterval(interval);
-    }, []);
+    return () => clearInterval(interval);
+  }, []);
 
-    return {
-        status,
-        requests,
-        isOnline: status.isOnline,
-        hasPendingRequests: status.pendingRequests > 0,
-        hasFailedRequests: status.failedRequests > 0,
-    };
+  return {
+    status,
+    requests,
+    isOnline: status.isOnline,
+    hasPendingRequests: status.pendingRequests > 0,
+    hasFailedRequests: status.failedRequests > 0,
+  };
 }
 
 // ============================================================================
@@ -323,9 +323,9 @@ export function useOfflineQueue() {
 
 /**
  * OPTION A: Modify existing API functions directly
- * 
+ *
  * In services/api.tsx, replace:
- * 
+ *
  * ```typescript
  * export const applyJob = async (jobId: string) => {
  *   console.log("Applying for job with ID:", jobId);
@@ -333,15 +333,15 @@ export function useOfflineQueue() {
  *   return data;
  * };
  * ```
- * 
+ *
  * With:
- * 
+ *
  * ```typescript
  * import { enqueueOrExecute } from './offlineQueue';
- * 
+ *
  * export const applyJob = async (jobId: string) => {
  *   console.log("Applying for job with ID:", jobId);
- *   
+ *
  *   return enqueueOrExecute(
  *     () => api.post(`applications/jobs/${jobId}/apply`),
  *     `/applications/jobs/${jobId}/apply`,
@@ -353,10 +353,10 @@ export function useOfflineQueue() {
 
 /**
  * OPTION B: Create wrapper functions (recommended for gradual migration)
- * 
+ *
  * Keep existing API functions unchanged and create new wrapper functions
  * with offline support. This is the approach used in this file.
- * 
+ *
  * Benefits:
  * - No breaking changes to existing code
  * - Gradual migration path

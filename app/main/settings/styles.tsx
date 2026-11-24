@@ -156,6 +156,13 @@ const styles = StyleSheet.create({
   bottomSpacing: {
     height: 32 * DeviceDimensions.heightRatio,
   },
+  appVersionText: {
+    fontSize: fontSizes.size14,
+    fontFamily: fontFamilies.regular,
+    color: Colors.grey,
+    textAlign: "center",
+    marginTop: 16 * DeviceDimensions.heightRatio,
+  },
 });
 
 export default styles;

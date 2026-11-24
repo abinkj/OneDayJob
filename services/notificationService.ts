@@ -1,0 +1,597 @@
+import { Platform, Alert, Linking, DeviceEventEmitter } from "react-native";
+import * as Notifications from "expo-notifications";
+import * as Device from "expo-device";
+import Constants from "expo-constants";
+import { getAccessToken } from "../utilities/secureStore";
+import Toast from "react-native-toast-message";
+
+// Notification types
+export interface NotificationData {
+  id?: string;
+  type:
+    | "verification_code"
+    | "job_update"
+    | "application_status"
+    | "message"
+    | "system";
+  title: string;
+  body: string;
+  data?: any;
+  jobId?: string;
+  userId?: string;
+  timestamp?: string;
+  read?: boolean;
+}
+
+export interface NotificationPermission {
+  granted: boolean;
+  canAskAgain: boolean;
+  status: "granted" | "denied" | "undetermined";
+}
+
+// Configure notification behavior
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowAlert: true,
+    shouldPlaySound: true,
+    shouldSetBadge: true,
+    shouldShowBanner: true,
+    shouldShowList: true,
+  }),
+});
+
+class NotificationService {
+  private expoPushToken: string | null = null;
+  private notificationListener: any = null;
+  private responseListener: any = null;
+
+  // Initialize the notification service
+  async initialize(): Promise<boolean> {
+    try {
+      // Register for push notifications
+      await this.registerForPushNotificationsAsync();
+
+      // Set up notification listeners
+      this.setupNotificationListeners();
+
+      return true;
+    } catch (error) {
+      console.error("Failed to initialize notification service:", error);
+      return false;
+    }
+  }
+
+  // Register for push notifications
+  async registerForPushNotificationsAsync(): Promise<string | null> {
+    let token: string | null = null;
+
+    if (Platform.OS === "android") {
+      await Notifications.setNotificationChannelAsync("default", {
+        name: "default",
+        importance: Notifications.AndroidImportance.MAX,
+        vibrationPattern: [0, 250, 250, 250],
+        lightColor: "#FF231F7C",
+      });
+    }
+
+    if (Device.isDevice) {
+      const { status: existingStatus } =
+        await Notifications.getPermissionsAsync();
+      let finalStatus = existingStatus;
+
+      if (existingStatus !== "granted") {
+        const { status } = await Notifications.requestPermissionsAsync();
+        finalStatus = status;
+      }
+
+      if (finalStatus !== "granted") {
+        console.log("Failed to get push token for push notification!");
+        return null;
+      }
+
+      try {
+        const projectId =
+          Constants.expoConfig?.extra?.eas?.projectId ??
+          Constants.easConfig?.projectId;
+        if (!projectId) {
+          throw new Error("Project ID not found");
+        }
+
+        token = (await Notifications.getExpoPushTokenAsync({ projectId })).data;
+        console.log("Expo push token:", token);
+      } catch (error) {
+        console.error("Error getting push token:", error);
+        return null;
+      }
+    } else {
+      console.log("Must use physical device for Push Notifications");
+    }
+
+    this.expoPushToken = token;
+    return token;
+  }
+
+  // Ensure we have a token (safe to call multiple times)
+  async ensureToken(): Promise<string | null> {
+    if (this.expoPushToken) {
+      return this.expoPushToken;
+    }
+    return await this.registerForPushNotificationsAsync();
+  }
+
+  // Set up notification listeners
+  private setupNotificationListeners(): void {
+    // Listener for notifications received while app is running
+    this.notificationListener = Notifications.addNotificationReceivedListener(
+      (notification) => {
+        console.log("Notification received:", notification);
+        this.handleIncomingNotification(notification);
+      }
+    );
+
+    // Listener for notification interactions (taps)
+    this.responseListener =
+      Notifications.addNotificationResponseReceivedListener((response) => {
+        console.log("Notification response:", response);
+        this.handleNotificationResponse(response);
+      });
+  }
+
+  // Handle incoming notifications
+  private handleIncomingNotification(
+    notification: Notifications.Notification
+  ): void {
+    const { title, body, data } = notification.request.content;
+
+    // Construct full notification data
+    const notificationData = {
+      ...(data as object),
+      title: title || "",
+      body: body || "",
+    } as NotificationData;
+
+    console.log("Processed incoming notification:", notificationData);
+
+    // Show in-app toast based on notification type
+    this.showInAppNotification(notificationData);
+
+    // Handle specific notification types
+    switch (notificationData.type) {
+      case "verification_code":
+        this.handleVerificationCodeNotification(notificationData);
+        break;
+      case "job_update":
+        this.handleJobUpdateNotification(notificationData);
+        break;
+      case "application_status":
+        this.handleApplicationStatusNotification(notificationData);
+        break;
+      case "message":
+        this.handleMessageNotification(notificationData);
+        break;
+      default:
+        console.log("Unknown notification type:", notificationData.type);
+    }
+  }
+
+  // Handle notification tap responses
+  private handleNotificationResponse(
+    response: Notifications.NotificationResponse
+  ): void {
+    const { title, body, data } = response.notification.request.content;
+
+    // Construct full notification data
+    const notificationData = {
+      ...(data as object),
+      title: title || "",
+      body: body || "",
+    } as NotificationData;
+
+    console.log("Processed notification response:", notificationData);
+    this.handleNotificationClick(notificationData);
+  }
+
+  // Handle clicking a notification (tray tap or foreground toast tap)
+  public handleNotificationClick(notificationData: NotificationData): void {
+    // Emit an event to be handled by the top-level navigation layout
+    const clickAction =
+      notificationData.data?.clickAction ||
+      (notificationData as any).clickAction;
+
+    if (
+      clickAction === "VERIFY_ARRIVAL" &&
+      notificationData.jobId &&
+      notificationData.data?.workerId
+    ) {
+      console.log(
+        "🔗 Deep-linking to Arrival Verification:",
+        notificationData.jobId,
+        notificationData.data.workerId
+      );
+      DeviceEventEmitter.emit("navigate_from_notification", {
+        screen: "RequestVerification",
+        params: {
+          jobId: notificationData.jobId,
+          workerId: notificationData.data.workerId,
+          initialTab: "verify",
+        },
+      });
+      return;
+    }
+
+    if (clickAction === "REVIEW_COMPLETION" && notificationData.jobId) {
+      console.log(
+        "🔗 Deep-linking to Completion Review:",
+        notificationData.jobId
+      );
+      DeviceEventEmitter.emit("navigate_from_notification", {
+        screen: "JobTimer",
+        params: {
+          jobId: notificationData.jobId,
+          jobName: notificationData.data?.jobName || "Job Summary",
+          isEmployer: true,
+        },
+      });
+      return;
+    }
+
+    if (clickAction === "JOB_TIMER" && notificationData.jobId) {
+      console.log(
+        "🔗 Deep-linking to Job Timer:",
+        notificationData.jobId
+      );
+      DeviceEventEmitter.emit("navigate_from_notification", {
+        screen: "JobTimer",
+        params: {
+          jobId: notificationData.jobId,
+          jobName: notificationData.data?.jobName || "Job Timer",
+          isEmployer: false,
+        },
+      });
+      return;
+    }
+
+    if (
+      notificationData.data?.type === "job_published" &&
+      notificationData.jobId
+    ) {
+      DeviceEventEmitter.emit("navigate_from_notification", {
+        screen: "JobDetails",
+        params: { jobId: notificationData.jobId },
+      });
+      return;
+    }
+
+    switch (notificationData.type) {
+      case "verification_code":
+        if (notificationData.jobId) {
+          DeviceEventEmitter.emit("navigate_from_notification", {
+            screen: "RequestVerification",
+            params: { jobId: notificationData.jobId },
+          });
+        }
+        break;
+      case "job_update":
+      case "application_status":
+        if (notificationData.jobId) {
+          DeviceEventEmitter.emit("navigate_from_notification", {
+            screen: "JobDetails",
+            params: { jobId: notificationData.jobId },
+          });
+        }
+        break;
+      case "message":
+        if (notificationData.data?.conversationId) {
+          DeviceEventEmitter.emit("navigate_from_notification", {
+            screen: "ChatScreen",
+            params: {
+              conversationId: notificationData.data.conversationId,
+              participant: {
+                id: notificationData.data.senderId || notificationData.userId,
+                name: notificationData.data.senderName || "User",
+                avatar: notificationData.data.senderAvatar,
+              },
+            },
+          });
+        }
+        break;
+    }
+  }
+
+  // Show in-app notification toast
+  private showInAppNotification(notificationData: NotificationData): void {
+    const { type, title, body } = notificationData;
+
+    let toastType: "success" | "info" | "error" = "info";
+
+    switch (type) {
+      case "verification_code":
+        toastType = "success";
+        break;
+      case "job_update":
+        toastType = "info";
+        break;
+      case "application_status":
+        toastType = "success";
+        break;
+      case "message":
+        toastType = "info";
+        break;
+      case "system":
+        toastType = "info";
+        break;
+    }
+
+    Toast.show({
+      type: toastType,
+      text1: title,
+      text2: body,
+      visibilityTime: 5000,
+      autoHide: true,
+      topOffset: 60,
+      bottomOffset: 40,
+      onPress: () => {
+        Toast.hide();
+        this.handleNotificationClick(notificationData);
+      },
+    });
+  }
+
+  // Handle verification code notifications
+  private handleVerificationCodeNotification(data: NotificationData): void {
+    console.log("Verification code notification received:", data);
+    DeviceEventEmitter.emit("refresh_active_job", { jobId: data.jobId });
+    DeviceEventEmitter.emit("refresh_notifications");
+  }
+
+  // Handle job update notifications
+  private handleJobUpdateNotification(data: NotificationData): void {
+    console.log("Job update notification received:", data);
+    DeviceEventEmitter.emit("refresh_active_job", { jobId: data.jobId });
+    DeviceEventEmitter.emit("refresh_notifications");
+    DeviceEventEmitter.emit("refresh_jobs_feed");
+  }
+
+  // Handle application status notifications
+  private handleApplicationStatusNotification(data: NotificationData): void {
+    console.log("Application status notification received:", data);
+    DeviceEventEmitter.emit("refresh_applications", { jobId: data.jobId });
+    DeviceEventEmitter.emit("refresh_notifications");
+    DeviceEventEmitter.emit("refresh_active_job", { jobId: data.jobId });
+  }
+
+  // Handle message notifications
+  private handleMessageNotification(data: NotificationData): void {
+    console.log("Message notification received:", data);
+    DeviceEventEmitter.emit("refresh_messages", {
+      conversationId: data.data?.conversationId,
+    });
+    DeviceEventEmitter.emit("refresh_notifications");
+  }
+
+  // Navigation helpers
+  private navigateToJobDetails(jobId: string): void {
+    // This would typically use navigation service
+    console.log("Navigate to job details:", jobId);
+    // navigation.navigate('JobDetails', { jobId });
+  }
+
+  private navigateToChat(conversationId: string): void {
+    // This would typically use navigation service
+    console.log("Navigate to chat:", conversationId);
+    // navigation.navigate('Chat', { conversationId });
+  }
+
+  // Send local notification
+  async sendLocalNotification(
+    title: string,
+    body: string,
+    data?: any
+  ): Promise<void> {
+    try {
+      await Notifications.scheduleNotificationAsync({
+        content: {
+          title,
+          body,
+          data,
+          sound: "default",
+        },
+        trigger: null, // Show immediately
+      });
+    } catch (error) {
+      console.error("Error sending local notification:", error);
+    }
+  }
+
+  // Send verification code notification
+  async sendVerificationCodeNotification(
+    jobId: string,
+    jobName: string,
+    code: string
+  ): Promise<void> {
+    const title = "Verification Code Received";
+    const body = `Your verification code for "${jobName}" is: ${code}`;
+
+    await this.sendLocalNotification(title, body, {
+      type: "verification_code",
+      jobId,
+      jobName,
+      code,
+    });
+  }
+
+  // Send job update notification
+  async sendJobUpdateNotification(
+    jobId: string,
+    jobName: string,
+    update: string
+  ): Promise<void> {
+    const title = "Job Update";
+    const body = `Update for "${jobName}": ${update}`;
+
+    await this.sendLocalNotification(title, body, {
+      type: "job_update",
+      jobId,
+      jobName,
+      update,
+    });
+  }
+
+  // Send application status notification
+  async sendApplicationStatusNotification(
+    jobId: string,
+    jobName: string,
+    status: string
+  ): Promise<void> {
+    const title = "Application Update";
+    const body = `Your application for "${jobName}" status: ${status}`;
+
+    await this.sendLocalNotification(title, body, {
+      type: "application_status",
+      jobId,
+      jobName,
+      status,
+    });
+  }
+
+  // Send message notification
+  async sendMessageNotification(
+    conversationId: string,
+    senderName: string,
+    message: string
+  ): Promise<void> {
+    const title = `Message from ${senderName}`;
+    const body = message;
+
+    await this.sendLocalNotification(title, body, {
+      type: "message",
+      conversationId,
+      senderName,
+    });
+  }
+
+  // Get notification permissions
+  async getNotificationPermissions(): Promise<NotificationPermission> {
+    const { status, canAskAgain } = await Notifications.getPermissionsAsync();
+
+    return {
+      granted: status === "granted",
+      canAskAgain,
+      status: status as "granted" | "denied" | "undetermined",
+    };
+  }
+
+  // Request notification permissions
+  async requestNotificationPermissions(): Promise<boolean> {
+    try {
+      const { status } = await Notifications.requestPermissionsAsync();
+      return status === "granted";
+    } catch (error) {
+      console.error("Error requesting notification permissions:", error);
+      return false;
+    }
+  }
+
+  // Get expo push token
+  getExpoPushToken(): string | null {
+    return this.expoPushToken;
+  }
+
+  // Register device with backend
+  async registerDeviceWithBackend(): Promise<boolean> {
+    try {
+      if (!this.expoPushToken) {
+        console.log("No push token available");
+        return false;
+      }
+
+      const token = await getAccessToken();
+      if (!token) {
+        console.log("No access token available");
+        return false;
+      }
+
+      // Ensure deviceId is always a string
+      const deviceId =
+        Device.osInternalBuildId || Device.modelId || "unknown-device";
+
+      const requestBody = {
+        expoPushToken: this.expoPushToken,
+        platform: Platform.OS,
+        deviceId: deviceId,
+      };
+
+      console.log("📱 Registering device with backend:", {
+        platform: Platform.OS,
+        deviceId: deviceId,
+        tokenPreview: this.expoPushToken.substring(0, 30) + "...",
+      });
+
+      // Remove trailing slash from API URL to prevent double slashes
+      const apiUrl = process.env.EXPO_PUBLIC_API_URL?.replace(/\/$/, "") || "";
+      const endpoint = `${apiUrl}/notifications/register-device`;
+
+      console.log("🌐 Registration endpoint:", endpoint);
+
+      // Send push token to backend
+      const response = await fetch(endpoint, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(requestBody),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        console.log("✅ Device registered with backend successfully:", data);
+        return true;
+      } else {
+        const errorText = await response.text();
+        console.error("❌ Failed to register device with backend:", {
+          status: response.status,
+          statusText: response.statusText,
+          error: errorText,
+        });
+        return false;
+      }
+    } catch (error) {
+      console.error("❌ Error registering device with backend:", error);
+      return false;
+    }
+  }
+
+  // Clear all notifications
+  async clearAllNotifications(): Promise<void> {
+    try {
+      await Notifications.dismissAllNotificationsAsync();
+    } catch (error) {
+      console.error("Error clearing notifications:", error);
+    }
+  }
+
+  // Set notification badge count
+  async setBadgeCount(count: number): Promise<void> {
+    try {
+      await Notifications.setBadgeCountAsync(count);
+    } catch (error) {
+      console.error("Error setting badge count:", error);
+    }
+  }
+
+  // Clean up listeners
+  cleanup(): void {
+    if (this.notificationListener) {
+      this.notificationListener.remove();
+    }
+    if (this.responseListener) {
+      this.responseListener.remove();
+    }
+  }
+}
+
+// Create singleton instance
+const notificationService = new NotificationService();
+
+export default notificationService;

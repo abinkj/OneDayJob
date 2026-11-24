@@ -1,6 +1,13 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
-import { Colors } from '../../constants/Colors';
+import React, { useState } from "react";
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  Alert,
+} from "react-native";
+import { Colors } from "../../constants/Colors";
 
 interface VerificationCodeProps {
   userName: string;
@@ -15,11 +22,11 @@ const VerificationCode: React.FC<VerificationCodeProps> = ({
   onResendCode,
   loading = false,
 }) => {
-  const [code, setCode] = useState('');
+  const [code, setCode] = useState("");
 
   const handleVerify = () => {
     if (!code.trim()) {
-      Alert.alert('Error', 'Please enter a verification code');
+      Alert.alert("Error", "Please enter a verification code");
       return;
     }
     onVerify(code);
@@ -27,9 +34,9 @@ const VerificationCode: React.FC<VerificationCodeProps> = ({
 
   const handleResend = () => {
     Alert.alert(
-      'Resend Code',
-      'A new verification code has been sent to the applicant.',
-      [{ text: 'OK', onPress: onResendCode }]
+      "Resend Code",
+      "A new verification code has been sent to the applicant.",
+      [{ text: "OK", onPress: onResendCode }]
     );
   };
 
@@ -52,7 +59,7 @@ const VerificationCode: React.FC<VerificationCodeProps> = ({
         disabled={loading}
       >
         <Text style={styles.verifyButtonText}>
-          {loading ? 'Verifying...' : `Verify ${userName}`}
+          {loading ? "Verifying..." : `Verify ${userName}`}
         </Text>
       </TouchableOpacity>
       <TouchableOpacity
@@ -68,12 +75,12 @@ const VerificationCode: React.FC<VerificationCodeProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: '#FFF',
+    backgroundColor: "#FFF",
     paddingHorizontal: 16,
     paddingVertical: 20,
     marginHorizontal: 16,
     borderRadius: 12,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: {
       width: 0,
       height: 2,
@@ -84,25 +91,25 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 16,
-    fontWeight: '600',
-    color: '#000',
+    fontWeight: "600",
+    color: "#000",
     marginBottom: 12,
   },
   input: {
-    backgroundColor: '#F8F8F8',
+    backgroundColor: "#F8F8F8",
     borderRadius: 8,
     paddingHorizontal: 16,
     paddingVertical: 12,
     fontSize: 16,
     borderWidth: 1,
-    borderColor: '#E5E5E5',
+    borderColor: "#E5E5E5",
     marginBottom: 16,
   },
   verifyButton: {
     backgroundColor: Colors.primary,
     borderRadius: 8,
     paddingVertical: 14,
-    alignItems: 'center',
+    alignItems: "center",
     marginBottom: 12,
   },
   disabledButton: {
@@ -110,20 +117,20 @@ const styles = StyleSheet.create({
   },
   verifyButtonText: {
     fontSize: 16,
-    fontWeight: '600',
-    color: '#FFF',
+    fontWeight: "600",
+    color: "#FFF",
   },
   resendButton: {
-    backgroundColor: 'transparent',
+    backgroundColor: "transparent",
     borderRadius: 8,
     paddingVertical: 12,
-    alignItems: 'center',
+    alignItems: "center",
   },
   resendButtonText: {
     fontSize: 14,
-    fontWeight: '600',
-    color: '#666',
-    textDecorationLine: 'underline',
+    fontWeight: "600",
+    color: "#666",
+    textDecorationLine: "underline",
   },
 });
 

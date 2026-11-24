@@ -12,7 +12,7 @@ const SavedAddressesScreen: React.FC = () => {
   const navigation = useNavigation();
   const { colors } = useTheme();
   const userData = useSelector(
-    (state: RootState) => state.authentication.userData,
+    (state: RootState) => state.authentication.userData
   );
   const [refreshKey, setRefreshKey] = useState(0);
 
@@ -20,7 +20,7 @@ const SavedAddressesScreen: React.FC = () => {
   useFocusEffect(
     React.useCallback(() => {
       setRefreshKey((prev) => prev + 1);
-    }, []),
+    }, [])
   );
 
   const handleAddNew = () => {
